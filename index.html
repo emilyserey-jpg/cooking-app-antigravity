@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cooking GPS — Interactive UI Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons via CDN for modern premium icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <a href="#" class="logo-container">
+      <div class="logo-icon">
+        <i data-lucide="navigation"></i>
+      </div>
+      <div class="logo-text">Cooking<span>GPS</span></div>
+    </a>
+    
+    <div class="header-actions">
+      <!-- Tabs to switch between view formats -->
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="switchView('mobile-player')">
+          <i data-lucide="smartphone"></i> Mobile Player
+        </button>
+        <button class="view-tab" onclick="switchView('bento-dashboard')">
+          <i data-lucide="layout-grid"></i> Bento Dashboard
+        </button>
+        <button class="view-tab" onclick="switchView('desktop-workbench')">
+          <i data-lucide="monitor"></i> Desktop Editor
+        </button>
+      </div>
+
+      <!-- User Info Badge -->
+      <div class="user-profile-badge">
+        <img class="avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Chef Avatar">
+        <span>Alex R.</span>
+        <i data-lucide="chevron-down"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="app-container">
+
+    <!-- 1. MOBILE RECIPE PLAYER VIEW -->
+    <section id="view-mobile-player" class="view-section active">
+      <div class="player-mobile-wrapper">
+        <div class="phone-notch"></div>
+        
+        <div class="phone-screen">
+          <!-- Video Section -->
+          <div class="mobile-video-container">
+            <div class="mobile-video-placeholder">
+              <!-- Animated Canvas representing video playback -->
+              <canvas id="mobileVideoCanvas" class="video-element-sim"></canvas>
+              
+              <!-- Badges -->
+              <div class="playback-controls-overlay">
+                <span id="activeModeBadge" class="mode-badge loop">
+                  <i data-lucide="repeat"></i> Loop Mode
+                </span>
+              </div>
+              
+              <div class="video-overlay-details">
+                <span id="videoTimeReadout">0:00 / 6:00</span>
+                <span id="activeSpeedBadge">1.0x</span>
+              </div>
+              
+              <!-- Timeline/Loop bounds -->
+              <div id="videoProgressLine" class="playback-loop-progress" style="width: 0%"></div>
+              <div id="videoBoundariesContainer"></div>
+            </div>
+          </div>
+
+          <!-- Segmented Mode Control -->
+          <div class="mode-selector-strip">
+            <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')">Loop</button>
+            <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')">Wait</button>
+            <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')">Continuous</button>
+          </div>
+
+          <!-- Mobile App Body -->
+          <div class="mobile-player-body">
+            <!-- Active Step Card -->
+            <div class="step-card-active">
+              <div class="step-meta-row">
+                <span id="mobileStepLabel" class="step-indicator-text">Step 2 of 5</span>
+                <span id="mobileStepTime" class="step-duration-badge">1:15 – 2:45</span>
+              </div>
+              <h3 id="mobileStepTitle" class="step-card-title">Sear the Chicken</h3>
+              <p id="mobileStepInstructions" class="step-instructions">
+                Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts. Cook for 5-7 minutes without moving, until beautifully browned.
+              </p>
+            </div>
+
+            <!-- Steps timeline scroll list -->
+            <div class="step-nav-chips-container">
+              <div class="step-nav-chips-title">Recipe Timeline</div>
+              <div id="chipsScrollX" class="chips-scroll-x">
+                <!-- Chips injected dynamically -->
+              </div>
+            </div>
+            
+            <!-- Voice Guide Assist tip -->
+            <div class="glass-card" style="padding: 12px; margin-top: auto; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="mic" style="color: var(--primary); flex-shrink: 0;"></i>
+              <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3;">
+                <strong>Hands-Free Active:</strong> Say <span style="color:var(--primary); font-family: monospace;">"Next step"</span>, <span style="color:var(--primary); font-family: monospace;">"Repeat"</span> or <span style="color:var(--primary); font-family: monospace;">"Pause"</span> while cooking.
+              </p>
+            </div>
+          </div>
+
+          <!-- Phone Floating Mic -->
+          <button id="phoneMicBtn" class="voice-assistant-fab" onclick="toggleVoiceSystem()">
+            <i data-lucide="mic"></i>
+          </button>
+
+          <!-- Mobile Tab Bar -->
+          <div class="mobile-player-footer">
+            <button class="phone-action-btn" onclick="showTip('Opening Library...')">
+              <i data-lucide="folder-heart"></i>
+              <span>Library</span>
+            </button>
+            <button class="phone-action-btn active" onclick="showTip('Stay on Player')">
+              <i data-lucide="play-circle"></i>
+              <span>Cook</span>
+            </button>
+            
+            <!-- Floating play button -->
+            <button id="phonePlayPauseBtn" class="play-pause-circle" onclick="toggleVideoPlayback()">
+              <i data-lucide="play"></i>
+            </button>
+            
+            <button class="phone-action-btn" onclick="triggerRemix()">
+              <i data-lucide="git-fork"></i>
+              <span>Remix</span>
+            </button>
+            <button class="phone-action-btn" onclick="showTip('Opening Profile...')">
+              <i data-lucide="user"></i>
+              <span>Profile</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. BENTO GRID DASHBOARD VIEW -->
+    <section id="view-bento-dashboard" class="view-section">
+      <div class="bento-controls">
+        <div>
+          <h2 style="font-size: 1.8rem; margin-bottom: 0.25rem;">My Culinary Bento</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Organize your recipes, timers, and active collections in a grid dashboard.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="bentoEditModeBtn" class="btn" onclick="toggleBentoEditMode()">
+            <i data-lucide="edit-3"></i> Edit Board
+          </button>
+          <button class="btn btn-primary" onclick="matchBentoSizes()">
+            <i data-lucide="grid-3x3"></i> Match Sizes
+          </button>
+        </div>
+      </div>
+
+      <div id="bentoContainer" class="bento-grid">
+        <!-- Widget 1: Recipe Card (2x2) -->
+        <div class="glass-card bento-widget widget-2x2" data-widget-id="1">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="recipe-widget-bg">
+            <img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80" alt="Lemon Salmon">
+          </div>
+          <div class="recipe-widget-overlay"></div>
+          <div class="recipe-widget-details">
+            <div class="recipe-meta-badges">
+              <span class="recipe-badge"><i data-lucide="clock" style="width:10px; height:10px; display:inline; vertical-align:middle; margin-right:2px;"></i> 45 mins</span>
+              <span class="recipe-badge"><i data-lucide="award" style="width:10px; height:10px; display:inline; vertical-align:middle; margin-right:2px;"></i> Medium</span>
+            </div>
+            <h3 class="recipe-widget-title">Pan-Seared Lemon Salmon with Asparagus</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+              <span style="font-size: 0.8rem; color: var(--primary); font-weight:600;"><i data-lucide="star" style="width:12px; height:12px; fill:var(--primary); display:inline;"></i> 4.8</span>
+              <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="openWidgetRecipe('Lemon Salmon')">Cook Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 2: Recent Activity Timeline (2x1) -->
+        <div class="glass-card bento-widget widget-2x1" data-widget-id="2" style="padding: 1.25rem;">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">
+            <span>Recent Activity</span>
+            <i data-lucide="clock" style="width:14px; height:14px;"></i>
+          </div>
+          <div class="widget-content" style="justify-content: flex-start; gap: 8px; margin-top: 4px;">
+            <div style="display:flex; align-items:center; gap: 10px; font-size: 0.8rem;">
+              <span class="folder-icon-glow" style="width:24px; height:24px;"><i data-lucide="folder-plus" style="width:12px;"></i></span>
+              <span style="color:var(--text-muted)">Added 3 recipes to <strong style="color:var(--text-main)">"Weeknight Classics"</strong></span>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px; font-size: 0.8rem;">
+              <span class="folder-icon-glow" style="width:24px; height:24px; background:rgba(245,158,11,0.15); color:var(--warning)"><i data-lucide="bookmark" style="width:12px;"></i></span>
+              <span style="color:var(--text-muted)">Remixed <strong style="color:var(--text-main)">"Spicy Basil Chicken"</strong></span>
+            </div>
+            <div style="display:flex; align-items:center; gap: 10px; font-size: 0.8rem;">
+              <span class="folder-icon-glow" style="width:24px; height:24px; background:rgba(16,185,129,0.15); color:var(--success)"><i data-lucide="check" style="width:12px;"></i></span>
+              <span style="color:var(--text-muted)">Completed <strong style="color:var(--text-main)">"Garlic Ribeye Steak"</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 3: Saved Folders Carousel (2x1 becomes carousel at full width) -->
+        <div class="glass-card bento-widget widget-2x1" data-widget-id="3">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">
+            <span>Saved Recipe Folders</span>
+            <i data-lucide="folder" style="width:14px; height:14px;"></i>
+          </div>
+          <div class="carousel-deck">
+            <div class="folder-card-thumb" onclick="showTip('Opening Italian Classics folder')">
+              <span class="folder-icon-glow"><i data-lucide="folder"></i></span>
+              <div>
+                <h4 style="font-size:0.85rem; font-weight:600;">Italian Classics</h4>
+                <p style="font-size:0.7rem; color:var(--text-muted)">18 recipes</p>
+              </div>
+            </div>
+            <div class="folder-card-thumb" onclick="showTip('Opening Weeknight Classics folder')">
+              <span class="folder-icon-glow" style="background:rgba(99, 102, 241, 0.15); color:#6366f1;"><i data-lucide="folder"></i></span>
+              <div>
+                <h4 style="font-size:0.85rem; font-weight:600;">Weeknight Classics</h4>
+                <p style="font-size:0.7rem; color:var(--text-muted)">12 recipes</p>
+              </div>
+            </div>
+            <div class="folder-card-thumb" onclick="showTip('Opening Spicy Sizzler folder')">
+              <span class="folder-icon-glow" style="background:rgba(245, 158, 11, 0.15); color:var(--warning);"><i data-lucide="folder"></i></span>
+              <div>
+                <h4 style="font-size:0.85rem; font-weight:600;">Spicy Sizzlers</h4>
+                <p style="font-size:0.7rem; color:var(--text-muted)">6 recipes</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 4: Active Kitchen Timer (1x1) -->
+        <div class="glass-card bento-widget widget-1x1" data-widget-id="4">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">Active Timers</div>
+          <div class="stat-widget-body">
+            <div class="timer-pulsing" id="dashboardTimer">0:30:15</div>
+            <span class="stat-label">Roast Chicken</span>
+          </div>
+        </div>
+
+        <!-- Widget 5: Cooked Count Stats (1x1) -->
+        <div class="glass-card bento-widget widget-1x1" data-widget-id="5">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">Kitchen Records</div>
+          <div class="stat-widget-body">
+            <div class="stat-value">12</div>
+            <span class="stat-label">Meals Cooked This Week</span>
+          </div>
+        </div>
+
+        <!-- Widget 6: Recipe Bank Stats (1x1) -->
+        <div class="glass-card bento-widget widget-1x1" data-widget-id="6">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">Total Recipes</div>
+          <div class="stat-widget-body">
+            <div class="stat-value">245</div>
+            <span class="stat-label">Recipes Saved</span>
+          </div>
+        </div>
+
+        <!-- Widget 7: Followers Stats (1x1) -->
+        <div class="glass-card bento-widget widget-1x1" data-widget-id="7">
+          <div class="widget-drag-handle"><i data-lucide="grip-horizontal"></i></div>
+          <div class="widget-title">Profile reach</div>
+          <div class="stat-widget-body">
+            <div class="stat-value">1.8k</div>
+            <span class="stat-label">Followers</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. DESKTOP WORKBENCH / EDITOR VIEW -->
+    <section id="view-desktop-workbench" class="view-section">
+      <div class="bento-controls">
+        <div>
+          <h2 style="font-size: 1.8rem; margin-bottom: 0.25rem;">Spicy Thai Basil Chicken — workbench</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Map step timings, refine loop segments, and ingest audio utilizing Gemini 2.5 Flash.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn" onclick="triggerUndo()"><i data-lucide="undo-2"></i> Undo</button>
+          <button class="btn" onclick="triggerRedo()"><i data-lucide="redo-2"></i> Redo</button>
+          <button class="btn btn-primary" onclick="showTip('Recipe Saved!')"><i data-lucide="save"></i> Save Changes</button>
+        </div>
+      </div>
+
+      <div class="workbench-layout">
+        <!-- Left Pane: Custom Timeline Video -->
+        <div class="workbench-left">
+          <div class="glass-card workbench-video-panel">
+            <div class="video-frame-container">
+              <!-- Active desktop video simulation -->
+              <canvas id="desktopVideoCanvas" class="video-element-sim"></canvas>
+              
+              <!-- Large play button on video center -->
+              <div class="playback-controls-overlay" style="top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.85;">
+                <button class="btn btn-icon btn-primary" style="width:60px; height:60px;" onclick="toggleVideoPlayback()">
+                  <i data-lucide="play" id="desktopPlayIcon" style="width:24px; height:24px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Draggable step timeline ruler -->
+            <div class="timeline-workbench-wrapper">
+              <div class="timeline-flex-row">
+                <span style="font-size:0.75rem; color:var(--text-muted); width:35px;" id="desktopTimerReadout">0:00</span>
+                <div class="timeline-ruler" id="editorTimelineRuler" onclick="timelineClick(event)">
+                  <!-- Draggable Playhead -->
+                  <div id="timelinePlayhead" class="timeline-playhead">
+                    <div class="timeline-playhead-cap"></div>
+                  </div>
+                  <!-- Markers dynamically created -->
+                  <div id="timelineMarkersContainer"></div>
+                </div>
+                <span style="font-size:0.75rem; color:var(--text-muted); width:35px;">6:00</span>
+              </div>
+
+              <!-- Controls row -->
+              <div class="nudge-controls-row">
+                <div class="nudge-group">
+                  <button class="btn btn-icon" onclick="nudgeActiveBoundary(-1)"><i data-lucide="chevron-left"></i></button>
+                  <button class="btn" style="padding:4px 12px;" onclick="nudgeActiveBoundary(-1)">Nudge -1s</button>
+                  <button class="btn" style="padding:4px 12px;" onclick="nudgeActiveBoundary(1)">Nudge +1s</button>
+                  <button class="btn btn-icon" onclick="nudgeActiveBoundary(1)"><i data-lucide="chevron-right"></i></button>
+                </div>
+                
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:0.75rem; color:var(--text-muted);">Seek Step:</span>
+                  <select id="seekStepSelect" class="btn" style="padding:6px 12px; background:var(--bg-secondary); border-radius:6px;">
+                    <option value="1">1 second</option>
+                    <option value="2">2 seconds</option>
+                    <option value="5" selected>5 seconds</option>
+                    <option value="10">10 seconds</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Pane: Draggable steps and detail editor -->
+        <div class="workbench-right">
+          <div class="glass-card">
+            <!-- Sidebar tabs -->
+            <div class="editor-tabs">
+              <button class="editor-tab-btn active" onclick="switchSidebarTab('steps')">Step Checklist</button>
+              <button class="editor-tab-btn" onclick="switchSidebarTab('details')">Step Details</button>
+              <button class="editor-tab-btn" onclick="switchSidebarTab('ai')">AI Copilot</button>
+            </div>
+
+            <!-- Tab 1: Draggable steps timeline checklist -->
+            <div id="tab-steps" class="sidebar-tab-content active">
+              <div class="widget-title" style="margin-bottom:12px;">
+                <span>Arrange Recipe Steps</span>
+                <i data-lucide="menu" style="width:14px; height:14px;"></i>
+              </div>
+              <div class="workbench-step-list" id="editorStepListContainer">
+                <!-- Draggable step list rows injected here -->
+              </div>
+            </div>
+
+            <!-- Tab 2: Edit form details for selected step -->
+            <div id="tab-details" class="sidebar-tab-content">
+              <div class="widget-title" style="margin-bottom:12px;">Step Details Form</div>
+              
+              <div class="form-group">
+                <label for="inputStepTitle">Step Title</label>
+                <input type="text" id="inputStepTitle" oninput="saveStepDetailsFromInputs()" value="Sear the Chicken">
+              </div>
+              
+              <div class="form-group">
+                <label for="inputStepInstructions">Instructions Text</label>
+                <textarea id="inputStepInstructions" rows="4" oninput="saveStepDetailsFromInputs()">Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts...</textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="inputStepSubloops">Sub-loops (Timestamps)</label>
+                <input type="text" id="inputStepSubloops" placeholder="e.g. 10, 25, 40">
+                <p style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Comma-separated times (in seconds) within this segment.</p>
+              </div>
+            </div>
+
+            <!-- Tab 3: AI Video Ingestion -->
+            <div id="tab-ai" class="sidebar-tab-content">
+              <div class="ai-glow-card glass-card" style="padding:1rem;">
+                <div class="ai-pulse-glow"></div>
+                <div style="position:relative; z-index:2;">
+                  <h3 style="font-size:1.1rem; font-weight:700; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="sparkles"></i> AI Video ingestion
+                  </h3>
+                  <p style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
+                    Gemini 2.5 Flash analyzes audio transcripts, pacing, and video scenes to split step loops and generate recipe text automatically.
+                  </p>
+                  
+                  <div class="form-group">
+                    <label>Extraction Mode</label>
+                    <select id="aiExtractionMode" style="width:100%;">
+                      <option value="all">Full Analysis (Loops + Instructions)</option>
+                      <option value="loops">Loops stops only (Boundaries)</option>
+                      <option value="describe">Describe loops (Describe custom marks)</option>
+                    </select>
+                  </div>
+                  
+                  <button class="btn btn-primary" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="runAiAnalysis()">
+                    <i data-lucide="sparkles"></i> Analyze Video Segment
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Voice Activity Overlay Indicator -->
+  <div id="voiceHudPanel" class="voice-hud-panel hidden">
+    <div id="voiceHudIndicator" class="voice-hud-indicator">
+      <i data-lucide="mic" style="width:18px; height:18px;"></i>
+    </div>
+    <div class="voice-hud-content">
+      <div class="voice-hud-status" id="voiceHudStatusLabel">Listening...</div>
+      <div class="voice-hud-transcript" id="voiceHudTranscript">"Repeat step"</div>
+    </div>
+  </div>
+
+  <!-- Lucide script initialization -->
+  <script>
+    lucide.createIcons();
+  </script>
+  
+  <!-- Main application script -->
+  <script src="app.js"></script>
+</body>
+</html>
