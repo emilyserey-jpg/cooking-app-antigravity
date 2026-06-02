@@ -1729,6 +1729,9 @@ window.saveNewRecipe = async function() {
 window.resetCreateView = function() {
   uploadedVideoUID = null;
   localVideoURL    = null;
+  uploadedFile     = null;
+  cachedTranscript = null;
+  cachedSegments   = null;
   createStepsArr   = [];
   createIsPublic   = false;
 
@@ -1743,6 +1746,15 @@ window.resetCreateView = function() {
   document.getElementById('uploadProgressBar').style.background = 'linear-gradient(90deg,var(--primary),#6aaee8)';
   document.getElementById('newRecipeTitleInput').value = '';
 
+  // Reset AI section
+  document.getElementById('aiStatus').style.display       = 'none';
+  document.getElementById('transcriptPreview').style.display = 'none';
+  document.getElementById('aiActions').style.display      = 'none';
+  document.getElementById('ingredientsResult').style.display = 'none';
+  document.getElementById('stepsTextResult').style.display   = 'none';
+  document.getElementById('transcribeBtn').disabled       = false;
+  document.getElementById('transcribeBtn').textContent    = '🎤 Step 1: Transcribe Video';
+
   const toggle = document.getElementById('privacyToggle');
   const thumb  = document.getElementById('privacyThumb');
   const label  = document.getElementById('privacyLabel');
@@ -1753,3 +1765,211 @@ window.resetCreateView = function() {
   const fi = document.getElementById('videoFileInput');
   if (fi) fi.value = '';
 };
+
+// ============================================================
+// PHASE 4 — AI FEATURES
+// ============================================================
+let uploadedFile     = null;   // original File object (for Whisper)
+let cachedTranscript = null;   // cached so we never transcribe twice
+let cachedSegments   = null;   // timestamped segments from Whisper
+
+// Store the file when user picks it (called in handleFileSelect)
+// We patch handleFileSelect to also save uploadedFile
+const _origHandleFileSelect = window.handleFileSelect;
+window.handleFileSelect = async function(file) {
+  uploadedFile     = file;       // save for AI
+  cachedTranscript = null;       // clear any previous cache
+  cachedSegments   = null;
+  return _origHandleFileSelect(file);
+};
+
+// ── Helper: set AI status message ──────────────────────────────────────────
+function setAIStatus(msg, show = true) {
+  const el = document.getElementById('aiStatus');
+  const tx = document.getElementById('aiStatusText');
+  if (el) el.style.display = show ? 'block' : 'none';
+  if (tx) tx.textContent   = msg;
+}
+
+// ── Step 1: Transcribe ─────────────────────────────────────────────────────
+window.transcribeVideo = async function() {
+  if (!uploadedFile) {
+    showTip('Upload a video first before transcribing.');
+    return;
+  }
+
+  if (uploadedFile.size > 25 * 1024 * 1024) {
+    showTip('Video is over 25MB — Whisper has a 25MB limit. Try a shorter clip.');
+    return;
+  }
+
+  // Use cache if already transcribed
+  if (cachedTranscript) {
+    showTip('Already transcribed! Use the buttons below to generate content.');
+    return;
+  }
+
+  const btn = document.getElementById('transcribeBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing...'; }
+  setAIStatus('🎤 Sending to OpenAI Whisper...');
+
+  try {
+    const formData = new FormData();
+    formData.append('video', uploadedFile, uploadedFile.name);
+
+    const res  = await fetch('/api/transcribe', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Cache the transcript and segments
+    cachedTranscript = data.transcript;
+    cachedSegments   = data.segments || [];
+
+    // Show transcript preview
+    const preview = document.getElementById('transcriptPreview');
+    const textEl  = document.getElementById('transcriptText');
+    if (preview) preview.style.display = 'block';
+    if (textEl)  textEl.textContent    = cachedTranscript;
+
+    // Show AI action buttons
+    const actions = document.getElementById('aiActions');
+    if (actions) actions.style.display = 'block';
+
+    setAIStatus('✅ Transcription done! Now generate content below.');
+    if (btn) { btn.textContent = '✅ Transcribed'; }
+    showTip('Transcription complete! Tap any button to generate content.');
+
+  } catch (err) {
+    console.error('[AI] Transcription error:', err);
+    setAIStatus('❌ ' + (err.message || 'Transcription failed.'));
+    if (btn) { btn.disabled = false; btn.textContent = '🎤 Step 1: Transcribe Video'; }
+    showTip('Transcription failed: ' + err.message);
+  }
+};
+
+// ── Generate ingredients ───────────────────────────────────────────────────
+window.generateIngredients = async function() {
+  if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
+  setAIStatus('✍️ Writing ingredients...');
+
+  try {
+    const res  = await fetch('/api/ai/ingredients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: cachedTranscript }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const result = document.getElementById('ingredientsResult');
+    const text   = document.getElementById('ingredientsText');
+    if (result) result.style.display = 'block';
+    if (text)   text.value           = data.ingredients;
+
+    setAIStatus('✅ Ingredients written — edit them above!');
+    showTip('Ingredients generated! Edit them if needed.');
+  } catch (err) {
+    setAIStatus('❌ ' + err.message);
+    showTip('Failed: ' + err.message);
+  }
+};
+
+// ── Generate written steps ─────────────────────────────────────────────────
+window.generateSteps = async function() {
+  if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
+  setAIStatus('📋 Writing step instructions...');
+
+  try {
+    const res  = await fetch('/api/ai/steps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: cachedTranscript }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const result = document.getElementById('stepsTextResult');
+    const text   = document.getElementById('stepsText');
+    if (result) result.style.display = 'block';
+    if (text)   text.value           = data.steps;
+
+    setAIStatus('✅ Step instructions written — edit them above!');
+    showTip('Step instructions generated! Edit them if needed.');
+  } catch (err) {
+    setAIStatus('❌ ' + err.message);
+    showTip('Failed: ' + err.message);
+  }
+};
+
+// ── Auto-add loop markers from AI ──────────────────────────────────────────
+window.generateLoops = async function() {
+  if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
+  setAIStatus('🔁 Detecting step timestamps...');
+
+  try {
+    const res  = await fetch('/api/ai/loops', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: cachedTranscript, segments: cachedSegments }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const loops = data.loops || [];
+    if (!loops.length) {
+      setAIStatus('⚠️ No steps detected — try adding them manually.');
+      return;
+    }
+
+    // Replace timeline steps with AI-detected ones
+    createStepsArr = loops.map(l => {
+      const t = Number(l.time) || 0;
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60).toString().padStart(2, '0');
+      return { time: t, label: l.label || `Step`, displayTime: `${m}:${s}` };
+    }).sort((a, b) => a.time - b.time);
+
+    renderCreateSteps();
+    renderTimeline();
+
+    setAIStatus(`✅ ${loops.length} steps placed on your timeline!`);
+    showTip(`AI placed ${loops.length} loop markers — check your timeline!`);
+  } catch (err) {
+    setAIStatus('❌ ' + err.message);
+    showTip('Failed: ' + err.message);
+  }
+};
+
+// ── Do It All — runs all 3 in sequence ────────────────────────────────────
+window.doItAll = async function() {
+  if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
+  setAIStatus('⚡ Running all AI features...');
+
+  try {
+    setAIStatus('✍️ Writing ingredients...');
+    await window.generateIngredients();
+
+    setAIStatus('📋 Writing step instructions...');
+    await window.generateSteps();
+
+    setAIStatus('🔁 Detecting loop points...');
+    await window.generateLoops();
+
+    setAIStatus('🎉 All done! Review and edit above, then save.');
+    showTip('All AI features complete! Review your results.');
+  } catch (err) {
+    setAIStatus('❌ ' + err.message);
+  }
+};
+
+// ── Update saveNewRecipe to include AI-generated content ───────────────────
+// Patch the save function to include ingredients and written steps
+const _origSaveNewRecipe = window.saveNewRecipe;
+window.saveNewRecipe = async function() {
+  // Inject AI content into the recipe payload before saving
+  // (the createRecipe function will pick these up via extra fields)
+  window._aiIngredients = document.getElementById('ingredientsText')?.value?.trim() || null;
+  window._aiStepsText   = document.getElementById('stepsText')?.value?.trim() || null;
+  return _origSaveNewRecipe();
+};
+
