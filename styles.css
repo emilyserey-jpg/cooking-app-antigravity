@@ -1218,3 +1218,8 @@ h1, h2, h3, h4, h5 {
   .app-header { padding: 0 1rem; }
   .view-tabs { display: none; }
 }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

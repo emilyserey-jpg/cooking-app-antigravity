@@ -28,13 +28,19 @@
       <!-- Tabs to switch between view formats -->
       <div class="view-tabs">
         <button class="view-tab active" onclick="switchView('mobile-player')">
-          <i data-lucide="smartphone"></i> Mobile Player
+          <i data-lucide="smartphone"></i> Player
+        </button>
+        <button class="view-tab" onclick="switchView('discover')">
+          <i data-lucide="compass"></i> Discover
+        </button>
+        <button class="view-tab" onclick="switchView('profile')">
+          <i data-lucide="user"></i> My Profile
         </button>
         <button class="view-tab" onclick="switchView('bento-dashboard')">
-          <i data-lucide="layout-grid"></i> Bento Dashboard
+          <i data-lucide="layout-grid"></i> Dashboard
         </button>
         <button class="view-tab" onclick="switchView('desktop-workbench')">
-          <i data-lucide="monitor"></i> Desktop Editor
+          <i data-lucide="monitor"></i> Editor
         </button>
       </div>
 
@@ -426,6 +432,84 @@
             </div>
 
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================
+         DISCOVER VIEW — Public recipes from all users
+         ================================================ -->
+    <section id="view-discover" class="view-section">
+      <!-- Search bar -->
+      <div style="max-width:600px;margin:0 auto 2rem;">
+        <div style="position:relative;">
+          <i data-lucide="search" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:18px;"></i>
+          <input id="discoverSearchInput" type="text" placeholder="Search public recipes..."
+            oninput="handleDiscoverSearch(this.value)"
+            style="width:100%;padding:14px 14px 14px 46px;border-radius:999px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.95rem;font-weight:600;color:var(--text-heading);box-shadow:var(--shadow-sm);outline:none;"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+        </div>
+      </div>
+
+      <!-- Section header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <h2 style="font-size:1.5rem;font-weight:900;color:var(--text-heading);">🌎 Public Recipes</h2>
+        <span id="discoverCount" style="font-size:0.85rem;font-weight:700;color:var(--text-muted);">Loading...</span>
+      </div>
+
+      <!-- Recipe grid -->
+      <div id="discoverGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;">
+        <!-- Skeleton loaders -->
+        <div class="glass-card" style="height:200px;background:linear-gradient(90deg,#f0f7ff 25%,#e0efff 50%,#f0f7ff 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;"></div>
+        <div class="glass-card" style="height:200px;background:linear-gradient(90deg,#f0f7ff 25%,#e0efff 50%,#f0f7ff 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;"></div>
+        <div class="glass-card" style="height:200px;background:linear-gradient(90deg,#f0f7ff 25%,#e0efff 50%,#f0f7ff 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;"></div>
+      </div>
+
+      <div id="discoverEmpty" style="display:none;text-align:center;padding:4rem 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🍽️</div>
+        <h3 style="color:var(--text-heading);margin-bottom:0.5rem;">No public recipes yet</h3>
+        <p style="color:var(--text-muted);font-weight:600;">Be the first to share one!</p>
+      </div>
+    </section>
+
+    <!-- ================================================
+         PROFILE VIEW — Current user's recipes
+         ================================================ -->
+    <section id="view-profile" class="view-section">
+      <!-- Profile hero -->
+      <div style="background:#fff;border-radius:var(--radius-xl);border:2px solid var(--border-card);padding:2rem;margin-bottom:1.5rem;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;align-items:center;gap:1.5rem;">
+          <!-- Avatar -->
+          <div id="profileAvatarLarge" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:900;flex-shrink:0;box-shadow:var(--shadow-md);">?</div>
+          <div style="flex:1;">
+            <h2 id="profileName" style="font-size:1.4rem;font-weight:900;color:var(--text-heading);margin-bottom:4px;">Not signed in</h2>
+            <p id="profileEmail" style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">Sign in to see your profile</p>
+          </div>
+          <!-- Stats -->
+          <div style="display:flex;gap:2rem;">
+            <div style="text-align:center;">
+              <div id="profileRecipeCount" style="font-size:1.8rem;font-weight:900;color:var(--primary);">—</div>
+              <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.05em;">Recipes</div>
+            </div>
+            <div style="text-align:center;">
+              <div id="profilePublicCount" style="font-size:1.8rem;font-weight:900;color:var(--green);">—</div>
+              <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.05em;">Public</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recipe tabs: All / Public / Private -->
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+        <button class="btn btn-primary" id="profileTabAll" onclick="filterProfileRecipes('all')" style="border-radius:999px;">All Recipes</button>
+        <button class="btn" id="profileTabPublic" onclick="filterProfileRecipes('public')" style="border-radius:999px;">🌎 Public</button>
+        <button class="btn" id="profileTabPrivate" onclick="filterProfileRecipes('private')" style="border-radius:999px;">🔒 Private</button>
+      </div>
+
+      <!-- My recipes grid -->
+      <div id="profileGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;">
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">
+          Sign in to see your recipes
         </div>
       </div>
     </section>

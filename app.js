@@ -944,24 +944,29 @@ function speakFeedback(phrase) {
 // ----------------------------------------------------
 function switchView(viewId) {
   currentView = viewId;
-  
+
   // Update Tabs
   document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
-  const activeTab = Array.from(document.querySelectorAll('.view-tab')).find(tab => 
-    (viewId === 'mobile-player' && tab.innerText.includes('Mobile Player')) ||
-    (viewId === 'bento-dashboard' && tab.innerText.includes('Bento Dashboard')) ||
-    (viewId === 'desktop-workbench' && tab.innerText.includes('Desktop Editor'))
+  const activeTab = Array.from(document.querySelectorAll('.view-tab')).find(tab =>
+    (viewId === 'mobile-player'    && tab.innerText.includes('Player')) ||
+    (viewId === 'discover'         && tab.innerText.includes('Discover')) ||
+    (viewId === 'profile'          && tab.innerText.includes('Profile')) ||
+    (viewId === 'bento-dashboard'  && tab.innerText.includes('Dashboard')) ||
+    (viewId === 'desktop-workbench'&& tab.innerText.includes('Editor'))
   );
   if (activeTab) activeTab.classList.add('active');
-  
+
   // Toggle Views
   document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
   document.getElementById(`view-${viewId}`).classList.add('active');
-  
-  // Resize target canvas
+
   resizeCanvas();
-  
-  showTip(`View switched to ${viewId.replace('-', ' ')}`);
+
+  // Load data when switching to these views
+  if (viewId === 'discover') loadDiscoverRecipes();
+  if (viewId === 'profile')  loadProfileRecipes();
+
+  showTip(`Switched to ${viewId.replace('-', ' ')}`);
 }
 
 function switchSidebarTab(tabId) {
@@ -1031,15 +1036,19 @@ function showTip(message) {
 // SUPABASE AUTH LOGIC
 // ----------------------------------------------------
 function initSupabase() {
-  // Listen for login/logout events
   onAuthChange((user) => {
     currentUser = user;
     updateUserBadge(user);
     if (user) {
       loadRealRecipes();
-      showTip(`Welcome back! Signed in as ${user.email}`);
+      populateProfilePage(user);
+      showTip(`Welcome back, ${user.email.split('@')[0]}!`);
+    } else {
+      resetProfilePage();
     }
   });
+  // Always load discover (public recipes don't require login)
+  loadDiscoverRecipes();
 }
 
 function updateUserBadge(user) {
@@ -1148,4 +1157,159 @@ window.handleAuthSubmit = async function(e) {
     btn.disabled = false;
     btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
   }
+};
+
+// ----------------------------------------------------
+// DISCOVER & PROFILE DATA LOADERS
+// ----------------------------------------------------
+let allDiscoverRecipes = [];
+let allMyRecipes = [];
+
+async function loadDiscoverRecipes() {
+  try {
+    const recipes = await getPublicRecipes();
+    allDiscoverRecipes = recipes || [];
+    renderDiscoverGrid(allDiscoverRecipes);
+  } catch (err) {
+    console.error('Discover load error:', err);
+    const grid = document.getElementById('discoverGrid');
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-weight:700;">Could not load recipes. Check your connection.</div>';
+  }
+}
+
+async function loadProfileRecipes() {
+  if (!currentUser) {
+    document.getElementById('profileGrid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">Sign in to see your recipes</div>';
+    return;
+  }
+  try {
+    const { data, error } = await import('./supabase-client.js').then(m => m.supabase
+      .from('recipes')
+      .select('*')
+      .eq('creator', currentUser.email)
+      .eq('is_draft', false)
+      .eq('temp_recipe', false)
+      .order('updated_at', { ascending: false })
+    );
+    if (error) throw error;
+    allMyRecipes = data || [];
+    renderProfileGrid(allMyRecipes);
+    // Update stats
+    const publicCount = allMyRecipes.filter(r => !r.private_recipe && r.is_published).length;
+    const totalEl = document.getElementById('profileRecipeCount');
+    const pubEl   = document.getElementById('profilePublicCount');
+    if (totalEl) totalEl.textContent = allMyRecipes.length;
+    if (pubEl)   pubEl.textContent   = publicCount;
+  } catch (err) {
+    console.error('Profile load error:', err);
+  }
+}
+
+function renderDiscoverGrid(recipes) {
+  const grid  = document.getElementById('discoverGrid');
+  const empty = document.getElementById('discoverEmpty');
+  const count = document.getElementById('discoverCount');
+  if (!grid) return;
+
+  if (!recipes || recipes.length === 0) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    if (count) count.textContent = '0 recipes';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+  if (count) count.textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
+  grid.innerHTML = recipes.map(r => renderRecipeCard(r, false)).join('');
+}
+
+function renderProfileGrid(recipes) {
+  const grid = document.getElementById('profileGrid');
+  if (!grid) return;
+  if (!recipes || recipes.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">No recipes yet. Go create your first one!</div>';
+    return;
+  }
+  grid.innerHTML = recipes.map(r => renderRecipeCard(r, true)).join('');
+}
+
+function renderRecipeCard(r, isOwner) {
+  const isPublic  = r.is_published && !r.private_recipe;
+  const stepCount = Array.isArray(r.steps) ? r.steps.length : 0;
+  const mins      = r.duration ? Math.floor(r.duration / 60) : 0;
+  const badge     = isPublic
+    ? `<span style="background:rgba(92,184,92,0.15);color:#449944;border:2px solid rgba(92,184,92,0.3);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🌎 Public</span>`
+    : `<span style="background:rgba(74,144,217,0.1);color:var(--primary);border:2px solid var(--border-card);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🔒 Private</span>`;
+
+  return `
+    <div class="glass-card" style="cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
+      onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(74,144,217,0.18)'"
+      onmouseleave="this.style.transform='';this.style.boxShadow=''"
+      onclick="openWidgetRecipe('${(r.title||'').replace(/'/g, "'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(74,144,217,0.25);">🍳</div>
+        ${isOwner ? badge : ''}
+      </div>
+      <h3 style="font-size:1rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;">${r.title || 'Untitled Recipe'}</h3>
+      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:1rem;">by ${r.creator || 'Chef'}</p>
+      <div style="display:flex;gap:12px;">
+        ${stepCount ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">📋 ${stepCount} steps</span>` : ''}
+        ${mins ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">⏱ ${mins} min</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function populateProfilePage(user) {
+  const name   = document.getElementById('profileName');
+  const email  = document.getElementById('profileEmail');
+  const avatar = document.getElementById('profileAvatarLarge');
+  const initials = user.email.slice(0, 2).toUpperCase();
+  if (name)   name.textContent  = user.email.split('@')[0];
+  if (email)  email.textContent = user.email;
+  if (avatar) avatar.textContent = initials;
+}
+
+function resetProfilePage() {
+  const name   = document.getElementById('profileName');
+  const email  = document.getElementById('profileEmail');
+  const avatar = document.getElementById('profileAvatarLarge');
+  const total  = document.getElementById('profileRecipeCount');
+  const pub    = document.getElementById('profilePublicCount');
+  if (name)   name.textContent  = 'Not signed in';
+  if (email)  email.textContent = 'Sign in to see your profile';
+  if (avatar) avatar.textContent = '?';
+  if (total)  total.textContent  = '—';
+  if (pub)    pub.textContent    = '—';
+  const grid = document.getElementById('profileGrid');
+  if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">Sign in to see your recipes</div>';
+}
+
+window.filterProfileRecipes = function(filter) {
+  // Update button styles
+  ['All','Public','Private'].forEach(f => {
+    const btn = document.getElementById(`profileTab${f}`);
+    if (btn) {
+      btn.className = filter === f.toLowerCase() ? 'btn btn-primary' : 'btn';
+      btn.style.borderRadius = '999px';
+    }
+  });
+  let filtered = allMyRecipes;
+  if (filter === 'public')  filtered = allMyRecipes.filter(r => r.is_published && !r.private_recipe);
+  if (filter === 'private') filtered = allMyRecipes.filter(r => r.private_recipe || !r.is_published);
+  renderProfileGrid(filtered);
+};
+
+window.handleDiscoverSearch = function(query) {
+  if (!query.trim()) {
+    renderDiscoverGrid(allDiscoverRecipes);
+    return;
+  }
+  const q = query.toLowerCase();
+  const filtered = allDiscoverRecipes.filter(r =>
+    (r.title || '').toLowerCase().includes(q) ||
+    (r.creator || '').toLowerCase().includes(q)
+  );
+  renderDiscoverGrid(filtered);
 };
