@@ -1,4 +1,5 @@
 // Cooking GPS — Core Application Script
+import { signIn, signUp, signOut, onAuthChange, getPublicRecipes } from './supabase-client.js';
 
 // 1. RECIPE & TIMELINE STATE STATE
 const recipeData = {
@@ -35,11 +36,13 @@ const recipeData = {
 };
 
 // Application UI States
-let currentView = 'mobile-player'; // mobile-player, bento-dashboard, desktop-workbench
-let playbackMode = 'loop'; // loop, wait, continuous
+let currentUser = null;
+let authMode = 'signin'; // 'signin' or 'signup'
+let currentView = 'mobile-player';
+let playbackMode = 'loop';
 let isPlaying = false;
-let currentTime = 75.0; // start at step 2 (Sear Chicken) for nice default view
-let activeStepIndex = 1; // 0-indexed (Step 2)
+let currentTime = 75.0;
+let activeStepIndex = 1;
 let currentSpeechActive = false;
 let undoHistory = [];
 let redoHistory = [];
@@ -68,26 +71,19 @@ window.addEventListener('DOMContentLoaded', () => {
   canvasDesktop = document.getElementById('desktopVideoCanvas');
   ctxDesktop = canvasDesktop.getContext('2d');
   
-  // Set dimensions
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   
-  // Build items
   renderStepChipsMobile();
   renderTimelineMarkersDesktop();
   renderStepListDesktop();
-  
-  // Start simulation loop
   startVideoSimulation();
-  
-  // Populate detail inputs
   updateDetailFields();
-  
-  // Set up Speech Recognition if supported
   setupSpeechRecognition();
-  
-  // Custom Timer tick on Dashboard
   setupDashboardTimer();
+
+  // 🔌 Connect to Supabase
+  initSupabase();
 });
 
 function resizeCanvas() {
@@ -992,9 +988,8 @@ function triggerRemix() {
   }, 1000);
 }
 
-// Quick UI notification toast
+// Quick UI notification toast (Wii-style light theme)
 function showTip(message) {
-  // Remove existing toast if any
   const existing = document.getElementById('uiToastNotify');
   if (existing) existing.remove();
   
@@ -1004,14 +999,15 @@ function showTip(message) {
     position: fixed;
     bottom: 24px;
     right: 24px;
-    background: rgba(15, 23, 42, 0.95);
-    border: 1px solid var(--primary);
-    color: var(--text-main);
+    background: #fff;
+    border: 2px solid rgba(74,144,217,0.25);
+    color: #1a3a5c;
     padding: 12px 20px;
-    border-radius: 12px;
+    border-radius: 999px;
     font-size: 0.85rem;
-    font-weight: 500;
-    box-shadow: var(--shadow-md);
+    font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    box-shadow: 0 8px 24px rgba(74,144,217,0.15);
     z-index: 1000;
     opacity: 0;
     transform: translateY(20px);
@@ -1020,21 +1016,136 @@ function showTip(message) {
     align-items: center;
     gap: 8px;
   `;
-  
-  toast.innerHTML = `<i data-lucide="bell" style="width:16px; color:var(--primary);"></i> ${message}`;
+  toast.innerHTML = `<span style="color:#4a90d9;font-size:1rem;">●</span> ${message}`;
   document.body.appendChild(toast);
   
-  lucide.createIcons();
-  
-  // trigger animation
-  setTimeout(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
-  }, 50);
-  
+  setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; }, 50);
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(20px)';
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
+
+// ----------------------------------------------------
+// SUPABASE AUTH LOGIC
+// ----------------------------------------------------
+function initSupabase() {
+  // Listen for login/logout events
+  onAuthChange((user) => {
+    currentUser = user;
+    updateUserBadge(user);
+    if (user) {
+      loadRealRecipes();
+      showTip(`Welcome back! Signed in as ${user.email}`);
+    }
+  });
+}
+
+function updateUserBadge(user) {
+  const label = document.getElementById('userBadgeLabel');
+  const avatar = document.getElementById('userAvatarCircle');
+  if (!label || !avatar) return;
+
+  if (user) {
+    const initials = user.email.slice(0, 2).toUpperCase();
+    label.textContent = user.email.split('@')[0];
+    avatar.textContent = initials;
+    avatar.style.background = 'linear-gradient(135deg,#4a90d9,#6aaee8)';
+    avatar.style.color = '#fff';
+  } else {
+    label.textContent = 'Sign In';
+    avatar.textContent = '?';
+    avatar.style.background = 'rgba(74,144,217,0.1)';
+    avatar.style.color = '#4a90d9';
+  }
+}
+
+async function loadRealRecipes() {
+  try {
+    const recipes = await getPublicRecipes();
+    if (!recipes || recipes.length === 0) return;
+    // Update the featured recipe widget title in the bento dashboard
+    const featuredTitle = document.getElementById('featuredRecipeTitle');
+    if (featuredTitle && recipes[0]) {
+      featuredTitle.textContent = recipes[0].title;
+    }
+    // Update carousel items
+    const carousel = document.getElementById('recipesCarouselDeck');
+    if (carousel && recipes.length > 0) {
+      carousel.innerHTML = recipes.slice(0, 6).map(r => `
+        <div class="folder-card-thumb" onclick="openWidgetRecipe('${r.title.replace(/'/g, "'")}')">
+          <div class="folder-icon-glow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <div style="font-size:0.8rem;font-weight:800;color:#1a3a5c;line-height:1.3;">${r.title}</div>
+          <div style="font-size:0.68rem;color:#7a9ab8;font-weight:600;">${r.creator || 'Chef'}</div>
+        </div>
+      `).join('');
+    }
+    showTip(`Loaded ${recipes.length} recipes from your library!`);
+  } catch (err) {
+    console.error('Failed to load recipes:', err);
+  }
+}
+
+// Auth modal controls (exposed globally for HTML onclick)
+window.openAuthModal = function() {
+  if (currentUser) {
+    // If already signed in, show sign-out option
+    if (confirm(`Sign out of ${currentUser.email}?`)) {
+      signOut().then(() => showTip('Signed out successfully.')).catch(console.error);
+    }
+    return;
+  }
+  authMode = 'signin';
+  document.getElementById('authModal').style.display = 'block';
+  document.getElementById('authModalBackdrop').style.display = 'block';
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+};
+
+window.closeAuthModal = function() {
+  document.getElementById('authModal').style.display = 'none';
+  document.getElementById('authModalBackdrop').style.display = 'none';
+};
+
+window.toggleAuthMode = function() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const isSignUp = authMode === 'signup';
+  document.getElementById('authModalTitle').textContent = isSignUp ? 'Create account' : 'Welcome back!';
+  document.getElementById('authModalSubtitle').textContent = isSignUp ? 'Join Cooking GPS today — it\'s free!' : 'Sign in to your Cooking GPS account';
+  document.getElementById('authSubmitBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+  document.getElementById('authToggleText').textContent = isSignUp ? 'Already have an account?' : 'Don\'t have an account?';
+  document.getElementById('authToggleBtn').textContent = isSignUp ? 'Sign In' : 'Sign Up';
+  document.getElementById('authError').style.display = 'none';
+};
+
+window.handleAuthSubmit = async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authSubmitBtn');
+  const errorEl = document.getElementById('authError');
+
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  errorEl.style.display = 'none';
+
+  try {
+    if (authMode === 'signin') {
+      await signIn(email, password);
+    } else {
+      await signUp(email, password);
+      showTip('Account created! Check your email to confirm.');
+    }
+    window.closeAuthModal();
+  } catch (err) {
+    errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  }
+};

@@ -39,9 +39,9 @@
       </div>
 
       <!-- User Info Badge -->
-      <div class="user-profile-badge">
-        <img class="avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" alt="Chef Avatar">
-        <span>Alex R.</span>
+      <div class="user-profile-badge" id="userProfileBadge" onclick="openAuthModal()" style="cursor:pointer;">
+        <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
+        <span id="userBadgeLabel">Sign In</span>
         <i data-lucide="chevron-down"></i>
       </div>
     </div>
@@ -432,6 +432,56 @@
 
   </main>
 
+  <!-- ============================================
+       AUTH MODAL — Sign In / Sign Up
+       ============================================ -->
+  <div id="authModalBackdrop" onclick="closeAuthModal()" style="display:none;position:fixed;inset:0;background:rgba(26,58,92,0.35);backdrop-filter:blur(6px);z-index:500;"></div>
+
+  <div id="authModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:501;width:100%;max-width:420px;padding:1rem;">
+    <div style="background:#fff;border-radius:28px;padding:2rem;box-shadow:0 24px 60px rgba(74,144,217,0.2);border:2px solid rgba(74,144,217,0.12);">
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#4a90d9,#6aaee8);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 8px 20px rgba(74,144,217,0.35);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h2 id="authModalTitle" style="font-size:1.5rem;font-weight:900;color:#1a3a5c;margin-bottom:0.25rem;">Welcome back!</h2>
+        <p id="authModalSubtitle" style="color:#7a9ab8;font-size:0.875rem;font-weight:600;">Sign in to your Cooking GPS account</p>
+      </div>
+
+      <!-- Error message -->
+      <div id="authError" style="display:none;background:#fee2e2;border:2px solid #fca5a5;color:#991b1b;padding:10px 14px;border-radius:12px;font-size:0.82rem;font-weight:700;margin-bottom:1rem;"></div>
+
+      <!-- Form -->
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#7a9ab8;margin-bottom:6px;">Email</label>
+          <input id="authEmail" type="email" required placeholder="you@example.com"
+            style="width:100%;background:#f4f9ff;border:2px solid rgba(74,144,217,0.15);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:0.9rem;font-weight:600;color:#1a3a5c;outline:none;transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='#4a90d9'" onblur="this.style.borderColor='rgba(74,144,217,0.15)'">
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#7a9ab8;margin-bottom:6px;">Password</label>
+          <input id="authPassword" type="password" required placeholder="••••••••" minlength="6"
+            style="width:100%;background:#f4f9ff;border:2px solid rgba(74,144,217,0.15);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:0.9rem;font-weight:600;color:#1a3a5c;outline:none;transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='#4a90d9'" onblur="this.style.borderColor='rgba(74,144,217,0.15)'">
+        </div>
+        <button id="authSubmitBtn" type="submit"
+          style="width:100%;background:#4a90d9;color:#fff;border:none;border-radius:999px;padding:14px;font-family:inherit;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 6px 18px rgba(74,144,217,0.35);transition:all 0.2s;">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Toggle sign in / sign up -->
+      <p style="text-align:center;margin-top:1.25rem;font-size:0.85rem;color:#7a9ab8;font-weight:600;">
+        <span id="authToggleText">Don't have an account?</span>
+        <button id="authToggleBtn" onclick="toggleAuthMode()" style="background:none;border:none;color:#4a90d9;font-weight:900;font-size:0.85rem;font-family:inherit;cursor:pointer;margin-left:4px;">Sign Up</button>
+      </p>
+
+      <!-- Close -->
+      <button onclick="closeAuthModal()" style="position:absolute;top:1.25rem;right:1.25rem;background:rgba(74,144,217,0.08);border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a9ab8;">✕</button>
+    </div>
+  </div>
+
   <!-- Global Voice Activity Overlay Indicator -->
   <div id="voiceHudPanel" class="voice-hud-panel hidden">
     <div id="voiceHudIndicator" class="voice-hud-indicator">
@@ -448,7 +498,7 @@
     lucide.createIcons();
   </script>
   
-  <!-- Main application script -->
-  <script src="app.js"></script>
+  <!-- Main application script (ES module so it can import Supabase) -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>

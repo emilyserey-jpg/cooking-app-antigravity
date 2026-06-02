@@ -12,34 +12,29 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Auth Helpers
 // =====================================================
 
-// Get the currently logged-in user
 export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) console.error('Error getting user:', error);
   return user;
 }
 
-// Sign up with email & password
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
   return data;
 }
 
-// Sign in with email & password
 export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
 }
 
-// Sign out
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
 
-// Listen for auth state changes (login/logout)
 export function onAuthChange(callback) {
   return supabase.auth.onAuthStateChange((_event, session) => {
     callback(session?.user ?? null);
@@ -47,30 +42,55 @@ export function onAuthChange(callback) {
 }
 
 // =====================================================
-// Recipe Helpers (ready for when you add the table)
+// Recipe Helpers — mapped to actual DB schema
+//
+// Actual columns:
+//   id, device_id, title, creator, duration,
+//   loops, ingredients, steps, text_overlays,
+//   videos, bundle_mode, private_recipe,
+//   created_at, updated_at, is_published,
+//   shared_on_profile, is_draft, temp_recipe, video_url
 // =====================================================
 
-// Fetch all public published recipes
+// Fetch all public published recipes for Discover feed
 export async function getPublicRecipes() {
   const { data, error } = await supabase
     .from('recipes')
-    .select('*')
+    .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at')
     .eq('is_published', true)
-    .eq('is_private', false)
+    .eq('private_recipe', false)
+    .eq('is_draft', false)
+    .eq('temp_recipe', false)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data;
+  return data ?? [];
 }
 
-// Fetch the current user's own recipes
-export async function getMyRecipes(userId) {
+// Fetch recipes shared on a user's public profile
+export async function getProfileRecipes(creator) {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('id, title, creator, duration, steps, video_url, created_at')
+    .eq('creator', creator)
+    .eq('shared_on_profile', true)
+    .eq('is_draft', false)
+    .eq('temp_recipe', false)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Fetch all recipes by device_id (anonymous user's recipes)
+export async function getMyRecipesByDevice(deviceId) {
   const { data, error } = await supabase
     .from('recipes')
     .select('*')
-    .eq('creator_id', userId)
-    .order('created_at', { ascending: false });
+    .eq('device_id', deviceId)
+    .eq('is_draft', false)
+    .eq('temp_recipe', false)
+    .order('updated_at', { ascending: false });
   if (error) throw error;
-  return data;
+  return data ?? [];
 }
 
 // Fetch a single recipe by ID
@@ -86,11 +106,41 @@ export async function getRecipeById(id) {
 
 // Save (upsert) a recipe
 export async function saveRecipe(recipe) {
+  const payload = {
+    ...recipe,
+    updated_at: new Date().toISOString(),
+  };
   const { data, error } = await supabase
     .from('recipes')
-    .upsert(recipe)
+    .upsert(payload)
     .select()
     .single();
   if (error) throw error;
   return data;
+}
+
+// Search recipes by title
+export async function searchRecipes(query) {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('id, title, creator, duration, steps, video_url, created_at')
+    .ilike('title', `%${query}%`)
+    .eq('is_published', true)
+    .eq('private_recipe', false)
+    .eq('is_draft', false)
+    .limit(20);
+  if (error) throw error;
+  return data ?? [];
+}
+
+// =====================================================
+// Device ID Helper (for anonymous users)
+// =====================================================
+export function getOrCreateDeviceId() {
+  let id = localStorage.getItem('cooking_gps_device_id');
+  if (!id) {
+    id = 'device_' + Math.random().toString(36).slice(2, 11);
+    localStorage.setItem('cooking_gps_device_id', id);
+  }
+  return id;
 }
