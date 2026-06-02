@@ -174,171 +174,171 @@ function drawSimulatedVideo() {
   const dw = w / window.devicePixelRatio;
   const dh = h / window.devicePixelRatio;
   
-  // Clear Frame with nice background gradient
-  const grad = ctx.createRadialGradient(dw/2, dh/2, 10, dw/2, dh/2, dw);
-  grad.addColorStop(0, '#1e293b');
-  grad.addColorStop(1, '#020617');
+  // ── Soft sky background (light Wii-style) ──
+  const grad = ctx.createLinearGradient(0, 0, dw, dh);
+  grad.addColorStop(0, '#ddeeff');
+  grad.addColorStop(1, '#c8e8ff');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, dw, dh);
-  
-  // Draw simulated graphic based on active cooking step
-  ctx.font = "bold 16px 'Outfit', sans-serif";
-  ctx.textAlign = "center";
-  
-  // Sizzle particles trigger for cooking animations
-  if (isPlaying) {
-    if (activeStepIndex === 1 || activeStepIndex === 2 || activeStepIndex === 3) {
-      if (Math.random() < 0.3) {
-        particles.push({
-          x: dw/2 + (Math.random() - 0.5) * 120,
-          y: dh/2 + 20,
-          vx: (Math.random() - 0.5) * 2,
-          vy: -Math.random() * 3 - 2,
-          alpha: 1,
-          size: Math.random() * 4 + 2,
-          color: activeStepIndex === 2 ? '#ef4444' : '#f59e0b'
-        });
-      }
+
+  // Soft floating circle in background
+  const t = performance.now() / 3000;
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.beginPath();
+  ctx.arc(dw * 0.75 + Math.sin(t) * 8, dh * 0.25 + Math.cos(t) * 6, 60, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.arc(dw * 0.15 + Math.cos(t) * 6, dh * 0.7 + Math.sin(t) * 5, 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Step label at top
+  const stepEmojis = ['🥒','🍳','🧄','🥫','🍽️'];
+  const stepColors = ['#2a7a5a','#c45a2a','#b07a10','#4a60c0','#2a7a5a'];
+  const emoji = stepEmojis[activeStepIndex] || '🍳';
+  ctx.font = "bold 13px 'Nunito', sans-serif";
+  ctx.textAlign = 'center';
+  ctx.fillStyle = stepColors[activeStepIndex] || '#1a3a5c';
+
+  // Soft particles (steam/bubbles instead of fire)
+  if (isPlaying && (activeStepIndex === 1 || activeStepIndex === 2 || activeStepIndex === 3)) {
+    if (Math.random() < 0.25) {
+      particles.push({
+        x: dw/2 + (Math.random() - 0.5) * 80,
+        y: dh/2 + 10,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: -Math.random() * 2 - 1,
+        alpha: 0.6,
+        size: Math.random() * 5 + 3,
+        color: activeStepIndex === 1 ? 'rgba(255,200,120,' : 'rgba(180,230,180,'
+      });
     }
   }
-  
-  // Update particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.alpha -= 0.02;
-    if (p.alpha <= 0) {
-      particles.splice(i, 1);
-    } else {
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.alpha;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    p.x += p.vx; p.y += p.vy; p.alpha -= 0.015;
+    if (p.alpha <= 0) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color + p.alpha + ')';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
-  
-  // Dynamic cooking scenery drawing depending on step
-  switch(activeStepIndex) {
-    case 0: // Prep
-      ctx.fillStyle = "#14b8a6";
-      ctx.fillText("🥒 SIMULATED VIDEO: PREPARATION CHOPPING", dw/2, dh/2 - 30);
-      
-      // Draw cutting board
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(dw/2 - 80, dh/2 - 10, 160, 60);
-      ctx.fillStyle = "rgba(255,255,255,0.05)";
-      ctx.fillRect(dw/2 - 80, dh/2 - 10, 160, 60);
-      
-      // Chop animation
-      let chopY = isPlaying ? Math.abs(Math.sin(performance.now() / 150)) * 25 : 0;
-      ctx.strokeStyle = "#e2e8f0";
+
+  // ── Step illustrations ──
+  switch (activeStepIndex) {
+    case 0: { // Prep & Chop
+      // Cutting board
+      ctx.fillStyle = '#e8d5b0';
+      roundRect(ctx, dw/2 - 65, dh/2 - 15, 130, 55, 10);
+      ctx.fillStyle = '#d4bc94';
+      ctx.fillRect(dw/2 - 50, dh/2 - 5, 8, 35);
+      ctx.fillRect(dw/2 - 30, dh/2 - 5, 8, 35);
+      ctx.fillRect(dw/2 - 10, dh/2 - 5, 8, 35);
+      // Knife animation
+      const chopY = isPlaying ? Math.abs(Math.sin(performance.now() / 160)) * 22 : 0;
+      ctx.strokeStyle = '#7a9ab8'; ctx.lineWidth = 3; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(dw/2 - 20, dh/2 - chopY + 10);
-      ctx.lineTo(dw/2 + 20, dh/2 - chopY + 30);
-      ctx.stroke();
-      break;
-      
-    case 1: // Sear Chicken
-      ctx.fillStyle = "#ef4444";
-      ctx.fillText("🔥 SIMULATED VIDEO: SEARING CHICKEN", dw/2, dh/2 - 35);
-      
-      // Draw skillet
-      ctx.fillStyle = "rgba(15,23,42,0.8)";
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
-      ctx.beginPath();
-      ctx.arc(dw/2, dh/2 + 20, 45, 0, Math.PI*2);
-      ctx.fill();
-      ctx.stroke();
-      
-      // Skillet handle
-      ctx.strokeStyle = "rgba(255,255,255,0.3)";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(dw/2 - 45, dh/2 + 20);
-      ctx.lineTo(dw/2 - 95, dh/2 + 20);
+      ctx.moveTo(dw/2 + 40, dh/2 - 18 - chopY);
+      ctx.lineTo(dw/2 + 40, dh/2 + 5 - chopY);
       ctx.stroke();
       ctx.lineWidth = 1;
-      
-      // Sizzling chicken blocks
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillRect(dw/2 - 15, dh/2 + 10, 30, 20);
+      // Label
+      ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
+      ctx.fillText('🥒  Prep & Chop', dw/2, dh/2 - 30);
       break;
-      
-    case 2: // Stir Fry Aromatics
-      ctx.fillStyle = "#f59e0b";
-      ctx.fillText("🧄 SIMULATED VIDEO: STIR FRY AROMATICS", dw/2, dh/2 - 30);
-      
-      // Draw wok
-      ctx.fillStyle = "rgba(30,41,59,0.7)";
-      ctx.beginPath();
-      ctx.ellipse(dw/2, dh/2 + 20, 55, 35, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
-      ctx.stroke();
-      
-      // Veggies tossing
-      let tossY = isPlaying ? Math.sin(performance.now() / 200) * 15 : 0;
-      ctx.fillStyle = "#10b981";
-      ctx.beginPath();
-      ctx.arc(dw/2 - 10, dh/2 + 15 + tossY, 4, 0, Math.PI*2);
-      ctx.arc(dw/2 + 15, dh/2 + 10 - tossY, 5, 0, Math.PI*2);
-      ctx.fillStyle = "#ef4444";
-      ctx.arc(dw/2 + 2, dh/2 + 25 + tossY/2, 3, 0, Math.PI*2);
-      ctx.fill();
+    }
+    case 1: { // Sear Chicken
+      // Pan
+      ctx.fillStyle = '#c8d8e8';
+      ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 18, 48, 14, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#b0c4d8';
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 10, 40, 0, Math.PI*2); ctx.fill();
+      // Handle
+      ctx.strokeStyle = '#8aaac0'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(dw/2 - 40, dh/2 + 10); ctx.lineTo(dw/2 - 85, dh/2 + 10); ctx.stroke();
+      ctx.lineWidth = 1;
+      // Chicken (golden)
+      ctx.fillStyle = '#f0b85a';
+      roundRect(ctx, dw/2 - 18, dh/2 + 2, 36, 20, 6);
+      ctx.fillStyle = '#e8a040';
+      roundRect(ctx, dw/2 - 12, dh/2 + 4, 24, 14, 4);
+      ctx.fillStyle = '#c45a2a'; ctx.font = "700 12px 'Nunito',sans-serif";
+      ctx.fillText('🍳  Sear the Chicken', dw/2, dh/2 - 30);
       break;
-      
-    case 3: // Toss in Sauce
-      ctx.fillStyle = "#6366f1";
-      ctx.fillText("🥫 SIMULATED VIDEO: TOSSING IN SAUCE", dw/2, dh/2 - 30);
-      
-      // Draw bubbling pan
-      ctx.fillStyle = "rgba(30,41,59,0.7)";
-      ctx.beginPath();
-      ctx.arc(dw/2, dh/2 + 20, 50, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
-      ctx.stroke();
-      
-      // Glaze overlay
-      let boilS = isPlaying ? Math.abs(Math.sin(performance.now() / 300)) * 5 : 0;
-      ctx.fillStyle = "rgba(120,53,4,0.3)";
-      ctx.beginPath();
-      ctx.arc(dw/2, dh/2 + 20, 40 + boilS, 0, Math.PI*2);
-      ctx.fill();
+    }
+    case 2: { // Stir Fry
+      // Wok
+      ctx.fillStyle = '#b8c8d8';
+      ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 15, 52, 32, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#a0b4c8';
+      ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 12, 38, 22, 0, 0, Math.PI*2); ctx.fill();
+      // Tossing veggies
+      const tossY = isPlaying ? Math.sin(performance.now() / 200) * 10 : 0;
+      const veggies = [
+        {x:-18, y:8, r:7, c:'#6abd6a'}, {x:10, y:4, r:8, c:'#e8a040'},
+        {x:-4, y:18, r:6, c:'#e85050'}, {x:18, y:12, r:6, c:'#6abd6a'}
+      ];
+      veggies.forEach((v, i) => {
+        ctx.fillStyle = v.c;
+        ctx.beginPath();
+        ctx.arc(dw/2 + v.x, dh/2 + v.y + (i%2===0 ? tossY : -tossY)*0.6, v.r, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#b07a10'; ctx.font = "700 12px 'Nunito',sans-serif";
+      ctx.fillText('🧄  Stir Fry Aromatics', dw/2, dh/2 - 30);
       break;
-      
-    case 4: // Basil Finish & Plate
-      ctx.fillStyle = "#10b981";
-      ctx.fillText("🍽️ SIMULATED VIDEO: PLATING & GARNISH", dw/2, dh/2 - 30);
-      
-      // Draw ceramic plate
-      ctx.fillStyle = "rgba(248,250,252,0.9)";
-      ctx.beginPath();
-      ctx.arc(dw/2, dh/2 + 20, 55, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.1)";
-      ctx.stroke();
-      
-      ctx.fillStyle = "rgba(248,250,252,0.5)";
-      ctx.beginPath();
-      ctx.arc(dw/2, dh/2 + 20, 40, 0, Math.PI*2);
-      ctx.fill();
-      
-      // Basil leaves
-      ctx.fillStyle = "#047857";
-      ctx.beginPath();
-      ctx.ellipse(dw/2 - 10, dh/2 + 15, 12, 6, Math.PI/4, 0, Math.PI*2);
-      ctx.ellipse(dw/2 + 15, dh/2 + 25, 10, 5, -Math.PI/6, 0, Math.PI*2);
-      ctx.fill();
+    }
+    case 3: { // Toss in Sauce
+      ctx.fillStyle = '#b8c8d8';
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 44, 0, Math.PI*2); ctx.fill();
+      const boil = isPlaying ? Math.abs(Math.sin(performance.now() / 280)) * 6 : 0;
+      ctx.fillStyle = 'rgba(200,140,60,0.5)';
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 34 + boil, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(200,140,60,0.3)';
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 24 + boil*0.5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#4a60c0'; ctx.font = "700 12px 'Nunito',sans-serif";
+      ctx.fillText('🥫  Toss in Sauce', dw/2, dh/2 - 30);
       break;
+    }
+    case 4: { // Plate & Garnish
+      // Plate
+      ctx.fillStyle = '#f4f8ff';
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 14, 52, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#dde8f4'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(dw/2, dh/2 + 14, 38, 0, Math.PI*2); ctx.stroke();
+      ctx.lineWidth = 1;
+      // Food
+      ctx.fillStyle = '#f0b85a';
+      ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 14, 22, 14, 0, 0, Math.PI*2); ctx.fill();
+      // Basil
+      ctx.fillStyle = '#5aaa5a';
+      ctx.beginPath(); ctx.ellipse(dw/2 - 8, dh/2 + 8, 10, 5, Math.PI/5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(dw/2 + 12, dh/2 + 16, 9, 4, -Math.PI/6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
+      ctx.fillText('🍽️  Plate & Garnish', dw/2, dh/2 - 30);
+      break;
+    }
   }
-  
-  // Draw Video Time HUD
+
   ctx.restore();
+}
+
+// Helper: rounded rectangle fill
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function updateTimelineUI() {
