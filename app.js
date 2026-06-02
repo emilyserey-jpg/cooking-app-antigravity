@@ -1475,8 +1475,37 @@ function showEditorStage(videoUrl) {
   if (window.lucide) lucide.createIcons();
 }
 
+// Step colors — one per step, Wii-style pastels
+const STEP_COLORS = ['#a8d8f0','#b8f0c8','#f0d8a8','#d8b8f0','#f0b8c8','#a8f0e8','#f0ebb8','#c8b8f0'];
+
+let videoDuration   = 0;
+let previewInterval = null;
+let dragSrcIndex    = null;
+
 window.onVideoLoaded = function() {
-  showTip('Video ready! Play it and tap "📍 Add Step Here" to mark your steps.');
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (videoEl) {
+    videoDuration = videoEl.duration || 0;
+    const m = Math.floor(videoDuration / 60);
+    const s = Math.floor(videoDuration % 60).toString().padStart(2, '0');
+    const dur = document.getElementById('timelineDuration');
+    if (dur) dur.textContent = `${m}:${s}`;
+
+    // Update playhead and current time as video plays
+    videoEl.addEventListener('timeupdate', () => {
+      const t = videoEl.currentTime;
+      const cm = Math.floor(t / 60);
+      const cs = Math.floor(t % 60).toString().padStart(2, '0');
+      const el = document.getElementById('createCurrentTime');
+      if (el) el.textContent = `${cm}:${cs}`;
+      // Move playhead
+      if (videoDuration > 0) {
+        const ph = document.getElementById('timelinePlayhead');
+        if (ph) ph.style.left = (t / videoDuration * 100) + '%';
+      }
+    });
+  }
+  showTip('Video ready! Play it and tap "📍 Add Step" to mark steps.');
 };
 
 window.addStepAtCurrentTime = function() {
@@ -1488,29 +1517,154 @@ window.addStepAtCurrentTime = function() {
   createStepsArr.push({ time, label: `Step ${createStepsArr.length + 1}`, displayTime: `${m}:${s}` });
   createStepsArr.sort((a, b) => a.time - b.time);
   renderCreateSteps();
-  showTip(`Step marked at ${m}:${s}`);
+  renderTimeline();
+  showTip(`Step marked at ${m}:${s} — rename it in the list!`);
 };
 
+// ── Timeline renderer ──────────────────────────────────────────────────────
+function renderTimeline() {
+  const timeline = document.getElementById('createTimeline');
+  if (!timeline || videoDuration <= 0) return;
+
+  // Keep the playhead, remove old segments
+  const playhead = document.getElementById('timelinePlayhead');
+  timeline.innerHTML = '';
+  if (playhead) timeline.appendChild(playhead);
+
+  createStepsArr.forEach((step, i) => {
+    const startPct = (step.time / videoDuration) * 100;
+    const nextTime = (createStepsArr[i + 1]?.time) ?? videoDuration;
+    const widthPct = ((nextTime - step.time) / videoDuration) * 100;
+    const color    = STEP_COLORS[i % STEP_COLORS.length];
+
+    const seg = document.createElement('div');
+    seg.style.cssText = `
+      position:absolute; top:0; left:${startPct}%; width:${widthPct}%;
+      height:100%; background:${color}; opacity:0.85;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden; border-right:2px solid rgba(255,255,255,0.6);
+    `;
+    seg.innerHTML = `<span style="font-size:0.65rem;font-weight:800;color:#446;white-space:nowrap;padding:0 4px;overflow:hidden;text-overflow:ellipsis;">${step.label}</span>`;
+    timeline.appendChild(seg);
+  });
+}
+
+// Click on timeline to seek
+window.timelineSeek = function(e) {
+  const videoEl  = document.getElementById('uploadedVideoPlayer');
+  const timeline = document.getElementById('createTimeline');
+  if (!videoEl || !timeline || videoDuration <= 0) return;
+  const rect = timeline.getBoundingClientRect();
+  const pct  = (e.clientX - rect.left) / rect.width;
+  videoEl.currentTime = pct * videoDuration;
+};
+
+// ── Step list renderer ─────────────────────────────────────────────────────
 function renderCreateSteps() {
   const list  = document.getElementById('createStepsList');
   const count = document.getElementById('createStepCount');
   if (!list) return;
   if (count) count.textContent = `(${createStepsArr.length})`;
+
   if (!createStepsArr.length) {
-    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">No steps yet.<br>Play the video and tap "📍 Add Step Here"</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">No steps yet.<br>Play the video and tap "📍 Add Step"</div>`;
     return;
   }
-  list.innerHTML = createStepsArr.map((step, i) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);">
-      <span style="font-size:0.72rem;font-weight:900;color:var(--primary);min-width:36px;font-variant-numeric:tabular-nums;">${step.displayTime}</span>
-      <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
-        style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;">
-      <button onclick="removeCreateStep(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">×</button>
-    </div>`).join('');
+
+  list.innerHTML = createStepsArr.map((step, i) => {
+    const color    = STEP_COLORS[i % STEP_COLORS.length];
+    const endTime  = (createStepsArr[i + 1]?.time) ?? videoDuration;
+    const em = Math.floor(endTime / 60);
+    const es = Math.floor(endTime % 60).toString().padStart(2, '0');
+    const endDisplay = videoDuration > 0 ? `→ ${em}:${es}` : '';
+    return `
+      <div draggable="true"
+        ondragstart="stepDragStart(event,${i})"
+        ondragover="stepDragOver(event,${i})"
+        ondrop="stepDrop(event,${i})"
+        ondragend="stepDragEnd(event)"
+        style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);cursor:grab;transition:opacity 0.15s;"
+        id="stepRow_${i}">
+        <!-- color dot -->
+        <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+        <!-- times -->
+        <span style="font-size:0.7rem;font-weight:900;color:var(--primary);font-variant-numeric:tabular-nums;min-width:80px;">${step.displayTime} ${endDisplay}</span>
+        <!-- label input -->
+        <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
+          style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.85rem;font-weight:700;color:var(--text-heading);outline:none;cursor:text;">
+        <!-- preview -->
+        <button onclick="previewStepLoop(${i})"
+          title="Preview this step looping"
+          style="background:${color};border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.75rem;font-weight:900;cursor:pointer;color:#446;white-space:nowrap;">▶ Loop</button>
+        <!-- delete -->
+        <button onclick="removeCreateStep(${i})"
+          style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0 4px;">×</button>
+      </div>`;
+  }).join('');
 }
 
-window.updateStepLabel   = (i, v)  => { if (createStepsArr[i]) createStepsArr[i].label = v; };
-window.removeCreateStep  = (i)     => { createStepsArr.splice(i, 1); renderCreateSteps(); };
+// ── Preview loop ───────────────────────────────────────────────────────────
+window.previewStepLoop = function(i) {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const step    = createStepsArr[i];
+  if (!videoEl || !step) return;
+
+  stopPreviewLoop();
+
+  const endTime = (createStepsArr[i + 1]?.time) ?? videoDuration;
+  videoEl.currentTime = step.time;
+  videoEl.play();
+
+  const label = document.getElementById('previewingLabel');
+  const stopBtn = document.getElementById('stopPreviewBtn');
+  if (label)   label.style.display  = 'inline';
+  if (stopBtn) stopBtn.style.display = 'inline-block';
+
+  previewInterval = setInterval(() => {
+    if (videoEl.currentTime >= endTime - 0.1) {
+      videoEl.currentTime = step.time;
+    }
+  }, 100);
+
+  showTip(`Looping "${step.label}" — tap ⏹ Stop when done`);
+};
+
+window.stopPreviewLoop = function() {
+  if (previewInterval) { clearInterval(previewInterval); previewInterval = null; }
+  const label   = document.getElementById('previewingLabel');
+  const stopBtn = document.getElementById('stopPreviewBtn');
+  if (label)   label.style.display   = 'none';
+  if (stopBtn) stopBtn.style.display = 'none';
+};
+
+// ── Drag to reorder ────────────────────────────────────────────────────────
+window.stepDragStart = function(e, i) {
+  dragSrcIndex = i;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const r = document.getElementById(`stepRow_${i}`); if (r) r.style.opacity = '0.4'; }, 0);
+};
+window.stepDragOver = function(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+};
+window.stepDrop = function(e, i) {
+  e.preventDefault();
+  if (dragSrcIndex === null || dragSrcIndex === i) return;
+  const moved = createStepsArr.splice(dragSrcIndex, 1)[0];
+  createStepsArr.splice(i, 0, moved);
+  dragSrcIndex = null;
+  renderCreateSteps();
+  renderTimeline();
+};
+window.stepDragEnd = function(e) {
+  dragSrcIndex = null;
+  renderCreateSteps();
+  renderTimeline();
+};
+
+window.updateStepLabel  = (i, v) => { if (createStepsArr[i]) createStepsArr[i].label = v; renderTimeline(); };
+window.removeCreateStep = (i)    => { createStepsArr.splice(i, 1); renderCreateSteps(); renderTimeline(); stopPreviewLoop(); };
+
 
 window.toggleCreatePrivacy = function() {
   createIsPublic = !createIsPublic;

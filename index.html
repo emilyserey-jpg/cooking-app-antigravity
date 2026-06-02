@@ -596,12 +596,33 @@
                 <div id="createCurrentTime" style="font-size:1.4rem;font-weight:900;color:var(--primary);font-variant-numeric:tabular-nums;">0:00</div>
               </div>
               <button onclick="addStepAtCurrentTime()"
-                style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:12px 24px;font-family:var(--font);font-weight:900;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(74,144,217,0.35);transition:all 0.2s;white-space:nowrap;"
+                style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:12px 20px;font-family:var(--font);font-weight:900;font-size:0.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(74,144,217,0.35);transition:all 0.2s;white-space:nowrap;"
                 onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform=''">
-                📍 Add Step Here
+                📍 Add Step
+              </button>
+              <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
+                style="display:none;background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);border-radius:999px;padding:12px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;white-space:nowrap;">
+                ⏹ Stop
               </button>
             </div>
+
+            <!-- Visual Timeline -->
+            <div class="glass-card" style="padding:12px 14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);">Timeline</span>
+                <span id="previewingLabel" style="font-size:0.75rem;font-weight:700;color:var(--primary);display:none;">▶ Looping step...</span>
+              </div>
+              <div id="createTimeline" onclick="timelineSeek(event)"
+                style="position:relative;height:44px;background:#eef4ff;border-radius:10px;overflow:hidden;cursor:pointer;">
+                <div id="timelinePlayhead" style="position:absolute;top:0;left:0%;width:3px;height:100%;background:var(--primary);border-radius:2px;z-index:10;pointer-events:none;transition:left 0.08s;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                <span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">0:00</span>
+                <span id="timelineDuration" style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">0:00</span>
+              </div>
+            </div>
           </div>
+
 
           <!-- Right: Form + steps list -->
           <div style="display:flex;flex-direction:column;gap:1rem;position:sticky;top:88px;">
@@ -631,11 +652,11 @@
             <div class="glass-card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
                 <div style="font-weight:900;color:var(--text-heading);">Steps <span id="createStepCount" style="color:var(--text-muted);font-weight:600;">(0)</span></div>
-                <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Play video → Add Step</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Play → Add Step → Preview</span>
               </div>
-              <div id="createStepsList" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+              <div id="createStepsList" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;">
                 <div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">
-                  No steps yet.<br>Play the video and tap "📍 Add Step Here"
+                  No steps yet.<br>Play the video and tap "📍 Add Step"
                 </div>
               </div>
             </div>
