@@ -1,10 +1,15 @@
 {
   "name": "cooking-gps-ui",
   "version": "1.0.0",
-  "description": "Cooking GPS UI Prototype",
+  "description": "Cooking GPS — SIMR Recipe App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "dependencies": {}
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
 }

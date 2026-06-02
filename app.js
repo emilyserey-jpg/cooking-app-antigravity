@@ -1347,128 +1347,128 @@ window.runAiAnalysis         = runAiAnalysis;
 window.showTip               = showTip;
 
 // ============================================================
-// VIDEO UPLOAD & RECIPE EDITOR
+// VIDEO UPLOAD & RECIPE EDITOR — Cloudflare Stream
 // ============================================================
-let createIsPublic  = false;   // privacy state
-let createStepsArr  = [];      // [{time, label}]
-let uploadedVideoURL = null;   // public URL after upload
-let createTimeUpdateInterval = null;
+let createIsPublic   = false;
+let createStepsArr   = [];
+let uploadedVideoUID = null;   // Cloudflare Stream video UID
+let localVideoURL    = null;   // blob URL for local preview while uploading
 
 function initCreateView() {
-  // Re-init lucide icons for the newly visible buttons
   if (window.lucide) lucide.createIcons();
 }
 
-// --- Drag & drop handlers ---
+// ── Drag & drop handlers ──────────────────────────────────────
 window.handleDragOver = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   const zone = document.getElementById('uploadDropZone');
-  if (zone) {
-    zone.style.borderColor = 'var(--primary)';
-    zone.style.background  = '#f0f8ff';
-    zone.style.transform   = 'scale(1.01)';
-  }
+  if (zone) { zone.style.borderColor='var(--primary)'; zone.style.background='#f0f8ff'; zone.style.transform='scale(1.01)'; }
 };
-
 window.handleDragLeave = function(e) {
   const zone = document.getElementById('uploadDropZone');
-  if (zone) {
-    zone.style.borderColor = 'rgba(74,144,217,0.3)';
-    zone.style.background  = '#fff';
-    zone.style.transform   = '';
-  }
+  if (zone) { zone.style.borderColor='rgba(74,144,217,0.3)'; zone.style.background='#fff'; zone.style.transform=''; }
 };
-
 window.handleDrop = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
+  e.preventDefault(); e.stopPropagation();
   window.handleDragLeave(e);
   const file = e.dataTransfer.files[0];
   if (file) window.handleFileSelect(file);
 };
 
+// ── Main file handler ─────────────────────────────────────────
 window.handleFileSelect = async function(file) {
   if (!file) return;
+  if (!file.type.startsWith('video/')) { showTip('Please select a video file (MP4, MOV, WebM)'); return; }
+  if (file.size > 500 * 1024 * 1024) { showTip('File too large — max 500MB'); return; }
 
-  // Validate type
-  if (!file.type.startsWith('video/')) {
-    showTip('Please select a video file (MP4, MOV, WebM)');
-    return;
-  }
+  // 1️⃣ Show LOCAL preview immediately so user can start marking steps right away
+  localVideoURL = URL.createObjectURL(file);
+  uploadedVideoUID = null;
+  showEditorStage(localVideoURL);
 
-  // Validate size (500MB)
-  if (file.size > 500 * 1024 * 1024) {
-    showTip('File is too large. Maximum size is 500MB.');
-    return;
-  }
+  // 2️⃣ Upload to Cloudflare Stream in the background
+  uploadToCFStream(file);
+};
 
-  // Show progress UI
+async function uploadToCFStream(file) {
   const progressWrap = document.getElementById('uploadProgressWrap');
   const progressBar  = document.getElementById('uploadProgressBar');
   const progressPct  = document.getElementById('uploadProgressPct');
   const fileNameEl   = document.getElementById('uploadFileName');
   const statusMsg    = document.getElementById('uploadStatusMsg');
+  const saveBtn      = document.getElementById('saveRecipeBtn');
 
   if (progressWrap) progressWrap.style.display = 'block';
   if (fileNameEl)   fileNameEl.textContent = file.name;
-
-  // Animate progress bar (estimated — Supabase JS doesn't report progress)
-  let fakeProgress = 0;
-  const progressInterval = setInterval(() => {
-    fakeProgress = Math.min(fakeProgress + Math.random() * 8, 90);
-    if (progressBar) progressBar.style.width = fakeProgress + '%';
-    if (progressPct) progressPct.textContent  = Math.round(fakeProgress) + '%';
-  }, 300);
+  if (saveBtn)      saveBtn.textContent = '⏳ Uploading video...';
 
   try {
-    if (statusMsg) statusMsg.textContent = 'Uploading to Supabase Storage...';
+    // Ask our server for a Cloudflare direct upload URL
+    const res = await fetch('/api/cf-upload-url', { method: 'POST' });
+    const { uploadURL, uid, error } = await res.json();
+    if (error) throw new Error(error);
 
-    // If user isn't signed in, preview locally without saving to storage
-    let videoUrl;
-    if (!currentUser) {
-      // Local preview mode — no Supabase upload
-      videoUrl = URL.createObjectURL(file);
-      if (statusMsg) statusMsg.textContent = 'Preview mode (sign in to save to cloud)';
-    } else {
-      videoUrl = await uploadVideo(file, currentUser.email);
-    }
-
-    clearInterval(progressInterval);
-    if (progressBar) progressBar.style.width = '100%';
-    if (progressPct) progressPct.textContent  = '100%';
-    if (statusMsg) statusMsg.textContent = '✅ Upload complete!';
-
-    uploadedVideoURL = videoUrl;
-    showEditorStage(videoUrl);
+    // Upload via tus (resumable, real progress)
+    await new Promise((resolve, reject) => {
+      const upload = new tus.Upload(file, {
+        uploadUrl: uploadURL,          // existing CF resource URL
+        retryDelays: [0, 3000, 5000, 10000],
+        metadata: { filename: file.name, filetype: file.type },
+        onProgress(loaded, total) {
+          const pct = Math.round((loaded / total) * 100);
+          if (progressBar) progressBar.style.width = pct + '%';
+          if (progressPct) progressPct.textContent  = pct + '%';
+        },
+        onSuccess() {
+          uploadedVideoUID = uid;
+          if (progressBar) progressBar.style.width = '100%';
+          if (progressPct) progressPct.textContent  = '100%';
+          if (statusMsg)  statusMsg.textContent = '✅ Uploaded to Cloudflare Stream!';
+          if (saveBtn)    saveBtn.textContent   = '✅ Save Recipe';
+          showTip('Video uploaded to Cloudflare! You can now save your recipe.');
+          resolve();
+        },
+        onError(err) {
+          reject(err);
+        },
+      });
+      upload.start();
+    });
 
   } catch (err) {
-    clearInterval(progressInterval);
-    console.error('Upload error:', err);
-    if (statusMsg) statusMsg.textContent = '❌ Upload failed: ' + (err.message || 'Unknown error');
+    console.error('CF upload error:', err);
+    if (statusMsg)  statusMsg.textContent = '❌ Upload failed: ' + (err.message || 'Unknown error');
     if (progressBar) progressBar.style.background = '#f87171';
-    showTip('Upload failed. Is your Supabase Storage bucket set up?');
+    if (saveBtn)     saveBtn.textContent = '✅ Save Recipe (local preview only)';
+    showTip('CF upload failed — video will save in preview mode.');
+    // Still allow saving with localVideoURL as fallback
+    uploadedVideoUID = null;
   }
-};
+}
 
 function showEditorStage(videoUrl) {
-  const stage1 = document.getElementById('createStage1');
-  const stage2 = document.getElementById('createStage2');
-  if (stage1) stage1.style.display = 'none';
-  if (stage2) stage2.style.display = 'block';
+  document.getElementById('createStage1').style.display = 'none';
+  document.getElementById('createStage2').style.display = 'block';
 
   const videoEl = document.getElementById('uploadedVideoPlayer');
-  if (videoEl) {
+  if (!videoEl) return;
+
+  // Use HLS.js for Cloudflare Stream HLS, blob URL plays natively
+  if (videoUrl.includes('videodelivery.net') && window.Hls && Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(videoUrl);
+    hls.attachMedia(videoEl);
+  } else {
     videoEl.src = videoUrl;
-    // Update current time display as video plays
-    videoEl.addEventListener('timeupdate', () => {
-      const t = videoEl.currentTime;
-      const m = Math.floor(t / 60);
-      const s = Math.floor(t % 60).toString().padStart(2, '0');
-      const el = document.getElementById('createCurrentTime');
-      if (el) el.textContent = `${m}:${s}`;
-    });
   }
+
+  videoEl.addEventListener('timeupdate', () => {
+    const t = videoEl.currentTime;
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, '0');
+    const el = document.getElementById('createCurrentTime');
+    if (el) el.textContent = `${m}:${s}`;
+  });
 
   createStepsArr = [];
   renderCreateSteps();
@@ -1476,19 +1476,16 @@ function showEditorStage(videoUrl) {
 }
 
 window.onVideoLoaded = function() {
-  showTip('Video ready! Play it and tap "📍 Add Step Here" to mark steps.');
+  showTip('Video ready! Play it and tap "📍 Add Step Here" to mark your steps.');
 };
 
 window.addStepAtCurrentTime = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (!videoEl) return;
-
   const time = videoEl.currentTime;
   const m = Math.floor(time / 60);
   const s = Math.floor(time % 60).toString().padStart(2, '0');
-  const label = `Step ${createStepsArr.length + 1}`;
-
-  createStepsArr.push({ time, label, displayTime: `${m}:${s}` });
+  createStepsArr.push({ time, label: `Step ${createStepsArr.length + 1}`, displayTime: `${m}:${s}` });
   createStepsArr.sort((a, b) => a.time - b.time);
   renderCreateSteps();
   showTip(`Step marked at ${m}:${s}`);
@@ -1498,47 +1495,28 @@ function renderCreateSteps() {
   const list  = document.getElementById('createStepsList');
   const count = document.getElementById('createStepCount');
   if (!list) return;
-
   if (count) count.textContent = `(${createStepsArr.length})`;
-
-  if (createStepsArr.length === 0) {
-    list.innerHTML = `
-      <div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">
-        No steps yet.<br>Play the video and tap "📍 Add Step Here"
-      </div>`;
+  if (!createStepsArr.length) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">No steps yet.<br>Play the video and tap "📍 Add Step Here"</div>`;
     return;
   }
-
   list.innerHTML = createStepsArr.map((step, i) => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);">
       <span style="font-size:0.72rem;font-weight:900;color:var(--primary);min-width:36px;font-variant-numeric:tabular-nums;">${step.displayTime}</span>
-      <input
-        value="${step.label.replace(/"/g, '&quot;')}"
-        onchange="updateStepLabel(${i}, this.value)"
-        style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;padding:0;"
-      >
-      <button
-        onclick="removeCreateStep(${i})"
-        style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;line-height:1;padding:2px 6px;"
-        title="Remove step">×</button>
-    </div>
-  `).join('');
+      <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
+        style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;">
+      <button onclick="removeCreateStep(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">×</button>
+    </div>`).join('');
 }
 
-window.updateStepLabel = function(index, value) {
-  if (createStepsArr[index]) createStepsArr[index].label = value;
-};
-
-window.removeCreateStep = function(index) {
-  createStepsArr.splice(index, 1);
-  renderCreateSteps();
-};
+window.updateStepLabel   = (i, v)  => { if (createStepsArr[i]) createStepsArr[i].label = v; };
+window.removeCreateStep  = (i)     => { createStepsArr.splice(i, 1); renderCreateSteps(); };
 
 window.toggleCreatePrivacy = function() {
   createIsPublic = !createIsPublic;
-  const toggle   = document.getElementById('privacyToggle');
-  const thumb    = document.getElementById('privacyThumb');
-  const label    = document.getElementById('privacyLabel');
+  const toggle = document.getElementById('privacyToggle');
+  const thumb  = document.getElementById('privacyThumb');
+  const label  = document.getElementById('privacyLabel');
   if (toggle) toggle.style.background = createIsPublic ? 'var(--green)' : '#e0eaf4';
   if (thumb)  thumb.style.left        = createIsPublic ? '26px' : '2px';
   if (label)  label.textContent       = createIsPublic
@@ -1549,76 +1527,68 @@ window.toggleCreatePrivacy = function() {
 window.saveNewRecipe = async function() {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim();
-
-  if (!title) {
-    showTip('Please enter a recipe title first!');
-    titleInput?.focus();
-    return;
-  }
-
-  if (!currentUser) {
-    showTip('Please sign in to save your recipe.');
-    window.openAuthModal();
-    return;
-  }
+  if (!title) { showTip('Please enter a recipe title first!'); titleInput?.focus(); return; }
+  if (!currentUser) { showTip('Please sign in to save your recipe.'); window.openAuthModal(); return; }
 
   const btn = document.getElementById('saveRecipeBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
   try {
-    const videoEl = document.getElementById('uploadedVideoPlayer');
+    const videoEl  = document.getElementById('uploadedVideoPlayer');
     const duration = videoEl?.duration || 0;
+    const steps    = createStepsArr.map(s => s.label);
+    const loops    = createStepsArr.map(s => s.time);
 
-    // Build steps in the format the DB expects
-    const steps = createStepsArr.map(s => s.label);
-    const loops = createStepsArr.map(s => s.time);
+    // Build video_url: prefer CF Stream, fall back to local blob
+    const videoUrl = uploadedVideoUID
+      ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
+      : localVideoURL || null;
 
-    const recipe = await createRecipe({
+    await createRecipe({
       title,
-      creator: currentUser.email,
+      creator:          currentUser.email,
       duration,
       steps,
       loops,
-      video_url: uploadedVideoURL,
-      private_recipe: !createIsPublic,
-      is_published: createIsPublic,
+      video_url:        videoUrl,
+      private_recipe:   !createIsPublic,
+      is_published:     createIsPublic,
       shared_on_profile: createIsPublic,
     });
 
-    // Show success
     const msg = document.getElementById('savedRecipeMsg');
     if (msg) msg.textContent = createIsPublic
-      ? `"${title}" is now public and visible on Discover!`
-      : `"${title}" is saved privately to your profile.`;
+      ? `"​${title}" is now public — visible on Discover 🌎`
+      : `"​${title}" saved privately to your profile 🔒`;
 
     document.getElementById('createStage2').style.display = 'none';
     document.getElementById('createStage3').style.display = 'block';
-    showTip(`Recipe "${title}" saved!`);
+    showTip(`"​${title}" saved!`);
 
   } catch (err) {
     console.error('Save error:', err);
-    showTip('Could not save recipe: ' + (err.message || 'Unknown error'));
+    showTip('Could not save: ' + (err.message || 'Unknown error'));
     if (btn) { btn.disabled = false; btn.textContent = '✅ Save Recipe'; }
   }
 };
 
 window.resetCreateView = function() {
-  uploadedVideoURL = null;
+  uploadedVideoUID = null;
+  localVideoURL    = null;
   createStepsArr   = [];
   createIsPublic   = false;
 
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (videoEl) videoEl.src = '';
 
-  document.getElementById('createStage1').style.display = 'block';
-  document.getElementById('createStage2').style.display = 'none';
-  document.getElementById('createStage3').style.display = 'none';
+  document.getElementById('createStage1').style.display    = 'block';
+  document.getElementById('createStage2').style.display    = 'none';
+  document.getElementById('createStage3').style.display    = 'none';
   document.getElementById('uploadProgressWrap').style.display = 'none';
   document.getElementById('uploadProgressBar').style.width = '0%';
   document.getElementById('uploadProgressBar').style.background = 'linear-gradient(90deg,var(--primary),#6aaee8)';
   document.getElementById('newRecipeTitleInput').value = '';
 
-  // Reset privacy toggle
   const toggle = document.getElementById('privacyToggle');
   const thumb  = document.getElementById('privacyThumb');
   const label  = document.getElementById('privacyLabel');
@@ -1626,6 +1596,6 @@ window.resetCreateView = function() {
   if (thumb)  thumb.style.left        = '2px';
   if (label)  label.textContent       = '🔒 Private — only you can see this';
 
-  const fileInput = document.getElementById('videoFileInput');
-  if (fileInput) fileInput.value = '';
+  const fi = document.getElementById('videoFileInput');
+  if (fi) fi.value = '';
 };
