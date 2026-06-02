@@ -1313,3 +1313,26 @@ window.handleDiscoverSearch = function(query) {
   );
   renderDiscoverGrid(filtered);
 };
+
+// ============================================================
+// EXPOSE ALL HTML onclick FUNCTIONS TO GLOBAL WINDOW SCOPE
+// ES modules are private by default — this makes them reachable
+// from inline onclick="..." attributes in index.html
+// ============================================================
+window.switchView            = switchView;
+window.switchSidebarTab      = switchSidebarTab;
+window.toggleVideoPlayback   = toggleVideoPlayback;
+window.setPlaybackMode       = setPlaybackMode;
+window.seekToStep            = seekToStep;
+window.toggleBentoEditMode   = toggleBentoEditMode;
+window.matchBentoSizes       = matchBentoSizes;
+window.openWidgetRecipe      = openWidgetRecipe;
+window.triggerRemix          = triggerRemix;
+window.toggleVoiceSystem     = toggleVoiceSystem;
+window.triggerUndo           = triggerUndo;
+window.triggerRedo           = triggerRedo;
+window.timelineClick         = timelineClick;
+window.nudgeActiveBoundary   = nudgeActiveBoundary;
+window.saveStepDetailsFromInputs = saveStepDetailsFromInputs;
+window.runAiAnalysis         = runAiAnalysis;
+window.showTip               = showTip;
