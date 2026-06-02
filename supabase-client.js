@@ -144,3 +144,61 @@ export function getOrCreateDeviceId() {
   }
   return id;
 }
+
+// =====================================================
+// Video Upload — Supabase Storage
+// =====================================================
+
+// Upload a video file to the 'videos' bucket
+// Returns the public URL of the uploaded video
+export async function uploadVideo(file, userEmail) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const folder = (userEmail || 'anon').replace(/[@.]/g, '_');
+  const filename = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+
+  const { data, error } = await supabase.storage
+    .from('videos')
+    .upload(filename, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('videos')
+    .getPublicUrl(filename);
+
+  return publicUrl;
+}
+
+// Create a brand new recipe record
+export async function createRecipe(recipe) {
+  const id = 'cook_' + Math.random().toString(36).slice(2, 10);
+  const payload = {
+    id,
+    title: recipe.title || 'Untitled Recipe',
+    creator: recipe.creator || 'you',
+    duration: recipe.duration || 0,
+    loops: recipe.loops || [],
+    steps: recipe.steps || [],
+    ingredients: recipe.ingredients || [],
+    video_url: recipe.video_url || null,
+    private_recipe: recipe.private_recipe ?? true,
+    is_published: recipe.is_published ?? false,
+    shared_on_profile: recipe.shared_on_profile ?? false,
+    is_draft: false,
+    temp_recipe: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from('recipes')
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}

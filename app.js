@@ -1,5 +1,5 @@
 // Cooking GPS — Core Application Script
-import { signIn, signUp, signOut, onAuthChange, getPublicRecipes } from './supabase-client.js';
+import { signIn, signUp, signOut, onAuthChange, getPublicRecipes, uploadVideo, createRecipe } from './supabase-client.js';
 
 // 1. RECIPE & TIMELINE STATE STATE
 const recipeData = {
@@ -965,8 +965,17 @@ function switchView(viewId) {
   // Load data when switching to these views
   if (viewId === 'discover') loadDiscoverRecipes();
   if (viewId === 'profile')  loadProfileRecipes();
+  if (viewId === 'create')   initCreateView();
 
-  showTip(`Switched to ${viewId.replace('-', ' ')}`);
+  // Fix Create tab appearance
+  const createTabEl = document.getElementById('createTab');
+  if (createTabEl) {
+    createTabEl.style.background = viewId === 'create' ? 'var(--primary)' : '';
+    createTabEl.style.color      = viewId === 'create' ? '#fff' : '';
+    createTabEl.style.boxShadow  = viewId === 'create' ? '0 3px 10px rgba(74,144,217,0.35)' : '';
+  }
+
+  showTip(`Switched to ${viewId.replace(/-/g, ' ')}`);
 }
 
 function switchSidebarTab(tabId) {
@@ -1336,3 +1345,287 @@ window.nudgeActiveBoundary   = nudgeActiveBoundary;
 window.saveStepDetailsFromInputs = saveStepDetailsFromInputs;
 window.runAiAnalysis         = runAiAnalysis;
 window.showTip               = showTip;
+
+// ============================================================
+// VIDEO UPLOAD & RECIPE EDITOR
+// ============================================================
+let createIsPublic  = false;   // privacy state
+let createStepsArr  = [];      // [{time, label}]
+let uploadedVideoURL = null;   // public URL after upload
+let createTimeUpdateInterval = null;
+
+function initCreateView() {
+  // Re-init lucide icons for the newly visible buttons
+  if (window.lucide) lucide.createIcons();
+}
+
+// --- Drag & drop handlers ---
+window.handleDragOver = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const zone = document.getElementById('uploadDropZone');
+  if (zone) {
+    zone.style.borderColor = 'var(--primary)';
+    zone.style.background  = '#f0f8ff';
+    zone.style.transform   = 'scale(1.01)';
+  }
+};
+
+window.handleDragLeave = function(e) {
+  const zone = document.getElementById('uploadDropZone');
+  if (zone) {
+    zone.style.borderColor = 'rgba(74,144,217,0.3)';
+    zone.style.background  = '#fff';
+    zone.style.transform   = '';
+  }
+};
+
+window.handleDrop = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  window.handleDragLeave(e);
+  const file = e.dataTransfer.files[0];
+  if (file) window.handleFileSelect(file);
+};
+
+window.handleFileSelect = async function(file) {
+  if (!file) return;
+
+  // Validate type
+  if (!file.type.startsWith('video/')) {
+    showTip('Please select a video file (MP4, MOV, WebM)');
+    return;
+  }
+
+  // Validate size (500MB)
+  if (file.size > 500 * 1024 * 1024) {
+    showTip('File is too large. Maximum size is 500MB.');
+    return;
+  }
+
+  // Show progress UI
+  const progressWrap = document.getElementById('uploadProgressWrap');
+  const progressBar  = document.getElementById('uploadProgressBar');
+  const progressPct  = document.getElementById('uploadProgressPct');
+  const fileNameEl   = document.getElementById('uploadFileName');
+  const statusMsg    = document.getElementById('uploadStatusMsg');
+
+  if (progressWrap) progressWrap.style.display = 'block';
+  if (fileNameEl)   fileNameEl.textContent = file.name;
+
+  // Animate progress bar (estimated — Supabase JS doesn't report progress)
+  let fakeProgress = 0;
+  const progressInterval = setInterval(() => {
+    fakeProgress = Math.min(fakeProgress + Math.random() * 8, 90);
+    if (progressBar) progressBar.style.width = fakeProgress + '%';
+    if (progressPct) progressPct.textContent  = Math.round(fakeProgress) + '%';
+  }, 300);
+
+  try {
+    if (statusMsg) statusMsg.textContent = 'Uploading to Supabase Storage...';
+
+    // If user isn't signed in, preview locally without saving to storage
+    let videoUrl;
+    if (!currentUser) {
+      // Local preview mode — no Supabase upload
+      videoUrl = URL.createObjectURL(file);
+      if (statusMsg) statusMsg.textContent = 'Preview mode (sign in to save to cloud)';
+    } else {
+      videoUrl = await uploadVideo(file, currentUser.email);
+    }
+
+    clearInterval(progressInterval);
+    if (progressBar) progressBar.style.width = '100%';
+    if (progressPct) progressPct.textContent  = '100%';
+    if (statusMsg) statusMsg.textContent = '✅ Upload complete!';
+
+    uploadedVideoURL = videoUrl;
+    showEditorStage(videoUrl);
+
+  } catch (err) {
+    clearInterval(progressInterval);
+    console.error('Upload error:', err);
+    if (statusMsg) statusMsg.textContent = '❌ Upload failed: ' + (err.message || 'Unknown error');
+    if (progressBar) progressBar.style.background = '#f87171';
+    showTip('Upload failed. Is your Supabase Storage bucket set up?');
+  }
+};
+
+function showEditorStage(videoUrl) {
+  const stage1 = document.getElementById('createStage1');
+  const stage2 = document.getElementById('createStage2');
+  if (stage1) stage1.style.display = 'none';
+  if (stage2) stage2.style.display = 'block';
+
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (videoEl) {
+    videoEl.src = videoUrl;
+    // Update current time display as video plays
+    videoEl.addEventListener('timeupdate', () => {
+      const t = videoEl.currentTime;
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60).toString().padStart(2, '0');
+      const el = document.getElementById('createCurrentTime');
+      if (el) el.textContent = `${m}:${s}`;
+    });
+  }
+
+  createStepsArr = [];
+  renderCreateSteps();
+  if (window.lucide) lucide.createIcons();
+}
+
+window.onVideoLoaded = function() {
+  showTip('Video ready! Play it and tap "📍 Add Step Here" to mark steps.');
+};
+
+window.addStepAtCurrentTime = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (!videoEl) return;
+
+  const time = videoEl.currentTime;
+  const m = Math.floor(time / 60);
+  const s = Math.floor(time % 60).toString().padStart(2, '0');
+  const label = `Step ${createStepsArr.length + 1}`;
+
+  createStepsArr.push({ time, label, displayTime: `${m}:${s}` });
+  createStepsArr.sort((a, b) => a.time - b.time);
+  renderCreateSteps();
+  showTip(`Step marked at ${m}:${s}`);
+};
+
+function renderCreateSteps() {
+  const list  = document.getElementById('createStepsList');
+  const count = document.getElementById('createStepCount');
+  if (!list) return;
+
+  if (count) count.textContent = `(${createStepsArr.length})`;
+
+  if (createStepsArr.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:2rem;color:var(--text-muted);font-weight:600;font-size:0.85rem;">
+        No steps yet.<br>Play the video and tap "📍 Add Step Here"
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = createStepsArr.map((step, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);">
+      <span style="font-size:0.72rem;font-weight:900;color:var(--primary);min-width:36px;font-variant-numeric:tabular-nums;">${step.displayTime}</span>
+      <input
+        value="${step.label.replace(/"/g, '&quot;')}"
+        onchange="updateStepLabel(${i}, this.value)"
+        style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;padding:0;"
+      >
+      <button
+        onclick="removeCreateStep(${i})"
+        style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;line-height:1;padding:2px 6px;"
+        title="Remove step">×</button>
+    </div>
+  `).join('');
+}
+
+window.updateStepLabel = function(index, value) {
+  if (createStepsArr[index]) createStepsArr[index].label = value;
+};
+
+window.removeCreateStep = function(index) {
+  createStepsArr.splice(index, 1);
+  renderCreateSteps();
+};
+
+window.toggleCreatePrivacy = function() {
+  createIsPublic = !createIsPublic;
+  const toggle   = document.getElementById('privacyToggle');
+  const thumb    = document.getElementById('privacyThumb');
+  const label    = document.getElementById('privacyLabel');
+  if (toggle) toggle.style.background = createIsPublic ? 'var(--green)' : '#e0eaf4';
+  if (thumb)  thumb.style.left        = createIsPublic ? '26px' : '2px';
+  if (label)  label.textContent       = createIsPublic
+    ? '🌎 Public — visible on Discover and your profile'
+    : '🔒 Private — only you can see this';
+};
+
+window.saveNewRecipe = async function() {
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  const title = titleInput?.value?.trim();
+
+  if (!title) {
+    showTip('Please enter a recipe title first!');
+    titleInput?.focus();
+    return;
+  }
+
+  if (!currentUser) {
+    showTip('Please sign in to save your recipe.');
+    window.openAuthModal();
+    return;
+  }
+
+  const btn = document.getElementById('saveRecipeBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    const videoEl = document.getElementById('uploadedVideoPlayer');
+    const duration = videoEl?.duration || 0;
+
+    // Build steps in the format the DB expects
+    const steps = createStepsArr.map(s => s.label);
+    const loops = createStepsArr.map(s => s.time);
+
+    const recipe = await createRecipe({
+      title,
+      creator: currentUser.email,
+      duration,
+      steps,
+      loops,
+      video_url: uploadedVideoURL,
+      private_recipe: !createIsPublic,
+      is_published: createIsPublic,
+      shared_on_profile: createIsPublic,
+    });
+
+    // Show success
+    const msg = document.getElementById('savedRecipeMsg');
+    if (msg) msg.textContent = createIsPublic
+      ? `"${title}" is now public and visible on Discover!`
+      : `"${title}" is saved privately to your profile.`;
+
+    document.getElementById('createStage2').style.display = 'none';
+    document.getElementById('createStage3').style.display = 'block';
+    showTip(`Recipe "${title}" saved!`);
+
+  } catch (err) {
+    console.error('Save error:', err);
+    showTip('Could not save recipe: ' + (err.message || 'Unknown error'));
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Save Recipe'; }
+  }
+};
+
+window.resetCreateView = function() {
+  uploadedVideoURL = null;
+  createStepsArr   = [];
+  createIsPublic   = false;
+
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (videoEl) videoEl.src = '';
+
+  document.getElementById('createStage1').style.display = 'block';
+  document.getElementById('createStage2').style.display = 'none';
+  document.getElementById('createStage3').style.display = 'none';
+  document.getElementById('uploadProgressWrap').style.display = 'none';
+  document.getElementById('uploadProgressBar').style.width = '0%';
+  document.getElementById('uploadProgressBar').style.background = 'linear-gradient(90deg,var(--primary),#6aaee8)';
+  document.getElementById('newRecipeTitleInput').value = '';
+
+  // Reset privacy toggle
+  const toggle = document.getElementById('privacyToggle');
+  const thumb  = document.getElementById('privacyThumb');
+  const label  = document.getElementById('privacyLabel');
+  if (toggle) toggle.style.background = '#e0eaf4';
+  if (thumb)  thumb.style.left        = '2px';
+  if (label)  label.textContent       = '🔒 Private — only you can see this';
+
+  const fileInput = document.getElementById('videoFileInput');
+  if (fileInput) fileInput.value = '';
+};
