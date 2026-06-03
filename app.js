@@ -1413,7 +1413,8 @@ window.saveDraft = async function() {
       creator:  currentUser.email,
       duration: videoEl?.duration || 0,
       steps:    createStepsArr.map(s => s.label),
-      loops:    createStepsArr.map(s => s.time),
+      // Save full loop objects so viewers get exact AI-detected start+end times
+      loops:    createStepsArr.map(s => ({ start: s.time, end: s.endTime ?? null, label: s.label })),
       video_url: videoUrl,
       is_draft: true,
     });
@@ -1517,6 +1518,27 @@ window.loadGridRecipe = async function(recipeId) {
   }
 };
 
+// ── Helper: normalize loop data (supports old number arrays AND new object arrays) ──
+// Old format: loops = [5.2, 18.7]  (just start times)
+// New format: loops = [{start:5.2, end:18.7, label:"Chop"}, ...]
+function parseLoops(rawLoops) {
+  if (!Array.isArray(rawLoops) || rawLoops.length === 0) return [];
+  return rawLoops.map((entry, i, arr) => {
+    if (typeof entry === 'number') {
+      // Old format — end = next start (or null)
+      const nextEntry = arr[i + 1];
+      const end = typeof nextEntry === 'number' ? nextEntry : null;
+      return { start: entry, end, label: null };
+    }
+    // New format — already has start, end, label
+    return {
+      start: entry.start ?? entry.time ?? 0,
+      end:   entry.end   ?? entry.endTime ?? null,
+      label: entry.label ?? null,
+    };
+  });
+}
+
 // Render all step tiles
 function renderGridTiles(recipe) {
   stopAllGridLoops();
@@ -1524,11 +1546,11 @@ function renderGridTiles(recipe) {
   const empty     = document.getElementById('gridEmptyState');
   if (!container) return;
 
-  const loops = Array.isArray(recipe.loops) ? recipe.loops : [];
-  const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+  const parsedLoops = parseLoops(recipe.loops);
+  const steps    = Array.isArray(recipe.steps) ? recipe.steps : [];
   const videoUrl = recipe.video_url || null;
 
-  if (loops.length === 0) {
+  if (parsedLoops.length === 0) {
     container.innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--text-muted);">
         <div style="font-size:2rem;margin-bottom:0.75rem;">⚠️</div>
@@ -1540,16 +1562,16 @@ function renderGridTiles(recipe) {
 
   if (empty) empty.style.display = 'none';
 
-  // Build tile HTML — each is a card with a video + step info
-  container.innerHTML = loops.map((startTime, i) => {
-    const label    = steps[i] || `Step ${i + 1}`;
-    const color    = GRID_STEP_COLORS[i % GRID_STEP_COLORS.length];
-    const nextTime = loops[i + 1] ?? null; // null = play to natural end
-    const sm = Math.floor(startTime / 60);
-    const ss = Math.floor(startTime % 60).toString().padStart(2, '0');
-    const em = nextTime != null ? Math.floor(nextTime / 60) : null;
-    const es = nextTime != null ? Math.floor(nextTime % 60).toString().padStart(2, '0') : null;
-    const timeLabel = em != null ? `${sm}:${ss} → ${em}:${es}` : `${sm}:${ss} → end`;
+  // Build tile HTML — each tile uses the AI-detected start+end times
+  container.innerHTML = parsedLoops.map((loop, i) => {
+    const label = loop.label || steps[i] || `Step ${i + 1}`;
+    const color = GRID_STEP_COLORS[i % GRID_STEP_COLORS.length];
+    const sm = Math.floor(loop.start / 60);
+    const ss = Math.floor(loop.start % 60).toString().padStart(2, '0');
+    const hasEnd = loop.end != null;
+    const em = hasEnd ? Math.floor(loop.end / 60) : null;
+    const es = hasEnd ? Math.floor(loop.end % 60).toString().padStart(2, '0') : null;
+    const timeLabel = hasEnd ? `${sm}:${ss} → ${em}:${es}` : `${sm}:${ss} → end`;
 
     return `
       <div class="glass-card" id="gridTile_${i}"
@@ -1564,15 +1586,12 @@ function renderGridTiles(recipe) {
             style="width:100%;height:100%;object-fit:cover;display:block;"
             preload="metadata">
           </video>
-          <!-- Play indicator overlay -->
           <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;" id="gridVideoOverlay_${i}">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">▶</div>
           </div>
-          <!-- Expand hint -->
           <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:800;color:#fff;">
             ⤢ expand
           </div>
-          <!-- Step number badge -->
           <div style="position:absolute;top:8px;left:8px;background:${color};border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:900;color:#446;">
             Step ${i + 1}
           </div>
@@ -1581,15 +1600,14 @@ function renderGridTiles(recipe) {
         <!-- Step info -->
         <div style="padding:12px 14px;background:${color}22;">
           <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
-          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}</div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}${hasEnd ? ' <span style="color:#22c55e;">✓ AI</span>' : ''}</div>
         </div>
       </div>`;
   }).join('');
 
-  // After tiles are in DOM, set up each video
-  loops.forEach((startTime, i) => {
-    const nextTime = loops[i + 1] ?? null;
-    setupGridTileVideo(i, videoUrl, startTime, nextTime);
+  // Set up each video with EXACT AI-detected start + end times
+  parsedLoops.forEach((loop, i) => {
+    setupGridTileVideo(i, videoUrl, loop.start, loop.end);
   });
 }
 
@@ -1661,11 +1679,12 @@ window.expandGridTile = function(i) {
   if (!gridCurrentRecipe) return;
   gridExpandedIndex = i;
 
-  const loops  = gridCurrentRecipe.loops || [];
+  const parsedLoops = parseLoops(gridCurrentRecipe.loops);
   const steps  = gridCurrentRecipe.steps || [];
-  const start  = loops[i] ?? 0;
-  const end    = loops[i + 1] ?? null;
-  const label  = steps[i] || `Step ${i + 1}`;
+  const loop   = parsedLoops[i] ?? { start: 0, end: null };
+  const start  = loop.start;
+  const end    = loop.end;
+  const label  = loop.label || steps[i] || `Step ${i + 1}`;
   const sm = Math.floor(start / 60);
   const ss = Math.floor(start % 60).toString().padStart(2, '0');
   const timeStr = end != null
@@ -1848,10 +1867,12 @@ async function uploadToCFStream(file) {
           uploadedVideoUID = uid;
           if (progressBar) progressBar.style.width = '100%';
           if (progressPct) progressPct.textContent  = '100%';
-          if (statusMsg)  statusMsg.textContent = '✅ Uploaded to Cloudflare Stream!';
-          if (saveBtn)    saveBtn.textContent   = '✅ Save Recipe';
-          showTip('Video uploaded to Cloudflare! You can now save your recipe.');
+          if (statusMsg)  statusMsg.textContent = '✅ Uploaded! Starting AI analysis...';
+          if (saveBtn)    saveBtn.textContent   = '⏳ Analyzing...';
+          showTip('Upload done! AI is now analyzing your video...');
           resolve();
+          // Auto-run AI analysis immediately after upload
+          autoAnalyzeWithAI();
         },
         onError(err) {
           reject(err);
@@ -1868,6 +1889,87 @@ async function uploadToCFStream(file) {
     showTip('CF upload failed — video will save in preview mode.');
     // Still allow saving with localVideoURL as fallback
     uploadedVideoUID = null;
+  }
+}
+
+// ── Auto AI Analysis (runs automatically after upload) ──────────────────────
+// Transcribes video + places loop stops without any manual clicks needed.
+async function autoAnalyzeWithAI() {
+  if (!uploadedFile) return;
+  const statusMsg = document.getElementById('uploadStatusMsg');
+  const saveBtn   = document.getElementById('saveRecipeBtn');
+
+  if (uploadedFile.size > 25 * 1024 * 1024) {
+    if (statusMsg) statusMsg.textContent = '✅ Uploaded! (File >25MB — use 🤖 AI Magic to analyze)';
+    if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
+    showTip('Video uploaded! Use the 🤖 AI Magic section to analyze it manually.');
+    return;
+  }
+
+  try {
+    // ── Step 1: Transcribe ──────────────────────────────────────────────
+    setAIStatus('🎤 Transcribing your video...', true);
+    if (statusMsg) statusMsg.textContent = '🤖 Step 1/2: Transcribing audio...';
+
+    const formData = new FormData();
+    formData.append('video', uploadedFile, uploadedFile.name);
+    const tRes  = await fetch('/api/transcribe', { method: 'POST', body: formData });
+    const tData = await tRes.json();
+    if (tData.error) throw new Error(tData.error);
+
+    cachedTranscript = tData.transcript;
+    cachedSegments   = tData.segments || [];
+
+    // Show transcript in AI section
+    const preview = document.getElementById('transcriptPreview');
+    const textEl  = document.getElementById('transcriptText');
+    if (preview) preview.style.display = 'block';
+    if (textEl)  textEl.textContent    = cachedTranscript;
+    const tBtn = document.getElementById('transcribeBtn');
+    if (tBtn) tBtn.textContent = '✅ Transcribed';
+    const aiActions = document.getElementById('aiActions');
+    if (aiActions) aiActions.style.display = 'block';
+
+    // ── Step 2: Detect loop start + stop points ─────────────────────────
+    setAIStatus('🔁 Detecting loop start & stop points...', true);
+    if (statusMsg) statusMsg.textContent = '🤖 Step 2/2: Placing loop stops...';
+
+    const lRes  = await fetch('/api/ai/loops', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: cachedTranscript, segments: cachedSegments }),
+    });
+    const lData = await lRes.json();
+    if (lData.error) throw new Error(lData.error);
+
+    const loops = lData.loops || [];
+    if (loops.length > 0) {
+      createStepsArr = loops.map(l => {
+        const t   = Number(l.time) || 0;
+        const end = l.endTime != null ? Number(l.endTime) : null;
+        const m   = Math.floor(t / 60);
+        const s   = Math.floor(t % 60).toString().padStart(2, '0');
+        return { time: t, endTime: end, label: l.label || 'Step', displayTime: `${m}:${s}` };
+      }).sort((a, b) => a.time - b.time);
+
+      renderCreateSteps();
+      renderTimeline();
+
+      setAIStatus(`✅ ${loops.length} loop stops placed! Review and edit below.`, true);
+      if (statusMsg) statusMsg.textContent = `✅ AI placed ${loops.length} loop stops`;
+      if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
+      showTip(`🤖 AI placed ${loops.length} loop stops — review the timeline!`);
+    } else {
+      setAIStatus('⚠️ No steps detected — add them manually below.', true);
+      if (statusMsg) statusMsg.textContent = '✅ Uploaded (no steps detected — add manually)';
+      if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
+    }
+
+  } catch (err) {
+    console.error('[AutoAI]', err);
+    setAIStatus('⚠️ Auto-analysis failed — use 🤖 AI Magic to retry.', true);
+    if (statusMsg) statusMsg.textContent = '✅ Uploaded (AI failed — retry in AI Magic)';
+    if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
   }
 }
 
@@ -2149,7 +2251,12 @@ window.saveNewRecipe = async function() {
     const videoEl  = document.getElementById('uploadedVideoPlayer');
     const duration = videoEl?.duration || 0;
     const steps    = createStepsArr.map(s => s.label);
-    const loops    = createStepsArr.map(s => s.time);
+    // Save full loop objects — preserves AI-detected start AND end times
+    const loops    = createStepsArr.map(s => ({
+      start: s.time,
+      end:   s.endTime ?? null,
+      label: s.label,
+    }));
 
     // Build video_url: prefer CF Stream, fall back to local blob
     const videoUrl = uploadedVideoUID
