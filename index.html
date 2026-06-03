@@ -38,7 +38,7 @@
           <i data-lucide="compass"></i> Discover
         </button>
         <button class="view-tab" onclick="switchView('profile')">
-          <i data-lucide="user"></i> My Profile
+          <i data-lucide="layout-dashboard"></i> My Page
         </button>
         <button class="view-tab" onclick="switchView('create')" id="createTab" style="background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(74,144,217,0.35);">
           <i data-lucide="plus-circle"></i> Create
@@ -506,11 +506,12 @@
         </div>
       </div>
 
-      <!-- Recipe tabs: All / Public / Private -->
-      <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+      <!-- Recipe tabs: All / Public / Private / Drafts -->
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;">
         <button class="btn btn-primary" id="profileTabAll" onclick="filterProfileRecipes('all')" style="border-radius:999px;">All Recipes</button>
         <button class="btn" id="profileTabPublic" onclick="filterProfileRecipes('public')" style="border-radius:999px;">🌎 Public</button>
         <button class="btn" id="profileTabPrivate" onclick="filterProfileRecipes('private')" style="border-radius:999px;">🔒 Private</button>
+        <button class="btn" id="profileTabDraft" onclick="filterProfileRecipes('draft')" style="border-radius:999px;">📝 Drafts</button>
       </div>
 
       <!-- My recipes grid -->
@@ -744,6 +745,12 @@
               onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
               ✅ Save Recipe
             </button>
+            <!-- Save as Draft -->
+            <button onclick="saveDraft()" id="saveDraftBtn"
+              style="width:100%;background:#fff;color:var(--text-muted);border:2px solid var(--border-card);border-radius:999px;padding:13px;font-family:var(--font);font-size:0.9rem;font-weight:800;cursor:pointer;transition:all 0.2s;"
+              onmouseenter="this.style.background='var(--bg-card-soft)'" onmouseleave="this.style.background='#fff'">
+              💾 Save as Draft
+            </button>
           </div>
         </div>
       </div>
@@ -754,7 +761,7 @@
         <h2 style="font-size:1.8rem;font-weight:900;color:var(--text-heading);margin-bottom:0.75rem;">Recipe Saved!</h2>
         <p id="savedRecipeMsg" style="color:var(--text-muted);font-weight:600;margin-bottom:2rem;">Your recipe has been saved to your library.</p>
         <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
-          <button onclick="switchView('profile')" class="btn btn-primary" style="border-radius:999px;padding:12px 28px;">View My Profile</button>
+          <button onclick="switchView('profile')" class="btn btn-primary" style="border-radius:999px;padding:12px 28px;">View My Page</button>
           <button onclick="resetCreateView()" class="btn" style="border-radius:999px;padding:12px 28px;">Upload Another</button>
         </div>
       </div>

@@ -175,22 +175,23 @@ export async function uploadVideo(file, userEmail) {
 // Create a brand new recipe record
 export async function createRecipe(recipe) {
   const id = 'cook_' + Math.random().toString(36).slice(2, 10);
+  const isDraft = recipe.is_draft ?? false;
   const payload = {
     id,
-    title: recipe.title || 'Untitled Recipe',
-    creator: recipe.creator || 'you',
-    duration: recipe.duration || 0,
-    loops: recipe.loops || [],
-    steps: recipe.steps || [],
-    ingredients: recipe.ingredients || [],
-    video_url: recipe.video_url || null,
-    private_recipe: recipe.private_recipe ?? true,
-    is_published: recipe.is_published ?? false,
-    shared_on_profile: recipe.shared_on_profile ?? false,
-    is_draft: false,
-    temp_recipe: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    title:             recipe.title || 'Untitled Recipe',
+    creator:           recipe.creator || 'you',
+    duration:          recipe.duration || 0,
+    loops:             recipe.loops || [],
+    steps:             recipe.steps || [],
+    ingredients:       recipe.ingredients || [],
+    video_url:         recipe.video_url || null,
+    private_recipe:    isDraft ? true : (recipe.private_recipe ?? true),
+    is_published:      isDraft ? false : (recipe.is_published ?? false),
+    shared_on_profile: isDraft ? false : (recipe.shared_on_profile ?? false),
+    is_draft:          isDraft,
+    temp_recipe:       false,
+    created_at:        new Date().toISOString(),
+    updated_at:        new Date().toISOString(),
   };
 
   const { data, error } = await supabase
@@ -199,6 +200,35 @@ export async function createRecipe(recipe) {
     .select()
     .single();
 
+  if (error) throw error;
+  return data;
+}
+
+// =====================================================
+// My Page — fetch ALL recipes for the logged-in user
+// (drafts + private + public — everything they've made)
+// =====================================================
+export async function getUserAllRecipes(creator) {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('id, title, creator, duration, steps, video_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
+    .eq('creator', creator)
+    .eq('temp_recipe', false)
+    .order('updated_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// =====================================================
+// Update a recipe (publish/unpublish, edit fields)
+// =====================================================
+export async function updateRecipe(id, updates) {
+  const { data, error } = await supabase
+    .from('recipes')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }

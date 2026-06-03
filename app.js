@@ -1193,26 +1193,31 @@ async function loadProfileRecipes() {
     return;
   }
   try {
-    const { data, error } = await import('./supabase-client.js').then(m => m.supabase
-      .from('recipes')
-      .select('*')
-      .eq('creator', currentUser.email)
-      .eq('is_draft', false)
-      .eq('temp_recipe', false)
-      .order('updated_at', { ascending: false })
-    );
-    if (error) throw error;
-    allMyRecipes = data || [];
+    const { getUserAllRecipes } = await import('./supabase-client.js');
+    allMyRecipes = await getUserAllRecipes(currentUser.email);
     renderProfileGrid(allMyRecipes);
     // Update stats
-    const publicCount = allMyRecipes.filter(r => !r.private_recipe && r.is_published).length;
-    const totalEl = document.getElementById('profileRecipeCount');
-    const pubEl   = document.getElementById('profilePublicCount');
+    const totalEl  = document.getElementById('profileRecipeCount');
+    const pubEl    = document.getElementById('profilePublicCount');
+    const draftCount  = allMyRecipes.filter(r => r.is_draft).length;
+    const publicCount = allMyRecipes.filter(r => r.is_published && !r.private_recipe && !r.is_draft).length;
     if (totalEl) totalEl.textContent = allMyRecipes.length;
     if (pubEl)   pubEl.textContent   = publicCount;
   } catch (err) {
     console.error('Profile load error:', err);
+    document.getElementById('profileGrid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">Could not load recipes</div>';
   }
+}
+
+function renderProfileGrid(recipes) {
+  const grid = document.getElementById('profileGrid');
+  if (!grid) return;
+  if (!recipes || recipes.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">No recipes yet — go create your first one! 🍳</div>';
+    return;
+  }
+  grid.innerHTML = recipes.map(r => renderRecipeCard(r, true)).join('');
 }
 
 function renderDiscoverGrid(recipes) {
@@ -1220,55 +1225,208 @@ function renderDiscoverGrid(recipes) {
   const empty = document.getElementById('discoverEmpty');
   const count = document.getElementById('discoverCount');
   if (!grid) return;
-
   if (!recipes || recipes.length === 0) {
     grid.innerHTML = '';
     if (empty) empty.style.display = 'block';
     if (count) count.textContent = '0 recipes';
     return;
   }
-
   if (empty) empty.style.display = 'none';
   if (count) count.textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
   grid.innerHTML = recipes.map(r => renderRecipeCard(r, false)).join('');
 }
 
-function renderProfileGrid(recipes) {
-  const grid = document.getElementById('profileGrid');
-  if (!grid) return;
-  if (!recipes || recipes.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">No recipes yet. Go create your first one!</div>';
-    return;
-  }
-  grid.innerHTML = recipes.map(r => renderRecipeCard(r, true)).join('');
-}
+window.filterProfileRecipes = function(filter) {
+  // Update active tab styling
+  ['All','Public','Private','Draft'].forEach(t => {
+    const btn = document.getElementById(`profileTab${t}`);
+    if (!btn) return;
+    btn.className = 'btn';
+    btn.style.background = '';
+    btn.style.color = '';
+  });
+  const activeId = `profileTab${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
+  const activeBtn = document.getElementById(activeId);
+  if (activeBtn) { activeBtn.className = 'btn btn-primary'; }
+
+  let filtered = allMyRecipes || [];
+  if (filter === 'public')  filtered = filtered.filter(r => r.is_published && !r.private_recipe && !r.is_draft);
+  if (filter === 'private') filtered = filtered.filter(r => !r.is_published && !r.is_draft);
+  if (filter === 'draft')   filtered = filtered.filter(r => r.is_draft);
+  renderProfileGrid(filtered);
+};
 
 function renderRecipeCard(r, isOwner) {
-  const isPublic  = r.is_published && !r.private_recipe;
+  const isDraft   = r.is_draft;
+  const isPublic  = r.is_published && !r.private_recipe && !isDraft;
+  const isPrivate = !r.is_published && !isDraft;
   const stepCount = Array.isArray(r.steps) ? r.steps.length : 0;
   const mins      = r.duration ? Math.floor(r.duration / 60) : 0;
-  const badge     = isPublic
-    ? `<span style="background:rgba(92,184,92,0.15);color:#449944;border:2px solid rgba(92,184,92,0.3);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🌎 Public</span>`
-    : `<span style="background:rgba(74,144,217,0.1);color:var(--primary);border:2px solid var(--border-card);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🔒 Private</span>`;
+
+  // Status badge
+  let badge = '';
+  if (isDraft) {
+    badge = `<span style="background:#fff8e1;color:#b45309;border:2px solid #fde68a;padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">📝 Draft</span>`;
+  } else if (isPublic) {
+    badge = `<span style="background:rgba(92,184,92,0.15);color:#449944;border:2px solid rgba(92,184,92,0.3);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🌎 Public</span>`;
+  } else {
+    badge = `<span style="background:rgba(74,144,217,0.1);color:var(--primary);border:2px solid var(--border-card);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🔒 Private</span>`;
+  }
+
+  // Owner action buttons
+  let ownerActions = '';
+  if (isOwner) {
+    if (isDraft) {
+      ownerActions = `
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+          <button onclick="event.stopPropagation();publishDraft('${r.id}')"
+            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            🚀 Publish
+          </button>
+          <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
+            style="background:#fff0f0;color:#e55;border:2px solid #fcc;border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            🗑
+          </button>
+        </div>`;
+    } else if (isPublic) {
+      ownerActions = `
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+          <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', true)"
+            style="flex:1;background:#fff0f0;color:#c00;border:2px solid #fcc;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            🔒 Make Private
+          </button>
+        </div>`;
+    } else {
+      ownerActions = `
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+          <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', false)"
+            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            🌎 Make Public
+          </button>
+          <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
+            style="background:#fff0f0;color:#e55;border:2px solid #fcc;border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            🗑
+          </button>
+        </div>`;
+    }
+  }
 
   return `
     <div class="glass-card" style="cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
       onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(74,144,217,0.18)'"
       onmouseleave="this.style.transform='';this.style.boxShadow=''"
-      onclick="openWidgetRecipe('${(r.title||'').replace(/'/g, "'")}')">
+      onclick="openWidgetRecipe('${(r.title||'').replace(/'/g, '\'').replace(/"/g,'&quot;')}')">  
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
         <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(74,144,217,0.25);">🍳</div>
-        ${isOwner ? badge : ''}
+        ${badge}
       </div>
       <h3 style="font-size:1rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;">${r.title || 'Untitled Recipe'}</h3>
-      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:1rem;">by ${r.creator || 'Chef'}</p>
-      <div style="display:flex;gap:12px;">
+      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:${isOwner ? '0' : '1rem'};">by ${r.creator || 'Chef'}</p>
+      ${isOwner ? '' : `<div style="display:flex;gap:12px;">
         ${stepCount ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">📋 ${stepCount} steps</span>` : ''}
         ${mins ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">⏱ ${mins} min</span>` : ''}
-      </div>
+      </div>`}
+      ${ownerActions}
     </div>
   `;
 }
+
+// Toggle a recipe between public and private
+window.toggleRecipePublish = async function(id, currentlyPublic) {
+  try {
+    const { updateRecipe } = await import('./supabase-client.js');
+    if (currentlyPublic) {
+      // Make private
+      await updateRecipe(id, { is_published: false, private_recipe: true, shared_on_profile: false });
+      showTip('Recipe is now private 🔒');
+    } else {
+      // Pre-publish check
+      const recipe = allMyRecipes.find(r => r.id === id);
+      if (recipe && (!recipe.title || recipe.title === 'Untitled Recipe')) {
+        showTip('Add a title before publishing!');
+        return;
+      }
+      await updateRecipe(id, { is_published: true, private_recipe: false, is_draft: false, shared_on_profile: true });
+      showTip('Recipe is now public 🌎');
+    }
+    await loadProfileRecipes();
+  } catch (err) {
+    showTip('Could not update: ' + err.message);
+  }
+};
+
+// Publish a draft
+window.publishDraft = async function(id) {
+  try {
+    const { updateRecipe } = await import('./supabase-client.js');
+    const recipe = allMyRecipes.find(r => r.id === id);
+    if (recipe && (!recipe.title || recipe.title === 'Untitled Recipe')) {
+      showTip('Add a title before publishing!');
+      return;
+    }
+    if (recipe && (!recipe.steps || recipe.steps.length === 0)) {
+      showTip('Add at least one step before publishing!');
+      return;
+    }
+    await updateRecipe(id, { is_published: true, private_recipe: false, is_draft: false, shared_on_profile: true });
+    showTip('Recipe published! 🌎');
+    await loadProfileRecipes();
+  } catch (err) {
+    showTip('Could not publish: ' + err.message);
+  }
+};
+
+// Delete a recipe
+window.deleteRecipeById = async function(id) {
+  if (!confirm('Delete this recipe? This cannot be undone.')) return;
+  try {
+    const { supabase } = await import('./supabase-client.js');
+    const { error } = await supabase.from('recipes').delete().eq('id', id);
+    if (error) throw error;
+    showTip('Recipe deleted.');
+    await loadProfileRecipes();
+  } catch (err) {
+    showTip('Could not delete: ' + err.message);
+  }
+};
+
+// Save as Draft (from Create view)
+window.saveDraft = async function() {
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  const title = titleInput?.value?.trim() || 'Untitled Draft';
+  if (!currentUser) { showTip('Sign in to save drafts.'); window.openAuthModal(); return; }
+
+  const btn = document.getElementById('saveDraftBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving draft...'; }
+
+  try {
+    const videoEl = document.getElementById('uploadedVideoPlayer');
+    const videoUrl = uploadedVideoUID
+      ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
+      : localVideoURL || null;
+
+    const { createRecipe } = await import('./supabase-client.js');
+    await createRecipe({
+      title,
+      creator:  currentUser.email,
+      duration: videoEl?.duration || 0,
+      steps:    createStepsArr.map(s => s.label),
+      loops:    createStepsArr.map(s => s.time),
+      video_url: videoUrl,
+      is_draft: true,
+    });
+
+    const msg = document.getElementById('savedRecipeMsg');
+    if (msg) msg.textContent = `"${title}" saved as a draft — finish it later on My Page 📝`;
+    document.getElementById('createStage2').style.display = 'none';
+    document.getElementById('createStage3').style.display = 'block';
+    showTip(`Draft "${title}" saved!`);
+  } catch (err) {
+    showTip('Could not save draft: ' + err.message);
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save as Draft'; }
+  }
+};
+
 
 function populateProfilePage(user) {
   const name   = document.getElementById('profileName');
@@ -1295,20 +1453,7 @@ function resetProfilePage() {
   if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">Sign in to see your recipes</div>';
 }
 
-window.filterProfileRecipes = function(filter) {
-  // Update button styles
-  ['All','Public','Private'].forEach(f => {
-    const btn = document.getElementById(`profileTab${f}`);
-    if (btn) {
-      btn.className = filter === f.toLowerCase() ? 'btn btn-primary' : 'btn';
-      btn.style.borderRadius = '999px';
-    }
-  });
-  let filtered = allMyRecipes;
-  if (filter === 'public')  filtered = allMyRecipes.filter(r => r.is_published && !r.private_recipe);
-  if (filter === 'private') filtered = allMyRecipes.filter(r => r.private_recipe || !r.is_published);
-  renderProfileGrid(filtered);
-};
+
 
 window.handleDiscoverSearch = function(query) {
   if (!query.trim()) {
