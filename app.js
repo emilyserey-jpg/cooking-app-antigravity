@@ -964,7 +964,9 @@ function switchView(viewId) {
 
   // Load data when switching to these views
   if (viewId === 'discover') loadDiscoverRecipes();
-  if (viewId === 'profile')  loadProfileRecipes();
+  if (viewId === 'profile')   loadProfileRecipes();
+  if (viewId === 'grid-view') initGridView();
+  if (viewId !== 'grid-view') stopAllGridLoops();
   if (viewId === 'create')   initCreateView();
 
   // Fix Create tab appearance
@@ -1454,6 +1456,284 @@ function resetProfilePage() {
 }
 
 
+
+// ============================================================
+// PHASE 6 — MULTI-VIDEO GRID VIEW
+// ============================================================
+let gridCurrentRecipe   = null;   // loaded recipe object
+let gridCurrentLayout   = 1;      // 1, 2, or 4 columns
+let gridExpandedIndex   = null;   // which step is expanded
+let gridStepIntervals   = [];     // loop interval IDs per tile
+
+const GRID_STEP_COLORS = ['#a8d8f0','#b8f0c8','#f0d8a8','#d8b8f0','#f0b8c8','#a8f0e8','#f0ebb8','#c8b8f0'];
+
+// Populate recipe picker dropdown when grid view opens
+async function initGridView() {
+  const picker = document.getElementById('gridRecipePicker');
+  if (!picker) return;
+
+  try {
+    const { getPublicRecipes } = await import('./supabase-client.js');
+    let recipes = await getPublicRecipes();
+
+    // Also include the user's own private/draft recipes if signed in
+    if (currentUser) {
+      const { getUserAllRecipes } = await import('./supabase-client.js');
+      const mine = await getUserAllRecipes(currentUser.email);
+      // Merge avoiding duplicates
+      const ids = new Set(recipes.map(r => r.id));
+      mine.forEach(r => { if (!ids.has(r.id) && !r.is_draft) recipes.push(r); });
+    }
+
+    picker.innerHTML = '<option value="">— Pick a recipe to view in grid —</option>';
+    recipes.forEach(r => {
+      const stepCount = Array.isArray(r.steps) ? r.steps.length : 0;
+      if (stepCount === 0) return; // skip recipes with no steps
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = `${r.title} (${stepCount} steps)`;
+      picker.appendChild(opt);
+    });
+
+    // Auto-load if a recipe is already selected
+    if (gridCurrentRecipe) picker.value = gridCurrentRecipe.id;
+  } catch (err) {
+    console.error('[Grid] Init error:', err);
+  }
+}
+
+// Load a recipe into the grid
+window.loadGridRecipe = async function(recipeId) {
+  if (!recipeId) return;
+  stopAllGridLoops();
+
+  try {
+    const { getRecipeById } = await import('./supabase-client.js');
+    const recipe = await getRecipeById(recipeId);
+    gridCurrentRecipe = recipe;
+    renderGridTiles(recipe);
+  } catch (err) {
+    showTip('Could not load recipe: ' + err.message);
+  }
+};
+
+// Render all step tiles
+function renderGridTiles(recipe) {
+  stopAllGridLoops();
+  const container = document.getElementById('gridTilesContainer');
+  const empty     = document.getElementById('gridEmptyState');
+  if (!container) return;
+
+  const loops = Array.isArray(recipe.loops) ? recipe.loops : [];
+  const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
+  const videoUrl = recipe.video_url || null;
+
+  if (loops.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--text-muted);">
+        <div style="font-size:2rem;margin-bottom:0.75rem;">⚠️</div>
+        <div style="font-weight:800;margin-bottom:0.5rem;">No steps found</div>
+        <div style="font-size:0.85rem;font-weight:600;">This recipe has no loop points set. Add steps in the Create view first.</div>
+      </div>`;
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  // Build tile HTML — each is a card with a video + step info
+  container.innerHTML = loops.map((startTime, i) => {
+    const label    = steps[i] || `Step ${i + 1}`;
+    const color    = GRID_STEP_COLORS[i % GRID_STEP_COLORS.length];
+    const nextTime = loops[i + 1] ?? null; // null = play to natural end
+    const sm = Math.floor(startTime / 60);
+    const ss = Math.floor(startTime % 60).toString().padStart(2, '0');
+    const em = nextTime != null ? Math.floor(nextTime / 60) : null;
+    const es = nextTime != null ? Math.floor(nextTime % 60).toString().padStart(2, '0') : null;
+    const timeLabel = em != null ? `${sm}:${ss} → ${em}:${es}` : `${sm}:${ss} → end`;
+
+    return `
+      <div class="glass-card" id="gridTile_${i}"
+        style="position:relative;overflow:hidden;cursor:pointer;border:2px solid ${color};padding:0;border-radius:16px;transition:box-shadow 0.2s;"
+        onclick="expandGridTile(${i})"
+        onmouseenter="this.style.boxShadow='0 12px 32px rgba(74,144,217,0.22)'"
+        onmouseleave="this.style.boxShadow=''">
+
+        <!-- Video tile -->
+        <div style="position:relative;background:#111;aspect-ratio:16/9;overflow:hidden;">
+          <video id="gridVideo_${i}" muted playsinline
+            style="width:100%;height:100%;object-fit:cover;display:block;"
+            preload="metadata">
+          </video>
+          <!-- Play indicator overlay -->
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;" id="gridVideoOverlay_${i}">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">▶</div>
+          </div>
+          <!-- Expand hint -->
+          <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:800;color:#fff;">
+            ⤢ expand
+          </div>
+          <!-- Step number badge -->
+          <div style="position:absolute;top:8px;left:8px;background:${color};border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:900;color:#446;">
+            Step ${i + 1}
+          </div>
+        </div>
+
+        <!-- Step info -->
+        <div style="padding:12px 14px;background:${color}22;">
+          <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // After tiles are in DOM, set up each video
+  loops.forEach((startTime, i) => {
+    const nextTime = loops[i + 1] ?? null;
+    setupGridTileVideo(i, videoUrl, startTime, nextTime);
+  });
+}
+
+// Set up a single tile's video to loop its segment
+function setupGridTileVideo(i, videoUrl, startTime, endTime) {
+  const video   = document.getElementById(`gridVideo_${i}`);
+  const overlay = document.getElementById(`gridVideoOverlay_${i}`);
+  if (!video || !videoUrl) return;
+
+  // For HLS streams use hls.js, otherwise set src directly
+  if (videoUrl.includes('videodelivery.net') || videoUrl.includes('.m3u8')) {
+    if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({ maxBufferLength: 10 }); // keep buffer small for grid tiles
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.currentTime = startTime;
+        video.play().catch(() => {});
+        if (overlay) overlay.style.display = 'none';
+      });
+    }
+  } else {
+    video.src = videoUrl;
+    video.currentTime = startTime;
+    video.play().catch(() => {});
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  // Loop: when video passes endTime, jump back to startTime
+  const loopEnd = endTime ?? Infinity;
+  const intervalId = setInterval(() => {
+    if (!video || video.paused) return;
+    if (endTime !== null && video.currentTime >= endTime - 0.1) {
+      video.currentTime = startTime;
+    }
+  }, 150);
+  gridStepIntervals[i] = intervalId;
+}
+
+// Stop all tile loop intervals
+function stopAllGridLoops() {
+  gridStepIntervals.forEach(id => { if (id) clearInterval(id); });
+  gridStepIntervals = [];
+}
+
+// ── Layout switcher ────────────────────────────────────────────
+window.setGridLayout = function(cols) {
+  gridCurrentLayout = cols;
+  const container = document.getElementById('gridTilesContainer');
+  if (container) {
+    if (cols === 1) container.style.gridTemplateColumns = '1fr';
+    if (cols === 2) container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    if (cols === 4) container.style.gridTemplateColumns = 'repeat(2, 1fr)'; // 2×2 on desktop, responsive
+
+    // Update button styles
+    [1, 2, 4].forEach(n => {
+      const btn = document.getElementById(`layout${n}Btn`);
+      if (!btn) return;
+      const active = n === cols;
+      btn.style.background = active ? 'var(--primary)' : 'var(--bg-card-soft)';
+      btn.style.color      = active ? '#fff' : 'var(--text-body)';
+      btn.style.border     = active ? 'none' : '2px solid var(--border-card)';
+    });
+  }
+};
+
+// ── Expand a tile to full-screen ──────────────────────────────
+window.expandGridTile = function(i) {
+  if (!gridCurrentRecipe) return;
+  gridExpandedIndex = i;
+
+  const loops  = gridCurrentRecipe.loops || [];
+  const steps  = gridCurrentRecipe.steps || [];
+  const start  = loops[i] ?? 0;
+  const end    = loops[i + 1] ?? null;
+  const label  = steps[i] || `Step ${i + 1}`;
+  const sm = Math.floor(start / 60);
+  const ss = Math.floor(start % 60).toString().padStart(2, '0');
+  const timeStr = end != null
+    ? `${sm}:${ss} → ${Math.floor(end/60)}:${Math.floor(end%60).toString().padStart(2,'0')}`
+    : `${sm}:${ss} → end`;
+
+  const overlay    = document.getElementById('gridExpandedOverlay');
+  const titleEl    = document.getElementById('gridExpandedTitle');
+  const timeEl     = document.getElementById('gridExpandedTime');
+  const expandedVid = document.getElementById('gridExpandedVideo');
+
+  if (titleEl) titleEl.textContent = `Step ${i + 1} — ${label}`;
+  if (timeEl)  timeEl.textContent  = `🔁 ${timeStr}`;
+
+  if (expandedVid && gridCurrentRecipe.video_url) {
+    const videoUrl = gridCurrentRecipe.video_url;
+    if (videoUrl.includes('videodelivery.net') || videoUrl.includes('.m3u8')) {
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(videoUrl);
+        hls.attachMedia(expandedVid);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          expandedVid.currentTime = start;
+          expandedVid.play().catch(() => {});
+        });
+      }
+    } else {
+      expandedVid.src = videoUrl;
+      expandedVid.currentTime = start;
+      expandedVid.play().catch(() => {});
+    }
+
+    // Loop the expanded video
+    if (expandedVid._gridLoopInterval) clearInterval(expandedVid._gridLoopInterval);
+    expandedVid._gridLoopInterval = setInterval(() => {
+      if (end !== null && expandedVid.currentTime >= end - 0.1) {
+        expandedVid.currentTime = start;
+      }
+    }, 150);
+  }
+
+  if (overlay) { overlay.style.display = 'flex'; }
+};
+
+window.collapseGridTile = function() {
+  const overlay     = document.getElementById('gridExpandedOverlay');
+  const expandedVid = document.getElementById('gridExpandedVideo');
+  if (overlay) overlay.style.display = 'none';
+  if (expandedVid) {
+    expandedVid.pause();
+    if (expandedVid._gridLoopInterval) {
+      clearInterval(expandedVid._gridLoopInterval);
+      expandedVid._gridLoopInterval = null;
+    }
+    expandedVid.src = '';
+  }
+  gridExpandedIndex = null;
+};
+
+// Prev/Next in expanded view
+window.navigateGridStep = function(direction) {
+  if (!gridCurrentRecipe || gridExpandedIndex === null) return;
+  const loops = gridCurrentRecipe.loops || [];
+  const next = gridExpandedIndex + direction;
+  if (next < 0 || next >= loops.length) return;
+  collapseGridTile();
+  setTimeout(() => expandGridTile(next), 100);
+};
 
 window.handleDiscoverSearch = function(query) {
   if (!query.trim()) {
