@@ -150,15 +150,14 @@ app.post('/api/ai/steps', async (req, res) => {
   }
 });
 
-// ─── AI: Auto-detect loop points from timestamped transcript ───────────────
+// ─── AI: Auto-detect loop points (start + end) from transcript ────────────
 app.post('/api/ai/loops', async (req, res) => {
   if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });
   const { transcript, segments } = req.body;
   if (!transcript) return res.status(400).json({ error: 'No transcript.' });
 
-  // Build a timestamped segment string for GPT to reason about
   const segmentText = (segments && segments.length > 0)
-    ? segments.map(s => `[${s.start.toFixed(1)}s] ${s.text.trim()}`).join('\n')
+    ? segments.map(s => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s] ${s.text.trim()}`).join('\n')
     : transcript;
 
   try {
@@ -167,19 +166,25 @@ app.post('/api/ai/loops', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `You are a cooking video analyzer. Given timestamped transcript segments, identify distinct cooking steps.
-Return a JSON object: { "steps": [ { "time": <seconds as number>, "label": "<short step name, max 4 words>" }, ... ] }
+          content: `You are a cooking video loop editor. Given timestamped transcript segments, identify distinct cooking steps and for each one, determine:
+1. "time" — when the step STARTS (seconds, number)
+2. "endTime" — when the loop should STOP and jump back to "time" (seconds, number). This is the last moment of that action before the next step begins.
+3. "label" — short action name, max 4 words
+
+Return JSON: { "steps": [ { "time": 5.2, "endTime": 18.7, "label": "Chop onions" }, ... ] }
+
 Rules:
-- Look for transitions: "now", "next", "then", "first", "add", "place", "stir", "cook", "remove"
-- Each step should be a meaningful cooking action
+- endTime must always be AFTER time (endTime > time)
+- Each step's endTime should be just before the next action starts
+- The final step's endTime should be near the end of that action, not the end of the whole video
 - Minimum 2 steps, maximum 12 steps
-- Labels should be action-oriented (e.g. "Chop onions", "Add flour", "Stir mixture")
-- time must be a number (seconds), not a string`,
+- Look for transitions: "now", "next", "then", "add", "place", "stir", "cook", "remove"
+- Labels should be action verbs ("Chop onions", "Add flour", "Stir mixture")`,
         },
-        { role: 'user', content: `Identify cooking step timestamps:\n\n${segmentText}` },
+        { role: 'user', content: `Identify cooking step loop boundaries:\n\n${segmentText}` },
       ],
       response_format: { type: 'json_object' },
-      max_tokens: 700,
+      max_tokens: 800,
       temperature: 0.2,
     });
 

@@ -1659,11 +1659,35 @@ window.addStepAtCurrentTime = function() {
   const time = videoEl.currentTime;
   const m = Math.floor(time / 60);
   const s = Math.floor(time % 60).toString().padStart(2, '0');
-  createStepsArr.push({ time, label: `Step ${createStepsArr.length + 1}`, displayTime: `${m}:${s}` });
+  // Default endTime = start + 15s (or video end if near end)
+  const defaultEnd = Math.min(time + 15, videoDuration || time + 15);
+  createStepsArr.push({
+    time,
+    endTime: defaultEnd,
+    label: `Step ${createStepsArr.length + 1}`,
+    displayTime: `${m}:${s}`
+  });
   createStepsArr.sort((a, b) => a.time - b.time);
   renderCreateSteps();
   renderTimeline();
-  showTip(`Step marked at ${m}:${s} — rename it in the list!`);
+  showTip(`Step marked at ${m}:${s} — play to the loop end then tap ✂️ Set End`);
+};
+
+// Set the loop end point for a step to the current video time
+window.setStepEnd = function(i) {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (!videoEl || !createStepsArr[i]) return;
+  const endTime = videoEl.currentTime;
+  if (endTime <= createStepsArr[i].time) {
+    showTip('End time must be after the step start time!');
+    return;
+  }
+  createStepsArr[i].endTime = endTime;
+  renderCreateSteps();
+  renderTimeline();
+  const em = Math.floor(endTime / 60);
+  const es = Math.floor(endTime % 60).toString().padStart(2, '0');
+  showTip(`Loop end set to ${em}:${es}`);
 };
 
 // ── Timeline renderer ──────────────────────────────────────────────────────
@@ -1678,8 +1702,9 @@ function renderTimeline() {
 
   createStepsArr.forEach((step, i) => {
     const startPct = (step.time / videoDuration) * 100;
-    const nextTime = (createStepsArr[i + 1]?.time) ?? videoDuration;
-    const widthPct = ((nextTime - step.time) / videoDuration) * 100;
+    // Use explicit endTime if set, otherwise next step's start
+    const nextTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
+    const widthPct = Math.max(((nextTime - step.time) / videoDuration) * 100, 0.5);
     const color    = STEP_COLORS[i % STEP_COLORS.length];
 
     const seg = document.createElement('div');
@@ -1718,32 +1743,39 @@ function renderCreateSteps() {
 
   list.innerHTML = createStepsArr.map((step, i) => {
     const color    = STEP_COLORS[i % STEP_COLORS.length];
-    const endTime  = (createStepsArr[i + 1]?.time) ?? videoDuration;
-    const em = Math.floor(endTime / 60);
-    const es = Math.floor(endTime % 60).toString().padStart(2, '0');
-    const endDisplay = videoDuration > 0 ? `→ ${em}:${es}` : '';
+    // Use explicit endTime, fall back to next step start or video duration
+    const rawEnd   = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
+    const em = Math.floor(rawEnd / 60);
+    const es = Math.floor(rawEnd % 60).toString().padStart(2, '0');
+    const hasExplicitEnd = step.endTime != null;
     return `
       <div draggable="true"
         ondragstart="stepDragStart(event,${i})"
         ondragover="stepDragOver(event,${i})"
         ondrop="stepDrop(event,${i})"
         ondragend="stepDragEnd(event)"
-        style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);cursor:grab;transition:opacity 0.15s;"
+        style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--bg-card-soft);border-radius:12px;border:2px solid var(--border-card);cursor:grab;transition:opacity 0.15s;"
         id="stepRow_${i}">
-        <!-- color dot -->
-        <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-        <!-- times -->
-        <span style="font-size:0.7rem;font-weight:900;color:var(--primary);font-variant-numeric:tabular-nums;min-width:80px;">${step.displayTime} ${endDisplay}</span>
-        <!-- label input -->
-        <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
-          style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.85rem;font-weight:700;color:var(--text-heading);outline:none;cursor:text;">
-        <!-- preview -->
-        <button onclick="previewStepLoop(${i})"
-          title="Preview this step looping"
-          style="background:${color};border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.75rem;font-weight:900;cursor:pointer;color:#446;white-space:nowrap;">▶ Loop</button>
-        <!-- delete -->
-        <button onclick="removeCreateStep(${i})"
-          style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0 4px;">×</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+          <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
+            style="flex:1;background:transparent;border:none;font-family:var(--font);font-size:0.85rem;font-weight:700;color:var(--text-heading);outline:none;cursor:text;">
+          <button onclick="previewStepLoop(${i})"
+            style="background:${color};border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.72rem;font-weight:900;cursor:pointer;color:#446;white-space:nowrap;">▶ Loop</button>
+          <button onclick="removeCreateStep(${i})"
+            style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0 4px;">×</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:18px;">
+          <span style="font-size:0.68rem;font-weight:900;color:var(--primary);font-variant-numeric:tabular-nums;">
+            ${step.displayTime} <span style="color:var(--text-muted);font-weight:600;">▶</span> ${em}:${es}
+            ${hasExplicitEnd ? '<span style="color:#22c55e;font-size:0.6rem;">✓ AI</span>' : ''}
+          </span>
+          <button onclick="setStepEnd(${i})"
+            title="Set loop end to current video position"
+            style="background:#f0f4ff;border:2px solid rgba(74,144,217,0.2);border-radius:8px;padding:3px 8px;font-family:var(--font);font-size:0.68rem;font-weight:800;cursor:pointer;color:var(--primary);white-space:nowrap;">
+            ✂️ Set End Here
+          </button>
+        </div>
       </div>`;
   }).join('');
 }
@@ -1756,7 +1788,8 @@ window.previewStepLoop = function(i) {
 
   stopPreviewLoop();
 
-  const endTime = (createStepsArr[i + 1]?.time) ?? videoDuration;
+  // Use explicit endTime if set, otherwise next step's start or video duration
+  const endTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
   videoEl.currentTime = step.time;
   videoEl.play();
 
@@ -2066,12 +2099,18 @@ window.generateLoops = async function() {
       return;
     }
 
-    // Replace timeline steps with AI-detected ones
+    // Replace timeline steps with AI-detected ones (with start AND end times)
     createStepsArr = loops.map(l => {
-      const t = Number(l.time) || 0;
+      const t   = Number(l.time) || 0;
+      const end = l.endTime != null ? Number(l.endTime) : null;
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60).toString().padStart(2, '0');
-      return { time: t, label: l.label || `Step`, displayTime: `${m}:${s}` };
+      return {
+        time:        t,
+        endTime:     end,
+        label:       l.label || 'Step',
+        displayTime: `${m}:${s}`
+      };
     }).sort((a, b) => a.time - b.time);
 
     renderCreateSteps();
