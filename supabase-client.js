@@ -232,3 +232,80 @@ export async function updateRecipe(id, updates) {
   if (error) throw error;
   return data;
 }
+
+// =====================================================
+// Phase 7 — User Loop Customizations
+// =====================================================
+
+export async function getUserLoops(userId, recipeId) {
+  const { data, error } = await supabase
+    .from('user_loops')
+    .select('loops')
+    .eq('user_id', userId)
+    .eq('recipe_id', recipeId)
+    .single();
+  if (error) return null; // table may not exist yet
+  return data?.loops ?? null;
+}
+
+export async function saveUserLoops(userId, recipeId, loops) {
+  const { error } = await supabase
+    .from('user_loops')
+    .upsert({ user_id: userId, recipe_id: recipeId, loops, updated_at: new Date().toISOString() },
+             { onConflict: 'user_id,recipe_id' });
+  if (error) throw error;
+}
+
+// =====================================================
+// Phase 8b — Folders
+// =====================================================
+
+export async function getFolders(userId) {
+  const { data, error } = await supabase
+    .from('recipe_folders')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at');
+  if (error) return [];
+  return data ?? [];
+}
+
+export async function createFolder(userId, name, color = '#4a90d9') {
+  const { data, error } = await supabase
+    .from('recipe_folders')
+    .insert({ user_id: userId, name, color })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function assignRecipeToFolder(recipeId, folderId) {
+  const { error } = await supabase
+    .from('recipes')
+    .update({ folder_id: folderId })
+    .eq('id', recipeId);
+  if (error) throw error;
+}
+
+// =====================================================
+// Phase 8c — Translation Cache
+// =====================================================
+
+export async function getTranslation(recipeId, language) {
+  const { data, error } = await supabase
+    .from('recipe_translations')
+    .select('steps, ingredients')
+    .eq('recipe_id', recipeId)
+    .eq('language', language)
+    .single();
+  if (error) return null;
+  return data;
+}
+
+export async function saveTranslation(recipeId, language, steps, ingredients) {
+  const { error } = await supabase
+    .from('recipe_translations')
+    .upsert({ recipe_id: recipeId, language, steps, ingredients },
+             { onConflict: 'recipe_id,language' });
+  if (error) throw error;
+}

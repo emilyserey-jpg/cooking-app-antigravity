@@ -196,6 +196,67 @@ Rules:
   }
 });
 
+// ─── AI: Translate steps + ingredients into target language ───────────────
+app.post('/api/ai/translate', async (req, res) => {
+  if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });
+  const { recipe_id, language, steps, ingredients } = req.body;
+  if (!steps || !language) return res.status(400).json({ error: 'Missing steps or language.' });
+
+  const LANG_NAMES = {
+    es: 'Spanish', fr: 'French', zh: 'Mandarin Chinese', ja: 'Japanese',
+    pt: 'Brazilian Portuguese', de: 'German', ar: 'Arabic', hi: 'Hindi',
+  };
+  const langName = LANG_NAMES[language] || language;
+
+  try {
+    const stepsText = Array.isArray(steps) ? steps.join('\n') : steps;
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a cooking recipe translator. Translate cooking step labels and ingredients into ${langName}. Keep translations concise (step labels max 5 words). Return JSON: { "steps": ["...", ...], "ingredients": "..." }`,
+        },
+        {
+          role: 'user',
+          content: `Translate to ${langName}:\n\nSteps:\n${stepsText}\n\nIngredients:\n${ingredients || ''}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 600,
+      temperature: 0.1,
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content);
+
+    // Cache in Supabase if recipe_id provided
+    // Uses SUPABASE_URL + SUPABASE_SERVICE_KEY (or SUPABASE_ANON_KEY) from env
+    // @supabase/supabase-js is already a project dependency
+    if (recipe_id) {
+      try {
+        const { createClient } = require('@supabase/supabase-js');
+        const sb = createClient(
+          process.env.SUPABASE_URL || '',
+          process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
+        );
+        await sb.from('recipe_translations').upsert({
+          recipe_id,
+          language,
+          steps:       result.steps || [],
+          ingredients: result.ingredients || '',
+        }, { onConflict: 'recipe_id,language' });
+      } catch (cacheErr) {
+        console.warn('[Translate] Cache save failed (table may not exist):', cacheErr.message);
+      }
+    }
+
+    res.json({ steps: result.steps || [], ingredients: result.ingredients || '' });
+  } catch (err) {
+    console.error('[AI Translate] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Serve SPA ────────────────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

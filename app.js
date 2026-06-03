@@ -1513,6 +1513,19 @@ window.loadGridRecipe = async function(recipeId) {
     const recipe = await getRecipeById(recipeId);
     gridCurrentRecipe = recipe;
     renderGridTiles(recipe);
+    await loadUserLoops(recipeId);
+    activeLoopVersion = 'creator';
+
+    // Show Phase 7 loop toggle
+    const lt = document.getElementById('gridLoopToggle');
+    if (lt) lt.style.display = 'block';
+    // Show Phase 8e progress section
+    const ps = document.getElementById('gridProgressSection');
+    if (ps) ps.style.display = 'block';
+    const total = document.getElementById('gridProgressTotal');
+    const loops = Array.isArray(recipe.loops) ? recipe.loops : [];
+    if (total) total.textContent = loops.length;
+    updateProgressBar(recipe.id);
   } catch (err) {
     showTip('Could not load recipe: ' + err.message);
   }
@@ -1565,6 +1578,7 @@ function renderGridTiles(recipe) {
   // Build tile HTML — each tile uses the AI-detected start+end times
   container.innerHTML = parsedLoops.map((loop, i) => {
     const label = loop.label || steps[i] || `Step ${i + 1}`;
+    const timerSecs = detectTimer(label);
     const color = GRID_STEP_COLORS[i % GRID_STEP_COLORS.length];
     const sm = Math.floor(loop.start / 60);
     const ss = Math.floor(loop.start % 60).toString().padStart(2, '0');
@@ -1601,7 +1615,14 @@ function renderGridTiles(recipe) {
         <div style="padding:12px 14px;background:${color}22;">
           <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
           <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}${hasEnd ? ' <span style="color:#22c55e;">✓ AI</span>' : ''}</div>
+          <!-- Phase 8d: Timer button -->
+          ${timerSecs ? `<button onclick="event.stopPropagation();startStepTimer(${i},'${label.replace(/'/g,'\\'')}')" style="margin-top:6px;background:#fef3c7;border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.68rem;font-weight:800;cursor:pointer;color:#92400e;">⏱ Start ${Math.floor(timerSecs/60)}min timer</button>` : ''}
         </div>
+        <!-- Phase 8e: Done button -->
+        <button id="gridDoneBtn_${i}" onclick="event.stopPropagation();toggleStepDone(${i})"
+          style="position:absolute;bottom:12px;right:12px;background:rgba(255,255,255,0.85);border:none;border-radius:999px;padding:4px 12px;font-family:var(--font);font-size:0.72rem;font-weight:800;cursor:pointer;color:#333;backdrop-filter:blur(4px);">
+          ○ Done
+        </button>
       </div>`;
   }).join('');
 
@@ -1609,6 +1630,12 @@ function renderGridTiles(recipe) {
   parsedLoops.forEach((loop, i) => {
     setupGridTileVideo(i, videoUrl, loop.start, loop.end);
   });
+
+  // Load progress state for this recipe
+  if (gridCurrentRecipe) {
+    loadGridProgress(gridCurrentRecipe.id);
+    parsedLoops.forEach((_, i) => refreshTileDoneState(i));
+  }
 }
 
 // Set up a single tile's video to loop its segment
@@ -1752,6 +1779,361 @@ window.navigateGridStep = function(direction) {
   if (next < 0 || next >= loops.length) return;
   collapseGridTile();
   setTimeout(() => expandGridTile(next), 100);
+};
+
+// ============================================================
+// PHASE 7 — Creator Loops vs. User Loops
+// ============================================================
+let activeLoopVersion  = 'creator'; // 'creator' | 'mine'
+let userSavedLoops     = null;      // user's saved loop data for current recipe
+
+// Switch between creator's loops and user's own customized loops
+window.switchLoopVersion = function(version) {
+  if (!gridCurrentRecipe) return;
+  activeLoopVersion = version;
+
+  // Update tab styles
+  const tC = document.getElementById('loopTabCreator');
+  const tM = document.getElementById('loopTabMine');
+  if (tC) { tC.style.background = version === 'creator' ? 'var(--primary)' : 'var(--bg-card-soft)'; tC.style.color = version === 'creator' ? '#fff' : 'var(--text-body)'; tC.style.border = version === 'creator' ? 'none' : '2px solid var(--border-card)'; }
+  if (tM) { tM.style.background = version === 'mine'    ? 'var(--primary)' : 'var(--bg-card-soft)'; tM.style.color = version === 'mine'    ? '#fff' : 'var(--text-body)'; tM.style.border = version === 'mine'    ? 'none' : '2px solid var(--border-card)'; }
+
+  if (version === 'creator') {
+    renderGridTiles(gridCurrentRecipe);
+    showTip('Showing creator\'s original loop points 🎬');
+  } else {
+    if (!userSavedLoops) {
+      showTip('No saved loops yet — edit the timeline in Create view, then tap 💾 Save My Loops');
+      return;
+    }
+    const customRecipe = { ...gridCurrentRecipe, loops: userSavedLoops };
+    renderGridTiles(customRecipe);
+    showTip('Showing your custom loop points ✏️');
+  }
+};
+
+// Save the current grid's loop timing as the user's own version
+window.saveUserLoops = async function() {
+  if (!gridCurrentRecipe || !currentUser) {
+    showTip('Sign in to save your own loop customizations.');
+    return;
+  }
+  try {
+    const { supabase } = await import('./supabase-client.js');
+    const loops = parseLoops(gridCurrentRecipe.loops); // save what's currently rendered
+    const { error } = await supabase
+      .from('user_loops')
+      .upsert({
+        user_id:   currentUser.email,
+        recipe_id: gridCurrentRecipe.id,
+        loops:     loops,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,recipe_id' });
+    if (error) throw error;
+    userSavedLoops = loops;
+    showTip('Your loops saved! Switch to "My Loops" to use them 💾');
+  } catch (err) {
+    // Table might not exist yet — save to localStorage as fallback
+    userSavedLoops = parseLoops(gridCurrentRecipe.loops);
+    localStorage.setItem(`user_loops_${gridCurrentRecipe.id}`, JSON.stringify(userSavedLoops));
+    showTip('Loops saved locally 💾 (run the Phase 7 SQL in Supabase to sync across devices)');
+  }
+};
+
+// Load user's saved loops for the current recipe
+async function loadUserLoops(recipeId) {
+  userSavedLoops = null;
+
+  // Try localStorage first (works without DB)
+  const local = localStorage.getItem(`user_loops_${recipeId}`);
+  if (local) { try { userSavedLoops = JSON.parse(local); } catch {} }
+
+  // Try Supabase (if table exists)
+  if (currentUser) {
+    try {
+      const { supabase } = await import('./supabase-client.js');
+      const { data } = await supabase
+        .from('user_loops')
+        .select('loops')
+        .eq('user_id', currentUser.email)
+        .eq('recipe_id', recipeId)
+        .single();
+      if (data?.loops) userSavedLoops = data.loops;
+    } catch {} // silently ignore if table doesn't exist
+  }
+
+  // Show/hide the My Loops tab
+  const tM = document.getElementById('loopTabMine');
+  if (tM) {
+    tM.style.opacity = userSavedLoops ? '1' : '0.5';
+    tM.title = userSavedLoops ? 'Your saved loops' : 'No saved loops yet — tap 💾 Save My Loops first';
+  }
+}
+
+// ============================================================
+// PHASE 8b — Search (tags + title)
+// ============================================================
+window.handleGridSearch = function(query) {
+  // Reuse discover search logic — filter the picker
+  if (!query.trim()) return;
+  const q = query.toLowerCase();
+  const picker = document.getElementById('gridRecipePicker');
+  if (!picker) return;
+  Array.from(picker.options).forEach(opt => {
+    opt.style.display = opt.textContent.toLowerCase().includes(q) || !opt.value ? '' : 'none';
+  });
+};
+
+// ============================================================
+// PHASE 8c — AI Translation (cached per recipe + language)
+// ============================================================
+let gridTranslatedSteps       = null; // null = showing original
+let gridActiveLanguage        = '';   // '' = original
+
+window.translateGridRecipe = async function(lang) {
+  gridActiveLanguage = lang;
+  if (!gridCurrentRecipe) return;
+  if (!lang) {
+    // Reset to original
+    gridTranslatedSteps = null;
+    renderGridTiles(gridCurrentRecipe);
+    showTip('Showing original language');
+    return;
+  }
+
+  showTip('🌐 Translating...');
+
+  try {
+    // 1. Check cache in Supabase
+    const { supabase } = await import('./supabase-client.js');
+    const { data: cached } = await supabase
+      .from('recipe_translations')
+      .select('steps, ingredients')
+      .eq('recipe_id', gridCurrentRecipe.id)
+      .eq('language', lang)
+      .single();
+
+    if (cached) {
+      gridTranslatedSteps = cached.steps;
+      applyTranslationToGrid(cached.steps);
+      showTip(`✅ Loaded cached ${lang} translation (free!)`);
+      return;
+    }
+  } catch {} // table might not exist yet
+
+  // 2. No cache — call AI
+  try {
+    const steps = Array.isArray(gridCurrentRecipe.steps) ? gridCurrentRecipe.steps : [];
+    const ingredients = gridCurrentRecipe.ingredients || '';
+
+    const res  = await fetch('/api/ai/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipe_id:   gridCurrentRecipe.id,
+        language:    lang,
+        steps,
+        ingredients,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    gridTranslatedSteps = data.steps;
+    applyTranslationToGrid(data.steps);
+    showTip(`✅ Translated to ${lang}! Cached for free next time.`);
+  } catch (err) {
+    showTip('Translation failed: ' + err.message);
+  }
+};
+
+function applyTranslationToGrid(translatedSteps) {
+  if (!Array.isArray(translatedSteps)) return;
+  translatedSteps.forEach((label, i) => {
+    const tile = document.getElementById(`gridTile_${i}`);
+    if (!tile) return;
+    const labelEl = tile.querySelector('[data-step-label]');
+    if (labelEl) labelEl.textContent = label;
+  });
+}
+
+// ============================================================
+// PHASE 8d — Cooking Timers + Browser Notifications
+// ============================================================
+let activeTimerInterval = null;
+let activeTimerStep     = null;
+let expandedTimerSecs   = 0;
+let expandedTimerRunning = false;
+
+// Extract timer from step label: "Simmer 10 min" → 600 seconds
+function detectTimer(label) {
+  if (!label) return null;
+  const match = label.match(/(\d+)\s*(hour|hr|h|minute|min|m|second|sec|s)s?/i);
+  if (!match) return null;
+  const val  = parseInt(match[1]);
+  const unit = match[2].toLowerCase();
+  if (unit.startsWith('h')) return val * 3600;
+  if (unit.startsWith('m')) return val * 60;
+  return val;
+};
+
+window.startStepTimer = function(stepIndex, label) {
+  const secs = detectTimer(label);
+  if (!secs) { showTip('No timer found in this step.'); return; }
+  stopActiveTimer();
+
+  activeTimerStep = stepIndex;
+  let remaining   = secs;
+  const banner    = document.getElementById('gridTimerBanner');
+  const text      = document.getElementById('gridTimerText');
+
+  if (Notification.permission === 'default') Notification.requestPermission();
+
+  if (banner) banner.style.display = 'block';
+
+  function tick() {
+    const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+    const s = (remaining % 60).toString().padStart(2,'0');
+    if (text) text.textContent = `⏱ Step ${stepIndex + 1}: ${label} — ${m}:${s} remaining`;
+    if (remaining <= 0) {
+      stopActiveTimer();
+      if (text) text.textContent = `✅ Step ${stepIndex + 1} timer done!`;
+      if (Notification.permission === 'granted') {
+        new Notification('⏱ SIMR Timer Done!', {
+          body: `Step ${stepIndex + 1}: ${label} is ready!`,
+          icon: '/favicon.ico',
+        });
+      }
+      setTimeout(() => { if (banner) banner.style.display = 'none'; }, 5000);
+      return;
+    }
+    remaining--;
+  }
+  tick();
+  activeTimerInterval = setInterval(tick, 1000);
+};
+
+window.stopActiveTimer = function() {
+  if (activeTimerInterval) { clearInterval(activeTimerInterval); activeTimerInterval = null; }
+  const banner = document.getElementById('gridTimerBanner');
+  if (banner) banner.style.display = 'none';
+  activeTimerStep = null;
+};
+
+// Timer in expanded overlay
+window.toggleExpandedTimer = function() {
+  expandedTimerRunning = !expandedTimerRunning;
+  const btn = document.getElementById('gridExpandedTimerBtn');
+  if (btn) btn.textContent = expandedTimerRunning ? '⏸ Pause' : '▶ Resume';
+
+  if (expandedTimerRunning) {
+    const labelEl = document.getElementById('gridExpandedTimerLabel');
+    activeTimerInterval = setInterval(() => {
+      if (expandedTimerSecs <= 0) {
+        clearInterval(activeTimerInterval);
+        expandedTimerRunning = false;
+        if (btn) btn.textContent = '✅ Done!';
+        if (Notification.permission === 'granted') {
+          new Notification('⏱ Timer Done!', { body: 'Your cooking step is ready!' });
+        }
+        return;
+      }
+      expandedTimerSecs--;
+      const m = Math.floor(expandedTimerSecs / 60).toString().padStart(2,'0');
+      const s = (expandedTimerSecs % 60).toString().padStart(2,'0');
+      if (labelEl) labelEl.textContent = `${m}:${s} remaining`;
+    }, 1000);
+  } else {
+    clearInterval(activeTimerInterval);
+  }
+};
+
+// ============================================================
+// PHASE 8e — Step Progress Tracker (localStorage)
+// ============================================================
+let gridCompletedSteps = new Set();
+
+function getProgressKey(recipeId) {
+  return `simr_progress_${recipeId}`;
+}
+
+function loadGridProgress(recipeId) {
+  gridCompletedSteps = new Set();
+  try {
+    const saved = localStorage.getItem(getProgressKey(recipeId));
+    if (saved) {
+      const arr = JSON.parse(saved);
+      gridCompletedSteps = new Set(arr);
+    }
+  } catch {}
+  updateProgressBar(recipeId);
+}
+
+function updateProgressBar(recipeId) {
+  const total  = gridCurrentRecipe?.loops?.length || 0;
+  const done   = gridCompletedSteps.size;
+  const doneEl = document.getElementById('gridProgressDone');
+  const totEl  = document.getElementById('gridProgressTotal');
+  const fill   = document.getElementById('gridProgressFill');
+  if (doneEl) doneEl.textContent = done;
+  if (totEl)  totEl.textContent  = total;
+  if (fill)   fill.style.width   = total > 0 ? `${Math.round((done/total)*100)}%` : '0%';
+}
+
+function saveGridProgress(recipeId) {
+  localStorage.setItem(getProgressKey(recipeId), JSON.stringify([...gridCompletedSteps]));
+}
+
+window.toggleStepDone = function(stepIndex) {
+  if (!gridCurrentRecipe) return;
+  if (gridCompletedSteps.has(stepIndex)) {
+    gridCompletedSteps.delete(stepIndex);
+  } else {
+    gridCompletedSteps.add(stepIndex);
+  }
+  saveGridProgress(gridCurrentRecipe.id);
+  updateProgressBar(gridCurrentRecipe.id);
+  refreshTileDoneState(stepIndex);
+
+  const total = gridCurrentRecipe.loops?.length || 0;
+  if (gridCompletedSteps.size === total && total > 0) {
+    setTimeout(() => showTip('🎉 Recipe complete! Every step done!'), 300);
+  }
+};
+
+function refreshTileDoneState(i) {
+  const tile = document.getElementById(`gridTile_${i}`);
+  if (!tile) return;
+  const done = gridCompletedSteps.has(i);
+  tile.style.opacity  = done ? '0.6' : '1';
+  const doneBtn = document.getElementById(`gridDoneBtn_${i}`);
+  if (doneBtn) {
+    doneBtn.textContent = done ? '✅ Done' : '○ Done';
+    doneBtn.style.background = done ? '#22c55e' : 'rgba(255,255,255,0.85)';
+    doneBtn.style.color      = done ? '#fff' : '#333';
+  }
+}
+
+// Mark done from the expanded overlay
+window.markExpandedStepDone = function() {
+  if (gridExpandedIndex === null) return;
+  toggleStepDone(gridExpandedIndex);
+  const btn = document.getElementById('gridExpandedDoneBtn');
+  if (btn) {
+    const done = gridCompletedSteps.has(gridExpandedIndex);
+    btn.textContent = done ? '✅ Done!' : '○ Mark Done';
+    btn.style.background = done ? '#16a34a' : '#22c55e';
+  }
+};
+
+window.resetGridProgress = function() {
+  if (!gridCurrentRecipe) return;
+  gridCompletedSteps = new Set();
+  saveGridProgress(gridCurrentRecipe.id);
+  updateProgressBar(gridCurrentRecipe.id);
+  const loops = gridCurrentRecipe.loops || [];
+  loops.forEach((_, i) => refreshTileDoneState(i));
+  showTip('Progress reset 🔄');
 };
 
 window.handleDiscoverSearch = function(query) {
