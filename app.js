@@ -2480,27 +2480,103 @@ function renderTimeline() {
   const timeline = document.getElementById('createTimeline');
   if (!timeline || videoDuration <= 0) return;
 
-  // Keep the playhead, remove old segments
   const playhead = document.getElementById('timelinePlayhead');
   timeline.innerHTML = '';
   if (playhead) timeline.appendChild(playhead);
 
+  // Colored segments
   createStepsArr.forEach((step, i) => {
     const startPct = (step.time / videoDuration) * 100;
-    // Use explicit endTime if set, otherwise next step's start
     const nextTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
     const widthPct = Math.max(((nextTime - step.time) / videoDuration) * 100, 0.5);
     const color    = STEP_COLORS[i % STEP_COLORS.length];
 
     const seg = document.createElement('div');
-    seg.style.cssText = `
-      position:absolute; top:0; left:${startPct}%; width:${widthPct}%;
-      height:100%; background:${color}; opacity:0.85;
-      display:flex; align-items:center; justify-content:center;
-      overflow:hidden; border-right:2px solid rgba(255,255,255,0.6);
-    `;
-    seg.innerHTML = `<span style="font-size:0.65rem;font-weight:800;color:#446;white-space:nowrap;padding:0 4px;overflow:hidden;text-overflow:ellipsis;">${step.label}</span>`;
+    seg.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:0.75;overflow:hidden;border-radius:4px;pointer-events:none;`;
+    seg.innerHTML = `<span style="font-size:0.6rem;font-weight:800;color:#446;white-space:nowrap;padding:2px 4px;display:block;">${step.label}</span>`;
     timeline.appendChild(seg);
+  });
+
+  // Draggable marker handles (one per stop)
+  createStepsArr.forEach((step, i) => {
+    const startPct = (step.time / videoDuration) * 100;
+    const color    = STEP_COLORS[i % STEP_COLORS.length];
+
+    const handle = document.createElement('div');
+    handle.title = `Drag to move: ${step.label}`;
+    handle.style.cssText = `
+      position:absolute; top:0; left:${startPct}%;
+      width:18px; height:100%;
+      transform:translateX(-50%);
+      cursor:ew-resize; z-index:20;
+      display:flex; flex-direction:column; align-items:center;
+    `;
+    handle.innerHTML = `
+      <div style="width:3px;height:100%;background:rgba(255,255,255,0.95);border-radius:2px;box-shadow:0 0 4px rgba(0,0,0,0.3);"></div>
+      <div style="position:absolute;top:-1px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid ${color};box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>
+    `;
+
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const rect = timeline.getBoundingClientRect();
+
+      function onMove(ev) {
+        const pct     = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const newTime = Math.round(pct * videoDuration * 10) / 10;
+        createStepsArr[i].time = newTime;
+        const m = Math.floor(newTime / 60).toString().padStart(2, '0');
+        const s = Math.floor(newTime % 60).toString().padStart(2, '0');
+        createStepsArr[i].displayTime = `${m}:${s}`;
+        renderTimeline();
+      }
+
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        createStepsArr.sort((a, b) => a.time - b.time);
+        renderTimeline();
+        renderCreateSteps();
+        const vid = document.getElementById('uploadedVideoPlayer');
+        if (vid) vid.currentTime = createStepsArr[i]?.time ?? 0;
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // Touch support
+    handle.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const rect = timeline.getBoundingClientRect();
+
+      function onTouch(ev) {
+        const touch   = ev.touches[0];
+        const pct     = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+        const newTime = Math.round(pct * videoDuration * 10) / 10;
+        createStepsArr[i].time = newTime;
+        const m = Math.floor(newTime / 60).toString().padStart(2, '0');
+        const s = Math.floor(newTime % 60).toString().padStart(2, '0');
+        createStepsArr[i].displayTime = `${m}:${s}`;
+        renderTimeline();
+      }
+
+      function onTouchEnd() {
+        handle.removeEventListener('touchmove', onTouch);
+        handle.removeEventListener('touchend', onTouchEnd);
+        createStepsArr.sort((a, b) => a.time - b.time);
+        renderTimeline();
+        renderCreateSteps();
+        const vid = document.getElementById('uploadedVideoPlayer');
+        if (vid) vid.currentTime = createStepsArr[i]?.time ?? 0;
+      }
+
+      handle.addEventListener('touchmove', onTouch, { passive: false });
+      handle.addEventListener('touchend', onTouchEnd);
+    }, { passive: false });
+
+    timeline.appendChild(handle);
   });
 }
 
@@ -2519,17 +2595,18 @@ window.timelineSeek = function(e) {
 let currentNavStepIndex = 0;
 
 function refreshStepNavigator() {
-  const bar = document.getElementById('stepNavigatorBar');
-  if (!bar) return;
-  if (!createStepsArr.length) { bar.style.display = 'none'; return; }
-  bar.style.display = 'block';
-  const i     = Math.max(0, Math.min(currentNavStepIndex, createStepsArr.length - 1));
-  currentNavStepIndex = i;
-  const step  = createStepsArr[i];
   const label = document.getElementById('stepNavLabel');
   const count = document.getElementById('stepNavCount');
+  if (!createStepsArr.length) {
+    if (label) label.textContent = 'No loop stops yet';
+    if (count) count.textContent = 'Tap ▶ AI: Place Loop Stops or add manually';
+    return;
+  }
+  const i    = Math.max(0, Math.min(currentNavStepIndex, createStepsArr.length - 1));
+  currentNavStepIndex = i;
+  const step = createStepsArr[i];
   if (label) label.textContent = step.label || `Step ${i + 1}`;
-  if (count) count.textContent = `${i + 1} of ${createStepsArr.length}`;
+  if (count) count.textContent  = `${i + 1} of ${createStepsArr.length}  ·  ${step.displayTime || '0:00'}`;
 }
 
 window.navStep = function(dir) {

@@ -742,27 +742,25 @@
               <button onclick="addStepAtCurrentTime()"
                 style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:12px 20px;font-family:var(--font);font-weight:900;font-size:0.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(74,144,217,0.35);transition:all 0.2s;white-space:nowrap;"
                 onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform=''">
-                📍 Add Step
-              </button>
-              <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
-                style="display:none;background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);border-radius:999px;padding:12px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;white-space:nowrap;">
-                ⏹ Stop
+                📍 Add Stop Here
               </button>
             </div>
 
-            <!-- Step Navigator — jump between loop stops -->
-            <div class="glass-card" id="stepNavigatorBar" style="display:none;padding:10px 14px;">
+            <!-- Step Navigator — always visible -->
+            <div class="glass-card" id="stepNavigatorBar" style="padding:10px 14px;">
               <div style="display:flex;align-items:center;gap:8px;">
                 <button onclick="navStep(-1)"
-                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">← Prev</button>
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">← Prev</button>
                 <div style="flex:1;text-align:center;min-width:0;">
-                  <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-                  <div id="stepNavCount" style="font-size:0.68rem;font-weight:700;color:var(--text-muted);"></div>
+                  <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No loop stops yet</div>
+                  <div id="stepNavCount" style="font-size:0.68rem;font-weight:700;color:var(--text-muted);">Tap ▶ AI: Place Loop Stops or add manually</div>
                 </div>
                 <button onclick="navStep(1)"
-                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">Next →</button>
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">Next →</button>
                 <button onclick="previewCurrentNavStep()"
-                  style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">▶ Loop</button>
+                  style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:8px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">▶ Loop</button>
+                <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
+                  style="background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);border-radius:999px;padding:8px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:none;">⏹ Stop</button>
               </div>
             </div>
 
@@ -774,7 +772,7 @@
                 <span id="previewingLabel" style="font-size:0.75rem;font-weight:700;color:var(--primary);display:none;">▶ Looping step...</span>
               </div>
               <div id="createTimeline" onclick="timelineSeek(event)"
-                style="position:relative;height:44px;background:#eef4ff;border-radius:10px;overflow:hidden;cursor:pointer;">
+                style="position:relative;height:60px;background:#eef4ff;border-radius:10px;overflow:visible;cursor:pointer;user-select:none;">
                 <div id="timelinePlayhead" style="position:absolute;top:0;left:0%;width:3px;height:100%;background:var(--primary);border-radius:2px;z-index:10;pointer-events:none;transition:left 0.08s;"></div>
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:4px;">
