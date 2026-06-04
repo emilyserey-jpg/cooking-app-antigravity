@@ -2207,14 +2207,15 @@ window.handleFileSelect = async function(file) {
   if (!file.type.startsWith('video/')) { showTip('Please select a video file (MP4, MOV, WebM)'); return; }
   if (file.size > 500 * 1024 * 1024) { showTip('File too large — max 500MB'); return; }
 
-  // 1️⃣ Show LOCAL preview immediately so user can start marking steps right away
+  // Show local preview immediately
   localVideoURL = URL.createObjectURL(file);
   uploadedVideoUID = null;
   showEditorStage(localVideoURL);
 
-  // 2️⃣ Upload to Cloudflare Stream in the background
+  // Upload to Cloudflare Stream for playback
   uploadToCFStream(file);
 };
+
 
 async function uploadToCFStream(file) {
   const progressWrap = document.getElementById('uploadProgressWrap');
@@ -2893,24 +2894,17 @@ window.generateLoops = async function() {
   }
 };
 
-// ── Shared: send video file to Gemini, return structured data or null ──────
+// ── On-demand Gemini: only runs when user taps an AI button ────────────────
 async function tryGeminiFor(task) {
-  // Must have the actual file to send to Google File API
   if (!uploadedFile) return null;
-
   try {
-    setAIStatus('🤖 Uploading to Gemini for analysis...', true);
+    setAIStatus('🤖 Sending video to Gemini…', true);
     const formData = new FormData();
     formData.append('video', uploadedFile, uploadedFile.name);
-
     const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
     const data = await res.json();
-
-    if (!res.ok || data.error) {
-      console.warn('[Gemini] Failed:', data.error);
-      return null;
-    }
-    return data; // { title, ingredients, steps, loops }
+    if (!res.ok || data.error) { console.warn('[Gemini]', data.error); return null; }
+    return data;
   } catch (err) {
     console.warn('[Gemini] Network error:', err.message);
     return null;
