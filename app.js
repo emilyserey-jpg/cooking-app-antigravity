@@ -2378,7 +2378,7 @@ async function autoAnalyzeWithAI() {
 
 function showEditorStage(videoUrl) {
   document.getElementById('createStage1').style.display = 'none';
-  document.getElementById('createStage2').style.display = 'block';
+  document.getElementById('createStage2').style.display = 'flex';
 
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (!videoEl) return;
