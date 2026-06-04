@@ -2449,6 +2449,11 @@ window.onVideoLoaded = function() {
     videoEl.addEventListener('play',  () => { const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '⏸'; });
     videoEl.addEventListener('pause', () => { const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '▶'; });
   }
+  // Re-render timeline if steps already exist (e.g. after AI analysis)
+  if (createStepsArr.length) {
+    renderTimeline();
+    renderCreateSteps();
+  }
   showTip('Video ready! Play it and tap "📍 Add Step" to mark steps.');
 };
 
@@ -2561,13 +2566,13 @@ function renderTimeline() {
 
     // Full-height colored chapter band — label inside
     const band = document.createElement('div');
-    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:0.82;overflow:hidden;border-right:2px solid rgba(255,255,255,0.7);`;
+    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:1;overflow:hidden;border-right:2px solid rgba(255,255,255,0.5);box-sizing:border-box;`;
     // Number badge + label inside the band
     band.innerHTML = `
-      <div style="padding:4px 5px;display:flex;flex-direction:column;gap:1px;height:100%;">
-        <div style="font-size:0.55rem;font-weight:900;color:#334;line-height:1;">${i+1}</div>
-        <div style="font-size:0.6rem;font-weight:700;color:#334;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
-        <div style="font-size:0.52rem;font-weight:600;color:rgba(50,50,80,0.65);margin-top:auto;">${step.displayTime}</div>
+      <div style="padding:3px 5px;display:flex;flex-direction:column;gap:1px;height:100%;">
+        <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1;">${i+1}</div>
+        <div style="font-size:0.6rem;font-weight:800;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
+        <div style="font-size:0.5rem;font-weight:600;color:rgba(20,20,50,0.55);margin-top:auto;">${step.displayTime}</div>
       </div>`;
     markers.appendChild(band);
 
