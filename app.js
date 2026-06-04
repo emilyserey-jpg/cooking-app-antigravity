@@ -2174,6 +2174,16 @@ window.handleDiscoverSearch = function(query) {
 // ES modules are private by default — this makes them reachable
 // from inline onclick="..." attributes in index.html
 // ============================================================
+// ── Accordion toggle — shared by all collapsible panels in Create editor ───
+window.togglePanel = function(bodyId, chevronId) {
+  const body    = document.getElementById(bodyId);
+  const chevron = document.getElementById(chevronId);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
+};
+
 window.switchView            = switchView;
 window.switchSidebarTab      = switchSidebarTab;
 window.toggleVideoPlayback   = toggleVideoPlayback;
