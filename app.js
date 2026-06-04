@@ -1613,10 +1613,10 @@ function renderGridTiles(recipe) {
 
         <!-- Step info -->
         <div style="padding:12px 14px;background:${color}22;">
-          <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
+          <div data-step-label style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
           <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}${hasEnd ? ' <span style="color:#22c55e;">✓ AI</span>' : ''}</div>
           <!-- Phase 8d: Timer button -->
-          ${timerSecs ? `<button onclick="event.stopPropagation();startStepTimer(${i},'${label.replace(/'/g,'\\'')}')" style="margin-top:6px;background:#fef3c7;border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.68rem;font-weight:800;cursor:pointer;color:#92400e;">⏱ Start ${Math.floor(timerSecs/60)}min timer</button>` : ''}
+          ${timerSecs ? '<button onclick="event.stopPropagation();startStepTimer(' + i + ',\'' + label.replace(/'/g, '\\\'') + '\')" style="margin-top:6px;background:#fef3c7;border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.68rem;font-weight:800;cursor:pointer;color:#92400e;">⏱ Start ' + Math.floor(timerSecs/60) + 'min timer</button>' : ''}
         </div>
         <!-- Phase 8e: Done button -->
         <button id="gridDoneBtn_${i}" onclick="event.stopPropagation();toggleStepDone(${i})"
