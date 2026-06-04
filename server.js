@@ -307,6 +307,54 @@ Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole secon
 app.post('/api/ai/gemini-loops', (req, res) => res.status(410).json({ error: 'Deprecated — use /api/ai/gemini-analyze.' }));
 
 
+// ─── AI: Write a description for each loop stop ───────────────────────────
+app.post('/api/ai/describe-steps', async (req, res) => {
+  const { steps } = req.body;
+  if (!steps || !steps.length) return res.status(400).json({ error: 'No steps provided.' });
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured.' });
+
+  const stepList = steps.map((s, i) =>
+    `Step ${i + 1}: "${s.label}" (${formatTime(s.startTime)} → ${formatTime(s.endTime)})`
+  ).join('\n');
+
+  const prompt = `You are writing concise cooking instructions for a recipe video editor.
+The video has been divided into ${steps.length} loop stop sections:
+
+${stepList}
+
+For each step, write a single clear sentence (max 15 words) describing what the cook should do during that section.
+Reply ONLY with a JSON array of strings, one description per step, in order. Example:
+["Add oil and heat pan on medium-high.", "Season shrimp with salt, pepper, and garlic powder."]`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      }
+    );
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('No JSON array found in response');
+    const descriptions = JSON.parse(match[0]);
+    res.json({ descriptions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function formatTime(secs) {
+  if (!secs && secs !== 0) return '?';
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
 // ─── AI: Translate steps + ingredients into target language ───────────────
 app.post('/api/ai/translate', async (req, res) => {
   if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });

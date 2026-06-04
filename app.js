@@ -2429,7 +2429,10 @@ window.onVideoLoaded = function() {
     const m = Math.floor(videoDuration / 60);
     const s = Math.floor(videoDuration % 60).toString().padStart(2, '0');
     const dur = document.getElementById('timelineDuration');
-    if (dur) dur.textContent = `${m}:${s}`;
+    const cdl = document.getElementById('chapterDurationLabel');
+    const timeStr = `${m}:${s}`;
+    if (dur) dur.textContent = timeStr;
+    if (cdl) cdl.textContent = timeStr;
 
     // Update playhead and current time as video plays
     videoEl.addEventListener('timeupdate', () => {
@@ -2553,33 +2556,33 @@ function renderTimeline() {
   createStepsArr.forEach((step, i) => {
     const startPct = (step.time / videoDuration) * 100;
     const nextTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
-    const widthPct = Math.max(((nextTime - step.time) / videoDuration) * 100, 0.3);
+    const widthPct = Math.max(((nextTime - step.time) / videoDuration) * 100, 0.5);
     const color    = STEP_COLORS[i % STEP_COLORS.length];
 
-    // Colored chapter band in the scrubber
+    // Full-height colored chapter band — label inside
     const band = document.createElement('div');
-    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:0.7;border-radius:2px;pointer-events:none;`;
+    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:0.82;overflow:hidden;border-right:2px solid rgba(255,255,255,0.7);`;
+    // Number badge + label inside the band
+    band.innerHTML = `
+      <div style="padding:4px 5px;display:flex;flex-direction:column;gap:1px;height:100%;">
+        <div style="font-size:0.55rem;font-weight:900;color:#334;line-height:1;">${i+1}</div>
+        <div style="font-size:0.6rem;font-weight:700;color:#334;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
+        <div style="font-size:0.52rem;font-weight:600;color:rgba(50,50,80,0.65);margin-top:auto;">${step.displayTime}</div>
+      </div>`;
     markers.appendChild(band);
 
-    // Step number chip above the scrubber
-    const chip = document.createElement('div');
-    chip.style.cssText = `position:absolute;bottom:10px;left:${startPct}%;transform:translateX(-50%);background:${color};color:#446;font-size:0.55rem;font-weight:900;padding:1px 4px;border-radius:4px;white-space:nowrap;pointer-events:none;border:1px solid rgba(255,255,255,0.6);font-family:var(--font);`;
-    chip.textContent = `${i + 1}`;
-    markers.appendChild(chip);
-
-    // Draggable handle — circle on top of the scrubber boundary
+    // Draggable handle — thin vertical divider with circle dot at top
     const handle = document.createElement('div');
     handle.dataset.isHandle = '1';
-    handle.title = `Drag: ${step.label}`;
+    handle.title = `Drag to move: ${step.label}`;
     handle.style.cssText = `
-      position:absolute; top:50%; left:${startPct}%;
-      width:16px; height:16px;
-      transform:translate(-50%,-50%);
-      background:#fff; border:3px solid ${color};
-      border-radius:50%; cursor:ew-resize; z-index:30;
-      box-shadow:0 2px 6px rgba(0,0,0,0.5);
+      position:absolute; top:0; bottom:0; left:${startPct}%;
+      width:14px; transform:translateX(-50%);
+      cursor:ew-resize; z-index:30;
+      display:flex; align-items:flex-start; justify-content:center;
       pointer-events:auto;
     `;
+    handle.innerHTML = `<div style="width:12px;height:12px;margin-top:2px;border-radius:50%;background:#fff;border:2.5px solid ${color};box-shadow:0 2px 5px rgba(0,0,0,0.3);pointer-events:none;flex-shrink:0;"></div>`;
 
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation(); e.preventDefault();
@@ -3169,6 +3172,39 @@ window.aiWriteSteps = async function() {
     setAIStatus('✅ Steps written!', true);
   } catch (err) {
     setAIStatus('❌ ' + (err.message || 'Failed to write steps.'), true);
+  }
+};
+
+// ── AI: Write descriptions for each placed loop stop ──────────────────────
+window.aiWriteStepDescriptions = async function() {
+  if (!createStepsArr.length) {
+    showTip('Add loop stops first, then tap ✍️ AI Descriptions.');
+    return;
+  }
+  showTip('✍️ AI is writing descriptions for each loop stop…');
+  try {
+    const steps = createStepsArr.map((s, i) => ({
+      index: i,
+      label: s.label,
+      startTime: s.time,
+      endTime: s.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration),
+    }));
+    const videoUrl = document.getElementById('uploadedVideoPlayer')?.src || window._uploadedVideoUrl || '';
+    const res = await fetch('/api/ai/describe-steps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ steps, videoUrl }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    // Apply descriptions
+    (data.descriptions || []).forEach((desc, i) => {
+      if (createStepsArr[i]) createStepsArr[i].description = desc;
+    });
+    renderCreateSteps();
+    showTip('✅ Descriptions written! Edit any card to customize.');
+  } catch (err) {
+    showTip('❌ ' + (err.message || 'Could not generate descriptions.'));
   }
 };
 
