@@ -779,45 +779,61 @@
                 onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
             </div>
 
-            <!-- 🤖 AI Loop Placement — ONE BIG BUTTON -->
+            <!-- 🤖 AI Tools — each works independently -->
             <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:16px;">
-
-              <!-- Primary action: one tap does everything -->
-              <button id="aiLoopBtn" onclick="doItAll()"
-                style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:14px;padding:16px;font-family:var(--font);font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(124,58,237,0.4);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;"
-                onmouseenter="this.style.transform='translateY(-1px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.5)'"
-                onmouseleave="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(124,58,237,0.4)'">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
                 <span style="font-size:1.3rem;">🤖</span>
-                <span>AI: Place Loop Stops</span>
-              </button>
+                <div style="font-weight:900;color:#7c3aed;font-size:1rem;">AI Tools</div>
+                <span style="font-size:0.65rem;background:#ede9ff;color:#7c3aed;padding:2px 8px;border-radius:999px;font-weight:800;">Gemini + Whisper</span>
+              </div>
 
               <!-- AI Status -->
-              <div id="aiStatus" style="display:none;text-align:center;padding:10px;font-size:0.82rem;font-weight:700;color:#7c3aed;background:#f5f0ff;border-radius:10px;margin-bottom:8px;">
+              <div id="aiStatus" style="display:none;text-align:center;padding:10px;font-size:0.82rem;font-weight:700;color:#7c3aed;background:#f5f0ff;border-radius:10px;margin-bottom:10px;">
                 <span id="aiStatusText">Analyzing...</span>
               </div>
 
+              <!-- 1. Place Loop Stops — primary action -->
+              <button id="aiLoopBtn" onclick="doItAll()"
+                style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:12px;padding:14px;font-family:var(--font);font-weight:900;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,0.35);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;"
+                onmouseenter="this.style.opacity='0.92'" onmouseleave="this.style.opacity='1'">
+                <span>🔁</span><span>AI: Place Loop Stops</span>
+              </button>
+
+              <!-- 2 & 3: Steps + Ingredients — separate -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <button onclick="aiWriteIngredients()"
+                  style="background:#fff;border:2px solid rgba(124,58,237,0.25);border-radius:12px;padding:12px 8px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;"
+                  onmouseenter="this.style.background='#f5f0ff'" onmouseleave="this.style.background='#fff'">
+                  <span>✍️</span><span>AI: Ingredients</span>
+                </button>
+                <button onclick="aiWriteSteps()"
+                  style="background:#fff;border:2px solid rgba(124,58,237,0.25);border-radius:12px;padding:12px 8px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;"
+                  onmouseenter="this.style.background='#f5f0ff'" onmouseleave="this.style.background='#fff'">
+                  <span>📋</span><span>AI: Steps</span>
+                </button>
+              </div>
+
+              <!-- 4. Do everything -->
+              <button onclick="aiDoEverything()"
+                style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:12px;padding:11px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"
+                onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">
+                <span>⚡</span><span>AI: Do Everything</span>
+              </button>
+
               <!-- Transcript preview (shown after transcription) -->
-              <div id="transcriptPreview" style="display:none;margin-bottom:10px;">
+              <div id="transcriptPreview" style="display:none;margin-top:10px;">
                 <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Transcript</div>
                 <div id="transcriptText" style="font-size:0.78rem;color:var(--text-body);background:#f8f6ff;border-radius:10px;padding:10px;max-height:80px;overflow-y:auto;line-height:1.5;font-weight:500;border:1px solid rgba(124,58,237,0.1);"></div>
               </div>
 
-              <!-- Manual controls — always visible so users can adjust before/after AI -->
-              <div style="margin-top:4px;padding-top:10px;border-top:1px solid rgba(124,58,237,0.12);">
-                <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px;">Or use individually:</div>
+              <!-- Manual transcribe (power user) -->
+              <div id="aiActions" style="display:block;">
                 <button id="transcribeBtn" onclick="transcribeVideo()"
-                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.25);border-radius:10px;padding:9px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:#7c3aed;margin-bottom:6px;">
-                  🎤 Transcribe Only
+                  style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:10px;padding:7px;font-family:var(--font);font-weight:700;font-size:0.72rem;cursor:pointer;color:var(--text-muted);">
+                  🎤 Transcribe audio only (manual)
                 </button>
-                <div id="aiActions" style="display:block;">
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                    <button onclick="generateIngredients()" style="background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:10px;padding:9px 8px;font-family:var(--font);font-weight:800;font-size:0.78rem;cursor:pointer;color:var(--text-heading);">✍️ Ingredients</button>
-                    <button onclick="generateSteps()" style="background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:10px;padding:9px 8px;font-family:var(--font);font-weight:800;font-size:0.78rem;cursor:pointer;color:var(--text-heading);">📋 Steps Text</button>
-                    <button onclick="generateLoops()" style="background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:10px;padding:9px 8px;font-family:var(--font);font-weight:800;font-size:0.78rem;cursor:pointer;color:var(--text-heading);">🔁 Auto Loops</button>
-                    <button onclick="doItAll()" style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:10px;padding:9px 8px;font-family:var(--font);font-weight:900;font-size:0.78rem;cursor:pointer;">⚡ Do It All</button>
-                  </div>
-                </div>
               </div>
+
 
 
                 <!-- Ingredients result -->

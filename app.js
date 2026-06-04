@@ -2893,7 +2893,123 @@ window.generateLoops = async function() {
   }
 };
 
-// ── Do It All — runs all 3 in sequence ────────────────────────────────────
+// ── Shared: try Gemini for a specific task, return data or null ────────────
+async function tryGeminiFor(task) {
+  const videoUrl = uploadedVideoUID
+    ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
+    : null;
+  if (!videoUrl) return null;
+  try {
+    const res  = await fetch('/api/ai/gemini-loops', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoUrl }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) return null;
+    return data; // { title, ingredients, steps, loops }
+  } catch { return null; }
+}
+
+// ── AI: Write Ingredients only ─────────────────────────────────────────────
+window.aiWriteIngredients = async function() {
+  setAIStatus('✍️ Writing ingredients...', true);
+  try {
+    // Try Gemini first
+    const gem = await tryGeminiFor('ingredients');
+    if (gem?.ingredients?.length) {
+      const box = document.getElementById('ingredientsText');
+      if (box) box.value = gem.ingredients.join('\n');
+      window._aiIngredients = gem.ingredients.join('\n');
+      const r = document.getElementById('ingredientsResult');
+      if (r) r.style.display = 'block';
+      setAIStatus('✅ Ingredients written by Gemini!', true);
+      showTip('✍️ Ingredients filled in — edit as needed.');
+      return;
+    }
+    // Fallback: Whisper → GPT
+    if (!cachedTranscript) await window.transcribeVideo();
+    if (!cachedTranscript) { setAIStatus('❌ Need transcript first — video may be over 25MB.', true); return; }
+    await window.generateIngredients();
+    setAIStatus('✅ Ingredients written!', true);
+  } catch (err) {
+    setAIStatus('❌ ' + (err.message || 'Failed to write ingredients.'), true);
+  }
+};
+
+// ── AI: Write Steps only ───────────────────────────────────────────────────
+window.aiWriteSteps = async function() {
+  setAIStatus('📋 Writing step instructions...', true);
+  try {
+    // Try Gemini first
+    const gem = await tryGeminiFor('steps');
+    if (gem?.steps?.length) {
+      const box = document.getElementById('stepsText');
+      if (box) box.value = gem.steps.join('\n');
+      window._aiStepsText = gem.steps.join('\n');
+      const r = document.getElementById('stepsResult');
+      if (r) r.style.display = 'block';
+      setAIStatus('✅ Steps written by Gemini!', true);
+      showTip('📋 Steps filled in — edit as needed.');
+      return;
+    }
+    // Fallback: Whisper → GPT
+    if (!cachedTranscript) await window.transcribeVideo();
+    if (!cachedTranscript) { setAIStatus('❌ Need transcript first — video may be over 25MB.', true); return; }
+    await window.generateSteps();
+    setAIStatus('✅ Steps written!', true);
+  } catch (err) {
+    setAIStatus('❌ ' + (err.message || 'Failed to write steps.'), true);
+  }
+};
+
+// ── AI: Do Everything ──────────────────────────────────────────────────────
+window.aiDoEverything = async function() {
+  setAIStatus('⚡ Running all AI features...', true);
+  const btn = document.getElementById('aiLoopBtn');
+  try {
+    const gem = await tryGeminiFor('all');
+    if (gem?.loops?.length) {
+      // Apply all Gemini results
+      if (gem.title) {
+        const t = document.getElementById('newRecipeTitleInput');
+        if (t && !t.value) t.value = gem.title;
+      }
+      if (gem.ingredients?.length) {
+        const b = document.getElementById('ingredientsText');
+        if (b) b.value = gem.ingredients.join('\n');
+        window._aiIngredients = gem.ingredients.join('\n');
+        const r = document.getElementById('ingredientsResult'); if (r) r.style.display='block';
+      }
+      if (gem.steps?.length) {
+        const b = document.getElementById('stepsText');
+        if (b) b.value = gem.steps.join('\n');
+        window._aiStepsText = gem.steps.join('\n');
+        const r = document.getElementById('stepsResult'); if (r) r.style.display='block';
+      }
+      createStepsArr = gem.loops.map((l, i) => ({ label: l.label || gem.steps?.[i] || `Step ${i+1}`, start: l.start, end: l.end }));
+      renderStepsList(); renderTimelineMarkers();
+      setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
+      showTip(`⚡ All done! ${gem.loops.length} loop stops placed.`);
+      return;
+    }
+    // Fallback: transcribe then run each
+    if (!cachedTranscript) await window.transcribeVideo();
+    if (cachedTranscript) {
+      await window.generateIngredients();
+      await window.generateSteps();
+      await window.generateLoops();
+      setAIStatus('✅ Done! Review the timeline.', true);
+      showTip('⚡ AI completed all tasks!');
+    } else {
+      setAIStatus('❌ Video too large for Whisper. Add your Gemini key to unlock large video support.', true);
+    }
+  } catch (err) {
+    setAIStatus('❌ ' + (err.message || 'Error.'), true);
+  }
+};
+
+// ── Do It All (loop stops only, called by the primary button) ──────────────
 window.doItAll = async function() {
   setAIStatus('⚡ Running AI analysis...', true);
 
