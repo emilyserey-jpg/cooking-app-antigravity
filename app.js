@@ -3021,7 +3021,7 @@ window.aiDoEverything = async function() {
         const r = document.getElementById('stepsResult'); if (r) r.style.display='block';
       }
       createStepsArr = gem.loops.map((l, i) => ({ label: l.label || gem.steps?.[i] || `Step ${i+1}`, start: l.start, end: l.end }));
-      renderStepsList(); renderTimelineMarkers();
+      renderCreateSteps(); renderTimeline();
       setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
       showTip(`⚡ All done! ${gem.loops.length} loop stops placed.`);
       return;
@@ -3062,8 +3062,8 @@ window.doItAll = async function() {
         start: l.start,
         end:   l.end,
       }));
-      renderStepsList();
-      renderTimelineMarkers();
+      renderCreateSteps();
+      renderTimeline();
       setAIStatus(`✅ Gemini placed ${gem.loops.length} loop stops!`, true);
       showTip(`🤖 ${gem.loops.length} loop stops placed — check the timeline!`);
       if (btn) {
