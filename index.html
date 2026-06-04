@@ -750,7 +750,24 @@
               </button>
             </div>
 
-            <!-- Visual Timeline -->
+            <!-- Step Navigator — jump between loop stops -->
+            <div class="glass-card" id="stepNavigatorBar" style="display:none;padding:10px 14px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button onclick="navStep(-1)"
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">← Prev</button>
+                <div style="flex:1;text-align:center;min-width:0;">
+                  <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                  <div id="stepNavCount" style="font-size:0.68rem;font-weight:700;color:var(--text-muted);"></div>
+                </div>
+                <button onclick="navStep(1)"
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;color:var(--text-heading);">Next →</button>
+                <button onclick="previewCurrentNavStep()"
+                  style="background:var(--primary);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">▶ Loop</button>
+              </div>
+            </div>
+
+            <!-- Visual Timeline --&gt;
+
             <div class="glass-card" style="padding:12px 14px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);">Timeline</span>

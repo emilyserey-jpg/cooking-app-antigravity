@@ -2515,6 +2515,38 @@ window.timelineSeek = function(e) {
 };
 
 // ── Step list renderer ─────────────────────────────────────────────────────
+// ── Step Navigator ─────────────────────────────────────────────────────────
+let currentNavStepIndex = 0;
+
+function refreshStepNavigator() {
+  const bar = document.getElementById('stepNavigatorBar');
+  if (!bar) return;
+  if (!createStepsArr.length) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  const i     = Math.max(0, Math.min(currentNavStepIndex, createStepsArr.length - 1));
+  currentNavStepIndex = i;
+  const step  = createStepsArr[i];
+  const label = document.getElementById('stepNavLabel');
+  const count = document.getElementById('stepNavCount');
+  if (label) label.textContent = step.label || `Step ${i + 1}`;
+  if (count) count.textContent = `${i + 1} of ${createStepsArr.length}`;
+}
+
+window.navStep = function(dir) {
+  if (!createStepsArr.length) return;
+  currentNavStepIndex = Math.max(0, Math.min(currentNavStepIndex + dir, createStepsArr.length - 1));
+  refreshStepNavigator();
+  // Jump video to this step's start time
+  const vid = document.getElementById('uploadedVideoPlayer');
+  if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].start;
+};
+
+window.previewCurrentNavStep = function() {
+  if (!createStepsArr.length) return;
+  const step = createStepsArr[currentNavStepIndex];
+  if (step) previewLoop(step.start, step.end ?? step.start + 10);
+};
+
 function renderCreateSteps() {
   const list  = document.getElementById('createStepsList');
   const count = document.getElementById('createStepCount');
@@ -2563,6 +2595,7 @@ function renderCreateSteps() {
         </div>
       </div>`;
   }).join('');
+  refreshStepNavigator();
 }
 
 // ── Preview loop ───────────────────────────────────────────────────────────
