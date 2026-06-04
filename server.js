@@ -393,10 +393,6 @@ app.post('/api/ai/translate', async (req, res) => {
   }
 });
 
-// ─── Serve SPA ────────────────────────────────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
 
 // ─── Status: which AI services are configured ──────────────────────────────
 app.get('/api/ai/status', (req, res) => {
@@ -405,6 +401,11 @@ app.get('/api/ai/status', (req, res) => {
     whisper: !!OPENAI_API_KEY,
     cf:      !!CF_ACCOUNT_ID && !!CF_API_TOKEN,
   });
+});
+
+// ─── Serve SPA (must be LAST) ──────────────────────────────────────────
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
