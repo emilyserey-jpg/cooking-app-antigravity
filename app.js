@@ -2680,13 +2680,12 @@ window.navStep = function(dir) {
   refreshStepNavigator();
   // Jump video to this step's start time
   const vid = document.getElementById('uploadedVideoPlayer');
-  if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].start;
+  if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
 };
 
 window.previewCurrentNavStep = function() {
   if (!createStepsArr.length) return;
-  const step = createStepsArr[currentNavStepIndex];
-  if (step) previewLoop(step.start, step.end ?? step.start + 10);
+  previewStepLoop(currentNavStepIndex);
 };
 
 function renderCreateSteps() {
