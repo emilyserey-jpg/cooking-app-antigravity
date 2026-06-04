@@ -268,7 +268,7 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
 Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.`;
 
     const gemRes = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
       {
         method: 'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
