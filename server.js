@@ -20,6 +20,12 @@ const upload = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
 });
 
+// Separate Multer for Gemini — supports up to 500MB video files
+const geminiUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 500 * 1024 * 1024 },
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
@@ -197,42 +203,84 @@ Rules:
   }
 });
 
-// ─── AI: Gemini video analysis — loops + steps (no transcription needed) ────
-// Gemini 2.5 Flash reads video + audio directly — works on silent videos too.
-app.post('/api/ai/gemini-loops', async (req, res) => {
+// ─── AI: Gemini video analysis (proper implementation via Google File API) ───
+// Accepts the actual video file, uploads to Google's File API, then calls
+// Gemini 1.5 Flash. Works on any size video, no transcription needed.
+app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res) => {
   if (!GEMINI_API_KEY)
-    return res.status(503).json({ error: 'GEMINI_API_KEY not configured — using Whisper fallback.' });
+    return res.status(503).json({ error: 'GEMINI_API_KEY not set in Railway variables.' });
+  if (!req.file)
+    return res.status(400).json({ error: 'No video file received.' });
 
-  const { videoUrl } = req.body;
-  if (!videoUrl) return res.status(400).json({ error: 'Missing videoUrl.' });
+  const mimeType = req.file.mimetype || 'video/mp4';
+  console.log(`[Gemini] Received file: ${req.file.originalname}, ${(req.file.size/1024/1024).toFixed(1)}MB`);
 
   try {
-    // CF Stream: convert HLS url to an MP4 URL Gemini can fetch
-    let analyzeUrl = videoUrl;
-    const cfMatch = videoUrl.match(/videodelivery\.net\/([a-f0-9]+)/);
-    if (cfMatch) {
-      analyzeUrl = `https://videodelivery.net/${cfMatch[1]}/downloads/default.mp4`;
+    // ── Step 1: Upload video to Google File API ──────────────────────────
+    console.log('[Gemini] Uploading to Google File API...');
+    const uploadRes = await fetch(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': mimeType,
+          'X-Goog-Upload-Content-Type': mimeType,
+          'X-Goog-Upload-Protocol': 'raw',
+        },
+        body: req.file.buffer,
+      }
+    );
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      throw new Error(`File API upload failed (${uploadRes.status}): ${errText.slice(0, 300)}`);
     }
 
-    const prompt = `You are analyzing a cooking tutorial video. Watch the full video carefully.
-Identify distinct cooking steps and return precise loop timestamps for a learner to practice.
-A loop is a repeating segment: e.g. knife cut, sauce stir, fold technique.
+    const uploadData = await uploadRes.json();
+    const fileUri   = uploadData.file?.uri;
+    const fileName  = uploadData.file?.name;
+    if (!fileUri) throw new Error('Google File API returned no file URI.');
+    console.log(`[Gemini] File uploaded: ${fileUri}`);
+
+    // ── Step 2: Wait for file to be ACTIVE (Gemini needs to process it) ──
+    let fileState = uploadData.file?.state || 'PROCESSING';
+    let attempts  = 0;
+    while (fileState === 'PROCESSING' && attempts < 30) {
+      await new Promise(r => setTimeout(r, 3000));
+      const statusRes  = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`);
+      const statusData = await statusRes.json();
+      fileState = statusData.state;
+      attempts++;
+      console.log(`[Gemini] File state: ${fileState} (attempt ${attempts})`);
+    }
+    if (fileState !== 'ACTIVE') throw new Error(`File processing timed out (state: ${fileState}).`);
+
+    // ── Step 3: Call Gemini 1.5 Flash with the file ───────────────────────
+    const prompt = `You are analyzing a cooking tutorial video. Watch it carefully from start to finish.
+
+Your job: identify distinct cooking steps and return precise loop timestamps.
+A "loop stop" is a key moment a learner would replay to practice — e.g. dicing, folding, stirring.
+
+Return this exact JSON structure:
+{
+  "title": "short recipe title (3-6 words)",
+  "ingredients": ["ingredient 1", "ingredient 2", ...],
+  "steps": ["step 1 description", "step 2 description", ...],
+  "loops": [
+    { "start": 0, "end": 15, "label": "Prep the onions" },
+    ...
+  ]
+}
 
 Rules:
-- Return 3-12 loops depending on how many distinct steps exist
-- Each loop: { "start": <seconds>, "end": <seconds>, "label": "<2-5 word action>" }
-- Labels must be action phrases: "Dice the onions", "Fold in egg whites"
-- Timestamps must be accurate to the nearest second
+- Return 3 to 12 loops based on how many distinct steps exist
+- Loop labels must be action phrases (2-5 words): "Dice the onions", "Fold in egg whites"
+- Timestamps in whole seconds, accurate to what you see
+- If no speech — use visuals only
+- Return ONLY valid JSON, no markdown, no explanation`;
 
-Also return:
-- "title": short recipe title
-- "ingredients": array of ingredient strings seen or heard
-- "steps": array of step descriptions (one per loop)
-
-Return ONLY valid JSON: { "title": "...", "ingredients": [...], "steps": [...], "loops": [{"start":0,"end":15,"label":"..."},...] }`;
-
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`,
+    const gemRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,39 +288,49 @@ Return ONLY valid JSON: { "title": "...", "ingredients": [...], "steps": [...], 
           contents: [{
             parts: [
               { text: prompt },
-              { fileData: { mimeType: 'video/mp4', fileUri: analyzeUrl } },
+              { fileData: { mimeType, fileUri } },
             ],
           }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+          generationConfig: { temperature: 0.2 },
         }),
       }
     );
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      throw new Error(`Gemini API ${geminiRes.status}: ${errText.slice(0, 300)}`);
+    if (!gemRes.ok) {
+      const errText = await gemRes.text();
+      throw new Error(`Gemini generateContent failed (${gemRes.status}): ${errText.slice(0, 300)}`);
     }
 
-    const geminiData = await geminiRes.json();
-    const raw = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!raw) throw new Error('Empty response from Gemini.');
+    const gemData = await gemRes.json();
+    let raw = gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Strip markdown code fences if present
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    if (!raw) throw new Error('Gemini returned an empty response.');
 
     const result = JSON.parse(raw);
-    console.log(`[Gemini] ${result.loops?.length || 0} loops detected.`);
+    console.log(`[Gemini] ✅ ${result.loops?.length || 0} loops detected for "${result.title}"`);
+
+    // Cleanup the file from Google (fire and forget)
+    fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`, { method: 'DELETE' }).catch(() => {});
 
     res.json({
-      ok: true,
-      source: 'gemini',
+      ok:          true,
+      source:      'gemini',
       title:       result.title       || '',
       ingredients: result.ingredients || [],
       steps:       result.steps       || [],
       loops:       result.loops       || [],
     });
+
   } catch (err) {
-    console.error('[Gemini Loops] Error:', err.message);
+    console.error('[Gemini] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
+// Alias kept for any old callers
+app.post('/api/ai/gemini-loops', (req, res) => res.status(410).json({ error: 'Deprecated — use /api/ai/gemini-analyze.' }));
+
 
 // ─── AI: Translate steps + ingredients into target language ───────────────
 app.post('/api/ai/translate', async (req, res) => {

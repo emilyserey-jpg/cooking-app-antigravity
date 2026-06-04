@@ -2893,22 +2893,28 @@ window.generateLoops = async function() {
   }
 };
 
-// ── Shared: try Gemini for a specific task, return data or null ────────────
+// ── Shared: send video file to Gemini, return structured data or null ──────
 async function tryGeminiFor(task) {
-  const videoUrl = uploadedVideoUID
-    ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
-    : null;
-  if (!videoUrl) return null;
+  // Must have the actual file to send to Google File API
+  if (!uploadedFile) return null;
+
   try {
-    const res  = await fetch('/api/ai/gemini-loops', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ videoUrl }),
-    });
+    setAIStatus('🤖 Uploading to Gemini for analysis...', true);
+    const formData = new FormData();
+    formData.append('video', uploadedFile, uploadedFile.name);
+
+    const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
     const data = await res.json();
-    if (!res.ok || data.error) return null;
+
+    if (!res.ok || data.error) {
+      console.warn('[Gemini] Failed:', data.error);
+      return null;
+    }
     return data; // { title, ingredients, steps, loops }
-  } catch { return null; }
+  } catch (err) {
+    console.warn('[Gemini] Network error:', err.message);
+    return null;
+  }
 }
 
 // ── AI: Write Ingredients only ─────────────────────────────────────────────
