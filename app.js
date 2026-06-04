@@ -2926,22 +2926,22 @@ async function tryGeminiFor(task) {
     return _geminiCache;
   }
 
-  try {
-    setAIStatus('🤖 Sending video to Gemini… (once per video)', true);
-    const formData = new FormData();
-    formData.append('video', uploadedFile, uploadedFile.name);
-    const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
-    const data = await res.json();
-    if (!res.ok || data.error) { console.warn('[Gemini]', data.error); return null; }
+  setAIStatus('🤖 Uploading to Gemini…', true);
+  const formData = new FormData();
+  formData.append('video', uploadedFile, uploadedFile.name);
 
-    // Cache the result — all subsequent AI button taps reuse this for free
-    _geminiCache     = data;
-    _geminiCacheFile = uploadedFile;
-    return data;
-  } catch (err) {
-    console.warn('[Gemini] Network error:', err.message);
-    return null;
+  const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
+  const data = await res.json();
+
+  if (!res.ok || data.error) {
+    // Throw the REAL server error so buttons can show it
+    throw new Error(data.error || `Gemini server error (${res.status})`);
   }
+
+  // Cache — subsequent taps reuse for free
+  _geminiCache     = data;
+  _geminiCacheFile = uploadedFile;
+  return data;
 }
 
 // ── AI: Write Ingredients only ─────────────────────────────────────────────
@@ -3048,7 +3048,6 @@ window.doItAll = async function() {
   if (btn) btn.disabled = true;
 
   try {
-    // ── Try Gemini first (no transcription needed) ──────────────────────
     setAIStatus('🤖 Gemini is analyzing your video...', true);
     const gem = await tryGeminiFor('loops');
 
