@@ -967,7 +967,27 @@ function switchView(viewId) {
   if (viewId === 'profile')   loadProfileRecipes();
   if (viewId === 'grid-view') initGridView();
   if (viewId !== 'grid-view') stopAllGridLoops();
-  if (viewId === 'create')   initCreateView();
+  if (viewId === 'create') {
+    initCreateView();
+    // Check which AI services are live and update the badge
+    fetch('/api/ai/status').then(r => r.json()).then(s => {
+      const badge = document.getElementById('aiStatusBadge');
+      if (!badge) return;
+      if (s.gemini) {
+        badge.textContent = '✅ Gemini ready';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#16a34a';
+      } else if (s.whisper) {
+        badge.textContent = '⚠️ Whisper only (≤25MB)';
+        badge.style.background = '#fef9c3';
+        badge.style.color = '#a16207';
+      } else {
+        badge.textContent = '❌ No AI key set';
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#dc2626';
+      }
+    }).catch(() => {});
+  }
 
   // Fix Create tab appearance
   const createTabEl = document.getElementById('createTab');
@@ -2894,16 +2914,29 @@ window.generateLoops = async function() {
   }
 };
 
-// ── On-demand Gemini: only runs when user taps an AI button ────────────────
+// ── On-demand Gemini — called once per file, result cached for all AI buttons ─
+let _geminiCache     = null; // cached result for current file
+let _geminiCacheFile = null; // which file was analyzed (detect new uploads)
+
 async function tryGeminiFor(task) {
   if (!uploadedFile) return null;
+
+  // Return cached result if same file (free reuse)
+  if (_geminiCache && _geminiCacheFile === uploadedFile) {
+    return _geminiCache;
+  }
+
   try {
-    setAIStatus('🤖 Sending video to Gemini…', true);
+    setAIStatus('🤖 Sending video to Gemini… (once per video)', true);
     const formData = new FormData();
     formData.append('video', uploadedFile, uploadedFile.name);
     const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok || data.error) { console.warn('[Gemini]', data.error); return null; }
+
+    // Cache the result — all subsequent AI button taps reuse this for free
+    _geminiCache     = data;
+    _geminiCacheFile = uploadedFile;
     return data;
   } catch (err) {
     console.warn('[Gemini] Network error:', err.message);

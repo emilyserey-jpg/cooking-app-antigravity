@@ -398,8 +398,18 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ─── Status: which AI services are configured ──────────────────────────────
+app.get('/api/ai/status', (req, res) => {
+  res.json({
+    gemini:  !!GEMINI_API_KEY,
+    whisper: !!OPENAI_API_KEY,
+    cf:      !!CF_ACCOUNT_ID && !!CF_API_TOKEN,
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server on port ${PORT}`);
   console.log(`   Cloudflare Stream: ${CF_ACCOUNT_ID ? '✅' : '❌ not configured'}`);
   console.log(`   OpenAI / Whisper:  ${OPENAI_API_KEY ? '✅' : '❌ not configured'}`);
+  console.log(`   Gemini:            ${GEMINI_API_KEY ? '✅ key starts with ' + GEMINI_API_KEY.slice(0,6) + '...' : '❌ GEMINI_API_KEY not set'}`);
 });
