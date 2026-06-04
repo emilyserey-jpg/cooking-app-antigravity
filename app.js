@@ -2895,23 +2895,46 @@ window.generateLoops = async function() {
 
 // ── Do It All — runs all 3 in sequence ────────────────────────────────────
 window.doItAll = async function() {
-  if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
-  setAIStatus('⚡ Running all AI features...');
+  setAIStatus('⚡ Running AI analysis...', true);
 
   try {
-    setAIStatus('✍️ Writing ingredients...');
+    // Step 1: Transcribe if we don't have a transcript yet
+    if (!cachedTranscript) {
+      if (!uploadedFile) {
+        setAIStatus('⚠️ Upload a video first, then tap the button.', true);
+        showTip('Upload your video first — then AI can analyze it.');
+        return;
+      }
+      setAIStatus('🎤 Transcribing audio...', true);
+      await window.transcribeVideo();
+      if (!cachedTranscript) {
+        setAIStatus('❌ Transcription failed — check your video file.', true);
+        return;
+      }
+    }
+
+    // Step 2: Generate everything
+    setAIStatus('✍️ Writing ingredients...', true);
     await window.generateIngredients();
 
-    setAIStatus('📋 Writing step instructions...');
+    setAIStatus('📋 Writing step instructions...', true);
     await window.generateSteps();
 
-    setAIStatus('🔁 Detecting loop points...');
+    setAIStatus('🔁 Placing loop stops...', true);
     await window.generateLoops();
 
-    setAIStatus('🎉 All done! Review and edit above, then save.');
-    showTip('All AI features complete! Review your results.');
+    setAIStatus('✅ Done! Loop stops placed — review the timeline.', true);
+    showTip('🤖 AI placed your loop stops! Check the timeline and edit if needed.');
+
+    // Update big button to show success
+    const btn = document.getElementById('aiLoopBtn');
+    if (btn) {
+      btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+      btn.innerHTML = '<span style="font-size:1.3rem;">✅</span><span>Loop Stops Placed!</span>';
+    }
   } catch (err) {
-    setAIStatus('❌ ' + err.message);
+    setAIStatus('❌ ' + (err.message || 'Connection error.'), true);
+    showTip('AI error: ' + (err.message || 'Check your connection and try again.'));
   }
 };
 
