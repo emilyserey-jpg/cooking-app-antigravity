@@ -726,58 +726,68 @@
         <!-- Main 2-col workbench -->
         <div style="display:grid;grid-template-columns:1fr 330px;gap:1rem;flex:1;min-height:0;overflow:hidden;">
 
-          <!-- ══ LEFT: Video + timeline + controls ══ -->
+          <!-- ══ LEFT: Custom Video Player ══ -->
           <div style="display:flex;flex-direction:column;gap:0.6rem;overflow:hidden;">
 
-            <!-- Video -->
-            <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:#c8e0f4;box-shadow:var(--shadow-md);">
+            <!-- Video with controls overlay -->
+            <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
               <video id="uploadedVideoPlayer"
-                style="width:100%;height:100%;object-fit:contain;display:block;border-radius:16px;"
-                controls preload="metadata" onloadedmetadata="onVideoLoaded()"></video>
+                style="width:100%;height:100%;object-fit:contain;display:block;"
+                preload="metadata" onloadedmetadata="onVideoLoaded()"
+                onclick="toggleVideoPlay()"></video>
+
+              <!-- Controls overlay gradient -->
+              <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.82));padding:10px 14px 13px;border-radius:0 0 16px 16px;">
+
+                <!-- ─── Scrubber with embedded loop markers ─── -->
+                <div style="position:relative;margin-bottom:9px;">
+                  <div id="videoScrubber" onclick="videoScrubberSeek(event)"
+                    onmousemove="videoScrubberHover(event)" onmouseleave="document.getElementById('videoChapterLabel').style.display='none'"
+                    style="height:8px;background:rgba(255,255,255,0.18);border-radius:4px;position:relative;cursor:pointer;overflow:visible;user-select:none;">
+                    <!-- Playback fill -->
+                    <div id="videoProgressFill" style="position:absolute;top:0;left:0;height:100%;background:rgba(255,255,255,0.65);border-radius:4px;width:0%;pointer-events:none;"></div>
+                    <!-- Loop markers rendered by JS -->
+                    <div id="videoMarkers" style="position:absolute;inset:0;overflow:visible;pointer-events:none;"></div>
+                    <!-- Playhead thumb -->
+                    <div id="videoThumb" style="position:absolute;top:50%;left:0%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 1px 5px rgba(0,0,0,0.6);pointer-events:none;z-index:20;transition:left 0.06s;"></div>
+                    <!-- Chapter label tooltip -->
+                    <div id="videoChapterLabel" style="position:absolute;bottom:14px;background:rgba(0,0,0,0.85);color:#fff;font-size:0.6rem;font-weight:700;padding:3px 7px;border-radius:5px;pointer-events:none;display:none;white-space:nowrap;font-family:var(--font);transform:translateX(-50%);"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:3px;">
+                    <span id="createCurrentTime" style="font-size:0.6rem;color:rgba(255,255,255,0.65);font-weight:600;font-variant-numeric:tabular-nums;">0:00</span>
+                    <span id="previewingLabel" style="font-size:0.6rem;font-weight:700;color:#a78bfa;display:none;">▶ Looping...</span>
+                    <span id="timelineDuration" style="font-size:0.6rem;color:rgba(255,255,255,0.65);font-weight:600;font-variant-numeric:tabular-nums;">0:00</span>
+                  </div>
+                </div>
+
+                <!-- ─── Controls row ─── -->
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <button onclick="toggleVideoPlay()" id="videoPlayBtn"
+                    style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.25rem;padding:0;width:26px;flex-shrink:0;line-height:1;">▶</button>
+                  <button onclick="navStep(-1)"
+                    style="background:rgba(255,255,255,0.15);border:none;border-radius:7px;padding:5px 10px;color:#fff;cursor:pointer;font-size:0.82rem;font-weight:900;font-family:var(--font);flex-shrink:0;">←</button>
+                  <div style="flex:1;text-align:center;min-width:0;">
+                    <div id="stepNavLabel" style="font-size:0.78rem;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
+                    <div id="stepNavCount" style="font-size:0.58rem;color:rgba(255,255,255,0.6);font-weight:600;">Add stops or run AI</div>
+                  </div>
+                  <button onclick="navStep(1)"
+                    style="background:rgba(255,255,255,0.15);border:none;border-radius:7px;padding:5px 10px;color:#fff;cursor:pointer;font-size:0.82rem;font-weight:900;font-family:var(--font);flex-shrink:0;">→</button>
+                  <button onclick="previewCurrentNavStep()"
+                    style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
+                  <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
+                    style="display:none;background:#f0f4ff;border:none;border-radius:8px;padding:6px 12px;color:var(--primary);cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">⏹ Stop</button>
+                  <button onclick="addStepAtCurrentTime()"
+                    style="background:rgba(255,255,255,0.16);border:none;border-radius:8px;padding:6px 10px;color:#fff;cursor:pointer;font-size:0.7rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">📍 Add Stop</button>
+                </div>
+              </div>
             </div>
 
-            <!-- Timeline -->
-            <div style="background:#fff;border-radius:12px;padding:8px 12px;border:2px solid var(--border-card);flex-shrink:0;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-                <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);">Timeline — drag handles to adjust</span>
-                <span id="previewingLabel" style="font-size:0.7rem;font-weight:700;color:var(--primary);display:none;">▶ Looping...</span>
-              </div>
-              <div id="createTimeline" onclick="timelineSeek(event)"
-                style="position:relative;height:56px;background:#eef4ff;border-radius:8px;overflow:visible;cursor:pointer;user-select:none;">
-                <div id="timelinePlayhead" style="position:absolute;top:0;left:0%;width:3px;height:100%;background:var(--primary);border-radius:2px;z-index:10;pointer-events:none;transition:left 0.08s;"></div>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-top:3px;">
-                <span style="font-size:0.62rem;color:var(--text-muted);font-weight:600;">0:00</span>
-                <span id="timelineDuration" style="font-size:0.62rem;color:var(--text-muted);font-weight:600;">0:00</span>
-              </div>
-            </div>
-
-            <!-- Single compact controls bar: Time | Add Stop | ← Label/count → | ▶ Loop | ⏹ -->
-            <div style="background:#fff;border-radius:12px;padding:8px 12px;border:2px solid var(--border-card);display:flex;align-items:center;gap:8px;flex-shrink:0;">
-              <div style="min-width:44px;flex-shrink:0;">
-                <div style="font-size:0.58rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);line-height:1;">Time</div>
-                <div id="createCurrentTime" style="font-size:1rem;font-weight:900;color:var(--primary);font-variant-numeric:tabular-nums;line-height:1.2;">0:00</div>
-              </div>
-              <div style="width:1px;height:28px;background:var(--border-card);"></div>
-              <button onclick="addStepAtCurrentTime()"
-                style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 10px;font-family:var(--font);font-weight:900;font-size:0.75rem;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.3);">
-                📍 Add Stop
-              </button>
-              <div style="width:1px;height:28px;background:var(--border-card);"></div>
-              <button onclick="navStep(-1)"
-                style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">←</button>
-              <div style="flex:1;text-align:center;min-width:0;">
-                <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
-                <div id="stepNavCount" style="font-size:0.6rem;color:var(--text-muted);font-weight:700;white-space:nowrap;">Use AI or add manually</div>
-              </div>
-              <button onclick="navStep(1)"
-                style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">→</button>
-              <button onclick="previewCurrentNavStep()"
-                style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">▶ Loop</button>
-              <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
-                style="display:none;background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);border-radius:8px;padding:7px 12px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">⏹ Stop</button>
+            <!-- Hidden createTimeline for JS backward compat -->
+            <div id="createTimeline" style="display:none;position:relative;">
+              <div id="timelinePlayhead" style="display:none;"></div>
             </div>
           </div>
+
 
           <!-- ══ RIGHT: Scrollable recipe panel ══ -->
           <div style="overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding-right:2px;">
