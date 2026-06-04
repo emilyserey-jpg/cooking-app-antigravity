@@ -3009,48 +3009,72 @@ window.aiDoEverything = async function() {
   }
 };
 
-// ── Do It All (loop stops only, called by the primary button) ──────────────
+// ── Place Loop Stops (primary AI button) ──────────────────────────────────
 window.doItAll = async function() {
-  setAIStatus('⚡ Running AI analysis...', true);
+  const btn = document.getElementById('aiLoopBtn');
+  if (btn) btn.disabled = true;
 
   try {
-    // Step 1: Transcribe if we don't have a transcript yet
+    // ── Try Gemini first (no transcription needed) ──────────────────────
+    setAIStatus('🤖 Gemini is analyzing your video...', true);
+    const gem = await tryGeminiFor('loops');
+
+    if (gem?.loops?.length) {
+      // ✅ Gemini worked — apply loops + optionally title
+      if (gem.title) {
+        const t = document.getElementById('newRecipeTitleInput');
+        if (t && !t.value) t.value = gem.title;
+      }
+      createStepsArr = gem.loops.map((l, i) => ({
+        label: l.label || gem.steps?.[i] || `Step ${i + 1}`,
+        start: l.start,
+        end:   l.end,
+      }));
+      renderStepsList();
+      renderTimelineMarkers();
+      setAIStatus(`✅ Gemini placed ${gem.loops.length} loop stops!`, true);
+      showTip(`🤖 ${gem.loops.length} loop stops placed — check the timeline!`);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+        btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
+      }
+      return;
+    }
+
+    // ── Gemini unavailable — use Whisper + GPT fallback ─────────────────
+    setAIStatus('🎤 Using Whisper fallback...', true);
+
+    // Use cached transcript if already transcribed
     if (!cachedTranscript) {
       if (!uploadedFile) {
-        setAIStatus('⚠️ Upload a video first, then tap the button.', true);
-        showTip('Upload your video first — then AI can analyze it.');
+        setAIStatus('⚠️ Upload a video first.', true);
+        showTip('Upload your video first, then tap the button.');
+        if (btn) btn.disabled = false;
         return;
       }
-      setAIStatus('🎤 Transcribing audio...', true);
       await window.transcribeVideo();
-      if (!cachedTranscript) {
-        setAIStatus('❌ Transcription failed — check your video file.', true);
-        return;
-      }
     }
 
-    // Step 2: Generate everything
-    setAIStatus('✍️ Writing ingredients...', true);
-    await window.generateIngredients();
+    if (!cachedTranscript) {
+      setAIStatus('❌ Could not transcribe — video may be over 25MB. Add your Gemini key to Railway to support any size.', true);
+      if (btn) btn.disabled = false;
+      return;
+    }
 
-    setAIStatus('📋 Writing step instructions...', true);
-    await window.generateSteps();
-
-    setAIStatus('🔁 Placing loop stops...', true);
+    setAIStatus('🔁 Detecting loop stops from transcript...', true);
     await window.generateLoops();
-
-    setAIStatus('✅ Done! Loop stops placed — review the timeline.', true);
-    showTip('🤖 AI placed your loop stops! Check the timeline and edit if needed.');
-
-    // Update big button to show success
-    const btn = document.getElementById('aiLoopBtn');
+    setAIStatus('✅ Loop stops placed!', true);
+    showTip('🤖 Loop stops placed from transcript — check the timeline!');
     if (btn) {
+      btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-      btn.innerHTML = '<span style="font-size:1.3rem;">✅</span><span>Loop Stops Placed!</span>';
+      btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
     }
+
   } catch (err) {
-    setAIStatus('❌ ' + (err.message || 'Connection error.'), true);
-    showTip('AI error: ' + (err.message || 'Check your connection and try again.'));
+    setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
+    if (btn) btn.disabled = false;
   }
 };
 
