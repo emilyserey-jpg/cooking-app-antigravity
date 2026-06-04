@@ -2678,9 +2678,14 @@ window.navStep = function(dir) {
   if (!createStepsArr.length) return;
   currentNavStepIndex = Math.max(0, Math.min(currentNavStepIndex + dir, createStepsArr.length - 1));
   refreshStepNavigator();
-  // Jump video to this step's start time
-  const vid = document.getElementById('uploadedVideoPlayer');
-  if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
+  if (previewInterval !== null) {
+    // Loop is active — switch loop to the new step immediately
+    previewStepLoop(currentNavStepIndex);
+  } else {
+    // Not looping — just seek the video to this step's start
+    const vid = document.getElementById('uploadedVideoPlayer');
+    if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
+  }
 };
 
 window.previewCurrentNavStep = function() {
@@ -2748,12 +2753,16 @@ window.previewStepLoop = function(i) {
 
   stopPreviewLoop();
 
+  // Keep navigator in sync with the step being looped
+  currentNavStepIndex = i;
+  refreshStepNavigator();
+
   // Use explicit endTime if set, otherwise next step's start or video duration
   const endTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
   videoEl.currentTime = step.time;
   videoEl.play();
 
-  const label = document.getElementById('previewingLabel');
+  const label   = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
   if (label)   label.style.display  = 'inline';
   if (stopBtn) stopBtn.style.display = 'inline-block';
@@ -2764,7 +2773,7 @@ window.previewStepLoop = function(i) {
     }
   }, 100);
 
-  showTip(`Looping "${step.label}" — tap ⏹ Stop when done`);
+  showTip(`Looping "${step.label}" (${step.displayTime}) — use ← → to skip steps`);
 };
 
 window.stopPreviewLoop = function() {
