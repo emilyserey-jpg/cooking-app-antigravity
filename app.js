@@ -3236,7 +3236,13 @@ window.aiDoEverything = async function() {
         window._aiStepsText = gem.steps.join('\n');
         const r = document.getElementById('stepsResult'); if (r) r.style.display='block';
       }
-      createStepsArr = gem.loops.map((l, i) => ({ label: l.label || gem.steps?.[i] || `Step ${i+1}`, start: l.start, end: l.end }));
+      createStepsArr = gem.loops.map((l, i) => {
+        const t   = Number(l.start ?? l.time) || 0;
+        const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
+        const mm  = Math.floor(t / 60);
+        const ss  = Math.floor(t % 60).toString().padStart(2, '0');
+        return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+      }).sort((a, b) => a.time - b.time);
       renderCreateSteps(); renderTimeline();
       setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
       showTip(`⚡ All done! ${gem.loops.length} loop stops placed.`);
@@ -3273,11 +3279,13 @@ window.doItAll = async function() {
         const t = document.getElementById('newRecipeTitleInput');
         if (t && !t.value) t.value = gem.title;
       }
-      createStepsArr = gem.loops.map((l, i) => ({
-        label: l.label || gem.steps?.[i] || `Step ${i + 1}`,
-        start: l.start,
-        end:   l.end,
-      }));
+      createStepsArr = gem.loops.map((l, i) => {
+        const t   = Number(l.start ?? l.time) || 0;
+        const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
+        const mm  = Math.floor(t / 60);
+        const ss  = Math.floor(t % 60).toString().padStart(2, '0');
+        return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+      }).sort((a, b) => a.time - b.time);
       renderCreateSteps();
       renderTimeline();
       setAIStatus(`✅ Gemini placed ${gem.loops.length} loop stops!`, true);
