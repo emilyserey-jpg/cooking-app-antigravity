@@ -219,7 +219,7 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
     // ── Step 1: Upload video to Google File API ──────────────────────────
     console.log('[Gemini] Uploading to Google File API...');
     const uploadRes = await fetch(
-      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/upload/v1/files?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
@@ -247,7 +247,7 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
     let attempts  = 0;
     while (fileState === 'PROCESSING' && attempts < 30) {
       await new Promise(r => setTimeout(r, 3000));
-      const statusRes  = await fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`);
+      const statusRes  = await fetch(`https://generativelanguage.googleapis.com/v1/${fileName}?key=${GEMINI_API_KEY}`);
       const statusData = await statusRes.json();
       fileState = statusData.state;
       attempts++;
@@ -311,7 +311,7 @@ Rules:
     console.log(`[Gemini] ✅ ${result.loops?.length || 0} loops detected for "${result.title}"`);
 
     // Cleanup the file from Google (fire and forget)
-    fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`https://generativelanguage.googleapis.com/v1/${fileName}?key=${GEMINI_API_KEY}`, { method: 'DELETE' }).catch(() => {});
 
     res.json({
       ok:          true,
