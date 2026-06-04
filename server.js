@@ -6,9 +6,10 @@ const OpenAI  = require('openai');
 const app  = express();
 const PORT = process.env.PORT || 8000;
 
-const CF_ACCOUNT_ID  = process.env.CF_ACCOUNT_ID;
-const CF_API_TOKEN   = process.env.CF_API_TOKEN;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const CF_ACCOUNT_ID   = process.env.CF_ACCOUNT_ID;
+const CF_API_TOKEN    = process.env.CF_API_TOKEN;
+const OPENAI_API_KEY  = process.env.OPENAI_API_KEY;
+const GEMINI_API_KEY  = process.env.GEMINI_API_KEY;
 
 // OpenAI client (only created if key exists)
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
@@ -192,6 +193,83 @@ Rules:
     res.json({ loops: Array.isArray(result.steps) ? result.steps : [] });
   } catch (err) {
     console.error('[AI Loops] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── AI: Gemini video analysis — loops + steps (no transcription needed) ────
+// Gemini 2.5 Flash reads video + audio directly — works on silent videos too.
+app.post('/api/ai/gemini-loops', async (req, res) => {
+  if (!GEMINI_API_KEY)
+    return res.status(503).json({ error: 'GEMINI_API_KEY not configured — using Whisper fallback.' });
+
+  const { videoUrl } = req.body;
+  if (!videoUrl) return res.status(400).json({ error: 'Missing videoUrl.' });
+
+  try {
+    // CF Stream: convert HLS url to an MP4 URL Gemini can fetch
+    let analyzeUrl = videoUrl;
+    const cfMatch = videoUrl.match(/videodelivery\.net\/([a-f0-9]+)/);
+    if (cfMatch) {
+      analyzeUrl = `https://videodelivery.net/${cfMatch[1]}/downloads/default.mp4`;
+    }
+
+    const prompt = `You are analyzing a cooking tutorial video. Watch the full video carefully.
+Identify distinct cooking steps and return precise loop timestamps for a learner to practice.
+A loop is a repeating segment: e.g. knife cut, sauce stir, fold technique.
+
+Rules:
+- Return 3-12 loops depending on how many distinct steps exist
+- Each loop: { "start": <seconds>, "end": <seconds>, "label": "<2-5 word action>" }
+- Labels must be action phrases: "Dice the onions", "Fold in egg whites"
+- Timestamps must be accurate to the nearest second
+
+Also return:
+- "title": short recipe title
+- "ingredients": array of ingredient strings seen or heard
+- "steps": array of step descriptions (one per loop)
+
+Return ONLY valid JSON: { "title": "...", "ingredients": [...], "steps": [...], "loops": [{"start":0,"end":15,"label":"..."},...] }`;
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { fileData: { mimeType: 'video/mp4', fileUri: analyzeUrl } },
+            ],
+          }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+        }),
+      }
+    );
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      throw new Error(`Gemini API ${geminiRes.status}: ${errText.slice(0, 300)}`);
+    }
+
+    const geminiData = await geminiRes.json();
+    const raw = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!raw) throw new Error('Empty response from Gemini.');
+
+    const result = JSON.parse(raw);
+    console.log(`[Gemini] ${result.loops?.length || 0} loops detected.`);
+
+    res.json({
+      ok: true,
+      source: 'gemini',
+      title:       result.title       || '',
+      ingredients: result.ingredients || [],
+      steps:       result.steps       || [],
+      loops:       result.loops       || [],
+    });
+  } catch (err) {
+    console.error('[Gemini Loops] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
