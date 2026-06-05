@@ -1397,6 +1397,18 @@ function switchView(viewId) {
     if (currentView && currentView !== 'mobile-player') {
       playerPreviousView = currentView;
     }
+  } else {
+    // Pause mobile player video when leaving player view
+    const realVideo = document.getElementById('mobileRealVideo');
+    if (realVideo) {
+      try {
+        realVideo.pause();
+      } catch (e) {}
+    }
+    isPlaying = false;
+    if (typeof updateControlsUI === 'function') {
+      updateControlsUI();
+    }
   }
 
   // Hide the public-profile overlay when switching away
@@ -2600,8 +2612,14 @@ function updatePlayerEditButtonVisibility() {
   if (!editBtn) return;
   if (playerCurrentRecipe && currentUser && playerCurrentRecipe.creator === currentUser.email) {
     editBtn.style.display = 'flex';
+    editBtn.onclick = () => {
+      if (playerCurrentRecipe) {
+        window.loadRecipeToEditor(playerCurrentRecipe);
+      }
+    };
   } else {
     editBtn.style.display = 'none';
+    editBtn.onclick = null;
   }
 }
 

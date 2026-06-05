@@ -987,13 +987,13 @@
         </div>
 
         <!-- Main 2-col workbench -->
-        <div style="display:grid;grid-template-columns:1fr 330px;gap:1rem;flex:1;min-height:0;overflow:hidden;">
+        <div class="workbench-grid" style="gap:1rem;flex:1;min-height:0;overflow:hidden;">
 
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
-          <div style="display:flex;flex-direction:column;gap:0.5rem;overflow:hidden;">
+          <div class="workbench-left" style="display:flex;flex-direction:column;gap:0.5rem;">
 
             <!-- Video (overlay: only play/pause + add stop) -->
-            <div style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
+            <div class="workbench-video-wrapper">
               <video id="uploadedVideoPlayer"
                 style="width:100%;height:100%;object-fit:contain;display:block;"
                 preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
@@ -1067,7 +1067,7 @@
 
 
                     <!-- ══ RIGHT: Scrollable recipe panel ══ -->
-          <div style="overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding-right:2px;">
+          <div class="workbench-right" style="display:flex;flex-direction:column;gap:0.5rem;">
 
             <!-- Title (always visible) -->
             <div class="glass-card" style="padding:10px 13px;flex-shrink:0;">

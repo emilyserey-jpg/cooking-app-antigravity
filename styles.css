@@ -1665,3 +1665,36 @@ a:focus-visible {
   min-width: 0 !important;
 }
 
+/* ====================================================
+   WORKBENCH RESPONSIVE LAYOUT
+   ==================================================== */
+.workbench-grid {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+}
+
+@media (max-width: 768px) {
+  #createStage2 {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  .workbench-grid {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .workbench-left {
+    overflow: visible !important;
+    flex-shrink: 0;
+  }
+  .workbench-video-wrapper {
+    flex: none !important;
+    height: 220px !important;
+    width: 100% !important;
+  }
+  .workbench-right {
+    overflow: visible !important;
+    flex-shrink: 0;
+  }
+}
+
