@@ -1572,23 +1572,38 @@ a:focus-visible {
   border: 2px dashed var(--primary) !important;
 }
 
-/* Multigrid Row layout mode styles */
+/* Multigrid layout mode styles (applies to both row and quad) */
 @media (min-width: 768px) {
-  .phone-screen.multigrid-row-mode {
+  .phone-screen.multigrid-active {
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
   }
-  .phone-screen.multigrid-row-mode .player-left-column {
+  .phone-screen.multigrid-active .player-left-column {
     width: 100% !important;
   }
-  .phone-screen.multigrid-row-mode .mobile-player-body {
+  .phone-screen.multigrid-active .mobile-player-body {
     width: 100% !important;
     min-height: auto !important;
   }
 }
 
 /* Multigrid Active height overrides */
+.player-mobile-wrapper.multigrid-active {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.phone-screen.multigrid-active {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.phone-screen.multigrid-active .mobile-player-body {
+  overflow: visible !important;
+  height: auto !important;
+}
+
 .mobile-video-container.multigrid-active,
 .mobile-video-container.multigrid-active .mobile-video-placeholder {
   height: auto !important;

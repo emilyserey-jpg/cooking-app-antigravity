@@ -4416,12 +4416,27 @@ function updateMultigridLayoutClass() {
   const screen = document.querySelector('.phone-screen');
   const videoContainer = document.querySelector('.mobile-video-container');
   const multigridContainer = document.getElementById('playerMultigridContainer');
+  const wrapper = document.querySelector('.player-mobile-wrapper');
 
   if (screen) {
     if (isPlayerMultigridActive && playerGridLayout === 'row') {
       screen.classList.add('multigrid-row-mode');
     } else {
       screen.classList.remove('multigrid-row-mode');
+    }
+
+    if (isPlayerMultigridActive) {
+      screen.classList.add('multigrid-active');
+    } else {
+      screen.classList.remove('multigrid-active');
+    }
+  }
+
+  if (wrapper) {
+    if (isPlayerMultigridActive) {
+      wrapper.classList.add('multigrid-active');
+    } else {
+      wrapper.classList.remove('multigrid-active');
     }
   }
 
@@ -4525,7 +4540,8 @@ function renderPlayerMultigrid() {
     tilesContainer.style.display = 'grid';
     tilesContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
     tilesContainer.style.overflowX = 'hidden';
-    tilesContainer.style.overflowY = 'auto';
+    tilesContainer.style.overflowY = 'visible';
+    tilesContainer.style.height = 'auto';
   }
 
   const videoUrl = recipeData.video_url || (playerCurrentRecipe && playerCurrentRecipe.video_url);
