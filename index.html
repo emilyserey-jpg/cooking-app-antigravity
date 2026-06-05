@@ -121,15 +121,8 @@
               </div>
             </div>
 
-            <!-- Segmented Mode Control -->
-            <div class="mode-selector-strip">
-              <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')">Loop</button>
-              <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')">Wait</button>
-              <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')">Continuous</button>
-            </div>
-
             <!-- Unified Player Controls Strip -->
-            <div class="player-controls-strip">
+            <div class="player-controls-strip" style="margin-top: 4px; margin-bottom: 2px;">
               <button id="playerPrevStepBtn" onclick="window.desktopPlayerPrev()" class="control-btn" title="Previous Step">
                 <i data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
               </button>
@@ -149,15 +142,27 @@
               </button>
             </div>
 
-            <!-- Arrow Keys Keyboard Behavior Toggle (Centered & Compact) -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 2px; font-family: var(--font);">
-              <span style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
-                <i data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--primary);"></i> Arrow Keys:
-              </span>
-              <div style="display: flex; background: var(--bg-card-soft); border-radius: 999px; padding: 2px; border: 1.5px solid var(--border-card); overflow: hidden; flex-shrink: 0;">
-                <button id="playerKbModeSteps" onclick="setPlayerKeyboardMode('steps')" style="padding: 3px 10px; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">Steps</button>
-                <button id="playerKbModeScrub" onclick="setPlayerKeyboardMode('scrub')" style="padding: 3px 10px; border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">1s Seek</button>
+            <!-- Settings Strip (Modes & Keys side-by-side) -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 6px 2px; padding: 0 4px; font-family: var(--font);">
+              
+              <!-- Playback Mode Selector -->
+              <div class="mode-selector-strip" style="flex: 1; max-width: 200px; margin: 0; padding: 2px; box-shadow: var(--shadow-xs);">
+                <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')" style="font-size: 0.62rem; padding: 3px 0;">Loop</button>
+                <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')" style="font-size: 0.62rem; padding: 3px 0;">Wait</button>
+                <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')" style="font-size: 0.62rem; padding: 3px 0;">Continuous</button>
               </div>
+
+              <!-- Keyboard Behavior Toggle -->
+              <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.8); border-radius: 999px; padding: 2px 4px 2px 8px; border: 2px solid var(--border-card); box-shadow: var(--shadow-xs);">
+                <span style="font-size: 0.62rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 2px; white-space: nowrap;">
+                  <i data-lucide="keyboard" style="width: 11px; height: 11px; color: var(--primary);"></i> Keys:
+                </span>
+                <div style="display: flex; background: var(--bg-card-soft); border-radius: 999px; padding: 1px; border: 1.5px solid var(--border-card); overflow: hidden;">
+                  <button id="playerKbModeSteps" onclick="setPlayerKeyboardMode('steps')" style="padding: 2px 8px; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-family: var(--font); font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;">Steps</button>
+                  <button id="playerKbModeScrub" onclick="setPlayerKeyboardMode('scrub')" style="padding: 2px 8px; border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-family: var(--font); font-weight: 800; font-size: 0.6rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;">1s</button>
+                </div>
+              </div>
+
             </div>
           </div>
 
