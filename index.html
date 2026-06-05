@@ -78,15 +78,23 @@
                 <!-- Real Video Player -->
                 <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
                 
-                <!-- Floating Back Button -->
-                <button onclick="window.playerGoBack()" class="player-back-btn" tabindex="-1" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
-                  <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
-                </button>
-                
-                <!-- Floating Edit Button (Only visible for recipe creators) -->
-                <button id="playerEditRecipeBtn" tabindex="-1" style="display: none; position: absolute; top: 10px; left: 88px; z-index: 10; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #eab308; color: #1e293b; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#facc15'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#eab308'; this.style.transform='scale(1)'">
-                  <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Edit
-                </button>
+                <!-- Floating Controls Row -->
+                <div style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; align-items: center;">
+                  <!-- Floating Back Button -->
+                  <button onclick="window.playerGoBack()" class="player-back-btn" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+                    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
+                  </button>
+                  
+                  <!-- Floating Edit Button (Only visible for recipe creators) -->
+                  <button id="playerEditRecipeBtn" tabindex="-1" style="display: none; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #eab308; color: #1e293b; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#facc15'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#eab308'; this.style.transform='scale(1)'">
+                    <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Edit
+                  </button>
+
+                  <!-- Floating Remix Button -->
+                  <button id="playerRemixRecipeBtn" onclick="triggerRemix()" tabindex="-1" style="display: none; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #8b5cf6; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#a78bfa'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#8b5cf6'; this.style.transform='scale(1)'">
+                    <i data-lucide="git-fork" style="width: 13px; height: 13px;"></i> Remix
+                  </button>
+                </div>
                 
                 <!-- Badges & Grid Controls -->
                 <div class="playback-controls-overlay" style="align-items: center; gap: 8px;">

@@ -2629,18 +2629,29 @@ function updatePlayerMarkDoneButton() {
 
 function updatePlayerEditButtonVisibility() {
   const editBtn = document.getElementById('playerEditRecipeBtn');
+  const remixBtn = document.getElementById('playerRemixRecipeBtn');
   if (!editBtn) return;
-  if (playerCurrentRecipe && currentUser && playerCurrentRecipe.creator === currentUser.email) {
+  
+  const isOwner = playerCurrentRecipe && currentUser && playerCurrentRecipe.creator === currentUser.email;
+  
+  if (isOwner) {
     editBtn.style.display = 'flex';
     editBtn.onclick = () => {
       if (playerCurrentRecipe) {
         window.loadRecipeToEditor(playerCurrentRecipe);
       }
     };
+    if (remixBtn) remixBtn.style.display = 'none';
   } else {
     editBtn.style.display = 'none';
     editBtn.onclick = null;
+    if (remixBtn && playerCurrentRecipe) {
+      remixBtn.style.display = 'flex';
+    } else if (remixBtn) {
+      remixBtn.style.display = 'none';
+    }
   }
+  if (window.lucide) lucide.createIcons();
 }
 
 function renderPlayerTimelineMarkers() {

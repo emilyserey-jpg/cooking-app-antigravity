@@ -1764,6 +1764,98 @@ a:focus-visible {
   .mobile-editor-toolbar {
     display: flex !important;
   }
+
+  /* Make the main view switcher tabs behave as a floating glassmorphic bottom navigation bar on mobile */
+  .view-tabs {
+    display: flex !important; /* Override display: none from max-width: 640px */
+    position: fixed !important;
+    bottom: 16px !important;
+    left: 16px !important;
+    right: 16px !important;
+    z-index: 9999 !important; /* Float above all views */
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 2px solid var(--border-card) !important;
+    border-radius: 30px !important;
+    box-shadow: 0 8px 32px rgba(74, 144, 217, 0.15) !important;
+    padding: 6px 8px !important;
+    justify-content: space-around !important;
+    height: 60px !important;
+    align-items: center !important;
+    flex: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Style each tab button vertically (native style) */
+  .view-tabs .view-tab {
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 4px 8px !important;
+    font-size: 0.62rem !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex: 1 !important;
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+  }
+
+  .view-tabs .view-tab i {
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0 !important;
+  }
+  
+  /* Active tab indicator on mobile (accent color text + small dot or clean indicator) */
+  .view-tabs .view-tab.active {
+    color: var(--primary) !important;
+    background: rgba(74, 144, 217, 0.08) !important;
+    border-radius: 20px !important;
+    font-weight: 800 !important;
+  }
+
+  /* Make logo/actions fill top header nicely on mobile when view-tabs is fixed at bottom */
+  .header-actions {
+    justify-content: flex-end !important;
+  }
+
+  /* Adjust app-container bottom padding so floating bottom bar doesn't overlap view content */
+  .app-container {
+    padding: 1rem 1rem 90px 1rem !important;
+  }
+
+  /* Remove mockup frame borders and heights on actual mobile screen viewports */
+  .player-mobile-wrapper {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .phone-notch {
+    display: none !important;
+  }
+  .phone-screen {
+    padding-top: 0 !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+  }
+
+  /* Hide the mockup footer on mobile screens to make room for real bottom nav bar */
+  .mobile-player-footer {
+    display: none !important;
+  }
+}
+
+/* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
+body:has(#createStage2:not([style*="display: none"])) .view-tabs {
+  display: none !important;
 }
 
 /* ====================================================
