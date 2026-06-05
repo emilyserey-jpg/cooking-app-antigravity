@@ -86,13 +86,27 @@ function initializeApp() {
   // 🔌 Connect to Supabase
   initSupabase();
 
-  // Load default landing view preference
-  const defaultView = localStorage.getItem('cooking_gps_landing_view') || 'create';
-  switchView(defaultView);
+  // Load view from URL hash first, then fallback to landing view preference
+  let startView = window.location.hash.replace('#', '') || '';
+  const validViews = ['create', 'discover', 'grid-view', 'profile', 'my-profile', 'mobile-player', 'bento-dashboard', 'desktop-workbench'];
+  if (!validViews.includes(startView)) {
+    startView = localStorage.getItem('cooking_gps_landing_view') || 'create';
+  }
+  switchView(startView);
+
+  if (startView === 'mobile-player') {
+    const activeId = localStorage.getItem('cooking_gps_active_recipe_id');
+    if (activeId) {
+      window.loadRecipeById(activeId);
+    }
+  }
   
   // Set select input value in UI if it exists
   const landingSelect = document.getElementById('defaultLandingViewSelect');
-  if (landingSelect) landingSelect.value = defaultView;
+  if (landingSelect) {
+    const defaultPref = localStorage.getItem('cooking_gps_landing_view') || 'create';
+    landingSelect.value = defaultPref;
+  }
 }
 
 // App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
@@ -1054,6 +1068,7 @@ function switchView(viewId) {
   }
 
   currentView = viewId;
+  window.location.hash = viewId;
 
   // Update Tabs
   document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
@@ -2088,6 +2103,7 @@ let hlsInstance = null;
 
 window.loadPlayerRecipe = async function(recipeId) {
   if (!recipeId) return;
+  localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
   try {
     const { getRecipeById } = await import('./supabase-client.js');
     const recipe = await getRecipeById(recipeId);
