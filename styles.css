@@ -105,7 +105,7 @@ h1, h2, h3, h4, h5 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0 1.25rem 0 2rem;
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -114,6 +114,9 @@ h1, h2, h3, h4, h5 {
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-sm);
+  gap: 0.75rem;
+  /* allow the tab strip to scroll without clipping */
+  overflow: hidden;
 }
 
 .logo-container {
@@ -121,6 +124,7 @@ h1, h2, h3, h4, h5 {
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
+  flex-shrink: 0; /* logo never shrinks */
 }
 
 .logo-icon {
@@ -152,6 +156,7 @@ h1, h2, h3, h4, h5 {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0; /* avatar badge never shrinks */
 }
 
 .view-tabs {
@@ -161,7 +166,16 @@ h1, h2, h3, h4, h5 {
   border-radius: var(--radius-pill);
   border: 2px solid var(--border-card);
   box-shadow: var(--shadow-xs);
+  /* scrollable when window is narrow */
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+  /* hide scrollbar track but keep scroll functionality */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
 }
+.view-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
 .view-tab {
   padding: 7px 18px;
