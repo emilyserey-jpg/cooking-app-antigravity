@@ -94,11 +94,7 @@ function initializeApp() {
   if (landingSelect) landingSelect.value = defaultView;
 }
 
-if (document.readyState === 'loading') {
-  window.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-  initializeApp();
-}
+// App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
 
 function resizeCanvas() {
   if (canvasMobile) {
@@ -5105,4 +5101,11 @@ window.saveNewRecipe = async function() {
   window._aiStepsText   = document.getElementById('stepsText')?.value?.trim() || null;
   return _origSaveNewRecipe();
 };
+
+// ── App execution trigger ──
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
 
