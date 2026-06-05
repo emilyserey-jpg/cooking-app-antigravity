@@ -6941,7 +6941,29 @@ window.aiDoEverything = async function() {
 // ── Place Loop Stops (primary AI button) ──────────────────────────────────
 window.doItAll = async function() {
   const btn = document.getElementById('aiLoopBtn');
+  const overlayBtn = document.getElementById('overlayAiBtn');
+  
   if (btn) btn.disabled = true;
+  if (overlayBtn) {
+    overlayBtn.disabled = true;
+    overlayBtn.style.opacity = '0.7';
+    overlayBtn.innerHTML = '🤖 Analyzing...';
+  }
+
+  // Check if video is loaded first
+  if (!uploadedFile) {
+    setAIStatus('⚠️ Upload a video first.', true);
+    showTip('Upload your video first, then tap the button.');
+    if (btn) btn.disabled = false;
+    if (overlayBtn) {
+      overlayBtn.disabled = false;
+      overlayBtn.style.opacity = '1';
+      overlayBtn.innerHTML = '⚡ AI Stops';
+    }
+    return;
+  }
+
+  showTip('🤖 Gemini is analyzing your video for loop points. Please wait... 🎬');
 
   try {
     setAIStatus('🤖 Gemini is analyzing your video...', true);
@@ -6969,6 +6991,11 @@ window.doItAll = async function() {
         btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
         btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
       }
+      if (overlayBtn) {
+        overlayBtn.disabled = false;
+        overlayBtn.style.opacity = '1';
+        overlayBtn.innerHTML = '⚡ AI Stops';
+      }
       return;
     }
 
@@ -6977,18 +7004,18 @@ window.doItAll = async function() {
 
     // Use cached transcript if already transcribed
     if (!cachedTranscript) {
-      if (!uploadedFile) {
-        setAIStatus('⚠️ Upload a video first.', true);
-        showTip('Upload your video first, then tap the button.');
-        if (btn) btn.disabled = false;
-        return;
-      }
       await window.transcribeVideo();
     }
 
     if (!cachedTranscript) {
       setAIStatus('❌ Could not transcribe — video may be over 25MB. Add your Gemini key to Railway to support any size.', true);
+      showTip('❌ AI Analysis failed: Could not transcribe video.');
       if (btn) btn.disabled = false;
+      if (overlayBtn) {
+        overlayBtn.disabled = false;
+        overlayBtn.style.opacity = '1';
+        overlayBtn.innerHTML = '⚡ AI Stops';
+      }
       return;
     }
 
@@ -7001,10 +7028,21 @@ window.doItAll = async function() {
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
       btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
     }
+    if (overlayBtn) {
+      overlayBtn.disabled = false;
+      overlayBtn.style.opacity = '1';
+      overlayBtn.innerHTML = '⚡ AI Stops';
+    }
 
   } catch (err) {
     setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
+    showTip('❌ AI Analysis failed: ' + (err.message || 'Connection error.'));
     if (btn) btn.disabled = false;
+    if (overlayBtn) {
+      overlayBtn.disabled = false;
+      overlayBtn.style.opacity = '1';
+      overlayBtn.innerHTML = '⚡ AI Stops';
+    }
   }
 };
 
