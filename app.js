@@ -1252,7 +1252,8 @@ function renderDiscoverGrid(recipes) {
     if (empty) empty.style.display = 'block';
     if (count) count.textContent = '0 recipes';
     return;
-  }\n  if (empty) empty.style.display = 'none';
+  }
+  if (empty) empty.style.display = 'none';
   if (count) count.textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
   grid.innerHTML = recipes.map(r => renderRecipeCard(r, false)).join('');
 }
