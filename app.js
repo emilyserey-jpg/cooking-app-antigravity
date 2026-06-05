@@ -1950,10 +1950,12 @@ window.saveDraft = async function() {
         }
       } catch (upErr) {
         console.error('Supabase video upload failed:', upErr);
-        videoUrl = localVideoURL || null;
+        showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
+        throw new Error('Supabase video upload failed: ' + upErr.message);
       }
     } else {
-      videoUrl = localVideoURL || null;
+      // No video uploaded (remix or empty)
+      videoUrl = null;
     }
 
     const { createRecipe } = await import('./supabase-client.js');
@@ -4758,10 +4760,12 @@ window.saveNewRecipe = async function(targetFolderId) {
         }
       } catch (upErr) {
         console.error('Supabase video upload failed:', upErr);
-        videoUrl = localVideoURL || null;
+        showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
+        throw new Error('Supabase video upload failed: ' + upErr.message);
       }
     } else {
-      videoUrl = localVideoURL || null;
+      // No video uploaded (remix or empty)
+      videoUrl = null;
     }
 
     const savedRecipe = await createRecipe({
