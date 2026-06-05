@@ -185,6 +185,7 @@ export async function createRecipe(recipe) {
     steps:             recipe.steps || [],
     ingredients:       recipe.ingredients || [],
     video_url:         recipe.video_url || null,
+    thumbnail_url:     recipe.thumbnail_url || null,
     private_recipe:    isDraft ? true : (recipe.private_recipe ?? true),
     is_published:      isDraft ? false : (recipe.is_published ?? false),
     shared_on_profile: isDraft ? false : (recipe.shared_on_profile ?? false),

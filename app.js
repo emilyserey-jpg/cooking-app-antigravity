@@ -1008,10 +1008,13 @@ function switchSidebarTab(tabId) {
   document.getElementById(`tab-${tabId}`).classList.add('active');
 }
 
-function openWidgetRecipe(title) {
-  switchView('mobile-player');
-  seekToStep(1); // open with step 2 ready
-  showTip(`Loaded: ${title}`);
+function openWidgetRecipe(title, id) {
+  if (id) {
+    window.loadRecipeById(id);
+  } else {
+    switchView('mobile-player');
+    showTip('Loaded: ' + title);
+  }
 }
 
 function triggerRemix() {
@@ -1114,7 +1117,7 @@ async function loadRealRecipes() {
     const carousel = document.getElementById('recipesCarouselDeck');
     if (carousel && recipes.length > 0) {
       carousel.innerHTML = recipes.slice(0, 6).map(r => `
-        <div class="folder-card-thumb" onclick="openWidgetRecipe('${r.title.replace(/'/g, "'")}')">
+        <div class="folder-card-thumb" onclick="loadRecipeById('${r.id}')">
           <div class="folder-icon-glow">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           </div>
@@ -1653,7 +1656,7 @@ function renderRecipeCard(r, isOwner) {
     <div class="glass-card" style="cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
       onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(74,144,217,0.18)'"
       onmouseleave="this.style.transform='';this.style.boxShadow=''"
-      onclick="openWidgetRecipe('${(r.title||'').replace(/'/g, '\'').replace(/"/g,'&quot;')}')">  
+      onclick="loadRecipeById('${r.id}')">  
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
         <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(74,144,217,0.25);">🍳</div>
         ${badge}
@@ -1874,6 +1877,15 @@ window.loadGridRecipe = async function(recipeId) {
   } catch (err) {
     showTip('Could not load recipe: ' + err.message);
   }
+};
+
+// ── Universal recipe launcher — used by Library, My Profile, Discover ──────
+window.loadRecipeById = async function(id) {
+  if (!id) return;
+  switchView('grid-view');
+  await window.loadGridRecipe(id);
+  const picker = document.getElementById('gridRecipePicker');
+  if (picker) picker.value = id;
 };
 
 // ── Helper: normalize loop data (supports old number arrays AND new object arrays) ──
@@ -2526,7 +2538,7 @@ async function libFetchRecipes() {
     const { supabase } = await import('./supabase-client.js');
     const { data } = await supabase
       .from('recipes')
-      .select('id, title, video_url, duration, created_at, private_recipe')
+      .select('id, title, video_url, thumbnail_url, duration, created_at, private_recipe')
       .eq('creator', currentUser.email)
       .order('created_at', { ascending: false });
     return data || [];
@@ -2664,35 +2676,70 @@ function libFolderCardHTML(f) {
 }
 
 function libRecipeCardHTML(r, folderId) {
-  const mins = r.duration ? `${Math.floor(r.duration/60)}:${Math.floor(r.duration%60).toString().padStart(2,'0')}` : '';
-  const date = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-  const isDrag = libState.sort === 'custom';
-  const removeBtn = folderId
-    ? `<button onclick="event.stopPropagation();libRemoveFromFolder('${r.id}','${folderId}')" title="Move to loose"
-         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">↩ Remove</button>`
+  const mins = r.duration
+    ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
     : '';
-  return `
-    <div class="lib-recipe-card" id="libR_${r.id}"
-      style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:12px 14px;
-             display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"
-      onclick="libOpenRecipe('${r.id}')"
-      ${isDrag && !folderId ? `draggable="true" ondragstart="libOnDragStart(event,'recipe','${r.id}')"` : ''}
-      onmouseenter="this.style.boxShadow='0 4px 18px rgba(74,144,217,0.13)';this.style.borderColor='var(--primary)'"
-      onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)'">
-      <!-- Thumbnail placeholder -->
-      <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#e0eaf8,#d0d8f0);flex-shrink:0;
-                  display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🎬</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title||'Untitled'}</div>
-        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;margin-top:2px;">${[mins,date].filter(Boolean).join(' · ')}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        ${removeBtn}
-        <span style="font-size:0.7rem;color:var(--text-muted);">›</span>
-      </div>
-      ${isDrag && !folderId ? '<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;flex-shrink:0;">⠿</div>' : ''}
-    </div>`;
+  const date = r.created_at
+    ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
+  const isDrag = libState.sort === 'custom';
+
+  const removeBtn = folderId
+    ? '<button onclick="event.stopPropagation();libRemoveFromFolder(\'' + r.id + '\',\'' + folderId + '\')" title="Move to loose"'
+      + ' style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">'
+      + '&#x21A9; Remove</button>'
+    : '';
+
+  // Thumbnail: real image or dark gradient placeholder
+  const thumbHtml = r.thumbnail_url
+    ? '<img src="' + encodeURI(r.thumbnail_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">'
+    : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">&#x1F3AC;</div>';
+
+  const privBadge = r.private_recipe
+    ? '<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">&#x1F512; Private</span>'
+    : '<span style="font-size:0.6rem;font-weight:800;color:#22c55e;background:#dcfce7;border-radius:5px;padding:2px 6px;">&#x1F30E; Public</span>';
+
+  const dragAttr = isDrag && !folderId
+    ? 'draggable="true" ondragstart="libOnDragStart(event,'recipe','' + r.id + '')"'
+    : '';
+
+  return ''
+    + '<div class="lib-recipe-card" id="libR_' + r.id + '"'
+    + ' style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;'
+    + 'cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"'
+    + ' onclick="libOpenRecipe('' + r.id + '')"'
+    + ' ' + dragAttr
+    + ' onmouseenter="this.style.boxShadow='0 6px 22px rgba(74,144,217,0.16)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"'
+    + ' onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">'
+
+    // Thumbnail strip
+    + '<div style="position:relative;height:130px;background:#111;overflow:hidden;">'
+    + thumbHtml
+    + (mins ? '<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">' + mins + '</div>' : '')
+    + '<div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">'
+    + '<div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.15rem;">&#x25B6;</div>'
+    + '</div>'
+    + '</div>'
+
+    // Info row
+    + '<div style="padding:10px 12px;display:flex;align-items:center;gap:10px;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-weight:900;font-size:0.88rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">' + (r.title || 'Untitled') + '</div>'
+    + '<div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;">'
+    + privBadge
+    + (date ? '<span>' + date + '</span>' : '')
+    + '</div>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+    + removeBtn
+    + (isDrag && !folderId
+        ? '<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">&#x2807;</div>'
+        : '<span style="font-size:0.85rem;color:var(--text-muted);">&#x203A;</span>')
+    + '</div>'
+    + '</div>'
+    + '</div>';
 }
+
 
 function libEmptyState(q) {
   if (q) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
@@ -2794,12 +2841,9 @@ window.libRemoveFromFolder = function(recipeId, folderId) {
 };
 
 window.libOpenRecipe = function(id) {
-  // Switch to player and load the recipe
-  switchView('mobile-player');
   const r = libAllRecipes.find(r => r.id === id);
-  if (r) showTip(`Opening "${r.title}"…`);
-  // If profile has a loadRecipe function, use it
-  if (typeof window.loadProfileRecipe === 'function') window.loadProfileRecipe(id);
+  if (r) showTip('Opening "' + r.title + '"\u2026');
+  window.loadRecipeById(id);
 };
 
 // ── Sort ──────────────────────────────────────────────────────────────────
@@ -3870,6 +3914,19 @@ window.fsmSaveWithFolder = async function() {
   await saveNewRecipe(chosenFolderId);
 };
 
+// ── Capture a thumbnail from the editor video element ──────────────────────
+async function captureThumbnail(videoEl) {
+  if (!videoEl || !videoEl.videoWidth) return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.min(videoEl.videoWidth,  640);
+    canvas.height = Math.min(videoEl.videoHeight, 360);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.82));
+  } catch { return null; }
+}
+
 window.saveNewRecipe = async function(targetFolderId) {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim();
@@ -3891,6 +3948,28 @@ window.saveNewRecipe = async function(targetFolderId) {
       description: s.description || '',
     }));
 
+    // Capture thumbnail from the video element
+    let thumbnailUrl = null;
+    try {
+      const videoEl2 = document.getElementById('uploadedVideoPlayer');
+      if (videoEl2 && videoEl2.videoWidth > 0) {
+        const blob = await captureThumbnail(videoEl2);
+        if (blob) {
+          const { supabase: sb } = await import('./supabase-client.js');
+          const ext    = 'jpg';
+          const folder = currentUser.email.replace(/[@.]/g, '_');
+          const fname  = 'thumbnails/' + folder + '/' + Date.now() + '.' + ext;
+          const { error: upErr } = await sb.storage.from('videos').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
+          if (!upErr) {
+            const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+            thumbnailUrl = urlData.publicUrl;
+          }
+        }
+      }
+    } catch (tErr) {
+      console.warn('Thumbnail capture failed (non-fatal):', tErr);
+    }
+
     // Build video_url: prefer CF Stream, fall back to local blob
     const videoUrl = uploadedVideoUID
       ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
@@ -3903,6 +3982,7 @@ window.saveNewRecipe = async function(targetFolderId) {
       steps,
       loops,
       video_url:        videoUrl,
+      thumbnail_url:    thumbnailUrl,
       private_recipe:   !createIsPublic,
       is_published:     createIsPublic,
       shared_on_profile: createIsPublic,
@@ -3932,7 +4012,7 @@ window.saveNewRecipe = async function(targetFolderId) {
   }
 };
 
-// ── Stage 3: success screen + folder picker ───────────────────────────────
+// ── Stage 3: simple success screen ─────────────────────────────────
 let _lastSavedRecipeId    = null;
 let _lastSavedRecipeTitle = '';
 
@@ -3944,98 +4024,24 @@ function showStage3WithFolderPicker(recipe, isPublic) {
   if (!stage3) return;
   stage3.style.display = 'block';
 
-  // Build folder options from localStorage libState
-  let folders = [];
-  try {
-    const raw = localStorage.getItem('cookingGPS_library_v1');
-    const lib = raw ? JSON.parse(raw) : {};
-    folders = lib.folders || [];
-  } catch {}
+  const v = isPublic
+    ? '<span style="color:#22c55e;font-weight:700;">&#x1F30E; Public</span> — visible on Discover and your profile'
+    : '<span style="color:#4a90d9;font-weight:700;">&#x1F512; Private</span> — only you can see this';
 
-  const visibility = isPublic
-    ? '<span style="color:#22c55e;font-weight:700;">🌎 Public</span> — visible on Discover and your My Profile'
-    : '<span style="color:#4a90d9;font-weight:700;">🔒 Private</span> — only you can see this';
-
-  const folderOpts = folders.map(f =>
-    '<option value="' + f.id + '">' + f.name + '</option>'
-  ).join('');
-
-  stage3.innerHTML = `
-    <div style="font-size:4rem;margin-bottom:0.75rem;">&#x1F389;</div>
-    <h2 style="font-size:1.6rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Recipe Saved!</h2>
-    <p id="savedRecipeMsg" style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.9rem;">${visibility}</p>
-
-    <!-- Folder picker -->
-    <div style="background:var(--bg-card);border:2px solid var(--border-card);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;text-align:left;">
-      <div style="font-weight:900;font-size:0.85rem;color:var(--text-heading);margin-bottom:0.75rem;">&#x1F4C1; Add to a Folder <span style="font-weight:500;font-size:0.75rem;color:var(--text-muted);">(optional)</span></div>
-      ${ folders.length > 0 ? `
-        <select id="stage3FolderSelect" style="width:100%;padding:10px 12px;border:2px solid var(--border-card);border-radius:10px;font-family:var(--font);font-size:0.88rem;margin-bottom:0.75rem;background:var(--bg-input,#fff);color:var(--text-body);">
-          <option value="">— choose a folder —</option>
-          ${folderOpts}
-        </select>
-        <button onclick="addNewlySavedToFolder()" style="width:100%;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:0.5rem;">&#x2795; Add to Selected Folder</button>
-        <div style="text-align:center;font-size:0.75rem;color:var(--text-muted);font-weight:600;">or</div>
-      ` : '' }
-      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
-        <input id="stage3NewFolderName" type="text" placeholder="New folder name…" style="flex:1;padding:9px 12px;border:2px solid var(--border-card);border-radius:10px;font-family:var(--font);font-size:0.85rem;">
-        <button onclick="createAndAddToNewFolder()" style="background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:10px;padding:9px 14px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:var(--text-heading);white-space:nowrap;">&#x2795; Create & Add</button>
-      </div>
-      <div id="stage3FolderMsg" style="font-size:0.78rem;color:var(--primary);font-weight:700;margin-top:0.5rem;min-height:1.2em;"></div>
-    </div>
-
-    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
-      <button onclick="switchView('library')" class="btn btn-primary" style="border-radius:999px;padding:11px 24px;">&#x1F4DA; View in Library</button>
-      <button onclick="resetCreateView()" class="btn" style="border-radius:999px;padding:11px 24px;">&#x2795; Upload Another</button>
-    </div>`;
+  stage3.innerHTML =
+    '<div style="font-size:4rem;margin-bottom:0.75rem;">&#x1F389;</div>'
+    + '<h2 style="font-size:1.6rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Recipe Saved!</h2>'
+    + '<p style="color:var(--text-muted);font-weight:600;margin-bottom:2rem;font-size:0.9rem;">' + v + '</p>'
+    + '<div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">'
+    + '<button onclick="switchView('library')" class="btn btn-primary" style="border-radius:999px;padding:12px 28px;">&#x1F4DA; View in Library</button>'
+    + '<button onclick="resetCreateView()" class="btn" style="border-radius:999px;padding:12px 28px;">&#x2795; Upload Another</button>'
+    + '</div>';
 }
 
-window.addNewlySavedToFolder = function() {
-  const select = document.getElementById('stage3FolderSelect');
-  const msg    = document.getElementById('stage3FolderMsg');
-  if (!select || !select.value) { if (msg) msg.textContent = 'Please choose a folder first.'; return; }
-  if (!_lastSavedRecipeId) { if (msg) msg.textContent = 'Recipe ID not found — please check Library.'; return; }
-  try {
-    const raw = localStorage.getItem('cookingGPS_library_v1');
-    const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
-    const folder = lib.folders.find(f => f.id === select.value);
-    if (!folder) { if (msg) msg.textContent = 'Folder not found.'; return; }
-    if (!folder.recipeIds) folder.recipeIds = [];
-    if (!folder.recipeIds.includes(_lastSavedRecipeId)) folder.recipeIds.push(_lastSavedRecipeId);
-    localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
-    if (msg) { msg.style.color = '#22c55e'; msg.textContent = '\u2705 Added to "' + folder.name + '"!'; }
-    select.value = '';
-  } catch (e) {
-    if (msg) msg.textContent = 'Error: ' + e.message;
-  }
-};
+// Stubs for any lingering inline HTML references
+window.addNewlySavedToFolder   = function() {};
+window.createAndAddToNewFolder = function() {};
 
-window.createAndAddToNewFolder = function() {
-  const input = document.getElementById('stage3NewFolderName');
-  const msg   = document.getElementById('stage3FolderMsg');
-  const name  = input ? input.value.trim() : '';
-  if (!name) { if (msg) msg.textContent = 'Enter a folder name first.'; return; }
-  if (!_lastSavedRecipeId) { if (msg) msg.textContent = 'Recipe ID not found — please check Library.'; return; }
-  try {
-    const raw = localStorage.getItem('cookingGPS_library_v1');
-    const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
-    if (!lib.folders) lib.folders = [];
-    if (!lib.customOrder) lib.customOrder = [];
-    const colors = ['#4a90d9','#22c55e','#f59e0b','#a855f7','#ef4444','#06b6d4'];
-    const newFolder = {
-      id:        'f_' + Date.now(),
-      name,
-      color:     colors[lib.folders.length % colors.length],
-      recipeIds: [_lastSavedRecipeId],
-    };
-    lib.folders.push(newFolder);
-    lib.customOrder.push('folder:' + newFolder.id);
-    localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
-    if (msg) { msg.style.color = '#22c55e'; msg.textContent = '\u2705 Created "' + name + '" and added recipe!'; }
-    if (input) input.value = '';
-  } catch (e) {
-    if (msg) msg.textContent = 'Error: ' + e.message;
-  }
-};
 
 window.resetCreateView = function() {
   uploadedVideoUID = null;
