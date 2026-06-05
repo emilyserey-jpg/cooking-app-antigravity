@@ -987,28 +987,20 @@
         </div>
 
         <!-- Main 2-col workbench -->
-        <div class="workbench-grid" style="gap:1rem;flex:1;min-height:0;overflow:hidden;">
-
-          <!-- Title (placed at top using grid areas) -->
-          <div class="workbench-title-card glass-card" style="padding:10px 13px;flex-shrink:0;">
-            <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
-            <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
-              style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;"
-              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
-          </div>
+        <div id="workbenchGrid" style="display:grid;grid-template-columns:1fr 330px;gap:1rem;flex:1;min-height:0;overflow:hidden;">
 
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
-          <div class="workbench-left" style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div id="workbenchLeft" style="display:flex;flex-direction:column;gap:0.5rem;overflow:hidden;">
 
             <!-- Video (overlay: only play/pause + add stop) -->
-            <div class="workbench-video-wrapper">
+            <div id="workbenchVideoWrapper" style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
               <video id="uploadedVideoPlayer"
                 style="width:100%;height:100%;object-fit:contain;display:block;"
                 preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
                 onclick="toggleVideoPlay()"></video>
 
               <!-- Minimal overlay: play + current time + add stop -->
-              <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));padding:8px 12px 10px;display:flex;align-items:center;gap:8px;">
+              <div id="videoOverlayControls" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));padding:8px 12px 10px;display:flex;align-items:center;gap:8px;">
                 <button onclick="toggleVideoPlay()" id="videoPlayBtn"
                   style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;color:#fff;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">▶</button>
                 <div style="flex:1;">
@@ -1021,8 +1013,10 @@
                   style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">▶ Loop</button>
                 <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
                   style="display:none;background:#f0f4ff;border:none;border-radius:8px;padding:6px 11px;color:var(--primary);cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(240,244,255,0.4);">⏹ Stop</button>
-                <button onclick="window.openManualTimestampModal()"
+                <button onclick="window.openManualTimestampModal()" id="overlayTypeStopBtn"
                   style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">⌨️ Type Stop</button>
+                <button onclick="doItAll()" id="overlayAiBtn"
+                  style="background:linear-gradient(135deg,#7c3aed,#6366f1);border:none;border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(124,58,237,0.3);">⚡ AI Stops</button>
                 <button onclick="addStepAtCurrentTime()"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);">📍 Add Stop</button>
               </div>
@@ -1052,7 +1046,7 @@
             </div>
 
             <!-- ── Nav controls bar ── -->
-            <div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
 
               <!-- Row 1: step navigator + loop/stop + keyboard toggle -->
               <div style="display:flex;align-items:center;gap:7px;">
@@ -1083,9 +1077,37 @@
             <div id="createTimeline" style="display:none;"><div id="timelinePlayhead" style="display:none;"></div></div>
           </div>
 
+          <!-- ══ RIGHT: Scrollable recipe panel ══ -->
+          <div id="workbenchRight" style="overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding-right:2px;">
 
-                    <!-- ══ RIGHT: Scrollable recipe panel ══ -->
-          <div class="workbench-right" style="display:flex;flex-direction:column;gap:0.5rem;">
+            <!-- Recipe Title (statically first in right panel on desktop) -->
+            <div class="glass-card" id="editorTitleCard" style="padding:10px 13px;flex-shrink:0;">
+              <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
+              <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
+                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;"
+                onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+            </div>
+
+            <!-- Preview Cover -->
+            <div class="glass-card" id="editorCoverCard" style="padding:10px 13px;flex-shrink:0;">
+              <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Preview Cover (Thumbnail)</label>
+              <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+                <div id="createThumbnailPreviewContainer" style="width:96px;height:54px;border-radius:8px;background:#1a2235;overflow:hidden;border:2px solid var(--border-card);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
+                  <span id="createThumbnailPlaceholder" style="font-size:1.1rem;">🖼️</span>
+                  <img id="createThumbnailPreviewImg" style="width:100%;height:100%;object-fit:cover;display:none;border-radius:6px;">
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+                  <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="padding:6px 12px;font-size:0.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px;background:var(--bg-card-soft);border:2px solid var(--border-card);cursor:pointer;border-radius:8px;justify-content:center;font-family:var(--font);box-shadow:var(--shadow-xs);">
+                    📁 Choose Image
+                  </button>
+                  <span id="coverUploadStatus" style="font-size:0.58rem;color:var(--text-muted);font-weight:600;line-height:1.2;">Captured from video or custom</span>
+                </div>
+              </div>
+              <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="handleCoverFileSelect(this.files[0])">
+              <input id="newRecipeCoverInput" type="text" placeholder="Or paste image URL..."
+                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-heading);outline:none;"
+                oninput="updateCoverPreviewFromUrl(this.value)">
+            </div>
 
             <!-- ▾ AI Tools accordion -->
             <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:0;flex-shrink:0;overflow:hidden;">

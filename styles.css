@@ -1668,34 +1668,15 @@ a:focus-visible {
 /* ====================================================
    WORKBENCH RESPONSIVE LAYOUT
    ==================================================== */
-.workbench-grid {
-  display: grid;
-  grid-template-columns: 1fr 330px;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "video title"
-    "video right";
-}
 
-.workbench-title-card {
-  grid-area: title;
-}
-
-.workbench-left {
-  grid-area: video;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow: hidden;
-}
-
-.workbench-right {
-  grid-area: right;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow-y: auto;
-  padding-right: 2px;
+/* Hide mobile-specific overlay buttons in video player controls on desktop */
+@media (min-width: 769px) {
+  #overlayPreviewLoopBtn,
+  #overlayStopPreviewBtn,
+  #overlayTypeStopBtn,
+  #overlayAiBtn {
+    display: none !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1703,45 +1684,85 @@ a:focus-visible {
     height: calc(100dvh - 120px) !important;
     max-height: calc(100dvh - 120px) !important;
     overflow: hidden !important;
-    display: flex;
+    display: flex; /* no !important to allow resetCreateView to hide it */
     flex-direction: column !important;
     position: relative !important;
     padding-bottom: 60px !important; /* space for toolbar */
   }
-  .workbench-grid {
+  
+  #workbenchGrid {
     display: flex !important;
     flex-direction: column !important;
     height: 100% !important;
     overflow: hidden !important;
     gap: 0.5rem !important;
   }
-  .workbench-title-card {
-    margin-bottom: 0 !important;
-    width: 100% !important;
-  }
-  .workbench-left {
+  
+  #workbenchLeft {
     overflow: hidden !important;
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
   }
-  .workbench-video-wrapper {
+  
+  #workbenchVideoWrapper {
+    position: relative !important;
     flex: 1 !important;
     min-height: 160px !important;
     max-height: 240px !important;
     width: 100% !important;
   }
-  .workbench-right {
-    display: none !important; /* hidden, children moved to drawers */
+  
+  #workbenchRight {
+    display: none !important; /* hide sidebar on mobile since elements are moved to slides */
+  }
+
+  /* Make controls row scrollable horizontally on mobile */
+  #videoOverlayControls {
+    position: relative !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #1e2235 !important;
+    border-top: 1.5px solid var(--border-card) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+  }
+  
+  #videoOverlayControls::-webkit-scrollbar,
+  #stepNavControlsRow::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  #videoOverlayControls button,
+  #stepNavControlsRow button {
+    flex-shrink: 0 !important;
+  }
+  
+  #stepNavControlsRow {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+    flex-direction: row !important;
+    align-items: center !important;
   }
 
   /* Show mobile-specific layouts */
   .editor-carousel {
-    display: flex;
+    display: flex !important;
   }
   .mobile-editor-toolbar {
-    display: flex;
+    display: flex !important;
   }
 }
 

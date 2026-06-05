@@ -78,7 +78,7 @@ function enableDragToScroll(el) {
 
   el.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return; // Left click only
-    if (typeof playerDescLayoutMode !== 'undefined' && playerDescLayoutMode !== 'row') return;
+    if (el.id === 'playerMultigridDescriptions' && typeof playerDescLayoutMode !== 'undefined' && playerDescLayoutMode !== 'row') return;
     isDown = true;
     hasMoved = false;
     startX = e.pageX - el.offsetLeft;
@@ -148,6 +148,16 @@ function initializeApp() {
   const multigridDescContainer = document.getElementById('playerMultigridDescriptions');
   if (multigridDescContainer) {
     enableDragToScroll(multigridDescContainer);
+  }
+
+  // Enable drag-to-scroll on editor mobile controls containers
+  const videoControls = document.getElementById('videoOverlayControls');
+  if (videoControls) {
+    enableDragToScroll(videoControls);
+  }
+  const stepNavControls = document.getElementById('stepNavControlsRow');
+  if (stepNavControls) {
+    enableDragToScroll(stepNavControls);
   }
 
   // Update keyboard navigation buttons when seek amount is changed
@@ -2715,6 +2725,9 @@ window.loadRecipeToEditor = function(recipe) {
   renderTimeline();
   switchView('create');
   showTip(`Editing recipe: ${recipe.title} ✏️`);
+  if (typeof window.setupResponsiveDrawers === 'function') {
+    window.setupResponsiveDrawers();
+  }
 };
 
 let hlsInstance = null;
@@ -5192,9 +5205,9 @@ async function autoAnalyzeWithAI() {
   const saveBtn   = document.getElementById('saveRecipeBtn');
 
   if (uploadedFile.size > 25 * 1024 * 1024) {
-    if (statusMsg) statusMsg.textContent = '✅ Uploaded! (File >25MB — use 🤖 AI Magic to analyze)';
+    if (statusMsg) statusMsg.textContent = '✅ Uploaded! (File >25MB — use 🤖 AI Tools to analyze)';
     if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
-    showTip('Video uploaded! Use the 🤖 AI Magic section to analyze it manually.');
+    showTip('Video uploaded! Use the 🤖 AI Tools section to analyze it manually.');
     return;
   }
 
@@ -5259,8 +5272,8 @@ async function autoAnalyzeWithAI() {
 
   } catch (err) {
     console.error('[AutoAI]', err);
-    setAIStatus('⚠️ Auto-analysis failed — use 🤖 AI Magic to retry.', true);
-    if (statusMsg) statusMsg.textContent = '✅ Uploaded (AI failed — retry in AI Magic)';
+    setAIStatus('⚠️ Auto-analysis failed — use 🤖 AI Tools to retry.', true);
+    if (statusMsg) statusMsg.textContent = '✅ Uploaded (AI failed — retry in AI Tools)';
     if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
   }
 }
@@ -5297,6 +5310,9 @@ function showEditorStage(videoUrl) {
   createStepsArr = [];
   renderCreateSteps();
   if (window.lucide) lucide.createIcons();
+  if (typeof window.setupResponsiveDrawers === 'function') {
+    window.setupResponsiveDrawers();
+  }
 }
 
 // Step colors — one per step, Wii-style pastels
@@ -6996,13 +7012,16 @@ window.setupResponsiveDrawers = function() {
   const slideStops = document.getElementById('slideStops');
   const slideSave = document.getElementById('slideSave');
   
-  const titleCard = document.querySelector('.workbench-title-card');
-  const coverCard = document.getElementById('coverFileInput')?.closest('.glass-card');
-  const visibilityCard = document.getElementById('privacyToggle')?.closest('.glass-card');
+  const titleCard = document.getElementById('editorTitleCard');
+  const coverCard = document.getElementById('editorCoverCard');
+  const visibilityCard = document.getElementById('editorVisibilityCard');
   const aiSection = document.getElementById('aiSection');
-  const stopsSection = document.getElementById('createStepsList')?.closest('.glass-card');
+  const stopsSection = document.getElementById('editorStopsCard');
   const saveBtn = document.getElementById('saveRecipeBtn');
   const saveDraftBtn = document.getElementById('saveDraftBtn');
+  const rightPanel = document.getElementById('workbenchRight');
+  const videoWrapper = document.getElementById('workbenchVideoWrapper');
+  const videoOverlayControls = document.getElementById('videoOverlayControls');
   
   if (isMobile) {
     if (slideDetails) {
@@ -7021,28 +7040,28 @@ window.setupResponsiveDrawers = function() {
       if (saveDraftBtn && saveDraftBtn.parentElement !== slideSave) slideSave.appendChild(saveDraftBtn);
     }
     
+    // Relocate #videoOverlayControls to be sibling of #workbenchVideoWrapper on mobile to fix iOS Safari touch swallowing
+    if (videoWrapper && videoOverlayControls && videoOverlayControls.parentElement === videoWrapper) {
+      videoWrapper.parentNode.insertBefore(videoOverlayControls, videoWrapper.nextSibling);
+    }
+    
     // Wire swipe scroll listeners
     window.setupCarouselListeners();
   } else {
-    // Restore to desktop 2-column sidebar positions
-    const grid = document.querySelector('.workbench-grid');
-    const rightPanel = document.querySelector('.workbench-right');
-    const leftPanel = document.querySelector('.workbench-left');
-    
-    if (grid && titleCard && titleCard.parentElement !== grid) {
-      if (leftPanel) {
-        grid.insertBefore(titleCard, leftPanel);
-      } else {
-        grid.appendChild(titleCard);
-      }
-    }
+    // Restore to desktop 2-column sidebar positions in exact original order
     if (rightPanel) {
-      if (aiSection && aiSection.parentElement !== rightPanel) rightPanel.appendChild(aiSection);
-      if (stopsSection && stopsSection.parentElement !== rightPanel) rightPanel.appendChild(stopsSection);
+      if (titleCard && titleCard.parentElement !== rightPanel) rightPanel.appendChild(titleCard);
       if (coverCard && coverCard.parentElement !== rightPanel) rightPanel.appendChild(coverCard);
+      if (aiSection && aiSection.parentElement !== rightPanel) rightPanel.appendChild(aiSection);
       if (visibilityCard && visibilityCard.parentElement !== rightPanel) rightPanel.appendChild(visibilityCard);
+      if (stopsSection && stopsSection.parentElement !== rightPanel) rightPanel.appendChild(stopsSection);
       if (saveBtn && saveBtn.parentElement !== rightPanel) rightPanel.appendChild(saveBtn);
       if (saveDraftBtn && saveDraftBtn.parentElement !== rightPanel) rightPanel.appendChild(saveDraftBtn);
+    }
+    
+    // Restore #videoOverlayControls back inside #workbenchVideoWrapper on desktop
+    if (videoWrapper && videoOverlayControls && videoOverlayControls.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(videoOverlayControls);
     }
   }
 };
@@ -7094,6 +7113,23 @@ function updateToolbarButtonStates(activeIndex) {
       btn.classList.toggle('active', i === activeIndex);
     }
   });
+
+  // Auto-expand accordion body when sliding to its tab
+  if (activeIndex === 1) { // Stops tab
+    const stopsBody = document.getElementById('stopsBody');
+    const stopsChevron = document.getElementById('stopsChevron');
+    if (stopsBody) {
+      stopsBody.style.display = '';
+      if (stopsChevron) stopsChevron.style.transform = '';
+    }
+  } else if (activeIndex === 2) { // AI Tools tab
+    const aiBody = document.getElementById('aiBody');
+    const aiChevron = document.getElementById('aiChevron');
+    if (aiBody) {
+      aiBody.style.display = '';
+      if (aiChevron) aiChevron.style.transform = '';
+    }
+  }
 }
 
 // Kept for compatibility during view switching and resets
