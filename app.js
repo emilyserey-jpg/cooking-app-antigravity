@@ -4201,8 +4201,13 @@ window.desktopPlayerPrev     = function() {
   } else if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
-    seekToStep(0);
-    showTip("First step reached.");
+    currentTime = 0;
+    const realVideo = document.getElementById('mobileRealVideo');
+    if (realVideo && realVideo.style.display !== 'none') {
+      realVideo.currentTime = 0;
+    }
+    updateStepDetailsUI();
+    showTip("Beginning of video reached.");
   }
 };
 window.toggleBentoEditMode   = toggleBentoEditMode;
