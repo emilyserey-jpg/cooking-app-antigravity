@@ -107,28 +107,46 @@ function startVideoSimulation() {
     const delta = (time - lastTime) / 1000;
     lastTime = time;
     
-    if (isPlaying) {
-      // Apply play speed
-      const speed = currentView === 'mobile-player' ? 1.0 : parseFloat(document.getElementById('activeSpeedBadge').innerText) || 1.0;
-      currentTime += delta * speed;
-      
-      const stepStart = recipeData.loops[activeStepIndex];
-      const stepEnd = recipeData.loops[activeStepIndex + 1];
-      
-      // CRITICAL GPS BEHAVIOR IMPLEMENTATION
+    const realVideo = document.getElementById('mobileRealVideo');
+    const isRealVideoActive = realVideo && realVideo.style.display !== 'none';
+
+    if (isRealVideoActive) {
+      if (isPlaying) {
+        if (realVideo.paused) {
+          realVideo.play().catch(() => {});
+        }
+        if (Math.abs(realVideo.currentTime - currentTime) > 0.5) {
+          realVideo.currentTime = currentTime;
+        } else {
+          currentTime = realVideo.currentTime;
+        }
+      } else {
+        if (!realVideo.paused) {
+          realVideo.pause();
+        }
+        if (Math.abs(realVideo.currentTime - currentTime) > 0.3) {
+          realVideo.currentTime = currentTime;
+        }
+      }
+
+      const stepStart = recipeData.loops[activeStepIndex] || 0;
+      const stepEnd   = recipeData.loops[activeStepIndex + 1] || recipeData.duration;
+
       if (playbackMode === 'loop') {
         if (currentTime >= stepEnd) {
-          currentTime = stepStart; // jump back to loop start
+          currentTime = stepStart;
+          realVideo.currentTime = stepStart;
         }
       } else if (playbackMode === 'wait') {
         if (currentTime >= stepEnd) {
           currentTime = stepEnd;
-          isPlaying = false; // pause exactly at end
+          realVideo.currentTime = stepEnd;
+          isPlaying = false;
+          realVideo.pause();
           speakFeedback("Step completed. Waiting.");
           updateControlsUI();
         }
       } else if (playbackMode === 'continuous') {
-        // Auto-advance step dynamically
         if (currentTime >= stepEnd) {
           if (activeStepIndex < recipeData.steps.length - 1) {
             activeStepIndex++;
@@ -136,17 +154,63 @@ function startVideoSimulation() {
             updateStepDetailsUI();
           } else {
             currentTime = stepEnd;
+            realVideo.currentTime = stepEnd;
             isPlaying = false;
+            realVideo.pause();
             updateControlsUI();
           }
         }
       }
-      
-      // Boundaries cap
+
       if (currentTime >= recipeData.duration) {
         currentTime = recipeData.duration;
+        realVideo.currentTime = recipeData.duration;
         isPlaying = false;
+        realVideo.pause();
         updateControlsUI();
+      }
+    } else {
+      if (isPlaying) {
+        // Apply play speed
+        const speed = currentView === 'mobile-player' ? 1.0 : parseFloat(document.getElementById('activeSpeedBadge').innerText) || 1.0;
+        currentTime += delta * speed;
+        
+        const stepStart = recipeData.loops[activeStepIndex];
+        const stepEnd = recipeData.loops[activeStepIndex + 1];
+        
+        // CRITICAL GPS BEHAVIOR IMPLEMENTATION
+        if (playbackMode === 'loop') {
+          if (currentTime >= stepEnd) {
+            currentTime = stepStart; // jump back to loop start
+          }
+        } else if (playbackMode === 'wait') {
+          if (currentTime >= stepEnd) {
+            currentTime = stepEnd;
+            isPlaying = false; // pause exactly at end
+            speakFeedback("Step completed. Waiting.");
+            updateControlsUI();
+          }
+        } else if (playbackMode === 'continuous') {
+          // Auto-advance step dynamically
+          if (currentTime >= stepEnd) {
+            if (activeStepIndex < recipeData.steps.length - 1) {
+              activeStepIndex++;
+              speakFeedback("Advancing to " + recipeData.steps[activeStepIndex].title);
+              updateStepDetailsUI();
+            } else {
+              currentTime = stepEnd;
+              isPlaying = false;
+              updateControlsUI();
+            }
+          }
+        }
+        
+        // Boundaries cap
+        if (currentTime >= recipeData.duration) {
+          currentTime = recipeData.duration;
+          isPlaying = false;
+          updateControlsUI();
+        }
       }
     }
     
@@ -372,6 +436,16 @@ function updateTimelineUI() {
 function toggleVideoPlayback() {
   isPlaying = !isPlaying;
   updateControlsUI();
+
+  // Real video play/pause sync
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (realVideo && realVideo.style.display !== 'none') {
+    if (isPlaying) {
+      realVideo.play().catch(() => {});
+    } else {
+      realVideo.pause();
+    }
+  }
 }
 
 function updateControlsUI() {
@@ -417,6 +491,12 @@ function setPlaybackMode(mode) {
 function seekToStep(index) {
   activeStepIndex = index;
   currentTime = recipeData.loops[index];
+
+  // Real video seek sync
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (realVideo && realVideo.style.display !== 'none') {
+    realVideo.currentTime = currentTime;
+  }
   
   updateStepDetailsUI();
   speakFeedback("Navigating to " + recipeData.steps[index].title);
@@ -1969,13 +2049,95 @@ window.loadGridRecipe = async function(recipeId) {
   }
 };
 
+let hlsInstance = null;
+
+window.loadPlayerRecipe = async function(recipeId) {
+  if (!recipeId) return;
+  try {
+    const { getRecipeById } = await import('./supabase-client.js');
+    const recipe = await getRecipeById(recipeId);
+    if (!recipe) return;
+
+    // Mutate recipeData properties
+    recipeData.title = recipe.title || 'Untitled Recipe';
+    recipeData.duration = recipe.duration || 10;
+    
+    // Normalize loops and steps
+    const parsed = parseLoops(recipe.loops);
+    if (parsed.length > 0) {
+      recipeData.loops = parsed.map(l => l.start);
+      // Make sure step boundaries end at duration
+      if (recipeData.loops[recipeData.loops.length - 1] < recipeData.duration) {
+        recipeData.loops.push(recipeData.duration);
+      }
+      recipeData.steps = parsed.map((l, idx) => ({
+        title: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
+        instruction: l.description || '',
+      }));
+    } else {
+      recipeData.loops = [0, recipeData.duration];
+      recipeData.steps = [{
+        title: 'Start Cooking',
+        instruction: 'Follow the steps to prepare this dish.',
+      }];
+    }
+
+    // Reset player state
+    activeStepIndex = 0;
+    currentTime = 0;
+    isPlaying = false;
+
+    // Handle video player UI display
+    const realVideo = document.getElementById('mobileRealVideo');
+    const canvas = document.getElementById('mobileVideoCanvas');
+
+    if (recipe.video_url && realVideo) {
+      if (canvas) canvas.style.display = 'none';
+      realVideo.style.display = 'block';
+      
+      // Load source
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      if (recipe.video_url.includes('.m3u8')) {
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+          hlsInstance = new Hls();
+          hlsInstance.loadSource(recipe.video_url);
+          hlsInstance.attachMedia(realVideo);
+        } else if (realVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          realVideo.src = recipe.video_url;
+        }
+      } else {
+        realVideo.src = recipe.video_url;
+      }
+      realVideo.currentTime = 0;
+    } else {
+      if (realVideo) {
+        realVideo.style.display = 'none';
+        realVideo.src = '';
+      }
+      if (canvas) canvas.style.display = 'block';
+    }
+
+    // Refresh controls and details
+    renderStepChipsMobile();
+    updateStepDetailsUI();
+    updateControlsUI();
+    
+    showTip(`Loaded: ${recipeData.title} 🎬`);
+  } catch (err) {
+    console.error('[Player] Load error:', err);
+    showTip('Could not load recipe to player: ' + err.message);
+  }
+};
+
 // ── Universal recipe launcher — used by Library, My Profile, Discover ──────
 window.loadRecipeById = async function(id) {
   if (!id) return;
-  switchView('grid-view');
-  await window.loadGridRecipe(id);
-  const picker = document.getElementById('gridRecipePicker');
-  if (picker) picker.value = id;
+  switchView('mobile-player');
+  await window.loadPlayerRecipe(id);
 };
 
 // ── Helper: normalize loop data (supports old number arrays AND new object arrays) ──
