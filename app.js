@@ -4414,6 +4414,9 @@ window.togglePlayerMultigridMute = function(event, idx) {
 
 function updateMultigridLayoutClass() {
   const screen = document.querySelector('.phone-screen');
+  const videoContainer = document.querySelector('.mobile-video-container');
+  const multigridContainer = document.getElementById('playerMultigridContainer');
+
   if (screen) {
     if (isPlayerMultigridActive && playerGridLayout === 'row') {
       screen.classList.add('multigrid-row-mode');
@@ -4421,7 +4424,70 @@ function updateMultigridLayoutClass() {
       screen.classList.remove('multigrid-row-mode');
     }
   }
+
+  if (videoContainer) {
+    if (isPlayerMultigridActive) {
+      videoContainer.classList.add('multigrid-active');
+    } else {
+      videoContainer.classList.remove('multigrid-active');
+    }
+  }
+
+  if (multigridContainer) {
+    if (isPlayerMultigridActive) {
+      multigridContainer.classList.add('multigrid-active');
+    } else {
+      multigridContainer.classList.remove('multigrid-active');
+    }
+  }
 }
+
+window.toggleMultigridTilePlayback = function(event, idx) {
+  if (event) event.stopPropagation();
+  
+  // Try video first
+  const video = document.getElementById(`playerMultigridVid_${idx}`);
+  if (video) {
+    if (video.paused) {
+      video.play().catch(() => {});
+      showTip(`Step ${idx + 1} playing ▶`);
+    } else {
+      video.pause();
+      showTip(`Step ${idx + 1} paused ⏸`);
+    }
+    return;
+  }
+  
+  // Try canvas simulation next
+  const canvas = document.getElementById(`playerMultigridCanvas_${idx}`);
+  if (canvas) {
+    if (playerMultigridIntervals[idx]) {
+      // Pause simulation
+      clearInterval(playerMultigridIntervals[idx]);
+      playerMultigridIntervals[idx] = null;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.save();
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        const dw = canvas.width / window.devicePixelRatio;
+        const dh = canvas.height / window.devicePixelRatio;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, dw, dh);
+        ctx.fillStyle = '#fff';
+        ctx.font = "bold 13px 'Nunito', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("⏸ Paused", dw / 2, dh / 2 + 4);
+        ctx.restore();
+      }
+      showTip(`Step ${idx + 1} simulation paused ⏸`);
+    } else {
+      // Resume simulation
+      setupMultigridTileSimulation(idx, canvas);
+      showTip(`Step ${idx + 1} simulation playing ▶`);
+    }
+  }
+};
 
 function renderPlayerMultigrid() {
   const tilesContainer = document.getElementById('playerMultigridTiles');
@@ -4481,12 +4547,14 @@ function renderPlayerMultigrid() {
       aspect-ratio: 16/9;
       flex-shrink: 0;
       scroll-snap-align: start;
+      cursor: pointer;
     `;
     if (playerGridLayout === 'row') {
       tile.style.width = '360px';
     } else {
       tile.style.width = '100%';
     }
+    tile.onclick = (event) => window.toggleMultigridTilePlayback(event, idx);
 
     if (videoUrl) {
       tile.innerHTML = `

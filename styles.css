@@ -1588,3 +1588,18 @@ a:focus-visible {
   }
 }
 
+/* Multigrid Active height overrides */
+.mobile-video-container.multigrid-active,
+.mobile-video-container.multigrid-active .mobile-video-placeholder {
+  height: auto !important;
+  aspect-ratio: auto !important;
+  overflow: visible !important;
+}
+
+#playerMultigridContainer.multigrid-active {
+  position: relative !important;
+  inset: auto !important;
+  height: auto !important;
+  overflow-y: visible !important;
+}
+
