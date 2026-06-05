@@ -1398,6 +1398,11 @@ function speakFeedback(phrase) {
 // INTERFACE VIEW SWITCHER / HELPER SHEETS
 // ----------------------------------------------------
 function switchView(viewId) {
+  const phoneMic = document.getElementById('phoneMicBtn');
+  if (phoneMic) {
+    phoneMic.style.display = (viewId === 'mobile-player') ? 'flex' : 'none';
+  }
+
   if (viewId === 'mobile-player') {
     if (currentView && currentView !== 'mobile-player') {
       playerPreviousView = currentView;
@@ -6983,13 +6988,13 @@ window.saveNewRecipe = async function() {
 // PREMIUM MOBILE EDITOR LAYOUT REDESIGN & TIMESTAMPS
 // ============================================================
 
-// Relocate cards and buttons dynamically between desktop grid and mobile bottom drawers
+// Relocate cards dynamically between desktop grid and mobile carousel slides
 window.setupResponsiveDrawers = function() {
   const isMobile = window.innerWidth <= 768;
-  const drawerDetails = document.getElementById('drawerDetails');
-  const drawerAI = document.getElementById('drawerAI');
-  const drawerStops = document.getElementById('drawerStops');
-  const drawerSave = document.getElementById('drawerSave');
+  const slideDetails = document.getElementById('slideDetails');
+  const slideAI = document.getElementById('slideAI');
+  const slideStops = document.getElementById('slideStops');
+  const slideSave = document.getElementById('slideSave');
   
   const titleCard = document.querySelector('.workbench-title-card');
   const coverCard = document.getElementById('coverFileInput')?.closest('.glass-card');
@@ -7000,29 +7005,24 @@ window.setupResponsiveDrawers = function() {
   const saveDraftBtn = document.getElementById('saveDraftBtn');
   
   if (isMobile) {
-    if (drawerDetails) {
-      const db = drawerDetails.querySelector('.drawer-body');
-      if (db) {
-        if (titleCard && titleCard.parentElement !== db) db.appendChild(titleCard);
-        if (coverCard && coverCard.parentElement !== db) db.appendChild(coverCard);
-        if (visibilityCard && visibilityCard.parentElement !== db) db.appendChild(visibilityCard);
-      }
+    if (slideDetails) {
+      if (titleCard && titleCard.parentElement !== slideDetails) slideDetails.appendChild(titleCard);
+      if (coverCard && coverCard.parentElement !== slideDetails) slideDetails.appendChild(coverCard);
+      if (visibilityCard && visibilityCard.parentElement !== slideDetails) slideDetails.appendChild(visibilityCard);
     }
-    if (drawerAI && aiSection && aiSection.parentElement !== drawerAI.querySelector('.drawer-body')) {
-      const db = drawerAI.querySelector('.drawer-body');
-      if (db) db.appendChild(aiSection);
+    if (slideAI && aiSection && aiSection.parentElement !== slideAI) {
+      slideAI.appendChild(aiSection);
     }
-    if (drawerStops && stopsSection && stopsSection.parentElement !== drawerStops.querySelector('.drawer-body')) {
-      const db = drawerStops.querySelector('.drawer-body');
-      if (db) db.appendChild(stopsSection);
+    if (slideStops && stopsSection && stopsSection.parentElement !== slideStops) {
+      slideStops.appendChild(stopsSection);
     }
-    if (drawerSave) {
-      const db = drawerSave.querySelector('.drawer-body');
-      if (db) {
-        if (saveBtn && saveBtn.parentElement !== db) db.appendChild(saveBtn);
-        if (saveDraftBtn && saveDraftBtn.parentElement !== db) db.appendChild(saveDraftBtn);
-      }
+    if (slideSave) {
+      if (saveBtn && saveBtn.parentElement !== slideSave) slideSave.appendChild(saveBtn);
+      if (saveDraftBtn && saveDraftBtn.parentElement !== slideSave) slideSave.appendChild(saveDraftBtn);
     }
+    
+    // Wire swipe scroll listeners
+    window.setupCarouselListeners();
   } else {
     // Restore to desktop 2-column sidebar positions
     const grid = document.querySelector('.workbench-grid');
@@ -7044,58 +7044,62 @@ window.setupResponsiveDrawers = function() {
       if (saveBtn && saveBtn.parentElement !== rightPanel) rightPanel.appendChild(saveBtn);
       if (saveDraftBtn && saveDraftBtn.parentElement !== rightPanel) rightPanel.appendChild(saveDraftBtn);
     }
-    // Automatically close drawers on resize to desktop
-    window.closeAllMobileDrawers();
   }
 };
 
-// Toggle mobile drawer visibility
-window.toggleMobileDrawer = function(drawerId) {
-  const drawer = document.getElementById(drawerId);
-  const backdrop = document.getElementById('drawerBackdrop');
-  if (!drawer) return;
+let carouselScrolling = false;
+window.setupCarouselListeners = function() {
+  const carousel = document.getElementById('mobileEditorCarousel');
+  if (!carousel) return;
   
-  const isOpen = drawer.classList.contains('open');
+  carousel.removeEventListener('scroll', handleCarouselScroll);
+  carousel.addEventListener('scroll', handleCarouselScroll);
+};
+
+function handleCarouselScroll() {
+  if (carouselScrolling) return;
+  const carousel = document.getElementById('mobileEditorCarousel');
+  if (!carousel) return;
+  const width = carousel.clientWidth;
+  if (width <= 0) return;
+  const scrollLeft = carousel.scrollLeft;
+  const index = Math.round(scrollLeft / width);
+  updateToolbarButtonStates(index);
+}
+
+window.scrollToCarouselSlide = function(index) {
+  const carousel = document.getElementById('mobileEditorCarousel');
+  if (!carousel) return;
   
-  // Close all other drawers
-  document.querySelectorAll('.mobile-drawer').forEach(d => {
-    if (d.id !== drawerId) {
-      d.classList.remove('open');
-    }
+  carouselScrolling = true;
+  const width = carousel.clientWidth;
+  carousel.scrollTo({
+    left: width * index,
+    behavior: 'smooth'
   });
   
-  // Toggle current drawer
-  if (isOpen) {
-    drawer.classList.remove('open');
-    if (backdrop) backdrop.classList.remove('active');
-  } else {
-    drawer.classList.add('open');
-    if (backdrop) backdrop.classList.add('active');
-  }
+  updateToolbarButtonStates(index);
   
-  updateToolbarButtonStates();
-};
-
-// Close all mobile bottom sheets
-window.closeAllMobileDrawers = function() {
-  document.querySelectorAll('.mobile-drawer').forEach(d => d.classList.remove('open'));
-  const backdrop = document.getElementById('drawerBackdrop');
-  if (backdrop) backdrop.classList.remove('active');
-  updateToolbarButtonStates();
+  setTimeout(() => {
+    carouselScrolling = false;
+  }, 450);
 };
 
 // Update active states on bottom toolbar tabs
-function updateToolbarButtonStates() {
-  const btnDetails = document.getElementById('btnToolbarDetails');
-  const btnStops = document.getElementById('btnToolbarStops');
-  const btnAI = document.getElementById('btnToolbarAI');
-  const btnSave = document.getElementById('btnToolbarSave');
-  
-  if (btnDetails) btnDetails.classList.toggle('active', document.getElementById('drawerDetails')?.classList.contains('open'));
-  if (btnStops) btnStops.classList.toggle('active', document.getElementById('drawerStops')?.classList.contains('open'));
-  if (btnAI) btnAI.classList.toggle('active', document.getElementById('drawerAI')?.classList.contains('open'));
-  if (btnSave) btnSave.classList.toggle('active', document.getElementById('drawerSave')?.classList.contains('open'));
+function updateToolbarButtonStates(activeIndex) {
+  const tabs = ['Details', 'Stops', 'AI', 'Save'];
+  tabs.forEach((tab, i) => {
+    const btn = document.getElementById(`btnToolbar${tab}`);
+    if (btn) {
+      btn.classList.toggle('active', i === activeIndex);
+    }
+  });
 }
+
+// Kept for compatibility during view switching and resets
+window.closeAllMobileDrawers = function() {
+  window.scrollToCarouselSlide(0);
+};
 
 // Open manual timestamp modal
 window.openManualTimestampModal = function() {

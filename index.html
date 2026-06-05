@@ -1211,61 +1211,33 @@
           </div>
         </div>
 
-        <!-- Mobile Bottom Drawer Sheets -->
-        <div id="drawerDetails" class="mobile-drawer">
-          <div class="drawer-header">
-            <h3>📝 Details</h3>
-            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
-          </div>
-          <div class="drawer-body"></div>
-        </div>
-
-        <div id="drawerAI" class="mobile-drawer">
-          <div class="drawer-header">
-            <h3>🤖 AI Tools</h3>
-            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
-          </div>
-          <div class="drawer-body"></div>
-        </div>
-
-        <div id="drawerStops" class="mobile-drawer">
-          <div class="drawer-header">
-            <h3>📍 Loop Stops</h3>
-            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
-          </div>
-          <div class="drawer-body"></div>
-        </div>
-
-        <div id="drawerSave" class="mobile-drawer">
-          <div class="drawer-header">
-            <h3>💾 Save Recipe</h3>
-            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
-          </div>
-          <div class="drawer-body" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px;"></div>
+        <!-- Mobile Editor Swipeable Carousel -->
+        <div id="mobileEditorCarousel" class="editor-carousel">
+          <div class="carousel-slide" id="slideDetails"></div>
+          <div class="carousel-slide" id="slideStops"></div>
+          <div class="carousel-slide" id="slideAI"></div>
+          <div class="carousel-slide" id="slideSave"></div>
         </div>
 
         <!-- Mobile Editor Navigation/Toolbar Bar -->
         <div id="mobileEditorToolbar" class="mobile-editor-toolbar">
-          <button onclick="window.toggleMobileDrawer('drawerDetails')" id="btnToolbarDetails" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(0)" id="btnToolbarDetails" class="toolbar-btn active">
             <span class="icon">📝</span>
             <span class="label">Details</span>
           </button>
-          <button onclick="window.toggleMobileDrawer('drawerStops')" id="btnToolbarStops" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarStops" class="toolbar-btn">
             <span class="icon">📍</span>
             <span class="label">Stops</span>
           </button>
-          <button onclick="window.toggleMobileDrawer('drawerAI')" id="btnToolbarAI" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarAI" class="toolbar-btn">
             <span class="icon">🤖</span>
             <span class="label">AI Tools</span>
           </button>
-          <button onclick="window.toggleMobileDrawer('drawerSave')" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>
         </div>
-
-        <!-- Backdrop overlay when drawer is open -->
-        <div id="drawerBackdrop" class="drawer-backdrop" onclick="window.closeAllMobileDrawers()"></div>
 
         <!-- Manual Timestamp Modal -->
         <div id="manualTimestampModal" class="timestamp-modal-overlay" style="display: none;">
