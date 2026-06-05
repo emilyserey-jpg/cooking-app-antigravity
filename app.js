@@ -2549,6 +2549,7 @@ window.loadPlayerRecipe = async function(recipeId) {
     // Mutate recipeData properties
     recipeData.title = recipe.title || 'Untitled Recipe';
     recipeData.duration = recipe.duration || 10;
+    recipeData.video_url = recipe.video_url || '';
     
     // Normalize loops and steps
     const parsed = parseLoops(recipe.loops);
@@ -4443,11 +4444,7 @@ function renderPlayerMultigrid() {
     tilesContainer.style.overflowY = 'auto';
   }
 
-  const videoUrl = recipeData.video_url;
-  if (!videoUrl) {
-    tilesContainer.innerHTML = `<div style="color:rgba(255,255,255,0.5);font-size:0.75rem;padding:20px;text-align:center;width:100%;">No video available for this recipe.</div>`;
-    return;
-  }
+  const videoUrl = recipeData.video_url || (playerCurrentRecipe && playerCurrentRecipe.video_url);
 
   recipeData.steps.forEach((step, idx) => {
     if (!playerSelectedSteps.has(idx)) return;
@@ -4473,25 +4470,41 @@ function renderPlayerMultigrid() {
       tile.style.width = '100%';
     }
 
-    tile.innerHTML = `
-      <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:cover; display:block;"></video>
-      <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
+    if (videoUrl) {
+      tile.innerHTML = `
+        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+        <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
+        
+        <!-- Mute/Unmute floating button -->
+        <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+          <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
+        </button>
+
+        <!-- Step info badge -->
+        <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
+          ${idx + 1}. ${step.title || 'Step'}
+        </div>
+      `;
+      tilesContainer.appendChild(tile);
+      if (window.lucide) lucide.createIcons();
+
+      const video = tile.querySelector('video');
+      setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime);
+    } else {
+      // Simulation mode fallback
+      tile.innerHTML = `
+        <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:cover; display:block;"></canvas>
+        
+        <!-- Step info badge -->
+        <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
+          ${idx + 1}. ${step.title || 'Step'}
+        </div>
+      `;
+      tilesContainer.appendChild(tile);
       
-      <!-- Mute/Unmute floating button -->
-      <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
-        <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
-      </button>
-
-      <!-- Step info badge -->
-      <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
-        ${idx + 1}. ${step.title || 'Step'}
-      </div>
-    `;
-    tilesContainer.appendChild(tile);
-    if (window.lucide) lucide.createIcons();
-
-    const video = tile.querySelector('video');
-    setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime);
+      const canvas = tile.querySelector('canvas');
+      setupMultigridTileSimulation(idx, canvas);
+    }
   });
 }
 
@@ -4530,6 +4543,164 @@ function setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime) {
       video.currentTime = startTime;
     }
   }, 150);
+  playerMultigridIntervals[idx] = intervalId;
+}
+
+function setupMultigridTileSimulation(idx, canvas) {
+  if (!canvas) return;
+  
+  canvas.width = canvas.clientWidth * window.devicePixelRatio;
+  canvas.height = canvas.clientHeight * window.devicePixelRatio;
+  
+  const ctx = canvas.getContext('2d');
+  
+  function drawFrame() {
+    if (!canvas || !ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    ctx.save();
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const dw = w / window.devicePixelRatio;
+    const dh = h / window.devicePixelRatio;
+    
+    // Soft sky background
+    const grad = ctx.createLinearGradient(0, 0, dw, dh);
+    grad.addColorStop(0, '#ddeeff');
+    grad.addColorStop(1, '#c8e8ff');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, dw, dh);
+    
+    // Soft floating circles in background
+    const t = performance.now() / 3000;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.arc(dw * 0.75 + Math.sin(t + idx) * 8, dh * 0.25 + Math.cos(t + idx) * 6, 60, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(dw * 0.15 + Math.cos(t + idx) * 6, dh * 0.7 + Math.sin(t + idx) * 5, 40, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Step illustrations
+    switch (idx) {
+      case 0: { // Prep & Chop
+        ctx.fillStyle = '#e8d5b0';
+        roundRect(ctx, dw/2 - 65, dh/2 - 15, 130, 55, 10);
+        ctx.fillStyle = '#d4bc94';
+        ctx.fillRect(dw/2 - 50, dh/2 - 5, 8, 35);
+        ctx.fillRect(dw/2 - 30, dh/2 - 5, 8, 35);
+        ctx.fillRect(dw/2 - 10, dh/2 - 5, 8, 35);
+        const chopY = Math.abs(Math.sin(performance.now() / 160)) * 22;
+        ctx.strokeStyle = '#7a9ab8'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(dw/2 + 40, dh/2 - 18 - chopY);
+        ctx.lineTo(dw/2 + 40, dh/2 + 5 - chopY);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🥒 Prep & Chop', dw/2, dh/2 - 30);
+        break;
+      }
+      case 1: { // Sear Chicken
+        ctx.fillStyle = '#c8d8e8';
+        ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 18, 48, 14, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#b0c4d8';
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 10, 40, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#8aaac0'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(dw/2 - 40, dh/2 + 10); ctx.lineTo(dw/2 - 85, dh/2 + 10); ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#f0b85a';
+        roundRect(ctx, dw/2 - 18, dh/2 + 2, 36, 20, 6);
+        ctx.fillStyle = '#e8a040';
+        roundRect(ctx, dw/2 - 12, dh/2 + 4, 24, 14, 4);
+        ctx.fillStyle = '#c45a2a'; ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🍳 Sear the Chicken', dw/2, dh/2 - 30);
+        break;
+      }
+      case 2: { // Stir Fry
+        ctx.fillStyle = '#b8c8d8';
+        ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 15, 52, 32, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#a0b4c8';
+        ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 12, 38, 22, 0, 0, Math.PI*2); ctx.fill();
+        const tossY = Math.sin(performance.now() / 200) * 10;
+        const veggies = [
+          {x:-18, y:8, r:7, c:'#6abd6a'}, {x:10, y:4, r:8, c:'#e8a040'},
+          {x:-4, y:18, r:6, c:'#e85050'}, {x:18, y:12, r:6, c:'#6abd6a'}
+        ];
+        veggies.forEach((v, i) => {
+          ctx.fillStyle = v.c;
+          ctx.beginPath();
+          ctx.arc(dw/2 + v.x, dh/2 + v.y + (i%2===0 ? tossY : -tossY)*0.6, v.r, 0, Math.PI*2);
+          ctx.fill();
+        });
+        ctx.fillStyle = '#b07a10'; ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🧄 Stir Fry Aromatics', dw/2, dh/2 - 30);
+        break;
+      }
+      case 3: { // Toss in Sauce
+        ctx.fillStyle = '#b8c8d8';
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 44, 0, Math.PI*2); ctx.fill();
+        const boil = Math.abs(Math.sin(performance.now() / 280)) * 6;
+        ctx.fillStyle = 'rgba(200,140,60,0.5)';
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 34 + boil, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(200,140,60,0.3)';
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 24 + boil*0.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#4a60c0'; ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🥫 Toss in Sauce', dw/2, dh/2 - 30);
+        break;
+      }
+      case 4: { // Plate & Garnish
+        ctx.fillStyle = '#f4f8ff';
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 14, 52, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#dde8f4'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(dw/2, dh/2 + 14, 38, 0, Math.PI*2); ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#f0b85a';
+        ctx.beginPath(); ctx.ellipse(dw/2, dh/2 + 14, 22, 14, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#5aaa5a';
+        ctx.beginPath(); ctx.ellipse(dw/2 - 8, dh/2 + 8, 10, 5, Math.PI/5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(dw/2 + 12, dh/2 + 16, 9, 4, -Math.PI/6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🍽️ Plate & Garnish', dw/2, dh/2 - 30);
+        break;
+      }
+      default: {
+        ctx.fillStyle = '#f0f4f8';
+        ctx.beginPath();
+        ctx.arc(dw/2, dh/2 + 10, 40, 0, Math.PI, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#c0c8d0';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        
+        ctx.strokeStyle = '#708090';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(dw/2 - 10, dh/2 + 5);
+        ctx.lineTo(dw/2 - 35, dh/2 - 25);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = "700 12px 'Nunito',sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText('🍳 Cooking Step', dw/2, dh/2 - 30);
+        break;
+      }
+    }
+    
+    ctx.restore();
+  }
+  
+  const intervalId = setInterval(drawFrame, 40);
   playerMultigridIntervals[idx] = intervalId;
 }
 
