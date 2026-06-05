@@ -1021,6 +1021,8 @@
                   style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">▶ Loop</button>
                 <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
                   style="display:none;background:#f0f4ff;border:none;border-radius:8px;padding:6px 11px;color:var(--primary);cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(240,244,255,0.4);">⏹ Stop</button>
+                <button onclick="window.openManualTimestampModal()"
+                  style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">⌨️ Type Stop</button>
                 <button onclick="addStepAtCurrentTime()"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);">📍 Add Stop</button>
               </div>
@@ -1069,6 +1071,10 @@
                 <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
                   style="background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Toggle Keyboard Mode">
                   <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+                </button>
+                <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
+                  style="background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Type Stop Manually">
+                  <span style="font-size:0.95rem; line-height:1;">✏️</span>
                 </button>
               </div>
             </div>
@@ -1202,6 +1208,84 @@
               style="width:100%;background:#fff;color:var(--text-muted);border:2px solid var(--border-card);border-radius:999px;padding:9px;font-family:var(--font);font-size:0.8rem;font-weight:800;cursor:pointer;flex-shrink:0;margin-bottom:8px;">
               💾 Save as Draft
             </button>
+          </div>
+        </div>
+
+        <!-- Mobile Bottom Drawer Sheets -->
+        <div id="drawerDetails" class="mobile-drawer">
+          <div class="drawer-header">
+            <h3>📝 Details</h3>
+            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
+          </div>
+          <div class="drawer-body"></div>
+        </div>
+
+        <div id="drawerAI" class="mobile-drawer">
+          <div class="drawer-header">
+            <h3>🤖 AI Tools</h3>
+            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
+          </div>
+          <div class="drawer-body"></div>
+        </div>
+
+        <div id="drawerStops" class="mobile-drawer">
+          <div class="drawer-header">
+            <h3>📍 Loop Stops</h3>
+            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
+          </div>
+          <div class="drawer-body"></div>
+        </div>
+
+        <div id="drawerSave" class="mobile-drawer">
+          <div class="drawer-header">
+            <h3>💾 Save Recipe</h3>
+            <button onclick="window.closeAllMobileDrawers()" class="btn-close-drawer">Done</button>
+          </div>
+          <div class="drawer-body" style="display:flex; flex-direction:column; gap:8px; padding-bottom:20px;"></div>
+        </div>
+
+        <!-- Mobile Editor Navigation/Toolbar Bar -->
+        <div id="mobileEditorToolbar" class="mobile-editor-toolbar">
+          <button onclick="window.toggleMobileDrawer('drawerDetails')" id="btnToolbarDetails" class="toolbar-btn">
+            <span class="icon">📝</span>
+            <span class="label">Details</span>
+          </button>
+          <button onclick="window.toggleMobileDrawer('drawerStops')" id="btnToolbarStops" class="toolbar-btn">
+            <span class="icon">📍</span>
+            <span class="label">Stops</span>
+          </button>
+          <button onclick="window.toggleMobileDrawer('drawerAI')" id="btnToolbarAI" class="toolbar-btn">
+            <span class="icon">🤖</span>
+            <span class="label">AI Tools</span>
+          </button>
+          <button onclick="window.toggleMobileDrawer('drawerSave')" id="btnToolbarSave" class="toolbar-btn">
+            <span class="icon">💾</span>
+            <span class="label">Save</span>
+          </button>
+        </div>
+
+        <!-- Backdrop overlay when drawer is open -->
+        <div id="drawerBackdrop" class="drawer-backdrop" onclick="window.closeAllMobileDrawers()"></div>
+
+        <!-- Manual Timestamp Modal -->
+        <div id="manualTimestampModal" class="timestamp-modal-overlay" style="display: none;">
+          <div class="timestamp-modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading);">⌨️ Enter Timestamp</h3>
+              <button onclick="window.closeManualTimestampModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">&times;</button>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:block; font-size:0.65rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Time (e.g., 1:30 or 95)</label>
+              <input id="manualTimestampInput" type="text" placeholder="1:30" style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block; font-size:0.65rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Step Name (optional)</label>
+              <input id="manualStepLabelInput" type="text" placeholder="e.g., Simmer broth" style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none;">
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button onclick="window.closeManualTimestampModal()" class="btn" style="padding:8px 14px; font-size:0.78rem; background:var(--bg-card-soft); border:2px solid var(--border-card);">Cancel</button>
+              <button onclick="window.addManualStep()" class="btn btn-primary" style="padding:8px 16px; font-size:0.78rem;">Add Stop</button>
+            </div>
           </div>
         </div>
       </div>

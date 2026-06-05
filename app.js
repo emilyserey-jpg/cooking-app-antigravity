@@ -130,6 +130,11 @@ function initializeApp() {
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   
+  if (typeof window.setupResponsiveDrawers === 'function') {
+    window.setupResponsiveDrawers();
+    window.addEventListener('resize', window.setupResponsiveDrawers);
+  }
+  
   loadPlayerProgress(activePlayerRecipeId || 'local_default');
   renderStepChipsMobile();
   renderTimelineMarkersDesktop();
@@ -6969,6 +6974,219 @@ window.saveNewRecipe = async function() {
   window._aiIngredients = document.getElementById('ingredientsText')?.value?.trim() || null;
   window._aiStepsText   = document.getElementById('stepsText')?.value?.trim() || null;
   return _origSaveNewRecipe();
+};
+
+// ============================================================
+// PREMIUM MOBILE EDITOR LAYOUT REDESIGN & TIMESTAMPS
+// ============================================================
+
+// Relocate cards and buttons dynamically between desktop grid and mobile bottom drawers
+window.setupResponsiveDrawers = function() {
+  const isMobile = window.innerWidth <= 768;
+  const drawerDetails = document.getElementById('drawerDetails');
+  const drawerAI = document.getElementById('drawerAI');
+  const drawerStops = document.getElementById('drawerStops');
+  const drawerSave = document.getElementById('drawerSave');
+  
+  const titleCard = document.querySelector('.workbench-title-card');
+  const coverCard = document.getElementById('coverFileInput')?.closest('.glass-card');
+  const visibilityCard = document.getElementById('privacyToggle')?.closest('.glass-card');
+  const aiSection = document.getElementById('aiSection');
+  const stopsSection = document.getElementById('createStepsList')?.closest('.glass-card');
+  const saveBtn = document.getElementById('saveRecipeBtn');
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
+  
+  if (isMobile) {
+    if (drawerDetails) {
+      const db = drawerDetails.querySelector('.drawer-body');
+      if (db) {
+        if (titleCard && titleCard.parentElement !== db) db.appendChild(titleCard);
+        if (coverCard && coverCard.parentElement !== db) db.appendChild(coverCard);
+        if (visibilityCard && visibilityCard.parentElement !== db) db.appendChild(visibilityCard);
+      }
+    }
+    if (drawerAI && aiSection && aiSection.parentElement !== drawerAI.querySelector('.drawer-body')) {
+      const db = drawerAI.querySelector('.drawer-body');
+      if (db) db.appendChild(aiSection);
+    }
+    if (drawerStops && stopsSection && stopsSection.parentElement !== drawerStops.querySelector('.drawer-body')) {
+      const db = drawerStops.querySelector('.drawer-body');
+      if (db) db.appendChild(stopsSection);
+    }
+    if (drawerSave) {
+      const db = drawerSave.querySelector('.drawer-body');
+      if (db) {
+        if (saveBtn && saveBtn.parentElement !== db) db.appendChild(saveBtn);
+        if (saveDraftBtn && saveDraftBtn.parentElement !== db) db.appendChild(saveDraftBtn);
+      }
+    }
+  } else {
+    // Restore to desktop 2-column sidebar positions
+    const grid = document.querySelector('.workbench-grid');
+    const rightPanel = document.querySelector('.workbench-right');
+    const leftPanel = document.querySelector('.workbench-left');
+    
+    if (grid && titleCard && titleCard.parentElement !== grid) {
+      if (leftPanel) {
+        grid.insertBefore(titleCard, leftPanel);
+      } else {
+        grid.appendChild(titleCard);
+      }
+    }
+    if (rightPanel) {
+      if (aiSection && aiSection.parentElement !== rightPanel) rightPanel.appendChild(aiSection);
+      if (stopsSection && stopsSection.parentElement !== rightPanel) rightPanel.appendChild(stopsSection);
+      if (coverCard && coverCard.parentElement !== rightPanel) rightPanel.appendChild(coverCard);
+      if (visibilityCard && visibilityCard.parentElement !== rightPanel) rightPanel.appendChild(visibilityCard);
+      if (saveBtn && saveBtn.parentElement !== rightPanel) rightPanel.appendChild(saveBtn);
+      if (saveDraftBtn && saveDraftBtn.parentElement !== rightPanel) rightPanel.appendChild(saveDraftBtn);
+    }
+    // Automatically close drawers on resize to desktop
+    window.closeAllMobileDrawers();
+  }
+};
+
+// Toggle mobile drawer visibility
+window.toggleMobileDrawer = function(drawerId) {
+  const drawer = document.getElementById(drawerId);
+  const backdrop = document.getElementById('drawerBackdrop');
+  if (!drawer) return;
+  
+  const isOpen = drawer.classList.contains('open');
+  
+  // Close all other drawers
+  document.querySelectorAll('.mobile-drawer').forEach(d => {
+    if (d.id !== drawerId) {
+      d.classList.remove('open');
+    }
+  });
+  
+  // Toggle current drawer
+  if (isOpen) {
+    drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('active');
+  } else {
+    drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('active');
+  }
+  
+  updateToolbarButtonStates();
+};
+
+// Close all mobile bottom sheets
+window.closeAllMobileDrawers = function() {
+  document.querySelectorAll('.mobile-drawer').forEach(d => d.classList.remove('open'));
+  const backdrop = document.getElementById('drawerBackdrop');
+  if (backdrop) backdrop.classList.remove('active');
+  updateToolbarButtonStates();
+};
+
+// Update active states on bottom toolbar tabs
+function updateToolbarButtonStates() {
+  const btnDetails = document.getElementById('btnToolbarDetails');
+  const btnStops = document.getElementById('btnToolbarStops');
+  const btnAI = document.getElementById('btnToolbarAI');
+  const btnSave = document.getElementById('btnToolbarSave');
+  
+  if (btnDetails) btnDetails.classList.toggle('active', document.getElementById('drawerDetails')?.classList.contains('open'));
+  if (btnStops) btnStops.classList.toggle('active', document.getElementById('drawerStops')?.classList.contains('open'));
+  if (btnAI) btnAI.classList.toggle('active', document.getElementById('drawerAI')?.classList.contains('open'));
+  if (btnSave) btnSave.classList.toggle('active', document.getElementById('drawerSave')?.classList.contains('open'));
+}
+
+// Open manual timestamp modal
+window.openManualTimestampModal = function() {
+  const modal = document.getElementById('manualTimestampModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    const tsInput = document.getElementById('manualTimestampInput');
+    const labelInput = document.getElementById('manualStepLabelInput');
+    if (tsInput) {
+      tsInput.value = '';
+      tsInput.focus();
+    }
+    if (labelInput) {
+      labelInput.value = '';
+    }
+  }
+};
+
+// Close manual timestamp modal
+window.closeManualTimestampModal = function() {
+  const modal = document.getElementById('manualTimestampModal');
+  if (modal) modal.style.display = 'none';
+};
+
+// Parse timestamps to float seconds (supports 1:30, 01:23:45, 95, 95s)
+window.parseTimestampToSeconds = function(str) {
+  if (!str) return null;
+  const cleaned = str.trim();
+  const parts = cleaned.split(':');
+  if (parts.length > 1) {
+    let secs = 0;
+    if (parts.length === 2) {
+      const m = parseInt(parts[0], 10);
+      const s = parseFloat(parts[1]);
+      if (isNaN(m) || isNaN(s)) return null;
+      secs = m * 60 + s;
+    } else if (parts.length === 3) {
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const s = parseFloat(parts[2]);
+      if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
+      secs = h * 3600 + m * 60 + s;
+    }
+    return secs;
+  }
+  const rawSecs = parseFloat(cleaned.replace(/s$/i, ''));
+  if (isNaN(rawSecs)) return null;
+  return rawSecs;
+};
+
+// Add a manual loop stop from parsed timestamp
+window.addManualStep = function() {
+  const tsInput = document.getElementById('manualTimestampInput');
+  const labelInput = document.getElementById('manualStepLabelInput');
+  if (!tsInput) return;
+  
+  const timeStr = tsInput.value;
+  const label = labelInput ? labelInput.value.trim() : '';
+  const secs = window.parseTimestampToSeconds(timeStr);
+  
+  if (secs === null || secs < 0) {
+    showTip('Please enter a valid timestamp (e.g. 1:30 or 95)');
+    return;
+  }
+  
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const duration = videoEl ? (videoEl.duration || videoDuration || 0) : 0;
+  if (duration && secs > duration) {
+    const durM = Math.floor(duration / 60);
+    const durS = Math.floor(duration % 60).toString().padStart(2, '0');
+    showTip(`Timestamp exceeds video duration (${durM}:${durS})`);
+    return;
+  }
+
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60).toString().padStart(2, '0');
+  const defaultEnd = duration ? Math.min(secs + 15, duration) : secs + 15;
+  
+  createStepsArr.push({
+    time: secs,
+    endTime: defaultEnd,
+    label: label || `Step ${createStepsArr.length + 1}`,
+    displayTime: `${m}:${s}`
+  });
+  createStepsArr.sort((a, b) => a.time - b.time);
+  
+  if (videoEl) {
+    videoEl.currentTime = secs;
+  }
+  
+  renderCreateSteps();
+  renderTimeline();
+  window.closeManualTimestampModal();
+  showTip(`Manual step added at ${m}:${s}`);
 };
 
 // ── App execution trigger ──

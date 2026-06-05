@@ -1,0 +1,59 @@
+[29365:1310805:0604/232513.424777:ERROR:net/socket/socket_posix.cc:173] bind() failed: Address already in use (48)
+
+DevTools listening on ws://[::1]:9222/devtools/browser/d9b6762a-08c2-45dc-ad0d-369d3181727d
+Trying to load the allocator multiple times. This is *not* supported.
+[29365:1310649:0604/232519.036257:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[29365:1310649:0604/232519.040595:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[29365:1310649:0604/232519.043662:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[29365:1310649:0604/232519.069738:ERROR:google_apis/gcm/engine/mcs_client.cc:702]   Error code: 401  Error message: Authentication Failed: wrong_secret
+[29365:1310649:0604/232519.069761:ERROR:google_apis/gcm/engine/mcs_client.cc:704] Failed to log in to GCM, resetting connection.
+Created TensorFlow Lite XNNPACK delegate for CPU.
+[29461:1312063:0604/232539.534796:VERBOSE1:chrome/updater/updater.cc:374] Version: 150.0.7863.0, opt, ARM_64, command line: /Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake-all --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2
+[29461:1312063:0604/232539.536090:VERBOSE1:chrome/updater/updater.cc:377] OS version: 26.4.1, arch: arm64, System uptime (seconds): 108201, parent pid: 29365
+[29461:1312063:0604/232539.541939:VERBOSE1:chrome/updater/updater.cc:382] Available disk space in install directory (/Users/emilyserey/Library/Application Support/Google/GoogleUpdater): 80144392192B (74.640GiB) / 245054767104B (228.225GiB)
+[29461:1312063:0604/232539.541968:VERBOSE1:chrome/updater/updater.cc:386] Available disk space in temporary directory (/var/folders/gs/_kytmbm141n558mdvf745s4c0000gn/T/): 80144392192B (74.640GiB) / 245054767104B (228.225GiB)
+[29461:1312063:0604/232539.542270:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS START event to the history log
+[29463:1312070:0604/232539.559440:VERBOSE1:chrome/updater/updater.cc:374] Version: 150.0.7863.0, opt, ARM_64, command line: /Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --crash-handler --database=/Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/Crashpad --url=https://clients2.google.com/cr/report --annotation=prod=Update4 --annotation=ver=150.0.7863.0 --handshake-fd=6 --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2
+[29463:1312070:0604/232539.559959:VERBOSE1:chrome/updater/updater.cc:377] OS version: 26.4.1, arch: arm64, System uptime (seconds): 108201, parent pid: 1
+[29463:1312070:0604/232539.568155:VERBOSE1:chrome/updater/updater.cc:382] Available disk space in install directory (/Users/emilyserey/Library/Application Support/Google/GoogleUpdater): 80144302080B (74.640GiB) / 245054767104B (228.225GiB)
+[29463:1312070:0604/232539.568184:VERBOSE1:chrome/updater/updater.cc:386] Available disk space in temporary directory (/var/folders/gs/_kytmbm141n558mdvf745s4c0000gn/T/): 80144302080B (74.640GiB) / 245054767104B (228.225GiB)
+[29463:1312070:0604/232539.568293:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS START event to the history log
+[29461:1312063:0604/232539.570612:VERBOSE1:chrome/updater/crash_reporter.cc:124] Crash handler launched and ready.
+[29461:1312063:0604/232539.572325:VERBOSE1:chrome/updater/crash_client.cc:108] Found 0 completed crash reports
+[29461:1312063:0604/232539.572546:VERBOSE1:chrome/updater/crash_client.cc:132] Found 0 pending crash reports
+[29461:1312063:0604/232539.572700:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/emilyserey/Library/Application Support/Google/RLZ/Crashpad/settings.dat: No such file or directory (2)
+[29461:1312063:0604/232539.572800:VERBOSE1:chrome/updater/updater.cc:105] Crash reporting initialized.
+[29461:1312079:0604/232539.573258:VERBOSE1:chrome/updater/app/app_wakeall.cc:58] Launching `/Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake`
+[29464:1312083:0604/232539.588185:VERBOSE1:chrome/updater/updater.cc:374] Version: 150.0.7863.0, opt, ARM_64, command line: /Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2
+[29464:1312083:0604/232539.588534:VERBOSE1:chrome/updater/updater.cc:377] OS version: 26.4.1, arch: arm64, System uptime (seconds): 108201, parent pid: 29461
+[29464:1312083:0604/232539.592201:VERBOSE1:chrome/updater/updater.cc:382] Available disk space in install directory (/Users/emilyserey/Library/Application Support/Google/GoogleUpdater): 80144125952B (74.640GiB) / 245054767104B (228.225GiB)
+[29464:1312083:0604/232539.592227:VERBOSE1:chrome/updater/updater.cc:386] Available disk space in temporary directory (/var/folders/gs/_kytmbm141n558mdvf745s4c0000gn/T/): 80144125952B (74.640GiB) / 245054767104B (228.225GiB)
+[29464:1312083:0604/232539.592324:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS START event to the history log
+[29466:1312087:0604/232539.610260:VERBOSE1:chrome/updater/updater.cc:374] Version: 150.0.7863.0, opt, ARM_64, command line: /Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --crash-handler --database=/Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/Crashpad --url=https://clients2.google.com/cr/report --annotation=prod=Update4 --annotation=ver=150.0.7863.0 --handshake-fd=6 --enable-logging --vmodule=*/components/update_client/*=2,*/chrome/enterprise_companion/*=2,*/chrome/updater/*=2
+[29466:1312087:0604/232539.610652:VERBOSE1:chrome/updater/updater.cc:377] OS version: 26.4.1, arch: arm64, System uptime (seconds): 108201, parent pid: 1
+[29466:1312087:0604/232539.615173:VERBOSE1:chrome/updater/updater.cc:382] Available disk space in install directory (/Users/emilyserey/Library/Application Support/Google/GoogleUpdater): 80144113664B (74.640GiB) / 245054767104B (228.225GiB)
+[29466:1312087:0604/232539.615191:VERBOSE1:chrome/updater/updater.cc:386] Available disk space in temporary directory (/var/folders/gs/_kytmbm141n558mdvf745s4c0000gn/T/): 80144113664B (74.640GiB) / 245054767104B (228.225GiB)
+[29466:1312087:0604/232539.615284:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS START event to the history log
+[29464:1312083:0604/232539.617811:VERBOSE1:chrome/updater/crash_reporter.cc:124] Crash handler launched and ready.
+[29464:1312083:0604/232539.621308:VERBOSE1:chrome/updater/crash_client.cc:108] Found 0 completed crash reports
+[29464:1312083:0604/232539.621482:VERBOSE1:chrome/updater/crash_client.cc:132] Found 0 pending crash reports
+[29464:1312083:0604/232539.621607:ERROR:third_party/crashpad/crashpad/util/file/file_io_posix.cc:145] open /Users/emilyserey/Library/Application Support/Google/RLZ/Crashpad/settings.dat: No such file or directory (2)
+[29464:1312083:0604/232539.621680:VERBOSE1:chrome/updater/updater.cc:105] Crash reporting initialized.
+[29464:1312083:0604/232539.621948:VERBOSE1:chrome/updater/ipc/update_service_internal_proxy_mojo.cc:61] Run
+[29365:1310649:0604/232545.344076:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[29464:1312083:0604/232552.765032:VERBOSE1:chrome/updater/app/app.cc:52] Shutdown: 0
+[29464:1312083:0604/232552.766657:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS END event to the history log
+[29464:1312083:0604/232552.766724:VERBOSE1:chrome/updater/updater.cc:419] UpdaterMain (--wake) returned 0.
+[29461:1312079:0604/232552.936754:VERBOSE1:chrome/updater/app/app_wakeall.cc:68] `/Users/emilyserey/Library/Application Support/Google/GoogleUpdater/150.0.7863.0/GoogleUpdater.app/Contents/MacOS/GoogleUpdater --wake` exited 0
+[29461:1312063:0604/232552.937180:VERBOSE1:chrome/updater/app/app.cc:52] Shutdown: 0
+[29461:1312063:0604/232552.937905:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS END event to the history log
+[29461:1312063:0604/232552.937959:VERBOSE1:chrome/updater/updater.cc:419] UpdaterMain (--wake-all) returned 0.
+[29466:1312087:0604/232602.786376:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS END event to the history log
+[29466:1312087:0604/232602.786616:VERBOSE1:chrome/updater/updater.cc:419] UpdaterMain (--crash-handler) returned 0.
+[29463:1312070:0604/232602.788858:VERBOSE2:chrome/updater/event_history.cc:265] Emitted a UPDATER_PROCESS END event to the history log
+[29463:1312070:0604/232602.788887:VERBOSE1:chrome/updater/updater.cc:419] UpdaterMain (--crash-handler) returned 0.
+[29365:1310649:0604/232645.241419:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[29365:1310532:0604/232657.053016:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
+[29365:1310532:0604/232657.593830:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
+[29365:1310532:0604/232657.597116:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
+[29365:1310532:0604/232657.614356:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
