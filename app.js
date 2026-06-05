@@ -6463,6 +6463,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         private_recipe:   !createIsPublic,
         is_published:     createIsPublic,
         shared_on_profile: createIsPublic,
+        ingredients:      window._aiIngredients || '',
       });
     }
 
@@ -6818,7 +6819,7 @@ window.aiWriteSteps = async function() {
       const box = document.getElementById('stepsText');
       if (box) box.value = gem.steps.join('\n');
       window._aiStepsText = gem.steps.join('\n');
-      const r = document.getElementById('stepsResult');
+      const r = document.getElementById('stepsTextResult');
       if (r) r.style.display = 'block';
       setAIStatus('✅ Steps written by Gemini!', true);
       showTip('📋 Steps filled in — edit as needed.');
@@ -6889,7 +6890,7 @@ window.aiDoEverything = async function() {
         const b = document.getElementById('stepsText');
         if (b) b.value = gem.steps.join('\n');
         window._aiStepsText = gem.steps.join('\n');
-        const r = document.getElementById('stepsResult'); if (r) r.style.display='block';
+        const r = document.getElementById('stepsTextResult'); if (r) r.style.display='block';
       }
       createStepsArr = gem.loops.map((l, i) => {
         const t   = Number(l.start ?? l.time) || 0;
