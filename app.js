@@ -89,6 +89,23 @@ function initializeApp() {
     realVideo.addEventListener('error', () => {
       console.warn('[Player] Video failed to load source:', realVideo.src);
       const src = realVideo.src || '';
+      
+      const errorOverlay = document.getElementById('videoErrorOverlay');
+      const errorOverlayMsg = document.getElementById('videoErrorOverlayMsg');
+      if (errorOverlay) {
+        errorOverlay.style.display = 'flex';
+        if (errorOverlayMsg) {
+          if (src.startsWith('blob:')) {
+            errorOverlayMsg.textContent = 'This video was saved as a temporary local preview and has expired. Please edit the recipe to upload the video file permanently.';
+          } else if (src) {
+            errorOverlayMsg.textContent = 'Could not load the video file. Please check your internet connection or verify the URL.';
+          }
+        }
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      }
+
       if (src.startsWith('blob:')) {
         showTip('⚠️ This video was saved locally in your browser and has expired. Please re-upload it.');
       } else if (src) {
@@ -2118,6 +2135,10 @@ let hlsInstance = null;
 window.loadPlayerRecipe = async function(recipeId) {
   if (!recipeId) return;
   localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
+  
+  const errOverlay = document.getElementById('videoErrorOverlay');
+  if (errOverlay) errOverlay.style.display = 'none';
+
   try {
     const { getRecipeById } = await import('./supabase-client.js');
     const recipe = await getRecipeById(recipeId);
