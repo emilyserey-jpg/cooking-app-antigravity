@@ -545,100 +545,127 @@
     </section>
 
     <!-- ================================================
-         PUBLIC CREATOR PROFILE — YouTube-style channel page
+         PUBLIC CREATOR PROFILE — Instagram-style
          ================================================ -->
-    <section id="view-public-profile" class="view-section" style="padding:0;display:none;">
+    <section id="view-public-profile" class="view-section" style="padding:0;display:none;background:#fafafa;min-height:100vh;">
 
-      <!-- ── Channel Banner ── -->
-      <div id="pubBanner" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0e4d8f 100%);min-height:200px;position:relative;overflow:hidden;">
-        <!-- Decorative orbs -->
-        <div style="position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(74,144,217,0.15);"></div>
-        <div style="position:absolute;bottom:-80px;left:10%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+      <!-- Profile header -->
+      <div style="max-width:935px;margin:0 auto;padding:2rem 1.5rem 0;">
 
-        <div style="max-width:1100px;margin:0 auto;padding:2rem 1.5rem 1.5rem;position:relative;z-index:1;">
-          <!-- Back button -->
-          <button onclick="pubProfileBack()" style="background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.2);border-radius:10px;padding:7px 14px;color:#fff;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;margin-bottom:1.5rem;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px);">
-            ← Back
-          </button>
+        <!-- Back button -->
+        <button id="pubBackBtn" onclick="pubProfileBack()"
+          style="display:none;background:none;border:none;color:var(--text-muted);font-family:var(--font);font-weight:700;font-size:0.85rem;cursor:pointer;padding:0 0 1.25rem;align-items:center;gap:5px;">
+          &#8592; Back
+        </button>
 
-          <div style="display:flex;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;">
-            <!-- Avatar -->
-            <div id="pubAvatar" style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.4rem;font-weight:900;flex-shrink:0;border:4px solid rgba(255,255,255,0.3);box-shadow:0 8px 30px rgba(0,0,0,0.4);">?</div>
-            <div style="flex:1;min-width:160px;padding-bottom:6px;">
-              <h1 id="pubName" style="font-size:1.8rem;font-weight:900;color:#fff;margin-bottom:4px;text-shadow:0 2px 10px rgba(0,0,0,0.4);">Creator</h1>
-              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <span id="pubHandle" style="font-size:0.82rem;color:rgba(255,255,255,0.6);font-weight:600;"></span>
-                <span id="pubVideoCount" style="font-size:0.82rem;color:rgba(255,255,255,0.7);font-weight:700;"></span>
+        <!-- Avatar + info row -->
+        <div style="display:flex;align-items:flex-start;gap:2.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+          <div style="flex-shrink:0;">
+            <div id="pubAvatar"
+              style="width:150px;height:150px;border-radius:50%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;color:#fff;font-size:3.5rem;font-weight:900;border:3px solid #fff;box-shadow:0 0 0 2px #dbdbdb;">?</div>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <!-- Username + action buttons -->
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+              <h1 id="pubName" style="font-size:1.4rem;font-weight:300;color:#262626;margin:0;">Loading&#8230;</h1>
+              <button id="pubActionBtn"
+                style="background:#efefef;border:1px solid #dbdbdb;border-radius:8px;padding:6px 16px;font-family:var(--font);font-weight:700;font-size:0.85rem;color:#262626;cursor:pointer;white-space:nowrap;">
+                Edit Profile
+              </button>
+              <button onclick="showTip('Share link copied!')"
+                style="background:#efefef;border:1px solid #dbdbdb;border-radius:8px;padding:7px 12px;font-family:var(--font);font-weight:700;font-size:0.82rem;color:#262626;cursor:pointer;">
+                <i data-lucide="share-2" style="width:14px;height:14px;vertical-align:middle;"></i>
+              </button>
+            </div>
+            <!-- Stats -->
+            <div style="display:flex;gap:2.5rem;margin-bottom:1.25rem;">
+              <div>
+                <span id="pubPostCount" style="font-size:1rem;font-weight:700;color:#262626;">0</span>
+                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">posts</span>
               </div>
+              <div><span style="font-size:1rem;font-weight:700;color:#262626;">&#8212;</span>
+                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">followers</span>
+              </div>
+              <div><span style="font-size:1rem;font-weight:700;color:#262626;">&#8212;</span>
+                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">following</span>
+              </div>
+            </div>
+            <!-- Bio -->
+            <div>
+              <div id="pubBioName" style="font-size:0.9rem;font-weight:700;color:#262626;margin-bottom:2px;"></div>
+              <div id="pubBioText" style="font-size:0.88rem;color:#262626;line-height:1.5;">Cooking creator &#127859;</div>
+              <div id="pubHandle" style="font-size:0.85rem;color:#003569;margin-top:2px;"></div>
             </div>
           </div>
         </div>
+
+        <!-- Story highlights row -->
+        <div id="pubHighlightsRow" style="display:none;gap:1.25rem;overflow-x:auto;padding-bottom:1rem;scrollbar-width:none;"></div>
       </div>
 
-      <!-- ── Tab nav (Videos / About) ── -->
-      <div style="background:#fff;border-bottom:2px solid var(--border-card);position:sticky;top:0;z-index:10;">
-        <div style="max-width:1100px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;">
+      <!-- Tab bar -->
+      <div style="border-top:1px solid #dbdbdb;margin-top:0.5rem;">
+        <div style="max-width:935px;margin:0 auto;display:flex;justify-content:center;">
           <button id="pubTabVideos" onclick="pubSwitchTab('videos')"
-            style="padding:14px 20px;border:none;background:none;font-family:var(--font);font-weight:900;font-size:0.88rem;color:var(--primary);cursor:pointer;border-bottom:3px solid var(--primary);margin-bottom:-2px;">
-            🎬 Videos
+            style="display:flex;align-items:center;gap:6px;padding:12px 24px;border:none;border-top:2px solid #262626;background:none;font-family:var(--font);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#262626;cursor:pointer;">
+            <i data-lucide="grid-2x2" style="width:13px;height:13px;"></i> Posts
           </button>
           <button id="pubTabSeries" onclick="pubSwitchTab('series')"
-            style="padding:14px 20px;border:none;background:none;font-family:var(--font);font-weight:800;font-size:0.88rem;color:var(--text-muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;">
-            📁 Series
+            style="display:flex;align-items:center;gap:6px;padding:12px 24px;border:none;border-top:2px solid transparent;background:none;font-family:var(--font);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#8e8e8e;cursor:pointer;">
+            <i data-lucide="clapperboard" style="width:13px;height:13px;"></i> Reels
           </button>
         </div>
       </div>
 
-      <!-- ── Videos Tab ── -->
-      <div id="pubTabVideosContent" style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 3rem;">
+      <!-- Posts grid -->
+      <div id="pubTabVideosContent" style="max-width:935px;margin:0 auto;">
+        <div id="pubVideoRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;"></div>
+        <div id="pubNoPostsMsg" style="display:none;text-align:center;padding:5rem 1rem;color:#8e8e8e;">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">&#128247;</div>
+          <div style="font-size:1.1rem;font-weight:700;color:#262626;margin-bottom:6px;">No Posts Yet</div>
+          <div>When you share videos, they'll appear here.</div>
+        </div>
+      </div>
 
-        <!-- Hero: Latest video -->
-        <div id="pubHeroSection" style="margin-bottom:2.5rem;">
-          <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:12px;">🔴 Latest Upload</div>
-          <div id="pubHeroCard" style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem;background:#fff;border-radius:20px;border:2px solid var(--border-card);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-            <!-- Video thumbnail -->
-            <div id="pubHeroThumb" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);min-height:300px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;" onclick="pubPlayHero()">
-              <div style="font-size:4rem;">🎬</div>
-              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-                <div style="width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;font-size:1.8rem;box-shadow:0 4px 20px rgba(0,0,0,0.3);">▶</div>
-              </div>
+      <!-- Reels/Series tab -->
+      <div id="pubTabSeriesContent" style="max-width:935px;margin:0 auto;display:none;">
+        <div id="pubSeriesGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;"></div>
+        <div id="pubSeriesEmpty" style="text-align:center;padding:5rem 1rem;color:#8e8e8e;">
+          <div style="font-size:3rem;margin-bottom:0.75rem;">&#127916;</div>
+          <div style="font-size:1.1rem;font-weight:700;color:#262626;margin-bottom:6px;">No Reels Yet</div>
+          <div>Videos will appear here.</div>
+        </div>
+      </div>
+
+      <!-- Lightbox -->
+      <div id="pubLightbox" onclick="closePubLightbox()"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+        <div onclick="event.stopPropagation()"
+          style="background:#fff;border-radius:4px;display:flex;max-width:900px;width:95%;max-height:90vh;overflow:hidden;">
+          <div id="pubLightboxThumb"
+            style="flex:1;min-width:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:400px;">
+            <span style="font-size:4rem;">&#127916;</span>
+          </div>
+          <div style="width:320px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid #dbdbdb;">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid #dbdbdb;">
+              <div id="pubLightboxAvatar"
+                style="width:32px;height:32px;border-radius:50%;background:linear-gradient(45deg,#f09433,#dc2743);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:0.85rem;flex-shrink:0;"></div>
+              <div id="pubLightboxUsername" style="font-size:0.9rem;font-weight:700;color:#262626;flex:1;"></div>
+              <button onclick="closePubLightbox()"
+                style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#8e8e8e;line-height:1;padding:0;">&#215;</button>
             </div>
-            <!-- Details -->
-            <div style="padding:1.5rem;display:flex;flex-direction:column;justify-content:space-between;">
-              <div>
-                <h2 id="pubHeroTitle" style="font-size:1.25rem;font-weight:900;color:var(--text-heading);margin-bottom:8px;line-height:1.3;">Loading...</h2>
-                <div id="pubHeroMeta" style="font-size:0.75rem;color:var(--text-muted);font-weight:700;margin-bottom:12px;"></div>
-                <div id="pubHeroDesc" style="font-size:0.85rem;color:var(--text-body);font-weight:600;line-height:1.6;"></div>
-              </div>
-              <button id="pubHeroPlayBtn" onclick="pubPlayHero()"
-                style="width:100%;background:linear-gradient(135deg,var(--primary),#2d7dd9);color:#fff;border:none;border-radius:12px;padding:13px;font-family:var(--font);font-weight:900;font-size:0.95rem;cursor:pointer;margin-top:1.25rem;box-shadow:0 4px 14px rgba(74,144,217,0.4);">
-                ▶ Watch Now
+            <div style="padding:14px;flex:1;overflow-y:auto;">
+              <div id="pubLightboxTitle" style="font-size:0.9rem;font-weight:700;color:#262626;margin-bottom:6px;"></div>
+              <div id="pubLightboxDesc" style="font-size:0.85rem;color:#262626;line-height:1.6;"></div>
+              <div id="pubLightboxMeta" style="font-size:0.75rem;color:#8e8e8e;margin-top:10px;font-weight:600;"></div>
+            </div>
+            <div style="padding:14px;border-top:1px solid #dbdbdb;">
+              <button onclick="pubLightboxWatch()"
+                style="width:100%;background:#0095f6;border:none;border-radius:8px;padding:10px;color:#fff;font-family:var(--font);font-weight:700;font-size:0.9rem;cursor:pointer;">
+                &#9654; Watch Now
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Latest videos row -->
-        <div style="margin-bottom:2.5rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">All Videos</div>
-            <span id="pubVideoTotal" style="font-size:0.75rem;color:var(--text-muted);font-weight:700;"></span>
-          </div>
-          <div id="pubVideoRow" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
-            <!-- populated by JS -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ── Series Tab ── -->
-      <div id="pubTabSeriesContent" style="max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 3rem;display:none;">
-        <div id="pubSeriesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
-          <!-- populated by JS -->
-        </div>
-        <div id="pubSeriesEmpty" style="display:none;text-align:center;padding:4rem;color:var(--text-muted);">
-          <div style="font-size:2.5rem;margin-bottom:0.75rem;">📂</div>
-          <div style="font-weight:700;">This creator hasn't made any series yet</div>
         </div>
       </div>
 
