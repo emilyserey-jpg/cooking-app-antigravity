@@ -1725,6 +1725,12 @@ a:focus-visible {
     display: none !important;
   }
 
+  /* Reduce app-container padding when editing to maximize vertical editor space */
+  body:has(#createStage2:not([style*="display: none"])) .app-container {
+    padding-top: 0.5rem !important;
+    padding-bottom: 65px !important;
+  }
+
 /* ====================================================
    MOBILE EDITOR CAROUSEL & TOOLBAR (GLOBAL & DESKTOP DEFAULT HIDE)
    ==================================================== */

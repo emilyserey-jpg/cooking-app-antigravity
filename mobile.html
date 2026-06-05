@@ -995,10 +995,10 @@
       </div>
 
       <!-- STAGE 2: Editor (shown after upload completes) -->
-      <div id="createStage2" style="display:none; height:calc(100vh - 110px); display:none; flex-direction:column; overflow:hidden;">
+      <div id="createStage2" style="display:none; height:calc(100vh - 141px); flex-direction:column; overflow:hidden;">
 
         <!-- Header row -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-shrink:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;flex-shrink:0;">
           <h2 style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Recipe</h2>
           <button onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;"><i data-lucide="arrow-left"></i> New Video</button>
         </div>
@@ -1006,7 +1006,7 @@
         <!-- Main Mobile Workbench (No desktop 2-col wrapper, no workbenchGrid/Left/Right) -->
         
         <!-- Video Player Wrapper (Fixed-height on mobile) -->
-        <div id="workbenchVideoWrapper" style="width:100%; height:200px; background:#000; border-radius:16px; overflow:hidden; position:relative; box-shadow:var(--shadow-md); flex-shrink:0;">
+        <div id="workbenchVideoWrapper" style="width:100%; height:140px; background:#000; border-radius:16px; overflow:hidden; position:relative; box-shadow:var(--shadow-md); flex-shrink:0;">
           <video id="uploadedVideoPlayer"
             style="width:100%; height:100%; object-fit:contain; display:block;"
             preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
@@ -1014,7 +1014,7 @@
         </div>
 
         <!-- Video Overlay Controls (Sibling of player wrapper, fixes iOS touch swallowing) -->
-        <div id="videoOverlayControls" style="background:#1e2235; border-top:1.5px solid var(--border-card); display:flex; align-items:center; gap:8px; padding:8px 12px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; touch-action:pan-x; flex-shrink:0;">
+        <div id="videoOverlayControls" style="background:#1e2235; border-top:1.5px solid var(--border-card); display:flex; align-items:center; gap:8px; padding:5px 10px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; touch-action:pan-x; flex-shrink:0;">
           <button onclick="toggleVideoPlay()" id="videoPlayBtn"
             style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:1rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;">▶</button>
           <div style="flex:1;">
@@ -1036,7 +1036,7 @@
         </div>
 
         <!-- Chapter Scrubber -->
-        <div style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:8px 12px; flex-shrink:0; margin-top:8px;">
+        <div style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:6px 10px; flex-shrink:0; margin-top:4px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
             <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Loop Stops — drag to adjust</span>
             <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600;" id="chapterDurationLabel">0:00</span>
@@ -1054,7 +1054,7 @@
         </div>
 
         <!-- Nav Controls Bar -->
-        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:7px 11px; display:flex; gap:6px; flex-shrink:0; margin-top:8px; align-items:center;">
+        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:4px 8px; display:flex; gap:6px; flex-shrink:0; margin-top:4px; align-items:center;">
           <button onclick="window.navOrScrub(-1)" id="navPrevBtn" tabindex="-1"
             style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer; flex-shrink:0;" title="Previous step (← key)">←</button>
           <div style="flex:1; text-align:center; min-width:0;">
@@ -1081,7 +1081,7 @@
         <div id="createTimeline" style="display:none;"><div id="timelinePlayhead" style="display:none;"></div></div>
 
         <!-- Mobile Editor Swipeable Carousel (Populated directly at markup-level) -->
-        <div id="mobileEditorCarousel" class="editor-carousel" style="margin-top:8px;">
+        <div id="mobileEditorCarousel" class="editor-carousel" style="margin-top:4px;">
           <!-- Slide 1: Stops -->
           <div class="carousel-slide" id="slideStops">
             <!-- Loop Stops -->
