@@ -1851,11 +1851,11 @@ a:focus-visible {
   .mobile-player-footer {
     display: none !important;
   }
-}
 
-/* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
-body:has(#createStage2:not([style*="display: none"])) .view-tabs {
-  display: none !important;
+  /* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
+  body:has(#createStage2:not([style*="display: none"])) .view-tabs {
+    display: none !important;
+  }
 }
 
 /* ====================================================
