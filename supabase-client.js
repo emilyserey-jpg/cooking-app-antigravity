@@ -195,13 +195,27 @@ export async function createRecipe(recipe) {
     updated_at:        new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('recipes')
     .insert(payload)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // If it's a schema cache/missing column error for thumbnail_url, retry without it
+    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying recipe insert without thumbnail_url column');
+      delete payload.thumbnail_url;
+      const retry = await supabase
+        .from('recipes')
+        .insert(payload)
+        .select()
+        .single();
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    throw error;
+  }
   return data;
 }
 

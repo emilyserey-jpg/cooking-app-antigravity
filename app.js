@@ -1315,13 +1315,30 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
 
   try {
     const { supabase } = await import('./supabase-client.js');
-    const { data: recipes } = await supabase
+    let { data: recipes, error } = await supabase
       .from('recipes')
       .select('id, title, description, video_url, thumbnail_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
       .eq('creator', creatorEmail)
       .eq('is_published', true)
       .eq('private_recipe', false)
       .order('created_at', { ascending: false });
+
+    if (error) {
+      if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+        console.warn('[Supabase] Retrying openPublicProfile without thumbnail_url column');
+        const retry = await supabase
+          .from('recipes')
+          .select('id, title, description, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
+          .eq('creator', creatorEmail)
+          .eq('is_published', true)
+          .eq('private_recipe', false)
+          .order('created_at', { ascending: false });
+        if (retry.error) throw retry.error;
+        recipes = retry.data;
+      } else {
+        throw error;
+      }
+    }
 
     const list = recipes || [];
     pubCurrentCreator = { email: creatorEmail, recipes: list };
@@ -2568,13 +2585,31 @@ async function libFetchRecipes() {
   if (!currentUser) return [];
   try {
     const { supabase } = await import('./supabase-client.js');
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from('recipes')
       .select('id, title, video_url, thumbnail_url, duration, created_at, private_recipe')
       .eq('creator', currentUser.email)
       .order('created_at', { ascending: false });
+    
+    if (error) {
+      // If it's a schema/missing column error for thumbnail_url, retry without it
+      if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+        console.warn('[Supabase] Retrying libFetchRecipes without thumbnail_url column');
+        const retry = await supabase
+          .from('recipes')
+          .select('id, title, video_url, duration, created_at, private_recipe')
+          .eq('creator', currentUser.email)
+          .order('created_at', { ascending: false });
+        if (retry.error) throw retry.error;
+        return retry.data || [];
+      }
+      throw error;
+    }
     return data || [];
-  } catch { return []; }
+  } catch (err) {
+    console.error('libFetchRecipes error:', err);
+    return [];
+  }
 }
 
 // ── Main render ────────────────────────────────────────────────────────────
