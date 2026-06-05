@@ -1549,13 +1549,14 @@ a:focus-visible {
 
 
   #createStage2 {
-    height: calc(100dvh - 120px) !important;
-    max-height: calc(100dvh - 120px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     overflow: hidden !important;
     display: flex; /* no !important to allow resetCreateView to hide it */
     flex-direction: column !important;
     position: relative !important;
     padding-bottom: 60px !important; /* space for toolbar */
+    box-sizing: border-box !important;
   }
   
   #workbenchGrid {
@@ -1725,10 +1726,18 @@ a:focus-visible {
     display: none !important;
   }
 
-  /* Reduce app-container padding when editing to maximize vertical editor space */
+  /* Lock body scroll and set viewport height when editing to prevent page scroll and toolbar overlaps */
+  body:has(#createStage2:not([style*="display: none"])) {
+    overflow: hidden !important;
+    height: 100dvh !important;
+  }
+
   body:has(#createStage2:not([style*="display: none"])) .app-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 65px !important;
+    height: calc(100dvh - 68px) !important;
+    max-height: calc(100dvh - 68px) !important;
+    overflow: hidden !important;
+    padding: 8px 8px 0 8px !important;
+    box-sizing: border-box !important;
   }
 
 /* ====================================================
@@ -1754,12 +1763,20 @@ a:focus-visible {
   scroll-snap-align: start;
   scroll-snap-stop: always;
   box-sizing: border-box;
-  padding: 8px 12px;
+  padding: 8px 12px 20px 12px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Ensure empty space at the bottom of the flex layout for consistent scrolling clear of toolbar */
+.carousel-slide::after {
+  content: "";
+  display: block;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 /* Make cards look flat and clean inside carousel slide body */
