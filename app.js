@@ -2757,31 +2757,46 @@ window.previewStepLoop = function(i) {
   currentNavStepIndex = i;
   refreshStepNavigator();
 
-  // Use explicit endTime if set, otherwise next step's start or video duration
-  const endTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
+  // endTime: use explicit value, then next step's start, then video end
+  const endTime = (step.endTime != null)
+    ? step.endTime
+    : (createStepsArr[i + 1]?.time ?? videoDuration);
+
+  // Seek to step start and play
   videoEl.currentTime = step.time;
   videoEl.play();
 
-  const label   = document.getElementById('previewingLabel');
+  const labelEl = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
-  if (label)   label.style.display  = 'inline';
-  if (stopBtn) stopBtn.style.display = 'inline-block';
+  if (labelEl) labelEl.style.display  = 'inline';
+  if (stopBtn) stopBtn.style.display  = 'inline-block';
 
-  previewInterval = setInterval(() => {
-    if (videoEl.currentTime >= endTime - 0.1) {
+  // Use timeupdate (fires ~4× per second) for precise boundary detection
+  // — avoids the 100ms polling lag that caused early/late cutoffs
+  function onTimeUpdate() {
+    if (videoEl.currentTime >= endTime - 0.05) {
       videoEl.currentTime = step.time;
     }
-  }, 100);
+  }
+  videoEl.addEventListener('timeupdate', onTimeUpdate);
 
-  showTip(`Looping "${step.label}" (${step.displayTime}) — use ← → to skip steps`);
+  // Store cleanup handle so stopPreviewLoop can remove the listener
+  previewInterval = { cancel: () => videoEl.removeEventListener('timeupdate', onTimeUpdate) };
+
+  const dur = endTime - step.time;
+  showTip(`Looping "${step.label}" — ${dur.toFixed(1)}s · use ← → to skip steps`);
 };
 
 window.stopPreviewLoop = function() {
-  if (previewInterval) { clearInterval(previewInterval); previewInterval = null; }
-  const label   = document.getElementById('previewingLabel');
+  if (previewInterval) {
+    if (typeof previewInterval.cancel === 'function') previewInterval.cancel();
+    else clearInterval(previewInterval);
+    previewInterval = null;
+  }
+  const labelEl = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
-  if (label)   label.style.display   = 'none';
-  if (stopBtn) stopBtn.style.display = 'none';
+  if (labelEl) labelEl.style.display  = 'none';
+  if (stopBtn) stopBtn.style.display  = 'none';
 };
 
 // ── Drag to reorder ────────────────────────────────────────────────────────
@@ -2846,11 +2861,12 @@ window.saveNewRecipe = async function() {
     const videoEl  = document.getElementById('uploadedVideoPlayer');
     const duration = videoEl?.duration || 0;
     const steps    = createStepsArr.map(s => s.label);
-    // Save full loop objects — preserves AI-detected start AND end times
+    // Save full loop objects — preserves AI-detected start AND end times + descriptions
     const loops    = createStepsArr.map(s => ({
-      start: s.time,
-      end:   s.endTime ?? null,
-      label: s.label,
+      start:       s.time,
+      end:         s.endTime ?? null,
+      label:       s.label,
+      description: s.description || '',
     }));
 
     // Build video_url: prefer CF Stream, fall back to local blob
