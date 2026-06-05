@@ -1572,17 +1572,17 @@ a:focus-visible {
   border: 2px dashed var(--primary) !important;
 }
 
-/* Multigrid layout mode styles (applies to both row and quad) */
+/* Multigrid layout mode styles (applies to row mode only on desktop) */
 @media (min-width: 768px) {
-  .phone-screen.multigrid-active {
+  .phone-screen.multigrid-row-mode {
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
   }
-  .phone-screen.multigrid-active .player-left-column {
+  .phone-screen.multigrid-row-mode .player-left-column {
     width: 100% !important;
   }
-  .phone-screen.multigrid-active .mobile-player-body {
+  .phone-screen.multigrid-row-mode .mobile-player-body {
     width: 100% !important;
     min-height: auto !important;
   }
