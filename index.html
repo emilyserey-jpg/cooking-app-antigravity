@@ -989,6 +989,14 @@
         <!-- Main 2-col workbench -->
         <div class="workbench-grid" style="gap:1rem;flex:1;min-height:0;overflow:hidden;">
 
+          <!-- Title (placed at top using grid areas) -->
+          <div class="workbench-title-card glass-card" style="padding:10px 13px;flex-shrink:0;">
+            <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
+            <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
+              style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+          </div>
+
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
           <div class="workbench-left" style="display:flex;flex-direction:column;gap:0.5rem;">
 
@@ -1068,14 +1076,6 @@
 
                     <!-- ══ RIGHT: Scrollable recipe panel ══ -->
           <div class="workbench-right" style="display:flex;flex-direction:column;gap:0.5rem;">
-
-            <!-- Title (always visible) -->
-            <div class="glass-card" style="padding:10px 13px;flex-shrink:0;">
-              <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
-              <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
-                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;"
-                onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
-            </div>
 
             <!-- ▾ AI Tools accordion -->
             <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:0;flex-shrink:0;overflow:hidden;">
