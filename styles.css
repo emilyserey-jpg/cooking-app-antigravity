@@ -1252,17 +1252,18 @@ h1, h2, h3, h4, h5 {
    ==================================================== */
 .player-timeline-rail {
   position: relative;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.08);
+  height: 10px;
+  background: #cbd5e1; /* slate-200 for maximum visibility */
   border-radius: 999px;
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   overflow: visible;
   transition: background 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .player-timeline-rail:hover {
-  background: rgba(0, 0, 0, 0.12);
+  background: #94a3b8; /* slate-400 */
 }
 
 #videoProgressLine {
@@ -1270,11 +1271,26 @@ h1, h2, h3, h4, h5 {
   top: 0;
   left: 0;
   height: 100%;
-  background: var(--primary);
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
   border-radius: 999px;
   transition: none;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(74, 144, 217, 0.4);
+  box-shadow: 0 0 8px rgba(74, 144, 217, 0.5);
+}
+
+.player-timeline-playhead {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 8;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: transform 0.1s ease;
 }
 
 #videoBoundariesContainer {
@@ -1287,25 +1303,26 @@ h1, h2, h3, h4, h5 {
 .player-timeline-tick {
   position: absolute;
   top: -2px;
-  width: 4px;
-  height: 12px;
-  background: var(--primary);
-  border: 1.5px solid #fff;
+  width: 5px;
+  height: 14px;
+  background: #fff;
+  border: 1.5px solid #475569; /* slate-600 dark border for high contrast */
   border-radius: 99px;
   transform: translateX(-50%);
   z-index: 5;
   pointer-events: auto;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: all 0.15s ease;
 }
 
 .player-timeline-tick:hover {
   background: #22c55e;
-  height: 16px;
+  border-color: #16a34a;
+  height: 18px;
   top: -4px;
-  width: 6px;
-  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
+  width: 7px;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.6);
   z-index: 10;
 }
 

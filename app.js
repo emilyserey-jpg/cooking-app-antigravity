@@ -120,8 +120,14 @@ function initializeApp() {
   // 🔌 Connect to Supabase
   initSupabase();
 
-  // Load view from URL hash first, then fallback to landing view preference
   let startView = window.location.hash.replace('#', '') || '';
+  let startRecipeId = null;
+  if (startView.includes('?')) {
+    const parts = startView.split('?');
+    startView = parts[0];
+    const params = new URLSearchParams(parts[1]);
+    startRecipeId = params.get('id') || params.get('recipeId');
+  }
   const validViews = ['create', 'discover', 'grid-view', 'profile', 'my-profile', 'mobile-player', 'bento-dashboard', 'desktop-workbench'];
   if (!validViews.includes(startView)) {
     startView = localStorage.getItem('cooking_gps_landing_view') || 'create';
@@ -129,7 +135,7 @@ function initializeApp() {
   switchView(startView);
 
   if (startView === 'mobile-player') {
-    const activeId = localStorage.getItem('cooking_gps_active_recipe_id');
+    const activeId = startRecipeId || localStorage.getItem('cooking_gps_active_recipe_id');
     if (activeId) {
       window.loadRecipeById(activeId);
     }
@@ -478,9 +484,11 @@ function updateTimelineUI() {
   
   // Mobile Progress line
   const mProgressLine = document.getElementById('videoProgressLine');
-  if (mProgressLine) {
+  const mPlayhead = document.getElementById('playerTimelinePlayhead');
+  if (mProgressLine || mPlayhead) {
     const pct = (recipeData.duration > 0) ? (currentTime / recipeData.duration) * 100 : 0;
-    mProgressLine.style.width = pct + '%';
+    if (mProgressLine) mProgressLine.style.width = pct + '%';
+    if (mPlayhead) mPlayhead.style.left = pct + '%';
   }
   
   // Desktop Playhead
@@ -588,10 +596,13 @@ function updateStepDetailsUI() {
   // Update mobile fields
   document.getElementById('mobileStepLabel').innerText = `Step ${activeStepIndex + 1} of ${recipeData.steps.length}`;
   
-  const minStart = Math.floor(recipeData.loops[activeStepIndex] / 60);
-  const secStart = Math.floor(recipeData.loops[activeStepIndex] % 60);
-  const minEnd = Math.floor(recipeData.loops[activeStepIndex+1] / 60);
-  const secEnd = Math.floor(recipeData.loops[activeStepIndex+1] % 60);
+  const startVal = recipeData.loops[activeStepIndex] !== undefined ? recipeData.loops[activeStepIndex] : 0;
+  const endVal = recipeData.loops[activeStepIndex+1] !== undefined ? recipeData.loops[activeStepIndex+1] : recipeData.duration;
+  
+  const minStart = Math.floor(startVal / 60);
+  const secStart = Math.floor(startVal % 60);
+  const minEnd = Math.floor(endVal / 60);
+  const secEnd = Math.floor(endVal % 60);
   document.getElementById('mobileStepTime').innerText = `${minStart}:${secStart.toString().padStart(2,'0')} – ${minEnd}:${secEnd.toString().padStart(2,'0')}`;
   
   document.getElementById('mobileStepTitle').innerText = step.title;
@@ -2162,15 +2173,13 @@ window.loadGridRecipe = async function(recipeId) {
 function updateStepFromTime(time) {
   if (!recipeData.loops || recipeData.loops.length === 0) return;
   let foundIndex = 0;
-  for (let i = 0; i < recipeData.loops.length - 1; i++) {
-    const start = recipeData.loops[i];
-    const end = recipeData.loops[i + 1];
-    if (time >= start - 0.01 && time < end) {
+  for (let i = 0; i < recipeData.loops.length; i++) {
+    if (time >= recipeData.loops[i] - 0.01) {
       foundIndex = i;
-      break;
     }
   }
-  if (time >= recipeData.duration - 0.01) {
+  // Cap foundIndex to the number of steps
+  if (recipeData.steps && foundIndex >= recipeData.steps.length) {
     foundIndex = recipeData.steps.length - 1;
   }
   if (foundIndex !== activeStepIndex) {
@@ -2394,6 +2403,15 @@ window.loadPlayerRecipe = async function(recipeId) {
   if (!recipeId) return;
   activePlayerRecipeId = recipeId;
   localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
+
+  // Ensure voice guide is deactivated by default when opening a new recipe
+  if (currentSpeechActive && recognition) {
+    try {
+      recognition.stop();
+    } catch (e) {}
+    currentSpeechActive = false;
+    updateVoiceUI(false);
+  }
   
   const errOverlay = document.getElementById('videoErrorOverlay');
   if (errOverlay) errOverlay.style.display = 'none';
@@ -2714,14 +2732,15 @@ function parseLoops(rawLoops) {
     if (typeof entry === 'number') {
       // Old format — end = next start (or null)
       const nextEntry = arr[i + 1];
-      const end = typeof nextEntry === 'number' ? nextEntry : null;
-      return { start: entry, end, label: null };
+      const end = typeof nextEntry === 'number' ? Number(nextEntry) : null;
+      return { start: Number(entry), end, label: null };
     }
     // New format — already has start, end, label
     return {
-      start: entry.start ?? entry.time ?? 0,
-      end:   entry.end   ?? entry.endTime ?? null,
+      start: Number(entry.start ?? entry.time ?? 0),
+      end:   (entry.end != null || entry.endTime != null) ? Number(entry.end ?? entry.endTime) : null,
       label: entry.label ?? null,
+      description: entry.description ?? '',
     };
   });
 }
@@ -4615,7 +4634,23 @@ function flashNavBtn(dir) {
   setTimeout(() => { btn.style.background = 'var(--bg-card-soft)'; btn.style.color = ''; }, 180);
 }
 
-// ── Global arrow-key handler (active on Create page) ──────────────────────
+// Flash the mobile player control button briefly when keyboard triggers it
+function flashPlayerBtn(btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  const origBg = btn.style.background;
+  const origColor = btn.style.color;
+  const origTransform = btn.style.transform;
+  btn.style.background = 'var(--primary)';
+  btn.style.color = '#fff';
+  btn.style.transform = 'scale(0.9)';
+  setTimeout(() => {
+    btn.style.background = origBg;
+    btn.style.color = origColor;
+    btn.style.transform = origTransform;
+  }, 180);
+}
+
 // ── Global arrow-key handler (active on Create page & Player page) ──────────────
 document.addEventListener('keydown', function(e) {
   // Ignore if user is typing in an input, textarea, or contenteditable
@@ -4641,7 +4676,9 @@ document.addEventListener('keydown', function(e) {
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
       const hasRealVideo = vid && vid.style.display !== 'none';
-      if (e.shiftKey || keyboardMode === 'scrub') {
+      const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
+      
+      if (isSeeking) {
         const newTime = Math.max(0, currentTime - 1);
         if (hasRealVideo) {
           vid.currentTime = newTime;
@@ -4649,8 +4686,10 @@ document.addEventListener('keydown', function(e) {
         currentTime = newTime;
         updateStepFromTime(currentTime);
         updateTimelineUI();
+        flashPlayerBtn('playerSkipBack1sBtn');
       } else {
         window.desktopPlayerPrev();
+        flashPlayerBtn('playerPrevStepBtn');
       }
     }
   } else if (e.key === 'ArrowRight') {
@@ -4666,7 +4705,9 @@ document.addEventListener('keydown', function(e) {
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
       const hasRealVideo = vid && vid.style.display !== 'none';
-      if (e.shiftKey || keyboardMode === 'scrub') {
+      const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
+      
+      if (isSeeking) {
         const newTime = Math.min(recipeData.duration, currentTime + 1);
         if (hasRealVideo) {
           vid.currentTime = newTime;
@@ -4674,8 +4715,10 @@ document.addEventListener('keydown', function(e) {
         currentTime = newTime;
         updateStepFromTime(currentTime);
         updateTimelineUI();
+        flashPlayerBtn('playerSkipFwd1sBtn');
       } else {
         window.desktopPlayerNext();
+        flashPlayerBtn('playerNextStepBtn');
       }
     }
   } else if (e.key === ' ') {

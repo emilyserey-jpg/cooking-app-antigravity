@@ -114,6 +114,8 @@
               <div class="player-timeline-rail" onclick="window.playerTimelineClick(event)">
                 <!-- Filled progress -->
                 <div id="videoProgressLine" style="width: 0%"></div>
+                <!-- Playhead knob/thumb -->
+                <div id="playerTimelinePlayhead" class="player-timeline-playhead" style="left: 0%"></div>
                 <!-- Boundaries tick container -->
                 <div id="videoBoundariesContainer"></div>
               </div>
@@ -128,21 +130,21 @@
 
             <!-- Unified Player Controls Strip -->
             <div class="player-controls-strip">
-              <button onclick="window.desktopPlayerPrev()" class="control-btn" title="Previous Step">
+              <button id="playerPrevStepBtn" onclick="window.desktopPlayerPrev()" class="control-btn" title="Previous Step">
                 <i data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
               </button>
-              <button onclick="window.playerSkipTime(-1)" class="control-btn" title="Rewind 1s">
+              <button id="playerSkipBack1sBtn" onclick="window.playerSkipTime(-1)" class="control-btn" title="Rewind 1s">
                 <i data-lucide="rewind" style="width: 15px; height: 15px;"></i>
                 <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
               </button>
               <button id="playerStripPlayPauseBtn" onclick="toggleVideoPlayback()" class="control-btn play-btn" title="Play/Pause">
                 <i data-lucide="play" style="width: 16px; height: 16px;"></i>
               </button>
-              <button onclick="window.playerSkipTime(1)" class="control-btn" title="Forward 1s">
+              <button id="playerSkipFwd1sBtn" onclick="window.playerSkipTime(1)" class="control-btn" title="Forward 1s">
                 <i data-lucide="fast-forward" style="width: 15px; height: 15px;"></i>
                 <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
               </button>
-              <button onclick="window.desktopPlayerNext()" class="control-btn" title="Next Step">
+              <button id="playerNextStepBtn" onclick="window.desktopPlayerNext()" class="control-btn" title="Next Step">
                 <i data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
               </button>
             </div>
