@@ -3405,23 +3405,34 @@ function renderTimeline() {
 
     // Full-height colored chapter band — label inside
     const band = document.createElement('div');
-    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:1;overflow:hidden;border-right:2px solid rgba(255,255,255,0.5);box-sizing:border-box;`;
-    // Number badge + label + delete button inside the band
+    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:1;border-right:2px solid rgba(255,255,255,0.5);box-sizing:border-box;cursor:pointer;overflow:hidden;`;
+    // Clicking the band background still seeks
+    band.addEventListener('click', (e) => { videoScrubberSeek(e); });
+    // Number badge + label + hover-delete button
     band.innerHTML = `
       <div style="padding:3px 5px;display:flex;flex-direction:column;gap:1px;height:100%;position:relative;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1;">${i+1}</div>
-          <button onclick="event.stopPropagation();removeCreateStep(${i})"
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:2px;">
+          <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1.6;">${i+1}</div>
+          <button class="band-del-btn"
             title="Delete stop ${i+1}"
-            style="background:rgba(200,0,0,0.15);border:none;border-radius:3px;width:14px;height:14px;font-size:0.65rem;font-weight:900;color:rgba(180,0,0,0.8);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity 0.15s;flex-shrink:0;line-height:1;"
-            class="band-delete-btn">×</button>
+            style="background:rgba(220,30,30,0.18);border:none;border-radius:3px;width:16px;height:16px;font-size:0.75rem;font-weight:900;color:rgba(180,0,0,0.9);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity 0.15s,background 0.1s;flex-shrink:0;line-height:1;"
+            onmouseenter="this.style.background='rgba(220,30,30,0.38)'"
+            onmouseleave="this.style.background='rgba(220,30,30,0.18)'">×</button>
         </div>
         <div style="font-size:0.6rem;font-weight:800;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
         <div style="font-size:0.5rem;font-weight:600;color:rgba(20,20,50,0.55);margin-top:auto;">${step.displayTime}</div>
       </div>`;
-    // Show delete button on hover
-    band.addEventListener('mouseenter', () => { const b = band.querySelector('.band-delete-btn'); if (b) b.style.opacity = '1'; });
-    band.addEventListener('mouseleave', () => { const b = band.querySelector('.band-delete-btn'); if (b) b.style.opacity = '0'; });
+    // Wire the delete button (created via innerHTML so use querySelector)
+    const delBtn = band.querySelector('.band-del-btn');
+    if (delBtn) {
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // don't seek
+        removeCreateStep(i);
+      });
+    }
+    // Show/hide delete button on band hover
+    band.addEventListener('mouseenter', () => { if (delBtn) delBtn.style.opacity = '1'; });
+    band.addEventListener('mouseleave', () => { if (delBtn) delBtn.style.opacity = '0'; });
     markers.appendChild(band);
 
     // Draggable handle — thin vertical divider with circle dot at top
