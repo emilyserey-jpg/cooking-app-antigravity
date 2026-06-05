@@ -3970,10 +3970,25 @@ window.saveNewRecipe = async function(targetFolderId) {
       console.warn('Thumbnail capture failed (non-fatal):', tErr);
     }
 
-    // Build video_url: prefer CF Stream, fall back to local blob
-    const videoUrl = uploadedVideoUID
-      ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
-      : localVideoURL || null;
+    // Build video_url: prefer CF Stream, upload to Supabase if CF is not configured, fall back to local blob
+    let videoUrl = null;
+    if (uploadedVideoUID) {
+      videoUrl = `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`;
+    } else if (uploadedFile) {
+      if (btn) btn.textContent = 'Uploading video file...';
+      try {
+        const { uploadVideo } = await import('./supabase-client.js');
+        const supabaseUrl = await uploadVideo(uploadedFile, currentUser.email);
+        if (supabaseUrl) {
+          videoUrl = supabaseUrl;
+        }
+      } catch (upErr) {
+        console.error('Supabase video upload failed:', upErr);
+        videoUrl = localVideoURL || null;
+      }
+    } else {
+      videoUrl = localVideoURL || null;
+    }
 
     const savedRecipe = await createRecipe({
       title,
