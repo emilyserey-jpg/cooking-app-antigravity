@@ -4956,15 +4956,44 @@ function refreshStepNavigator() {
 
 window.navStep = function(dir) {
   if (!createStepsArr.length) return;
-  currentNavStepIndex = Math.max(0, Math.min(currentNavStepIndex + dir, createStepsArr.length - 1));
-  refreshStepNavigator();
-  if (previewInterval !== null) {
-    // Loop is active — switch loop to the new step immediately
-    previewStepLoop(currentNavStepIndex);
+  const vid = document.getElementById('uploadedVideoPlayer');
+
+  if (dir < 0) {
+    if (vid) {
+      const currentStepStart = createStepsArr[currentNavStepIndex].time || 0;
+      if (vid.currentTime > currentStepStart + 2) {
+        vid.currentTime = currentStepStart;
+        if (previewInterval !== null) {
+          previewStepLoop(currentNavStepIndex);
+        }
+        return;
+      }
+    }
+
+    if (currentNavStepIndex > 0) {
+      currentNavStepIndex--;
+      refreshStepNavigator();
+      if (previewInterval !== null) {
+        previewStepLoop(currentNavStepIndex);
+      } else {
+        if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
+      }
+    } else {
+      if (vid) vid.currentTime = 0;
+      showTip("Beginning of video reached.");
+    }
   } else {
-    // Not looping — just seek the video to this step's start
-    const vid = document.getElementById('uploadedVideoPlayer');
-    if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
+    if (currentNavStepIndex < createStepsArr.length - 1) {
+      currentNavStepIndex++;
+      refreshStepNavigator();
+      if (previewInterval !== null) {
+        previewStepLoop(currentNavStepIndex);
+      } else {
+        if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
+      }
+    } else {
+      showTip("Last step reached.");
+    }
   }
 };
 
