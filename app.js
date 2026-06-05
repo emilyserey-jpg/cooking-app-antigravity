@@ -4700,9 +4700,9 @@ function renderPlayerMultigrid() {
     selectorList.innerHTML = recipeData.steps.map((step, idx) => {
       const checked = playerSelectedSteps.has(idx) ? 'checked' : '';
       return `
-        <label style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font); font-size:0.68rem; font-weight:800; color:#fff; background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:999px; cursor:pointer; user-select:none; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        <label style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font); font-size:0.68rem; font-weight:800; color:#fff; background:rgba(255,255,255,0.08); padding:4px 10px; border-radius:999px; cursor:pointer; user-select:none; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
           <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="accent-color:var(--primary); cursor:pointer;" />
-          Step ${idx + 1}
+          ${idx + 1}
         </label>
       `;
     }).join('');
