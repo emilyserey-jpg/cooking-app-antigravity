@@ -814,26 +814,24 @@ window.renderMultigridDescriptions = function() {
     const timeText = `${minStart}:${secStart.toString().padStart(2,'0')} – ${minEnd}:${secEnd.toString().padStart(2,'0')}`;
     
     const isCompleted = playerCompletedSteps.has(idx);
-    const doneBtnText = isCompleted ? '✓ Done' : '○ Mark Done';
-    const doneBtnBg = isCompleted ? 'rgba(34,197,94,0.15)' : 'rgba(74, 144, 217, 0.15)';
-    const doneBtnColor = isCompleted ? '#22c55e' : 'var(--primary)';
 
     return `
       <div class="multigrid-desc-card" style="${cardStyle} background:rgba(255,255,255,0.9); border-radius:var(--radius-lg); border:2px solid rgba(74, 144, 217, 0.12); padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 12px rgba(74,144,217,0.08); box-sizing:border-box;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">Step ${idx + 1} of ${recipeData.steps.length}</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div onclick="event.stopPropagation(); window.togglePlayerMultigridDescStepDone(${idx})" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; transition:all 0.2s ease-in-out; ${isCompleted ? 'background:#22c55e; color:#fff;' : 'background:rgba(74, 144, 217, 0.1); color:var(--primary);'}" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
+              <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" style="width:14px; height:14px;"></i>
+            </div>
+            <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">Step ${idx + 1} of ${recipeData.steps.length}</span>
+          </div>
           <span style="font-size:0.68rem; font-weight:800; color:var(--primary); background:rgba(74,144,217,0.08); padding:2px 8px; border-radius:999px;">${timeText}</span>
         </div>
         <h3 style="font-size:0.95rem; font-weight:800; color:var(--text-title); margin:0;">${step.title}</h3>
         <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0; flex:1; white-space:normal; ${clampStyle}">${step.instruction}</p>
-        
-        <!-- Toggle Done button -->
-        <button onclick="event.stopPropagation(); window.togglePlayerMultigridDescStepDone(${idx})" style="margin-top:6px; display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; border:none; border-radius:8px; font-family:var(--font); font-size:0.72rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:${doneBtnBg}; color:${doneBtnColor};">
-          ${doneBtnText}
-        </button>
       </div>
     `;
   }).join('');
+  if (window.lucide) lucide.createIcons();
 };
 
 window.togglePlayerMultigridDescStepDone = function(stepIndex) {
