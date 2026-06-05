@@ -1250,37 +1250,96 @@ h1, h2, h3, h4, h5 {
 /* ====================================================
    TIMELINE TICKS, UNIFIED CONTROLS, COMPLETED CHIPS
    ==================================================== */
+.player-timeline-rail {
+  position: relative;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  overflow: visible;
+  transition: background 0.2s ease;
+}
+
+.player-timeline-rail:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+#videoProgressLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: none;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(74, 144, 217, 0.4);
+}
+
 #videoBoundariesContainer {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 8px;
-  z-index: 4;
+  inset: 0;
   pointer-events: none;
+  overflow: visible;
 }
 
 .player-timeline-tick {
   position: absolute;
-  bottom: 0;
-  width: 3px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  top: -2px;
+  width: 4px;
+  height: 12px;
+  background: var(--primary);
+  border: 1.5px solid #fff;
   border-radius: 99px;
   transform: translateX(-50%);
   z-index: 5;
   pointer-events: auto;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: all 0.15s ease;
 }
 
 .player-timeline-tick:hover {
   background: #22c55e;
-  height: 14px;
-  width: 5px;
-  box-shadow: 0 0 6px #22c55e;
+  height: 16px;
+  top: -4px;
+  width: 6px;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.4);
   z-index: 10;
+}
+
+/* Checklist Checkbox Styles */
+.step-chip-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-card);
+  background: transparent;
+  color: transparent;
+  font-size: 0.65rem;
+  font-weight: 950;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-left: auto;
+}
+
+.step-chip:hover .step-chip-checkbox {
+  border-color: var(--primary);
+}
+
+.step-chip.done .step-chip-checkbox {
+  border-color: #22c55e;
+  background: #22c55e;
+  color: #fff;
+}
+
+.step-chip.active.done .step-chip-checkbox {
+  border-color: #fff;
+  background: #fff;
+  color: #22c55e;
 }
 
 .player-controls-strip {

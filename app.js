@@ -627,8 +627,11 @@ function renderStepChipsMobile() {
     chip.className = `step-chip ${idx === activeStepIndex ? 'active' : ''} ${isDone ? 'done' : ''}`;
     chip.onclick = () => seekToStep(idx);
     chip.innerHTML = `
-      <span class="step-chip-num">${isDone ? '✓' : idx + 1}</span>
-      <span>${step.title}</span>
+      <span class="step-chip-num">${idx + 1}</span>
+      <span style="flex:1; text-align:left;">${step.title}</span>
+      <span class="step-chip-checkbox" onclick="event.stopPropagation(); window.togglePlayerStepDone(${idx})">
+        ${isDone ? '✓' : ''}
+      </span>
     `;
     container.appendChild(chip);
   });
@@ -2191,6 +2194,23 @@ window.playerSkipTime = function(amount) {
   showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s ⏱️`);
 };
 
+window.playerTimelineClick = function(e) {
+  const rail = e.currentTarget;
+  const rect = rail.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const duration = recipeData.duration || 10;
+  const newTime = Math.max(0, Math.min(duration, pct * duration));
+  
+  const vid = document.getElementById('mobileRealVideo');
+  const hasRealVideo = vid && vid.style.display !== 'none';
+  if (hasRealVideo) {
+    vid.currentTime = newTime;
+  }
+  currentTime = newTime;
+  updateStepFromTime(currentTime);
+  updateTimelineUI();
+};
+
 function getPlayerProgressKey(recipeId) {
   return `cooking_gps_player_progress_${recipeId}`;
 }
@@ -2372,6 +2392,7 @@ let hlsInstance = null;
 
 window.loadPlayerRecipe = async function(recipeId) {
   if (!recipeId) return;
+  activePlayerRecipeId = recipeId;
   localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
   
   const errOverlay = document.getElementById('videoErrorOverlay');

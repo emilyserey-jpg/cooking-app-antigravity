@@ -100,16 +100,22 @@
                   <span id="activeSpeedBadge">1.0x</span>
                 </div>
                 
-                <!-- Timeline/Loop bounds -->
-                <div id="videoProgressLine" class="playback-loop-progress" style="width: 0%"></div>
-                <div id="videoBoundariesContainer"></div>
-                
                 <!-- Video Error Overlay -->
                 <div id="videoErrorOverlay" style="display:none; position:absolute; inset:0; z-index:5; background:rgba(15,23,42,0.92); backdrop-filter:blur(8px); color:#fff; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:var(--font); border-radius:16px;">
                   <i data-lucide="alert-triangle" style="width:36px; height:36px; color:#f59e0b; margin-bottom:8px;"></i>
                   <h4 style="margin:0 0 6px; font-size:0.9rem; font-weight:800; color:#fff;">Video Unavailable</h4>
                   <p id="videoErrorOverlayMsg" style="margin:0; font-size:0.72rem; color:rgba(255,255,255,0.85); line-height:1.4; max-width:85%;">This video was saved as a temporary local preview and has expired. Please edit the recipe to upload the video file permanently.</p>
                 </div>
+              </div>
+            </div>
+
+            <!-- Prominent Scrubber Timeline -->
+            <div class="player-timeline-rail-container" style="margin: 10px 4px 6px; padding: 0 4px;">
+              <div class="player-timeline-rail" onclick="window.playerTimelineClick(event)">
+                <!-- Filled progress -->
+                <div id="videoProgressLine" style="width: 0%"></div>
+                <!-- Boundaries tick container -->
+                <div id="videoBoundariesContainer"></div>
               </div>
             </div>
 
