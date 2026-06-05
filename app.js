@@ -2685,60 +2685,60 @@ function libRecipeCardHTML(r, folderId) {
   const isDrag = libState.sort === 'custom';
 
   const removeBtn = folderId
-    ? '<button onclick="event.stopPropagation();libRemoveFromFolder(\'' + r.id + '\',\'' + folderId + '\')" title="Move to loose"'
-      + ' style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">'
-      + '&#x21A9; Remove</button>'
+    ? `<button onclick="event.stopPropagation();libRemoveFromFolder('${r.id}','${folderId}')" title="Move to loose"
+         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">&#x21A9; Remove</button>`
     : '';
 
   // Thumbnail: real image or dark gradient placeholder
   const thumbHtml = r.thumbnail_url
-    ? '<img src="' + encodeURI(r.thumbnail_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">'
-    : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">&#x1F3AC;</div>';
+    ? `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`
+    : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
 
   const privBadge = r.private_recipe
-    ? '<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">&#x1F512; Private</span>'
-    : '<span style="font-size:0.6rem;font-weight:800;color:#22c55e;background:#dcfce7;border-radius:5px;padding:2px 6px;">&#x1F30E; Public</span>';
+    ? `<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">🔒 Private</span>`
+    : `<span style="font-size:0.6rem;font-weight:800;color:#22c55e;background:#dcfce7;border-radius:5px;padding:2px 6px;">🌎 Public</span>`;
 
   const dragAttr = isDrag && !folderId
-    ? 'draggable="true" ondragstart="libOnDragStart(event,'recipe','' + r.id + '')"'
+    ? `draggable="true" ondragstart="libOnDragStart(event,'recipe','${r.id}')"`
     : '';
 
-  return ''
-    + '<div class="lib-recipe-card" id="libR_' + r.id + '"'
-    + ' style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;'
-    + 'cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"'
-    + ' onclick="libOpenRecipe('' + r.id + '')"'
-    + ' ' + dragAttr
-    + ' onmouseenter="this.style.boxShadow='0 6px 22px rgba(74,144,217,0.16)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"'
-    + ' onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">'
+  return `
+    <div class="lib-recipe-card" id="libR_${r.id}"
+      style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;
+             cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"
+      onclick="libOpenRecipe('${r.id}')"
+      ${dragAttr}
+      onmouseenter="this.style.boxShadow='0 6px 22px rgba(74,144,217,0.16)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"
+      onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">
 
-    // Thumbnail strip
-    + '<div style="position:relative;height:130px;background:#111;overflow:hidden;">'
-    + thumbHtml
-    + (mins ? '<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">' + mins + '</div>' : '')
-    + '<div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">'
-    + '<div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.15rem;">&#x25B6;</div>'
-    + '</div>'
-    + '</div>'
+      <!-- Thumbnail strip -->
+      <div style="position:relative;height:130px;background:#111;overflow:hidden;">
+        ${thumbHtml}
+        ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
+        <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.15rem;">▶</div>
+        </div>
+      </div>
 
-    // Info row
-    + '<div style="padding:10px 12px;display:flex;align-items:center;gap:10px;">'
-    + '<div style="flex:1;min-width:0;">'
-    + '<div style="font-weight:900;font-size:0.88rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">' + (r.title || 'Untitled') + '</div>'
-    + '<div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;">'
-    + privBadge
-    + (date ? '<span>' + date + '</span>' : '')
-    + '</div>'
-    + '</div>'
-    + '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
-    + removeBtn
-    + (isDrag && !folderId
-        ? '<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">&#x2807;</div>'
-        : '<span style="font-size:0.85rem;color:var(--text-muted);">&#x203A;</span>')
-    + '</div>'
-    + '</div>'
-    + '</div>';
+      <!-- Info row -->
+      <div style="padding:10px 12px;display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:900;font-size:0.88rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">${r.title || 'Untitled'}</div>
+          <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;">
+            ${privBadge}
+            ${date ? `<span>${date}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          ${removeBtn}
+          ${isDrag && !folderId
+            ? `<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">⠿</div>`
+            : `<span style="font-size:0.85rem;color:var(--text-muted);">›</span>`}
+        </div>
+      </div>
+    </div>`;
 }
+
 
 
 function libEmptyState(q) {
@@ -4033,12 +4033,13 @@ function showStage3WithFolderPicker(recipe, isPublic) {
     + '<h2 style="font-size:1.6rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Recipe Saved!</h2>'
     + '<p style="color:var(--text-muted);font-weight:600;margin-bottom:2rem;font-size:0.9rem;">' + v + '</p>'
     + '<div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">'
-    + '<button onclick="switchView('library')" class="btn btn-primary" style="border-radius:999px;padding:12px 28px;">&#x1F4DA; View in Library</button>'
+    + '<button onclick="switchView(\'library\')" class="btn btn-primary" style="border-radius:999px;padding:12px 28px;">&#x1F4DA; View in Library</button>'
     + '<button onclick="resetCreateView()" class="btn" style="border-radius:999px;padding:12px 28px;">&#x2795; Upload Another</button>'
     + '</div>';
 }
 
-// Stubs for any lingering inline HTML references
+
+
 window.addNewlySavedToFolder   = function() {};
 window.createAndAddToNewFolder = function() {};
 
