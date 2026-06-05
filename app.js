@@ -123,9 +123,9 @@ function enableDragToScroll(el) {
 // Initialize App
 function initializeApp() {
   canvasMobile = document.getElementById('mobileVideoCanvas');
-  ctxMobile = canvasMobile.getContext('2d');
+  ctxMobile = canvasMobile ? canvasMobile.getContext('2d') : null;
   canvasDesktop = document.getElementById('desktopVideoCanvas');
-  ctxDesktop = canvasDesktop.getContext('2d');
+  ctxDesktop = canvasDesktop ? canvasDesktop.getContext('2d') : null;
   
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);

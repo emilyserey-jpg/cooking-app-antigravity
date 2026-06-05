@@ -1462,116 +1462,7 @@ h1, h2, h3, h4, h5 {
 /* ====================================================
    DESKTOP RESPONSIVE PLAYER LAYOUT
    ==================================================== */
-@media (min-width: 768px) {
-  .player-mobile-wrapper {
-    max-width: 1000px !important;
-    height: auto !important;
-    border: none !important;
-    border-radius: 20px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
-    background: transparent !important;
-    overflow: visible !important;
-  }
 
-  .phone-notch {
-    display: none !important;
-  }
-
-  .phone-screen {
-    padding-top: 0 !important;
-    background: transparent !important;
-    display: grid !important;
-    grid-template-columns: 1.25fr 1fr !important;
-    gap: 24px !important;
-    overflow: visible !important;
-    height: auto !important;
-    align-items: start !important;
-  }
-
-  .player-left-column {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-
-  /* Left Side Column: Video + Modes + Controls */
-  .mobile-video-container {
-    border-radius: 16px !important;
-    overflow: hidden !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
-  }
-
-  .mode-selector-strip {
-    margin: 0 !important;
-  }
-
-  .desktop-player-controls {
-    display: flex !important;
-    margin-top: 0 !important;
-  }
-
-  /* Right Side Column: Active Step Card + Chips Scroll List */
-  .mobile-player-body {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-    height: auto !important;
-    min-height: 500px !important;
-    padding: 0 !important;
-    background: transparent !important;
-    min-width: 0 !important;
-  }
-
-  .step-card-active {
-    flex-shrink: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  .step-nav-chips-container {
-    flex: 1 !important;
-    margin-top: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    max-height: 350px !important;
-  }
-
-  .chips-scroll-x {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding-right: 6px !important;
-    white-space: normal !important;
-    scrollbar-width: thin !important;
-  }
-
-  /* Make chips render vertically like a checklist on desktop */
-  .chips-scroll-x .step-chip {
-    width: 100% !important;
-    box-sizing: border-box !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-  }
-
-  /* Hide mobile-only footer on desktop */
-  .mobile-player-footer {
-    display: none !important;
-  }
-
-  /* Position floating mic badge nicely next to player */
-  .voice-assistant-fab {
-    position: fixed !important;
-    bottom: 24px !important;
-    right: 24px !important;
-    z-index: 9999 !important;
-  }
-}
 
 /* Suppress all default browser focus outlines on button controls to prevent distracting focus rings during arrow key use */
 button:focus,
@@ -1592,23 +1483,7 @@ a:focus-visible {
 }
 
 /* Multigrid layout mode styles (applies to row mode only on desktop) */
-@media (min-width: 768px) {
-  .phone-screen.multigrid-row-mode {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  .phone-screen.multigrid-row-mode .player-left-column {
-    width: 100% !important;
-  }
-  .phone-screen.multigrid-row-mode .mobile-player-body {
-    width: 100% !important;
-    min-height: auto !important;
-  }
-  .phone-screen.multigrid-active:not(.multigrid-row-mode) {
-    grid-template-columns: 2.2fr 1fr !important;
-  }
-}
+
 
 /* Multigrid Active height overrides */
 .player-mobile-wrapper.multigrid-active {
@@ -1670,15 +1545,304 @@ a:focus-visible {
    ==================================================== */
 
 /* Hide mobile-specific overlay buttons in video player controls on desktop */
-@media (min-width: 769px) {
-  #overlayPreviewLoopBtn,
-  #overlayStopPreviewBtn,
-  #overlayTypeStopBtn,
-  #overlayAiBtn {
+
+
+
+  #createStage2 {
+    height: calc(100dvh - 120px) !important;
+    max-height: calc(100dvh - 120px) !important;
+    overflow: hidden !important;
+    display: flex; /* no !important to allow resetCreateView to hide it */
+    flex-direction: column !important;
+    position: relative !important;
+    padding-bottom: 60px !important; /* space for toolbar */
+  }
+  
+  #workbenchGrid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    gap: 0.5rem !important;
+  }
+  
+  #workbenchLeft {
+    overflow: hidden !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  #workbenchVideoWrapper {
+    position: relative !important;
+    flex: 1 !important;
+    min-height: 160px !important;
+    max-height: 240px !important;
+    width: 100% !important;
+  }
+  
+  #workbenchRight {
+    display: none !important; /* hide sidebar on mobile since elements are moved to slides */
+  }
+
+  /* Make controls row scrollable horizontally on mobile */
+  #videoOverlayControls {
+    position: relative !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #1e2235 !important;
+    border-top: 1.5px solid var(--border-card) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+  }
+  
+  #videoOverlayControls::-webkit-scrollbar,
+  #stepNavControlsRow::-webkit-scrollbar {
     display: none !important;
   }
+  
+  #videoOverlayControls button,
+  #stepNavControlsRow button {
+    flex-shrink: 0 !important;
+  }
+  
+  #stepNavControlsRow {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  /* Show mobile-specific layouts */
+  .editor-carousel {
+    display: flex !important;
+  }
+  .mobile-editor-toolbar {
+    display: flex !important;
+  }
+
+  /* Make the main view switcher tabs behave as a floating glassmorphic bottom navigation bar on mobile */
+  .view-tabs {
+    display: flex !important; /* Override display: none from max-width: 640px */
+    position: fixed !important;
+    bottom: 16px !important;
+    left: 16px !important;
+    right: 16px !important;
+    z-index: 9999 !important; /* Float above all views */
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 2px solid var(--border-card) !important;
+    border-radius: 30px !important;
+    box-shadow: 0 8px 32px rgba(74, 144, 217, 0.15) !important;
+    padding: 6px 8px !important;
+    justify-content: space-around !important;
+    height: 60px !important;
+    align-items: center !important;
+    flex: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Style each tab button vertically (native style) */
+  .view-tabs .view-tab {
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 4px 8px !important;
+    font-size: 0.62rem !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex: 1 !important;
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+  }
+
+  .view-tabs .view-tab i {
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0 !important;
+  }
+  
+  /* Active tab indicator on mobile (accent color text + small dot or clean indicator) */
+  .view-tabs .view-tab.active {
+    color: var(--primary) !important;
+    background: rgba(74, 144, 217, 0.08) !important;
+    border-radius: 20px !important;
+    font-weight: 800 !important;
+  }
+
+  /* Make logo/actions fill top header nicely on mobile when view-tabs is fixed at bottom */
+  .header-actions {
+    justify-content: flex-end !important;
+  }
+
+  /* Adjust app-container bottom padding so floating bottom bar doesn't overlap view content */
+  .app-container {
+    padding: 1rem 1rem 90px 1rem !important;
+  }
+
+  /* Remove mockup frame borders and heights on actual mobile screen viewports */
+  .player-mobile-wrapper {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .phone-notch {
+    display: none !important;
+  }
+  .phone-screen {
+    padding-top: 0 !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+  }
+
+  /* Hide the mockup footer on mobile screens to make room for real bottom nav bar */
+  .mobile-player-footer {
+    display: none !important;
+  }
+
+  /* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
+  body:has(#createStage2:not([style*="display: none"])) .view-tabs {
+    display: none !important;
+  }
+
+/* ====================================================
+   MOBILE EDITOR CAROUSEL & TOOLBAR (GLOBAL & DESKTOP DEFAULT HIDE)
+   ==================================================== */
+.editor-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.editor-carousel::-webkit-scrollbar {
+  display: none;
+}
+.carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
+/* Make cards look flat and clean inside carousel slide body */
+.carousel-slide .glass-card {
+  box-shadow: none !important;
+  border: 1.5px solid var(--border-card) !important;
+  background: var(--bg-card-soft) !important;
+}
 
+/* Bottom Toolbar */
+.mobile-editor-toolbar {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1.5px solid var(--border-card);
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1001;
+  padding: 0 6px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-btn {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px 0;
+  flex: 1;
+  border-radius: 8px;
+  transition: all 0.2s;
+  max-width: 80px;
+}
+
+.toolbar-btn .icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.toolbar-btn .label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-family: var(--font);
+}
+
+.toolbar-btn.active {
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+/* Timestamp Modal */
+.timestamp-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.timestamp-modal-content {
+  width: 100%;
+  max-width: 340px;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: var(--shadow-lg);
+  background: #fff;
+  border: 2px solid var(--border-card);
+  animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.93); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
 
 
