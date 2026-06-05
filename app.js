@@ -555,22 +555,56 @@ function updateControlsUI() {
 function setPlaybackMode(mode) {
   playbackMode = mode;
   
-  // Update mobile buttons
+  // Update old mode switch buttons if they exist
   document.querySelectorAll('.mode-switch-btn').forEach(btn => btn.classList.remove('active'));
+  const btnLoop = document.getElementById('modeBtnLoop');
+  const btnWait = document.getElementById('modeBtnWait');
+  const btnCont = document.getElementById('modeBtnContinuous');
+
+  const activeBadge = document.getElementById('activeModeBadge');
+  
   if (mode === 'loop') {
-    document.getElementById('modeBtnLoop').classList.add('active');
-    document.getElementById('activeModeBadge').className = "mode-badge loop";
-    document.getElementById('activeModeBadge').innerHTML = `<i data-lucide="repeat"></i> Loop Mode`;
+    if (btnLoop) btnLoop.classList.add('active');
+    if (activeBadge) {
+      activeBadge.className = "mode-badge loop";
+      activeBadge.innerHTML = `<i data-lucide="repeat"></i> Loop Mode`;
+    }
   } else if (mode === 'wait') {
-    document.getElementById('modeBtnWait').classList.add('active');
-    document.getElementById('activeModeBadge').className = "mode-badge wait";
-    document.getElementById('activeModeBadge').innerHTML = `<i data-lucide="pause"></i> Wait Mode`;
+    if (btnWait) btnWait.classList.add('active');
+    if (activeBadge) {
+      activeBadge.className = "mode-badge wait";
+      activeBadge.innerHTML = `<i data-lucide="pause"></i> Wait Mode`;
+    }
   } else if (mode === 'continuous') {
-    document.getElementById('modeBtnContinuous').classList.add('active');
-    document.getElementById('activeModeBadge').className = "mode-badge continuous";
-    document.getElementById('activeModeBadge').innerHTML = `<i data-lucide="play-circle"></i> Continuous`;
+    if (btnCont) btnCont.classList.add('active');
+    if (activeBadge) {
+      activeBadge.className = "mode-badge continuous";
+      activeBadge.innerHTML = `<i data-lucide="play-circle"></i> Continuous`;
+    }
   }
   
+  // Update the new centered control-row cycle button
+  const cycleIcon = document.getElementById('playerModeCycleIcon');
+  const cycleBtn  = document.getElementById('playerModeCycleBtn');
+  if (cycleIcon && cycleBtn) {
+    if (mode === 'loop') {
+      cycleIcon.setAttribute('data-lucide', 'repeat');
+      cycleBtn.style.background = 'rgba(74, 144, 217, 0.1)';
+      cycleBtn.style.color = 'var(--primary)';
+      cycleBtn.style.borderColor = 'rgba(74, 144, 217, 0.2)';
+    } else if (mode === 'wait') {
+      cycleIcon.setAttribute('data-lucide', 'clock');
+      cycleBtn.style.background = 'rgba(224, 122, 32, 0.1)';
+      cycleBtn.style.color = '#e07a20';
+      cycleBtn.style.borderColor = 'rgba(224, 122, 32, 0.2)';
+    } else if (mode === 'continuous') {
+      cycleIcon.setAttribute('data-lucide', 'arrow-right-circle');
+      cycleBtn.style.background = 'rgba(92, 184, 92, 0.1)';
+      cycleBtn.style.color = 'var(--green)';
+      cycleBtn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
+    }
+  }
+
   lucide.createIcons();
   speakFeedback(mode + " mode activated.");
 }
@@ -4602,6 +4636,9 @@ window.setKeyboardMode = function(mode) {
   const pBtnScrub = document.getElementById('playerKbModeScrub');
   const pHint     = document.getElementById('playerKbModeHint');
 
+  const kbToggleIcon = document.getElementById('playerKbToggleIcon');
+  const kbToggleBtn  = document.getElementById('playerKbToggleBtn');
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
@@ -4610,6 +4647,12 @@ window.setKeyboardMode = function(mode) {
     if (pBtnSteps) { pBtnSteps.style.background = 'var(--primary)'; pBtnSteps.style.color = '#fff'; }
     if (pBtnScrub) { pBtnScrub.style.background = 'transparent';    pBtnScrub.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
+
+    if (kbToggleIcon && kbToggleBtn) {
+      kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
+      kbToggleBtn.style.color = 'var(--text-body)';
+      kbToggleBtn.style.borderColor = 'var(--border-card)';
+    }
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
@@ -4618,12 +4661,32 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will seek forward or backward by 1 second.';
+
+    if (kbToggleIcon && kbToggleBtn) {
+      kbToggleBtn.style.background = 'var(--primary-soft)';
+      kbToggleBtn.style.color = 'var(--primary-dark)';
+      kbToggleBtn.style.borderColor = 'var(--primary)';
+    }
   }
+  if (window.lucide) lucide.createIcons();
 };
 
 window.setPlayerKeyboardMode = function(mode) {
   window.setKeyboardMode(mode);
   showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
+};
+
+window.cyclePlaybackMode = function() {
+  const modes = ['loop', 'wait', 'continuous'];
+  const nextIdx = (modes.indexOf(playbackMode) + 1) % modes.length;
+  setPlaybackMode(modes[nextIdx]);
+  showTip(`Playback Mode: ${modes[nextIdx].toUpperCase()} 🔁`);
+};
+
+window.togglePlayerKeyboardMode = function() {
+  const newMode = (keyboardMode === 'steps') ? 'scrub' : 'steps';
+  window.setKeyboardMode(newMode);
+  showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
 };
 
 // Flash the on-screen arrow button briefly when keyboard triggers it
