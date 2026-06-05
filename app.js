@@ -816,18 +816,21 @@ window.renderMultigridDescriptions = function() {
     const isCompleted = playerCompletedSteps.has(idx);
 
     return `
-      <div class="multigrid-desc-card" style="${cardStyle} background:rgba(255,255,255,0.9); border-radius:var(--radius-lg); border:2px solid rgba(74, 144, 217, 0.12); padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 12px rgba(74,144,217,0.08); box-sizing:border-box;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div onclick="event.stopPropagation(); window.togglePlayerMultigridDescStepDone(${idx})" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; transition:all 0.2s ease-in-out; ${isCompleted ? 'background:#22c55e; color:#fff;' : 'background:rgba(74, 144, 217, 0.1); color:var(--primary);'}" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
-              <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" style="width:14px; height:14px;"></i>
-            </div>
-            <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">Step ${idx + 1} of ${recipeData.steps.length}</span>
+      <div class="multigrid-desc-card" style="${cardStyle} background:rgba(255,255,255,0.9); border-radius:var(--radius-lg); border:2px solid rgba(74, 144, 217, 0.12); padding:16px; display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 2px 12px rgba(74,144,217,0.08); box-sizing:border-box;">
+        <!-- Left Column: Details -->
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span style="font-size:0.72rem; font-weight:800; color:var(--text-muted);">Step ${idx + 1} of ${recipeData.steps.length}</span>
+            <span style="font-size:0.65rem; font-weight:800; color:var(--primary); background:rgba(74,144,217,0.08); padding:2px 8px; border-radius:999px;">${timeText}</span>
           </div>
-          <span style="font-size:0.68rem; font-weight:800; color:var(--primary); background:rgba(74,144,217,0.08); padding:2px 8px; border-radius:999px;">${timeText}</span>
+          <h3 style="font-size:0.92rem; font-weight:800; color:var(--text-title); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${step.title}</h3>
+          <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0; white-space:normal; ${clampStyle}">${step.instruction}</p>
         </div>
-        <h3 style="font-size:0.95rem; font-weight:800; color:var(--text-title); margin:0;">${step.title}</h3>
-        <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0; flex:1; white-space:normal; ${clampStyle}">${step.instruction}</p>
+        
+        <!-- Right Column: Checkoff circle icon -->
+        <div onclick="event.stopPropagation(); window.togglePlayerMultigridDescStepDone(${idx})" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; flex-shrink:0; transition:all 0.2s ease-in-out; ${isCompleted ? 'background:#22c55e; color:#fff; box-shadow:0 4px 10px rgba(34,197,94,0.3);' : 'background:rgba(74, 144, 217, 0.08); color:var(--primary);'}" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
+          <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" style="width:18px; height:18px;"></i>
+        </div>
       </div>
     `;
   }).join('');
