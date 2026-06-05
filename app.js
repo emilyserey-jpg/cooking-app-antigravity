@@ -1045,7 +1045,7 @@ function switchView(viewId) {
   // Load data when switching to these views
   if (viewId === 'discover') loadDiscoverRecipes();
   if (viewId === 'profile')   loadProfileRecipes();
-  if (viewId === 'grid-view') initGridView();
+  if (viewId === 'grid-view') renderLibrary();
   if (viewId !== 'grid-view') stopAllGridLoops();
   if (viewId === 'create') {
     initCreateView();
