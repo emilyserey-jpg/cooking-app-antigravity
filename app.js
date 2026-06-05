@@ -4958,6 +4958,19 @@ window.navStep = function(dir) {
   if (!createStepsArr.length) return;
   const vid = document.getElementById('uploadedVideoPlayer');
 
+  if (vid) {
+    const time = vid.currentTime;
+    let found = 0;
+    for (let i = 0; i < createStepsArr.length; i++) {
+      if (time >= createStepsArr[i].time) {
+        found = i;
+      } else {
+        break;
+      }
+    }
+    currentNavStepIndex = found;
+  }
+
   if (dir < 0) {
     if (vid) {
       const currentStepStart = createStepsArr[currentNavStepIndex].time || 0;
