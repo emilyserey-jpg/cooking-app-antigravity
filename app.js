@@ -1252,10 +1252,102 @@ function renderDiscoverGrid(recipes) {
     if (empty) empty.style.display = 'block';
     if (count) count.textContent = '0 recipes';
     return;
-  }
-  if (empty) empty.style.display = 'none';
+  }\n  if (empty) empty.style.display = 'none';
   if (count) count.textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
   grid.innerHTML = recipes.map(r => renderRecipeCard(r, false)).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🌟 MY SPACE — Bio, folder strip, stat badges
+// ══════════════════════════════════════════════════════════════════════════════
+
+const MY_SPACE_KEY = 'cookingGPS_myspace_v1';
+
+function mySpaceLoadData() {
+  try { return JSON.parse(localStorage.getItem(MY_SPACE_KEY) || '{}'); } catch { return {}; }
+}
+function mySpaceSaveData(data) {
+  localStorage.setItem(MY_SPACE_KEY, JSON.stringify(data));
+}
+
+// ── Bio editing ──────────────────────────────────────────────────────────
+window.mySpaceEditBio = function() {
+  if (!currentUser) { openAuthModal(); return; }
+  const display = document.getElementById('mySpaceBioDisplay');
+  const input   = document.getElementById('mySpaceBioInput');
+  if (!input) return;
+  const data = mySpaceLoadData();
+  input.value = data.bio || '';
+  if (display) display.style.display = 'none';
+  input.style.display = 'block';
+  input.focus();
+};
+
+window.mySpaceSaveBio = function() {
+  const input   = document.getElementById('mySpaceBioInput');
+  const bioText = document.getElementById('mySpaceBioText');
+  const display = document.getElementById('mySpaceBioDisplay');
+  if (!input) return;
+  const bio = input.value.trim();
+  const data = mySpaceLoadData();
+  data.bio = bio;
+  mySpaceSaveData(data);
+  if (bioText) bioText.textContent = bio || 'Click to add a bio…';
+  if (bioText) bioText.style.fontStyle = bio ? 'normal' : 'italic';
+  input.style.display = 'none';
+  if (display) display.style.display = '';
+};
+
+// ── Folder strip ─────────────────────────────────────────────────────────
+function mySpaceRenderFolderStrip() {
+  const strip = document.getElementById('mySpaceFolderStrip');
+  const countEl = document.getElementById('mySpaceFolderCount');
+  if (!strip) return;
+
+  // Load library state
+  let libData = { folders: [] };
+  try { libData = JSON.parse(localStorage.getItem('cookingGPS_library_v1') || '{}'); } catch {}
+  const folders = libData.folders || [];
+
+  if (countEl) countEl.textContent = folders.length || '0';
+
+  const addBtn = `<div style="flex-shrink:0;background:var(--bg-card-soft);border-radius:12px;border:2px dashed var(--border-card);padding:14px 18px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;font-weight:800;color:var(--text-muted);" onclick="switchView('grid-view')">+ New Folder</div>`;
+
+  if (!folders.length) {
+    strip.innerHTML = addBtn;
+    return;
+  }
+
+  strip.innerHTML = folders.map(f => {
+    const count = (f.recipeIds || []).length;
+    return `<div onclick="switchView('grid-view')"
+      style="flex-shrink:0;background:${f.color};border-radius:12px;padding:14px 18px;cursor:pointer;
+             min-width:130px;display:flex;flex-direction:column;gap:4px;
+             box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform 0.15s;"
+      onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+      <div style="font-size:1.4rem;">📁</div>
+      <div style="font-weight:900;font-size:0.82rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${f.name}</div>
+      <div style="font-size:0.65rem;font-weight:700;color:rgba(20,20,50,0.5);">${count} recipe${count!==1?'s':''}</div>
+    </div>`;
+  }).join('') + addBtn;
+}
+
+// ── Banner init ───────────────────────────────────────────────────────────
+function mySpaceInit() {
+  // Bio
+  const data = mySpaceLoadData();
+  const bioText = document.getElementById('mySpaceBioText');
+  if (bioText && data.bio) {
+    bioText.textContent = data.bio;
+    bioText.style.fontStyle = 'normal';
+  }
+
+  // Sign-in button visibility
+  const signInBtn = document.getElementById('mySpaceSignInBtn');
+  if (signInBtn) signInBtn.style.display = currentUser ? 'none' : '';
+
+  // Folder strip
+  mySpaceRenderFolderStrip();
 }
 
 window.filterProfileRecipes = function(filter) {
@@ -2643,6 +2735,9 @@ window.switchView = function(view) {
   if (view === 'grid-view') {
     if (!libState) libLoad();
     renderLibrary();
+  }
+  if (view === 'profile') {
+    mySpaceInit();
   }
 };
 
