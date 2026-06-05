@@ -155,11 +155,10 @@
                 <i data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
               </button>
 
-              <!-- Keyboard Toggle Pill -->
-              <div style="display: flex; background: var(--bg-card-soft); border-radius: 999px; padding: 2px; border: 1.5px solid var(--border-card); overflow: hidden; flex-shrink: 0; height: 38px; align-items: center; box-shadow: var(--shadow-xs);">
-                <button id="playerKbModeSteps" onclick="setPlayerKeyboardMode('steps')" style="padding: 0 8px; height: 100%; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; transition: all 0.2s;">Steps</button>
-                <button id="playerKbModeScrub" onclick="setPlayerKeyboardMode('scrub')" style="padding: 0 8px; height: 100%; border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; transition: all 0.2s;">1s</button>
-              </div>
+              <!-- Keyboard Toggle -->
+              <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="control-btn" title="Toggle Keyboard Mode">
+                <i id="playerKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
+              </button>
             </div>
           </div>
 

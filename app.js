@@ -4636,6 +4636,9 @@ window.setKeyboardMode = function(mode) {
   const pBtnScrub = document.getElementById('playerKbModeScrub');
   const pHint     = document.getElementById('playerKbModeHint');
 
+  const kbToggleIcon = document.getElementById('playerKbToggleIcon');
+  const kbToggleBtn  = document.getElementById('playerKbToggleBtn');
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
@@ -4644,6 +4647,12 @@ window.setKeyboardMode = function(mode) {
     if (pBtnSteps) { pBtnSteps.style.background = 'var(--primary)'; pBtnSteps.style.color = '#fff'; }
     if (pBtnScrub) { pBtnScrub.style.background = 'transparent';    pBtnScrub.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
+
+    if (kbToggleIcon && kbToggleBtn) {
+      kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
+      kbToggleBtn.style.color = 'var(--text-body)';
+      kbToggleBtn.style.borderColor = 'var(--border-card)';
+    }
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
@@ -4652,6 +4661,12 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will seek forward or backward by 1 second.';
+
+    if (kbToggleIcon && kbToggleBtn) {
+      kbToggleBtn.style.background = 'var(--primary-soft)';
+      kbToggleBtn.style.color = 'var(--primary-dark)';
+      kbToggleBtn.style.borderColor = 'var(--primary)';
+    }
   }
   if (window.lucide) lucide.createIcons();
 };
