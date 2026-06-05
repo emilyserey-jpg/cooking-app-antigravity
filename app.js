@@ -1419,14 +1419,19 @@ function pubRenderGrid(recipes) {
   }
   if (noPost) noPost.style.display = 'none';
   grid.innerHTML = recipes.map(function(r, idx) {
-    var thumbBg = r.thumbnail_url
-      ? 'url(' + encodeURI(r.thumbnail_url) + ') center/cover no-repeat'
-      : 'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)';
     var mins = r.duration
       ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
       : '';
-    var html = '<div onclick="openPubLightbox(' + idx + ')" style="position:relative;aspect-ratio:1/1;background:' + thumbBg + ';cursor:pointer;overflow:hidden;">';
-    if (!r.thumbnail_url) html += '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,0.5);">\ud83c\udfac</div>';
+    var mediaHtml = '';
+    if (r.thumbnail_url) {
+      mediaHtml = '<img src="' + encodeURI(r.thumbnail_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">';
+    } else if (r.video_url) {
+      mediaHtml = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>';
+    } else {
+      mediaHtml = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,0.5);">\ud83c\udfac</div>';
+    }
+    var html = '<div onclick="openPubLightbox(' + idx + ')" style="position:relative;aspect-ratio:1/1;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);cursor:pointer;overflow:hidden;">';
+    html += mediaHtml;
     html += '<div class="pub-ov" style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background 0.18s;" onmouseenter="this.style.background=\'rgba(0,0,0,0.32)\';this.querySelector(\'.pov\').style.opacity=\'1\'" onmouseleave="this.style.background=\'rgba(0,0,0,0)\';this.querySelector(\'.pov\').style.opacity=\'0\'">';
     html += '<div class="pov" style="color:#fff;font-weight:700;font-size:0.9rem;opacity:0;transition:opacity 0.18s;">\u25b6 ' + (mins || '\u2013') + '</div></div>';
     if (mins) html += '<div style="position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,0.75);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 6px;border-radius:3px;">' + mins + '</div>';
@@ -1449,12 +1454,18 @@ function pubRenderHighlights(recipes) {
   var palette = ['#f09433,#e6683c,#dc2743', '#4a90d9,#2d5986', '#5cb85c,#338a3e', '#a855f7,#7c3aed'];
   row.innerHTML = keys.map(function(k, i) {
     var r = groups[k];
-    var bg = r.thumbnail_url
-      ? 'url(' + encodeURI(r.thumbnail_url) + ') center/cover no-repeat'
-      : 'linear-gradient(45deg,' + palette[i % palette.length] + ')';
-    var inner = !r.thumbnail_url ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;">\ud83c\udf73</div>' : '';
+    var inner = '';
+    var bgStyle = '';
+    if (r.thumbnail_url) {
+      inner = '<img src="' + encodeURI(r.thumbnail_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">';
+    } else if (r.video_url) {
+      inner = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>';
+    } else {
+      inner = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:rgba(255,255,255,0.5);">\ud83c\udf73</div>';
+      bgStyle = 'background:linear-gradient(45deg,' + palette[i % palette.length] + ');';
+    }
     return '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;">'
-      + '<div style="width:64px;height:64px;border-radius:50%;background:' + bg + ';border:3px solid #fff;box-shadow:0 0 0 2px #e1306c;overflow:hidden;position:relative;">' + inner + '</div>'
+      + '<div style="width:64px;height:64px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #e1306c;overflow:hidden;position:relative;' + bgStyle + '">' + inner + '</div>'
       + '<div style="font-size:0.68rem;font-weight:500;color:#262626;text-align:center;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + k + '</div>'
       + '</div>';
   }).join('');
@@ -1473,6 +1484,9 @@ window.openPubLightbox = function(idx) {
     if (r.thumbnail_url) {
       thumbEl.style.background = 'url(' + encodeURI(r.thumbnail_url) + ') center/cover no-repeat';
       thumbEl.innerHTML = '';
+    } else if (r.video_url) {
+      thumbEl.style.background = '#000';
+      thumbEl.innerHTML = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>';
     } else {
       thumbEl.style.background = 'linear-gradient(135deg,#1a1a2e,#0f3460)';
       thumbEl.innerHTML = '<span style="font-size:4rem;">\ud83c\udfac</span>';
@@ -1637,14 +1651,24 @@ function renderRecipeCard(r, isOwner) {
   const stepCount = Array.isArray(r.steps) ? r.steps.length : 0;
   const mins      = r.duration ? Math.floor(r.duration / 60) : 0;
 
-  // Status badge
+  // Status badge (will be absolute positioned over the thumbnail)
   let badge = '';
   if (isDraft) {
-    badge = `<span style="background:#fff8e1;color:#b45309;border:2px solid #fde68a;padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">📝 Draft</span>`;
+    badge = `<span style="background:#fff8e1;color:#b45309;border:1.5px solid #fde68a;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">📝 Draft</span>`;
   } else if (isPublic) {
-    badge = `<span style="background:rgba(92,184,92,0.15);color:#449944;border:2px solid rgba(92,184,92,0.3);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🌎 Public</span>`;
+    badge = `<span style="background:#dcfce7;color:#15803d;border:1.5px solid #bbf7d0;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">🌎 Public</span>`;
   } else {
-    badge = `<span style="background:rgba(74,144,217,0.1);color:var(--primary);border:2px solid var(--border-card);padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:800;">🔒 Private</span>`;
+    badge = `<span style="background:#e0f2fe;color:#0369a1;border:1.5px solid #bae6fd;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">🔒 Private</span>`;
+  }
+
+  // Thumbnail markup
+  let thumbHtml = '';
+  if (r.thumbnail_url) {
+    thumbHtml = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+  } else if (r.video_url) {
+    thumbHtml = `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>`;
+  } else {
+    thumbHtml = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:2.2rem;">🍳</div>`;
   }
 
   // Owner action buttons
@@ -1652,69 +1676,86 @@ function renderRecipeCard(r, isOwner) {
   if (isOwner) {
     if (isDraft) {
       ownerActions = `
-        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();publishDraft('${r.id}')"
-            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
             🚀 Publish
           </button>
           <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
-            style="background:#fff0f0;color:#e55;border:2px solid #fcc;border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
-            🗑
+            style="background:#fff0f0;color:#e55;border:1.5px solid #fcc;border-radius:10px;padding:9px 12px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            🗑️
           </button>
         </div>`;
     } else if (isPublic) {
       ownerActions = `
-        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', true)"
-            style="flex:1;background:#fff0f0;color:#c00;border:2px solid #fcc;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            style="flex:1;background:#fff0f0;color:#c00;border:1.5px solid #fcc;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
             🔒 Make Private
           </button>
         </div>`;
     } else {
       ownerActions = `
-        <div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border-card);padding-top:10px;">
+        <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', false)"
-            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
+            style="flex:1;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
             🌎 Make Public
           </button>
           <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
-            style="background:#fff0f0;color:#e55;border:2px solid #fcc;border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:0.75rem;font-weight:800;cursor:pointer;">
-            🗑
+            style="background:#fff0f0;color:#e55;border:1.5px solid #fcc;border-radius:10px;padding:9px 12px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            🗑️
           </button>
         </div>`;
     }
   }
 
+  // Duration & steps badge at bottom right of thumbnail
+  const durationBadge = `
+    <div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.78);color:#fff;font-size:0.65rem;font-weight:800;padding:3px 8px;border-radius:6px;display:flex;gap:6px;align-items:center;backdrop-filter:blur(4px);">
+      ${stepCount ? `<span>📋 ${stepCount} steps</span>` : ''}
+      ${mins ? `<span>⏱ ${mins} min</span>` : ''}
+    </div>`;
+
   return `
-    <div class="glass-card" style="cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;"
+    <div class="glass-card" style="cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;padding:0;overflow:hidden;border-radius:18px;background:#fff;"
       onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(74,144,217,0.18)'"
       onmouseleave="this.style.transform='';this.style.boxShadow=''"
       onclick="loadRecipeById('${r.id}')">  
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
-        <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6aaee8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(74,144,217,0.25);">🍳</div>
-        ${badge}
+      
+      <!-- Thumbnail Header -->
+      <div style="position:relative;height:150px;background:#111;overflow:hidden;">
+        ${thumbHtml}
+        <!-- Top Left Status Badge -->
+        <div style="position:absolute;top:10px;left:10px;z-index:10;">
+          ${badge}
+        </div>
+        <!-- Bottom Right Info Overlay -->
+        ${durationBadge}
       </div>
-      <h3 style="font-size:1rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;">${r.title || 'Untitled Recipe'}</h3>
-      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:${isOwner ? '0' : '1rem'};">
-        ${!isOwner && r.creator
-          ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
-               style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
-               onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
-               📺 ${r.creator.split('@')[0]}
-             </span>`
-          : `by ${r.creator || 'Chef'}`
-        }
-      </p>
-      ${isOwner ? '' : `<div style="display:flex;gap:12px;">
-        ${stepCount ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">📋 ${stepCount} steps</span>` : ''}
-        ${mins ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">⏱ ${mins} min</span>` : ''}
-      </div>`}
-      ${ownerActions}
+
+      <!-- Card Details Body -->
+      <div style="padding:14px 16px;">
+        <h3 style="font-size:0.95rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${r.title || 'Untitled Recipe'}
+        </h3>
+        <p style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin:0;">
+          ${!isOwner && r.creator
+            ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
+                 style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
+                 onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
+                 📺 ${r.creator.split('@')[0]}
+               </span>`
+            : `by ${r.creator || 'Chef'}`
+          }
+        </p>
+        ${ownerActions}
+      </div>
     </div>
   `;
 }
 
-// Toggle a recipe between public and private
+
+
 window.toggleRecipePublish = async function(id, currentlyPublic) {
   try {
     const { updateRecipe } = await import('./supabase-client.js');
@@ -2756,10 +2797,15 @@ function libRecipeCardHTML(r, folderId) {
          style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">&#x21A9; Remove</button>`
     : '';
 
-  // Thumbnail: real image or dark gradient placeholder
-  const thumbHtml = r.thumbnail_url
-    ? `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`
-    : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
+  // Thumbnail: real image, video preview, or dark gradient placeholder
+  let thumbHtml = '';
+  if (r.thumbnail_url) {
+    thumbHtml = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+  } else if (r.video_url) {
+    thumbHtml = `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>`;
+  } else {
+    thumbHtml = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
+  }
 
   const privBadge = r.private_recipe
     ? `<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">🔒 Private</span>`

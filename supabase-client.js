@@ -54,29 +54,61 @@ export function onAuthChange(callback) {
 
 // Fetch all public published recipes for Discover feed
 export async function getPublicRecipes() {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at')
+    .select('id, title, creator, duration, loops, steps, ingredients, video_url, thumbnail_url, is_published, shared_on_profile, created_at')
     .eq('is_published', true)
     .eq('private_recipe', false)
     .eq('is_draft', false)
     .eq('temp_recipe', false)
     .order('created_at', { ascending: false });
-  if (error) throw error;
+
+  if (error) {
+    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getPublicRecipes without thumbnail_url column');
+      const retry = await supabase
+        .from('recipes')
+        .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at')
+        .eq('is_published', true)
+        .eq('private_recipe', false)
+        .eq('is_draft', false)
+        .eq('temp_recipe', false)
+        .order('created_at', { ascending: false });
+      if (retry.error) throw retry.error;
+      return retry.data ?? [];
+    }
+    throw error;
+  }
   return data ?? [];
 }
 
 // Fetch recipes shared on a user's public profile
 export async function getProfileRecipes(creator) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, created_at')
+    .select('id, title, creator, duration, steps, video_url, thumbnail_url, created_at')
     .eq('creator', creator)
     .eq('shared_on_profile', true)
     .eq('is_draft', false)
     .eq('temp_recipe', false)
     .order('created_at', { ascending: false });
-  if (error) throw error;
+
+  if (error) {
+    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getProfileRecipes without thumbnail_url column');
+      const retry = await supabase
+        .from('recipes')
+        .select('id, title, creator, duration, steps, video_url, created_at')
+        .eq('creator', creator)
+        .eq('shared_on_profile', true)
+        .eq('is_draft', false)
+        .eq('temp_recipe', false)
+        .order('created_at', { ascending: false });
+      if (retry.error) throw retry.error;
+      return retry.data ?? [];
+    }
+    throw error;
+  }
   return data ?? [];
 }
 
@@ -121,15 +153,31 @@ export async function saveRecipe(recipe) {
 
 // Search recipes by title
 export async function searchRecipes(query) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, created_at')
+    .select('id, title, creator, duration, steps, video_url, thumbnail_url, created_at')
     .ilike('title', `%${query}%`)
     .eq('is_published', true)
     .eq('private_recipe', false)
     .eq('is_draft', false)
     .limit(20);
-  if (error) throw error;
+
+  if (error) {
+    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying searchRecipes without thumbnail_url column');
+      const retry = await supabase
+        .from('recipes')
+        .select('id, title, creator, duration, steps, video_url, created_at')
+        .ilike('title', `%${query}%`)
+        .eq('is_published', true)
+        .eq('private_recipe', false)
+        .eq('is_draft', false)
+        .limit(20);
+      if (retry.error) throw retry.error;
+      return retry.data ?? [];
+    }
+    throw error;
+  }
   return data ?? [];
 }
 
@@ -224,13 +272,27 @@ export async function createRecipe(recipe) {
 // (drafts + private + public — everything they've made)
 // =====================================================
 export async function getUserAllRecipes(creator) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
+    .select('id, title, creator, duration, steps, video_url, thumbnail_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
     .eq('creator', creator)
     .eq('temp_recipe', false)
     .order('updated_at', { ascending: false });
-  if (error) throw error;
+
+  if (error) {
+    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getUserAllRecipes without thumbnail_url column');
+      const retry = await supabase
+        .from('recipes')
+        .select('id, title, creator, duration, steps, video_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
+        .eq('creator', creator)
+        .eq('temp_recipe', false)
+        .order('updated_at', { ascending: false });
+      if (retry.error) throw retry.error;
+      return retry.data ?? [];
+    }
+    throw error;
+  }
   return data ?? [];
 }
 
