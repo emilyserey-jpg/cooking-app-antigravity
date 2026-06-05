@@ -4201,13 +4201,17 @@ window.desktopPlayerPrev     = function() {
   } else if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
-    currentTime = 0;
-    const realVideo = document.getElementById('mobileRealVideo');
-    if (realVideo && realVideo.style.display !== 'none') {
-      realVideo.currentTime = 0;
+    if (Math.abs(currentTime - currentStepStart) < 0.5) {
+      currentTime = 0;
+      const realVideo = document.getElementById('mobileRealVideo');
+      if (realVideo && realVideo.style.display !== 'none') {
+        realVideo.currentTime = 0;
+      }
+      updateStepDetailsUI();
+      showTip("Beginning of video reached.");
+    } else {
+      seekToStep(0);
     }
-    updateStepDetailsUI();
-    showTip("Beginning of video reached.");
   }
 };
 window.toggleBentoEditMode   = toggleBentoEditMode;
@@ -4997,8 +5001,18 @@ window.navStep = function(dir) {
         if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
       }
     } else {
-      if (vid) vid.currentTime = 0;
-      showTip("Beginning of video reached.");
+      if (vid) {
+        const currentStepStart = createStepsArr[0].time || 0;
+        if (Math.abs(vid.currentTime - currentStepStart) < 0.5) {
+          vid.currentTime = 0;
+          showTip("Beginning of video reached.");
+        } else {
+          vid.currentTime = currentStepStart;
+          if (previewInterval !== null) {
+            previewStepLoop(0);
+          }
+        }
+      }
     }
   } else {
     if (currentNavStepIndex < createStepsArr.length - 1) {
