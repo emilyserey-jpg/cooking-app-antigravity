@@ -1259,6 +1259,217 @@ function renderDiscoverGrid(recipes) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// 📺 PUBLIC CREATOR PROFILE — YouTube-style channel page
+// ══════════════════════════════════════════════════════════════════════════════
+
+let pubCurrentCreator   = null; // { email, name, recipes[] }
+let pubHeroRecipe       = null; // currently featured recipe
+let pubPreviousView     = 'discover'; // where to go Back
+
+// ── Open a creator's public profile ──────────────────────────────────────
+window.openPublicProfile = async function(creatorEmail, fromView) {
+  pubPreviousView = fromView || 'discover';
+
+  // Show the section immediately with loading state
+  document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
+  const section = document.getElementById('view-public-profile');
+  if (!section) return;
+  section.style.display = '';
+
+  // Reset header while loading
+  const nameEl    = document.getElementById('pubName');
+  const handleEl  = document.getElementById('pubHandle');
+  const countEl   = document.getElementById('pubVideoCount');
+  const avatarEl  = document.getElementById('pubAvatar');
+  if (nameEl)   nameEl.textContent   = 'Loading…';
+  if (handleEl) handleEl.textContent = '';
+  if (countEl)  countEl.textContent  = '';
+
+  // Scroll to top
+  section.scrollTop = 0;
+  window.scrollTo(0, 0);
+
+  try {
+    const { supabase } = await import('./supabase-client.js');
+
+    // Fetch creator's public recipes
+    const { data: recipes } = await supabase
+      .from('recipes')
+      .select('id, title, description, video_url, thumbnail_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
+      .eq('creator', creatorEmail)
+      .eq('is_published', true)
+      .eq('private_recipe', false)
+      .order('created_at', { ascending: false });
+
+    const list = recipes || [];
+    pubCurrentCreator = { email: creatorEmail, recipes: list };
+
+    // Derive display name from email
+    const displayName = creatorEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (nameEl)   nameEl.textContent   = displayName;
+    if (handleEl) handleEl.textContent = creatorEmail;
+    if (countEl)  countEl.textContent  = `${list.length} video${list.length !== 1 ? 's' : ''}`;
+
+    // Avatar initials
+    if (avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
+
+    // Update active tab button
+    document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+
+    // Render content
+    pubRenderHero(list[0] || null);
+    pubRenderVideoGrid(list);
+    pubRenderSeries(creatorEmail);
+    pubSwitchTab('videos');
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  } catch (err) {
+    if (nameEl) nameEl.textContent = 'Could not load profile';
+    console.error('pubProfile error:', err);
+  }
+};
+
+// Open the signed-in user's own channel
+window.openMyChannel = function() {
+  if (!currentUser) { openAuthModal(); return; }
+  openPublicProfile(currentUser.email, 'profile');
+};
+
+// ── Back navigation ───────────────────────────────────────────────────────
+window.pubProfileBack = function() {
+  const section = document.getElementById('view-public-profile');
+  if (section) section.style.display = 'none';
+  switchView(pubPreviousView || 'discover');
+};
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+window.pubSwitchTab = function(tab) {
+  const videos  = document.getElementById('pubTabVideosContent');
+  const series  = document.getElementById('pubTabSeriesContent');
+  const btnV    = document.getElementById('pubTabVideos');
+  const btnS    = document.getElementById('pubTabSeries');
+
+  const isVideos = tab === 'videos';
+  if (videos) videos.style.display = isVideos ? '' : 'none';
+  if (series) series.style.display = isVideos ? 'none' : '';
+
+  const activeStyle  = `padding:14px 20px;border:none;background:none;font-family:var(--font);font-weight:900;font-size:0.88rem;color:var(--primary);cursor:pointer;border-bottom:3px solid var(--primary);margin-bottom:-2px;`;
+  const inactiveStyle= `padding:14px 20px;border:none;background:none;font-family:var(--font);font-weight:800;font-size:0.88rem;color:var(--text-muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;`;
+  if (btnV) btnV.style.cssText = isVideos ? activeStyle : inactiveStyle;
+  if (btnS) btnS.style.cssText = isVideos ? inactiveStyle : activeStyle;
+};
+
+// ── Hero (latest) video ───────────────────────────────────────────────────
+function pubRenderHero(r) {
+  pubHeroRecipe = r;
+  const heroSection = document.getElementById('pubHeroSection');
+  if (!heroSection) return;
+
+  if (!r) {
+    heroSection.style.display = 'none';
+    return;
+  }
+  heroSection.style.display = '';
+
+  const title   = document.getElementById('pubHeroTitle');
+  const meta    = document.getElementById('pubHeroMeta');
+  const desc    = document.getElementById('pubHeroDesc');
+  const thumb   = document.getElementById('pubHeroThumb');
+
+  if (title) title.textContent = r.title || 'Untitled';
+
+  const mins  = r.duration ? `${Math.floor(r.duration/60)}m ${Math.floor(r.duration%60)}s` : '';
+  const steps = Array.isArray(r.loops) ? r.loops.length : (Array.isArray(r.steps) ? r.steps.length : 0);
+  const date  = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+  if (meta) meta.textContent = [date, mins && `${mins}`, steps && `${steps} steps`].filter(Boolean).join(' · ');
+  if (desc) desc.textContent = r.description || 'No description.';
+
+  // Thumbnail
+  if (thumb) {
+    if (r.thumbnail_url) {
+      thumb.style.background = `url('${r.thumbnail_url}') center/cover no-repeat`;
+    } else {
+      thumb.style.background = 'linear-gradient(135deg,#0f172a,#1e3a5f)';
+    }
+  }
+}
+
+window.pubPlayHero = function() {
+  if (!pubHeroRecipe) return;
+  switchView('mobile-player');
+  showTip(`Loading "${pubHeroRecipe.title}"…`);
+  if (typeof window.loadRecipeById === 'function') window.loadRecipeById(pubHeroRecipe.id);
+};
+
+// ── Video grid (all videos below hero) ───────────────────────────────────
+function pubRenderVideoGrid(recipes) {
+  const grid    = document.getElementById('pubVideoRow');
+  const totalEl = document.getElementById('pubVideoTotal');
+  if (!grid) return;
+
+  // Exclude the hero (index 0) — show from index 1 onward in the grid
+  const remaining = recipes.slice(1);
+  if (totalEl) totalEl.textContent = recipes.length > 1 ? `${recipes.length} total` : '';
+
+  if (!remaining.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-size:0.88rem;font-weight:600;">No other videos yet</div>`;
+    return;
+  }
+
+  grid.innerHTML = remaining.map(r => pubVideoCardHTML(r)).join('');
+}
+
+function pubVideoCardHTML(r) {
+  const mins  = r.duration ? `${Math.floor(r.duration/60)}:${Math.floor(r.duration%60).toString().padStart(2,'0')}` : '';
+  const date  = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  const steps = Array.isArray(r.loops) ? r.loops.length : (Array.isArray(r.steps) ? r.steps.length : 0);
+  const thumbBg = r.thumbnail_url
+    ? `url('${r.thumbnail_url}') center/cover no-repeat`
+    : `linear-gradient(135deg,#0f172a,#1e3a5f)`;
+
+  return `
+    <div onclick="pubOpenVideo('${r.id}')"
+      style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;cursor:pointer;transition:box-shadow 0.18s,transform 0.18s;"
+      onmouseenter="this.style.boxShadow='0 8px 28px rgba(74,144,217,0.18)';this.style.transform='translateY(-3px)'"
+      onmouseleave="this.style.boxShadow='';this.style.transform=''">
+      <!-- Thumbnail -->
+      <div style="height:130px;background:${thumbBg};display:flex;align-items:center;justify-content:center;position:relative;">
+        ${!r.thumbnail_url ? '<span style="font-size:2.2rem;">🎬</span>' : ''}
+        ${mins ? `<span style="position:absolute;bottom:7px;right:9px;background:rgba(0,0,0,0.75);color:#fff;font-size:0.65rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</span>` : ''}
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:background 0.18s;display:flex;align-items:center;justify-content:center;"
+          onmouseenter="this.style.background='rgba(0,0,0,0.25)'" onmouseleave="this.style.background='rgba(0,0,0,0)'">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">▶</div>
+        </div>
+      </div>
+      <!-- Info -->
+      <div style="padding:10px 12px 12px;">
+        <div style="font-weight:900;font-size:0.85rem;color:var(--text-heading);line-height:1.35;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.title || 'Untitled'}</div>
+        <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;">${[date, steps && `${steps} steps`].filter(Boolean).join(' · ')}</div>
+      </div>
+    </div>`;
+}
+
+window.pubOpenVideo = function(id) {
+  const recipe = pubCurrentCreator?.recipes?.find(r => r.id === id);
+  if (recipe) { pubHeroRecipe = recipe; }
+  switchView('mobile-player');
+  if (typeof window.loadRecipeById === 'function') window.loadRecipeById(id);
+};
+
+// ── Series tab ────────────────────────────────────────────────────────────
+async function pubRenderSeries(creatorEmail) {
+  const grid  = document.getElementById('pubSeriesGrid');
+  const empty = document.getElementById('pubSeriesEmpty');
+  if (!grid) return;
+
+  // For now, derive series from recipe title groupings or show empty
+  // When the creator has Library folders synced to Supabase, we'll use those
+  grid.innerHTML = '';
+  if (empty) empty.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // 🌟 MY SPACE — Bio, folder strip, stat badges
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -1343,9 +1554,11 @@ function mySpaceInit() {
     bioText.style.fontStyle = 'normal';
   }
 
-  // Sign-in button visibility
-  const signInBtn = document.getElementById('mySpaceSignInBtn');
-  if (signInBtn) signInBtn.style.display = currentUser ? 'none' : '';
+  // Sign-in / My Channel button visibility
+  const signInBtn   = document.getElementById('mySpaceSignInBtn');
+  const channelBtn  = document.getElementById('mySpaceChannelBtn');
+  if (signInBtn)  signInBtn.style.display  = currentUser ? 'none' : '';
+  if (channelBtn) channelBtn.style.display = currentUser ? '' : 'none';
 
   // Folder strip
   mySpaceRenderFolderStrip();
@@ -1436,7 +1649,16 @@ function renderRecipeCard(r, isOwner) {
         ${badge}
       </div>
       <h3 style="font-size:1rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;">${r.title || 'Untitled Recipe'}</h3>
-      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:${isOwner ? '0' : '1rem'};">by ${r.creator || 'Chef'}</p>
+      <p style="font-size:0.78rem;color:var(--text-muted);font-weight:600;margin-bottom:${isOwner ? '0' : '1rem'};">
+        ${!isOwner && r.creator
+          ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
+               style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
+               onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
+               📺 ${r.creator.split('@')[0]}
+             </span>`
+          : `by ${r.creator || 'Chef'}`
+        }
+      </p>
       ${isOwner ? '' : `<div style="display:flex;gap:12px;">
         ${stepCount ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">📋 ${stepCount} steps</span>` : ''}
         ${mins ? `<span style="font-size:0.72rem;font-weight:800;color:var(--text-muted);">⏱ ${mins} min</span>` : ''}
