@@ -2658,6 +2658,71 @@ window.timelineSeek = function(e) {
 // ── Step list renderer ─────────────────────────────────────────────────────
 // ── Step Navigator ─────────────────────────────────────────────────────────
 let currentNavStepIndex = 0;
+let keyboardMode = 'steps'; // 'steps' | 'scrub'
+
+// ── Keyboard mode toggle ───────────────────────────────────────────────────
+window.setKeyboardMode = function(mode) {
+  keyboardMode = mode;
+  const btnSteps = document.getElementById('kbModeSteps');
+  const btnScrub = document.getElementById('kbModeScrub');
+  const hint     = document.getElementById('kbModeHint');
+  if (mode === 'steps') {
+    if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
+    if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
+    if (hint)  hint.textContent = 'Jump between loop stops';
+  } else {
+    if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
+    if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
+    if (hint)  hint.textContent = 'Seek video ±1 second';
+  }
+};
+
+// Flash the on-screen arrow button briefly when keyboard triggers it
+function flashNavBtn(dir) {
+  const btn = document.getElementById(dir < 0 ? 'navPrevBtn' : 'navNextBtn');
+  if (!btn) return;
+  btn.style.background = 'var(--primary)';
+  btn.style.color = '#fff';
+  setTimeout(() => { btn.style.background = 'var(--bg-card-soft)'; btn.style.color = ''; }, 180);
+}
+
+// ── Global arrow-key handler (active on Create page) ──────────────────────
+document.addEventListener('keydown', function(e) {
+  // Ignore if user is typing in an input, textarea, or contenteditable
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+  // Only active when Create editor (stage 2) is visible
+  const stage2 = document.getElementById('createStage2');
+  if (!stage2 || stage2.style.display === 'none' || stage2.style.display === '') return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (keyboardMode === 'steps') {
+      flashNavBtn(-1);
+      window.navStep(-1);
+    } else {
+      const vid = document.getElementById('uploadedVideoPlayer');
+      if (vid) { vid.currentTime = Math.max(0, vid.currentTime - 1); flashNavBtn(-1); }
+    }
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (keyboardMode === 'steps') {
+      flashNavBtn(1);
+      window.navStep(1);
+    } else {
+      const vid = document.getElementById('uploadedVideoPlayer');
+      if (vid) { vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1); flashNavBtn(1); }
+    }
+  } else if (e.key === ' ') {
+    // Spacebar: play/pause
+    const stage2check = document.getElementById('createStage2');
+    if (stage2check && stage2check.style.display !== 'none') {
+      e.preventDefault();
+      window.toggleVideoPlay?.();
+    }
+  }
+});
+
 
 function refreshStepNavigator() {
   const label = document.getElementById('stepNavLabel');

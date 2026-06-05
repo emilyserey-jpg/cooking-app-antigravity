@@ -775,19 +775,35 @@
             </div>
 
             <!-- ── Nav controls bar ── -->
-            <div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;align-items:center;gap:7px;flex-shrink:0;">
-              <button onclick="navStep(-1)"
-                style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">←</button>
-              <div style="flex:1;text-align:center;min-width:0;">
-                <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
-                <div id="stepNavCount" style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">Add stops or run AI</div>
+            <div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+
+              <!-- Row 1: step navigator + loop/stop -->
+              <div style="display:flex;align-items:center;gap:7px;">
+                <button onclick="navStep(-1)" id="navPrevBtn"
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;" title="Previous step (← key)">←</button>
+                <div style="flex:1;text-align:center;min-width:0;">
+                  <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
+                  <div id="stepNavCount" style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">Add stops or run AI</div>
+                </div>
+                <button onclick="navStep(1)" id="navNextBtn"
+                  style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;" title="Next step (→ key)">→</button>
+                <button onclick="previewCurrentNavStep()"
+                  style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
+                <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
+                  style="display:none;background:#f0f4ff;border:2px solid var(--primary);border-radius:8px;padding:6px 12px;color:var(--primary);cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">⏹ Stop</button>
               </div>
-              <button onclick="navStep(1)"
-                style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;">→</button>
-              <button onclick="previewCurrentNavStep()"
-                style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
-              <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
-                style="display:none;background:#f0f4ff;border:2px solid var(--primary);border-radius:8px;padding:6px 12px;color:var(--primary);cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">⏹ Stop</button>
+
+              <!-- Row 2: keyboard mode toggle -->
+              <div style="display:flex;align-items:center;gap:7px;">
+                <span style="font-size:0.6rem;font-weight:700;color:var(--text-muted);white-space:nowrap;">⌨️ Arrow keys:</span>
+                <div style="display:flex;background:var(--bg-card-soft);border-radius:7px;border:2px solid var(--border-card);overflow:hidden;flex-shrink:0;">
+                  <button id="kbModeSteps" onclick="setKeyboardMode('steps')"
+                    style="padding:3px 10px;border:none;background:var(--primary);color:#fff;font-family:var(--font);font-weight:800;font-size:0.65rem;cursor:pointer;white-space:nowrap;">⏭ Steps</button>
+                  <button id="kbModeScrub" onclick="setKeyboardMode('scrub')"
+                    style="padding:3px 10px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.65rem;cursor:pointer;white-space:nowrap;">⏩ 1s Scrub</button>
+                </div>
+                <span id="kbModeHint" style="font-size:0.58rem;color:var(--text-muted);font-weight:600;flex:1;">Jump between loop stops</span>
+              </div>
             </div>
 
             <!-- Hidden compat elements -->
