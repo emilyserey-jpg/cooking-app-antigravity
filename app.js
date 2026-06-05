@@ -4188,6 +4188,29 @@ window.toggleVideoPlayback   = toggleVideoPlayback;
 window.setPlaybackMode       = setPlaybackMode;
 window.seekToStep            = seekToStep;
 window.desktopPlayerNext     = function() {
+  if (!recipeData.loops || recipeData.loops.length === 0) {
+    showTip("Last step reached.");
+    return;
+  }
+
+  const firstStepStart = recipeData.loops[0] || 0;
+  if (currentTime < firstStepStart) {
+    seekToStep(0);
+    return;
+  }
+
+  // Find the correct activeStepIndex based on currentTime
+  let foundIndex = 0;
+  for (let i = 0; i < recipeData.loops.length; i++) {
+    if (currentTime >= recipeData.loops[i] - 0.01) {
+      foundIndex = i;
+    }
+  }
+  if (recipeData.steps && foundIndex >= recipeData.steps.length) {
+    foundIndex = recipeData.steps.length - 1;
+  }
+  activeStepIndex = foundIndex;
+
   if (activeStepIndex < recipeData.steps.length - 1) {
     seekToStep(activeStepIndex + 1);
   } else {
@@ -4195,23 +4218,60 @@ window.desktopPlayerNext     = function() {
   }
 };
 window.desktopPlayerPrev     = function() {
+  if (!recipeData.loops || recipeData.loops.length === 0) {
+    currentTime = 0;
+    const realVideo = document.getElementById('mobileRealVideo');
+    if (realVideo && realVideo.style.display !== 'none') {
+      realVideo.currentTime = 0;
+    }
+    showTip("Beginning of video reached.");
+    return;
+  }
+
+  // Find the correct activeStepIndex based on currentTime
+  let foundIndex = 0;
+  for (let i = 0; i < recipeData.loops.length; i++) {
+    if (currentTime >= recipeData.loops[i] - 0.01) {
+      foundIndex = i;
+    }
+  }
+  if (recipeData.steps && foundIndex >= recipeData.steps.length) {
+    foundIndex = recipeData.steps.length - 1;
+  }
+  activeStepIndex = foundIndex;
+
   const currentStepStart = recipeData.loops[activeStepIndex] || 0;
-  if (currentTime > currentStepStart + 2) {
+
+  // If we are before the current step start, seek to 0.
+  if (currentTime < currentStepStart) {
+    currentTime = 0;
+    const realVideo = document.getElementById('mobileRealVideo');
+    if (realVideo && realVideo.style.display !== 'none') {
+      realVideo.currentTime = 0;
+    }
+    updateStepDetailsUI();
+    showTip("Beginning of video reached.");
+    return;
+  }
+
+  // If we are more than 1.0 seconds past the current step start, seek to current step start.
+  if (currentTime > currentStepStart + 1.0) {
     seekToStep(activeStepIndex);
-  } else if (activeStepIndex > 0) {
+    return;
+  }
+
+  // Otherwise, seek to the previous step start.
+  if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
-    if (currentTime <= currentStepStart || Math.abs(currentTime - currentStepStart) < 0.5) {
-      currentTime = 0;
-      const realVideo = document.getElementById('mobileRealVideo');
-      if (realVideo && realVideo.style.display !== 'none') {
-        realVideo.currentTime = 0;
-      }
-      updateStepDetailsUI();
-      showTip("Beginning of video reached.");
-    } else {
-      seekToStep(0);
+    // We are at or near the first step start, go to 0.
+    currentTime = 0;
+    const realVideo = document.getElementById('mobileRealVideo');
+    if (realVideo && realVideo.style.display !== 'none') {
+      realVideo.currentTime = 0;
     }
+    updateStepDetailsUI();
+    showTip("Beginning of video reached.");
   }
 };
 window.toggleBentoEditMode   = toggleBentoEditMode;
@@ -4968,6 +5028,7 @@ window.navStep = function(dir) {
   if (!createStepsArr.length) {
     if (dir < 0 && vid) {
       vid.currentTime = 0;
+      stopPreviewLoop();
       showTip("Beginning of video reached.");
     }
     return;
@@ -4988,41 +5049,65 @@ window.navStep = function(dir) {
 
   if (dir < 0) {
     if (vid) {
+      const time = vid.currentTime;
       const currentStepStart = createStepsArr[currentNavStepIndex].time || 0;
-      if (vid.currentTime > currentStepStart + 2) {
+
+      // If we are before the first step start, go to 0 and stop preview loop
+      if (time < currentStepStart) {
+        vid.currentTime = 0;
+        stopPreviewLoop();
+        showTip("Beginning of video reached.");
+        return;
+      }
+
+      // If we are more than 1.0 seconds past the current step start, go to current step start
+      if (time > currentStepStart + 1.0) {
         vid.currentTime = currentStepStart;
         if (previewInterval !== null) {
           previewStepLoop(currentNavStepIndex);
         }
         return;
       }
-    }
 
-    if (currentNavStepIndex > 0) {
-      currentNavStepIndex--;
-      refreshStepNavigator();
-      if (previewInterval !== null) {
-        previewStepLoop(currentNavStepIndex);
-      } else {
-        if (vid) vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
-      }
-    } else {
-      if (vid) {
-        const currentStepStart = createStepsArr[0].time || 0;
-        if (vid.currentTime <= currentStepStart || Math.abs(vid.currentTime - currentStepStart) < 0.5) {
-          vid.currentTime = 0;
-          showTip("Beginning of video reached.");
+      // Otherwise, go to previous step start
+      if (currentNavStepIndex > 0) {
+        currentNavStepIndex--;
+        refreshStepNavigator();
+        if (previewInterval !== null) {
+          previewStepLoop(currentNavStepIndex);
         } else {
-          vid.currentTime = currentStepStart;
-          if (previewInterval !== null) {
-            previewStepLoop(0);
-          }
+          vid.currentTime = createStepsArr[currentNavStepIndex].time ?? 0;
         }
+      } else {
+        // At or near first step start, go to 0 and stop preview loop
+        vid.currentTime = 0;
+        stopPreviewLoop();
+        showTip("Beginning of video reached.");
       }
     }
   } else {
-    if (currentNavStepIndex < createStepsArr.length - 1) {
-      currentNavStepIndex++;
+    let targetIndex = 0;
+    if (createStepsArr.length > 0) {
+      const time = vid ? vid.currentTime : 0;
+      const firstStepStart = createStepsArr[0].time || 0;
+      if (time < firstStepStart) {
+        targetIndex = 0;
+      } else {
+        // Find which step we are currently in
+        let found = 0;
+        for (let i = 0; i < createStepsArr.length; i++) {
+          if (time >= createStepsArr[i].time) {
+            found = i;
+          } else {
+            break;
+          }
+        }
+        targetIndex = found + 1;
+      }
+    }
+
+    if (targetIndex < createStepsArr.length) {
+      currentNavStepIndex = targetIndex;
       refreshStepNavigator();
       if (previewInterval !== null) {
         previewStepLoop(currentNavStepIndex);
