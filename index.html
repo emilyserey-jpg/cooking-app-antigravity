@@ -93,10 +93,6 @@
                   <span id="activeModeBadge" class="mode-badge loop">
                     <i data-lucide="repeat"></i> Loop Mode
                   </span>
-                  <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="mode-badge" style="cursor:pointer; background:rgba(255,255,255,0.95); border:2px solid rgba(74, 144, 217, 0.15); font-family:var(--font); outline:none; transition: all 0.2s;" title="Toggle Arrow Key Mode">
-                    <i data-lucide="keyboard" style="width: 12px; height: 12px; color:var(--primary);"></i>
-                    <span id="playerKbToggleLabel" style="font-weight: 800; font-size: 0.68rem; margin-left: 2px;">Steps</span>
-                  </button>
                 </div>
                 
                 <div class="video-overlay-details">
@@ -151,6 +147,17 @@
               <button id="playerNextStepBtn" onclick="window.desktopPlayerNext()" class="control-btn" title="Next Step">
                 <i data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
               </button>
+            </div>
+
+            <!-- Arrow Keys Keyboard Behavior Toggle (Centered & Compact) -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 2px; font-family: var(--font);">
+              <span style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                <i data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--primary);"></i> Arrow Keys:
+              </span>
+              <div style="display: flex; background: var(--bg-card-soft); border-radius: 999px; padding: 2px; border: 1.5px solid var(--border-card); overflow: hidden; flex-shrink: 0;">
+                <button id="playerKbModeSteps" onclick="setPlayerKeyboardMode('steps')" style="padding: 3px 10px; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">Steps</button>
+                <button id="playerKbModeScrub" onclick="setPlayerKeyboardMode('scrub')" style="padding: 3px 10px; border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">1s Seek</button>
+              </div>
             </div>
           </div>
 
