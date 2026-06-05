@@ -2767,6 +2767,13 @@ window.loadPlayerRecipe = async function(recipeId) {
     if (recipe.video_url && realVideo) {
       if (canvas) canvas.style.display = 'none';
       realVideo.style.display = 'block';
+
+      // Set default preview cover/poster before play
+      if (recipe.thumbnail_url) {
+        realVideo.setAttribute('poster', recipe.thumbnail_url);
+      } else {
+        realVideo.removeAttribute('poster');
+      }
       
       // Load source
       if (hlsInstance) {
@@ -2785,6 +2792,7 @@ window.loadPlayerRecipe = async function(recipeId) {
       } else {
         realVideo.src = recipe.video_url;
       }
+      realVideo.load();
       realVideo.currentTime = 0;
     } else {
       if (realVideo) {
@@ -5236,6 +5244,9 @@ function showEditorStage(videoUrl) {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (!videoEl) return;
 
+  // Reset old poster
+  videoEl.removeAttribute('poster');
+
   // Use HLS.js for Cloudflare Stream HLS, blob URL plays natively
   if (videoUrl.includes('videodelivery.net') && window.Hls && Hls.isSupported()) {
     const hls = new Hls();
@@ -5244,6 +5255,8 @@ function showEditorStage(videoUrl) {
   } else {
     videoEl.src = videoUrl;
   }
+  
+  videoEl.load();
 
   videoEl.addEventListener('timeupdate', () => {
     const t = videoEl.currentTime;
@@ -5278,14 +5291,19 @@ window.onVideoLoaded = function() {
     if (cdl) cdl.textContent = timeStr;
 
     // Auto-capture a local preview when metadata or data is loaded
-    videoEl.addEventListener('loadeddata', () => {
+    const onFirstData = () => {
       videoEl.currentTime = 0.5;
-    }, { once: true });
+    };
+    videoEl.addEventListener('loadeddata', onFirstData, { once: true });
     
     videoEl.addEventListener('seeked', function onFirstSeek() {
       window.captureLocalVideoPreview();
       videoEl.removeEventListener('seeked', onFirstSeek);
     });
+
+    if (videoEl.readyState >= 2) {
+      onFirstData();
+    }
 
     // Update playhead and current time as video plays
     videoEl.addEventListener('timeupdate', () => {
@@ -6156,25 +6174,49 @@ async function captureThumbnail(videoEl) {
   } catch { return null; }
 }
 
+function dataURLtoBlob(dataurl) {
+  try {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch (e) {
+    console.error('dataURLtoBlob error:', e);
+    return null;
+  }
+}
+
 async function ensureThumbnailUrl() {
   let thumbnailUrl = document.getElementById('newRecipeCoverInput')?.value?.trim() || null;
   if (!thumbnailUrl) {
     try {
-      const videoEl = document.getElementById('uploadedVideoPlayer');
-      if (videoEl && videoEl.videoWidth > 0) {
-        const blob = await captureThumbnail(videoEl);
-        if (blob) {
-          const { supabase: sb } = await import('./supabase-client.js');
-          const ext    = 'jpg';
-          const folder = (currentUser?.email || 'anon').replace(/[@.]/g, '_');
-          const fname  = 'thumbnails/' + folder + '/' + Date.now() + '.' + ext;
-          const { error: upErr } = await sb.storage.from('videos').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
-          if (!upErr) {
-            const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
-            thumbnailUrl = urlData.publicUrl;
-            const input = document.getElementById('newRecipeCoverInput');
-            if (input) input.value = thumbnailUrl;
-          }
+      const previewImg = document.getElementById('createThumbnailPreviewImg');
+      let blob = null;
+      if (previewImg && previewImg.src && previewImg.src.startsWith('data:')) {
+        blob = dataURLtoBlob(previewImg.src);
+      }
+      if (!blob) {
+        const videoEl = document.getElementById('uploadedVideoPlayer');
+        if (videoEl && videoEl.videoWidth > 0) {
+          blob = await captureThumbnail(videoEl);
+        }
+      }
+      if (blob) {
+        const { supabase: sb } = await import('./supabase-client.js');
+        const ext    = 'jpg';
+        const folder = (currentUser?.email || 'anon').replace(/[@.]/g, '_');
+        const fname  = 'thumbnails/' + folder + '/' + Date.now() + '.' + ext;
+        const { error: upErr } = await sb.storage.from('videos').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
+        if (!upErr) {
+          const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+          thumbnailUrl = urlData.publicUrl;
+          const input = document.getElementById('newRecipeCoverInput');
+          if (input) input.value = thumbnailUrl;
         }
       }
     } catch (tErr) {
@@ -6250,6 +6292,7 @@ window.captureLocalVideoPreview = function() {
       previewImg.src = localUrl;
       previewImg.style.display = 'block';
       placeholder.style.display = 'none';
+      videoEl.setAttribute('poster', localUrl);
     } catch (err) {
       console.warn('Local preview capture failed:', err);
     }
