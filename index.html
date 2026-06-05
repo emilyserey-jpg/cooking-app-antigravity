@@ -1017,6 +1017,10 @@
                   <span id="timelineDuration" style="font-size:0.65rem;color:rgba(255,255,255,0.5);font-weight:600;font-variant-numeric:tabular-nums;">0:00</span>
                   <span id="previewingLabel" style="margin-left:8px;font-size:0.62rem;font-weight:700;color:#a78bfa;display:none;">▶ Looping…</span>
                 </div>
+                <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn"
+                  style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;">▶ Loop</button>
+                <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
+                  style="display:none;background:#f0f4ff;border:none;border-radius:8px;padding:6px 11px;color:var(--primary);cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(240,244,255,0.4);">⏹ Stop</button>
                 <button onclick="addStepAtCurrentTime()"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);">📍 Add Stop</button>
               </div>

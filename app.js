@@ -6001,6 +6001,11 @@ window.previewStepLoop = function(i) {
   if (loopBtn) loopBtn.style.display   = 'none';
   if (stopBtn) stopBtn.style.display  = 'inline-block';
 
+  const overlayStopBtn = document.getElementById('overlayStopPreviewBtn');
+  const overlayLoopBtn = document.getElementById('overlayPreviewLoopBtn');
+  if (overlayLoopBtn) overlayLoopBtn.style.display = 'none';
+  if (overlayStopBtn) overlayStopBtn.style.display = 'inline-block';
+
   // Use timeupdate (fires ~4× per second) for precise boundary detection
   // — avoids the 100ms polling lag that caused early/late cutoffs
   function onTimeUpdate() {
@@ -6029,6 +6034,11 @@ window.stopPreviewLoop = function() {
   if (labelEl) labelEl.style.display  = 'none';
   if (stopBtn) stopBtn.style.display  = 'none';
   if (loopBtn) loopBtn.style.display   = 'inline-block';
+
+  const overlayStopBtn = document.getElementById('overlayStopPreviewBtn');
+  const overlayLoopBtn = document.getElementById('overlayPreviewLoopBtn');
+  if (overlayStopBtn) overlayStopBtn.style.display = 'none';
+  if (overlayLoopBtn) overlayLoopBtn.style.display = 'inline-block';
 };
 
 // ── Drag to reorder ────────────────────────────────────────────────────────
