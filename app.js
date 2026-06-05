@@ -4741,41 +4741,12 @@ window.navOrScrub = function(dir) {
 
 // Flash the on-screen arrow button briefly when keyboard triggers it
 function flashNavBtn(dir) {
-  const btn = document.getElementById(dir < 0 ? 'navPrevBtn' : 'navNextBtn');
-  if (!btn || btn.dataset.isFlashing === 'true') return;
-  
-  btn.dataset.isFlashing = 'true';
-  const origBg = btn.style.background;
-  const origColor = btn.style.color;
-  btn.style.background = 'var(--primary)';
-  btn.style.color = '#fff';
-  
-  setTimeout(() => {
-    btn.style.background = origBg || 'var(--bg-card-soft)';
-    btn.style.color = origColor || '';
-    btn.dataset.isFlashing = 'false';
-  }, 180);
+  // Visual highlight disabled to prevent interrupting edit/hover states
 }
 
 // Flash the mobile player control button briefly when keyboard triggers it
 function flashPlayerBtn(btnId) {
-  const btn = document.getElementById(btnId);
-  if (!btn || btn.dataset.isFlashing === 'true') return;
-  
-  btn.dataset.isFlashing = 'true';
-  const origBg = btn.style.background;
-  const origColor = btn.style.color;
-  const origTransform = btn.style.transform;
-  btn.style.background = 'var(--primary)';
-  btn.style.color = '#fff';
-  btn.style.transform = 'scale(0.9)';
-  
-  setTimeout(() => {
-    btn.style.background = origBg || '';
-    btn.style.color = origColor || '';
-    btn.style.transform = origTransform || '';
-    btn.dataset.isFlashing = 'false';
-  }, 180);
+  // Visual highlight disabled to prevent interrupting edit/hover states
 }
 
 // Global button focus management: blur buttons after clicking so keyboard shortcuts aren't hijacked by browser focus
@@ -4791,6 +4762,12 @@ document.addEventListener('keydown', function(e) {
   // Ignore if user is typing in an input, textarea, or contenteditable
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+  
+  // Blur focused buttons to prevent browser focus rings or highlight rings from hijacking navigation
+  const activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'BUTTON' || activeEl.tagName === 'A' || activeEl.classList.contains('control-btn'))) {
+    activeEl.blur();
+  }
   
   const stage2 = document.getElementById('createStage2');
   const isCreateActive = stage2 && stage2.style.display !== 'none' && stage2.style.display !== '';
