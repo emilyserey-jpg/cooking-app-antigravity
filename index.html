@@ -192,26 +192,29 @@
           <!-- Mobile App Body -->
           <div class="mobile-player-body">
             <!-- Active Step Card -->
-            <div class="step-card-active">
-              <div class="step-meta-row">
-                <span id="mobileStepLabel" class="step-indicator-text">Step 2 of 5</span>
-                <span id="mobileStepTime" class="step-duration-badge">1:15 – 2:45</span>
+            <div class="step-card-active" style="display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; gap:12px !important;">
+              <!-- Left Column: Details -->
+              <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;">
+                <div class="step-meta-row">
+                  <span id="mobileStepLabel" class="step-indicator-text">Step 2 of 5</span>
+                  <span id="mobileStepTime" class="step-duration-badge">1:15 – 2:45</span>
+                </div>
+                <h3 id="mobileStepTitle" class="step-card-title">Sear the Chicken</h3>
+                <p id="mobileStepInstructions" class="step-instructions">
+                  Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts. Cook for 5-7 minutes without moving, until beautifully browned.
+                </p>
               </div>
-              <h3 id="mobileStepTitle" class="step-card-title">Sear the Chicken</h3>
-              <p id="mobileStepInstructions" class="step-instructions">
-                Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts. Cook for 5-7 minutes without moving, until beautifully browned.
-              </p>
               
-              <!-- Cooking Step Tracker Completion Controls -->
-              <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <button id="playerMarkDoneBtn" onclick="window.togglePlayerStepDone()" tabindex="-1" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; background: rgba(74, 144, 217, 0.15); color: var(--primary);">
-                  <i data-lucide="circle" style="width: 14px; height: 14px;"></i> Mark Done
+              <!-- Right Column: Checkoff circle icon + Reset Button -->
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0;">
+                <button id="playerMarkDoneBtn" onclick="window.togglePlayerStepDone()" tabindex="-1" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; transition:all 0.2s ease-in-out; background:rgba(74, 144, 217, 0.08); color:var(--primary);" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
+                  <i data-lucide="circle" style="width:18px; height:18px;"></i>
                 </button>
-                <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 8px 12px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
+                <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 4px 8px; border: none; border-radius: 6px; font-family: var(--font); font-size: 0.65rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
                   Reset
                 </button>
+              </div>
             </div>
-          </div>
 
             <!-- Multigrid Descriptions Layout Toggle Controls -->
             <div id="playerMultigridDescControls" style="display:none; align-items:center; justify-content:space-between; margin-bottom:8px; width:100%;">

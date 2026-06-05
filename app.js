@@ -2582,13 +2582,15 @@ function updatePlayerMarkDoneButton() {
   
   const isDone = playerCompletedSteps.has(activeStepIndex);
   if (isDone) {
-    btn.innerHTML = `<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Step Completed`;
+    btn.innerHTML = `<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>`;
     btn.style.background = '#22c55e';
     btn.style.color = '#fff';
+    btn.style.boxShadow = '0 4px 10px rgba(34,197,94,0.3)';
   } else {
-    btn.innerHTML = `<i data-lucide="circle" style="width: 14px; height: 14px;"></i> Mark Done`;
-    btn.style.background = 'rgba(74, 144, 217, 0.15)';
+    btn.innerHTML = `<i data-lucide="circle" style="width: 18px; height: 18px;"></i>`;
+    btn.style.background = 'rgba(74, 144, 217, 0.08)';
     btn.style.color = 'var(--primary)';
+    btn.style.boxShadow = 'none';
   }
   if (window.lucide) lucide.createIcons();
 }
