@@ -3797,7 +3797,7 @@ window.saveNewRecipe = async function() {
       ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
       : localVideoURL || null;
 
-    await createRecipe({
+    const savedRecipe = await createRecipe({
       title,
       creator:          currentUser.email,
       duration,
@@ -3809,19 +3809,119 @@ window.saveNewRecipe = async function() {
       shared_on_profile: createIsPublic,
     });
 
-    const msg = document.getElementById('savedRecipeMsg');
-    if (msg) msg.textContent = createIsPublic
-      ? `"​${title}" is now public — visible on Discover 🌎`
-      : `"​${title}" saved privately to your profile 🔒`;
-
     document.getElementById('createStage2').style.display = 'none';
-    document.getElementById('createStage3').style.display = 'block';
-    showTip(`"​${title}" saved!`);
+    showStage3WithFolderPicker(savedRecipe, createIsPublic);
+    showTip('"' + title + '" saved!');
 
   } catch (err) {
     console.error('Save error:', err);
     showTip('Could not save: ' + (err.message || 'Unknown error'));
     if (btn) { btn.disabled = false; btn.textContent = '✅ Save Recipe'; }
+  }
+};
+
+// ── Stage 3: success screen + folder picker ───────────────────────────────
+let _lastSavedRecipeId    = null;
+let _lastSavedRecipeTitle = '';
+
+function showStage3WithFolderPicker(recipe, isPublic) {
+  _lastSavedRecipeId    = recipe ? recipe.id : null;
+  _lastSavedRecipeTitle = recipe ? recipe.title : 'Recipe';
+
+  const stage3 = document.getElementById('createStage3');
+  if (!stage3) return;
+  stage3.style.display = 'block';
+
+  // Build folder options from localStorage libState
+  let folders = [];
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const lib = raw ? JSON.parse(raw) : {};
+    folders = lib.folders || [];
+  } catch {}
+
+  const visibility = isPublic
+    ? '<span style="color:#22c55e;font-weight:700;">🌎 Public</span> — visible on Discover and your My Profile'
+    : '<span style="color:#4a90d9;font-weight:700;">🔒 Private</span> — only you can see this';
+
+  const folderOpts = folders.map(f =>
+    '<option value="' + f.id + '">' + f.name + '</option>'
+  ).join('');
+
+  stage3.innerHTML = `
+    <div style="font-size:4rem;margin-bottom:0.75rem;">&#x1F389;</div>
+    <h2 style="font-size:1.6rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Recipe Saved!</h2>
+    <p id="savedRecipeMsg" style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.9rem;">${visibility}</p>
+
+    <!-- Folder picker -->
+    <div style="background:var(--bg-card);border:2px solid var(--border-card);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;text-align:left;">
+      <div style="font-weight:900;font-size:0.85rem;color:var(--text-heading);margin-bottom:0.75rem;">&#x1F4C1; Add to a Folder <span style="font-weight:500;font-size:0.75rem;color:var(--text-muted);">(optional)</span></div>
+      ${ folders.length > 0 ? `
+        <select id="stage3FolderSelect" style="width:100%;padding:10px 12px;border:2px solid var(--border-card);border-radius:10px;font-family:var(--font);font-size:0.88rem;margin-bottom:0.75rem;background:var(--bg-input,#fff);color:var(--text-body);">
+          <option value="">— choose a folder —</option>
+          ${folderOpts}
+        </select>
+        <button onclick="addNewlySavedToFolder()" style="width:100%;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:0.5rem;">&#x2795; Add to Selected Folder</button>
+        <div style="text-align:center;font-size:0.75rem;color:var(--text-muted);font-weight:600;">or</div>
+      ` : '' }
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <input id="stage3NewFolderName" type="text" placeholder="New folder name…" style="flex:1;padding:9px 12px;border:2px solid var(--border-card);border-radius:10px;font-family:var(--font);font-size:0.85rem;">
+        <button onclick="createAndAddToNewFolder()" style="background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:10px;padding:9px 14px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:var(--text-heading);white-space:nowrap;">&#x2795; Create & Add</button>
+      </div>
+      <div id="stage3FolderMsg" style="font-size:0.78rem;color:var(--primary);font-weight:700;margin-top:0.5rem;min-height:1.2em;"></div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+      <button onclick="switchView('library')" class="btn btn-primary" style="border-radius:999px;padding:11px 24px;">&#x1F4DA; View in Library</button>
+      <button onclick="resetCreateView()" class="btn" style="border-radius:999px;padding:11px 24px;">&#x2795; Upload Another</button>
+    </div>`;
+}
+
+window.addNewlySavedToFolder = function() {
+  const select = document.getElementById('stage3FolderSelect');
+  const msg    = document.getElementById('stage3FolderMsg');
+  if (!select || !select.value) { if (msg) msg.textContent = 'Please choose a folder first.'; return; }
+  if (!_lastSavedRecipeId) { if (msg) msg.textContent = 'Recipe ID not found — please check Library.'; return; }
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
+    const folder = lib.folders.find(f => f.id === select.value);
+    if (!folder) { if (msg) msg.textContent = 'Folder not found.'; return; }
+    if (!folder.recipeIds) folder.recipeIds = [];
+    if (!folder.recipeIds.includes(_lastSavedRecipeId)) folder.recipeIds.push(_lastSavedRecipeId);
+    localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
+    if (msg) { msg.style.color = '#22c55e'; msg.textContent = '\u2705 Added to "' + folder.name + '"!'; }
+    select.value = '';
+  } catch (e) {
+    if (msg) msg.textContent = 'Error: ' + e.message;
+  }
+};
+
+window.createAndAddToNewFolder = function() {
+  const input = document.getElementById('stage3NewFolderName');
+  const msg   = document.getElementById('stage3FolderMsg');
+  const name  = input ? input.value.trim() : '';
+  if (!name) { if (msg) msg.textContent = 'Enter a folder name first.'; return; }
+  if (!_lastSavedRecipeId) { if (msg) msg.textContent = 'Recipe ID not found — please check Library.'; return; }
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
+    if (!lib.folders) lib.folders = [];
+    if (!lib.customOrder) lib.customOrder = [];
+    const colors = ['#4a90d9','#22c55e','#f59e0b','#a855f7','#ef4444','#06b6d4'];
+    const newFolder = {
+      id:        'f_' + Date.now(),
+      name,
+      color:     colors[lib.folders.length % colors.length],
+      recipeIds: [_lastSavedRecipeId],
+    };
+    lib.folders.push(newFolder);
+    lib.customOrder.push('folder:' + newFolder.id);
+    localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
+    if (msg) { msg.style.color = '#22c55e'; msg.textContent = '\u2705 Created "' + name + '" and added recipe!'; }
+    if (input) input.value = '';
+  } catch (e) {
+    if (msg) msg.textContent = 'Error: ' + e.message;
   }
 };
 
