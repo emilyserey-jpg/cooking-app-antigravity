@@ -44,6 +44,9 @@ let playbackMode = 'loop';
 let isPlaying = false;
 let currentTime = 75.0;
 let activeStepIndex = 1;
+let editingRecipeId = null;
+let playerCurrentRecipe = null;
+let playerCompletedSteps = new Set();
 let currentSpeechActive = false;
 let undoHistory = [];
 let redoHistory = [];
@@ -464,7 +467,10 @@ function roundRect(ctx, x, y, w, h, r) {
 function updateTimelineUI() {
   const min = Math.floor(currentTime / 60);
   const sec = Math.floor(currentTime % 60);
-  const timeText = `${min}:${sec.toString().padStart(2, '0')} / 6:00`;
+  
+  const durMin = Math.floor((recipeData.duration || 0) / 60);
+  const durSec = Math.floor((recipeData.duration || 0) % 60);
+  const timeText = `${min}:${sec.toString().padStart(2, '0')} / ${durMin}:${durSec.toString().padStart(2, '0')}`;
   
   // Mobile Time text
   const mTimeReadout = document.getElementById('videoTimeReadout');
@@ -473,7 +479,7 @@ function updateTimelineUI() {
   // Mobile Progress line
   const mProgressLine = document.getElementById('videoProgressLine');
   if (mProgressLine) {
-    const pct = (currentTime / recipeData.duration) * 100;
+    const pct = (recipeData.duration > 0) ? (currentTime / recipeData.duration) * 100 : 0;
     mProgressLine.style.width = pct + '%';
   }
   
@@ -483,8 +489,13 @@ function updateTimelineUI() {
   if (dTimerReadout) dTimerReadout.innerText = `${min}:${sec.toString().padStart(2, '0')}`;
   
   if (dPlayhead) {
-    const pct = (currentTime / recipeData.duration) * 100;
+    const pct = (recipeData.duration > 0) ? (currentTime / recipeData.duration) * 100 : 0;
     dPlayhead.style.left = pct + '%';
+  }
+  
+  // Keep active step index in sync with current timeline playhead time
+  if (typeof currentView !== 'undefined' && currentView === 'mobile-player') {
+    updateStepFromTime(currentTime);
   }
 }
 
@@ -523,6 +534,13 @@ function updateControlsUI() {
   const dPlayPauseBtn = document.getElementById('desktopPlayPauseBtn');
   if (dPlayPauseBtn) {
     dPlayPauseBtn.innerHTML = isPlaying ? '⏸ Pause' : '▶ Play';
+  }
+
+  // Unified controls strip play/pause btn
+  const stripPlayBtn = document.getElementById('playerStripPlayPauseBtn');
+  if (stripPlayBtn) {
+    stripPlayBtn.innerHTML = isPlaying ? `<i data-lucide="pause" style="width: 16px; height: 16px;"></i>` : `<i data-lucide="play" style="width: 16px; height: 16px;"></i>`;
+    if (window.lucide) lucide.createIcons();
   }
 }
 
@@ -579,6 +597,9 @@ function updateStepDetailsUI() {
   document.getElementById('mobileStepTitle').innerText = step.title;
   document.getElementById('mobileStepInstructions').innerText = step.instruction;
   
+  // Update mobile done button checkbox state
+  updatePlayerMarkDoneButton();
+  
   // Update chips class active
   document.querySelectorAll('.step-chip').forEach((c, idx) => {
     if (idx === activeStepIndex) c.classList.add('active');
@@ -601,11 +622,12 @@ function renderStepChipsMobile() {
   
   container.innerHTML = '';
   recipeData.steps.forEach((step, idx) => {
+    const isDone = playerCompletedSteps.has(idx);
     const chip = document.createElement('button');
-    chip.className = `step-chip ${idx === activeStepIndex ? 'active' : ''}`;
+    chip.className = `step-chip ${idx === activeStepIndex ? 'active' : ''} ${isDone ? 'done' : ''}`;
     chip.onclick = () => seekToStep(idx);
     chip.innerHTML = `
-      <span class="step-chip-num">${idx + 1}</span>
+      <span class="step-chip-num">${isDone ? '✓' : idx + 1}</span>
       <span>${step.title}</span>
     `;
     container.appendChild(chip);
@@ -1245,6 +1267,7 @@ function initSupabase() {
   onAuthChange((user) => {
     currentUser = user;
     updateUserBadge(user);
+    updatePlayerEditButtonVisibility();
     if (typeof activePlayerRecipeId !== 'undefined' && activePlayerRecipeId) {
       renderCommentForm(activePlayerRecipeId);
     }
@@ -2130,6 +2153,221 @@ window.loadGridRecipe = async function(recipeId) {
   }
 };
 
+// ============================================================
+// PLAYER TIMELINE TICKS, SEEK SYNC, AND STEP PROGRESS CHECKS
+// ============================================================
+function updateStepFromTime(time) {
+  if (!recipeData.loops || recipeData.loops.length === 0) return;
+  let foundIndex = 0;
+  for (let i = 0; i < recipeData.loops.length - 1; i++) {
+    const start = recipeData.loops[i];
+    const end = recipeData.loops[i + 1];
+    if (time >= start - 0.01 && time < end) {
+      foundIndex = i;
+      break;
+    }
+  }
+  if (time >= recipeData.duration - 0.01) {
+    foundIndex = recipeData.steps.length - 1;
+  }
+  if (foundIndex !== activeStepIndex) {
+    activeStepIndex = foundIndex;
+    updateStepDetailsUI();
+    renderStepChipsMobile();
+  }
+}
+
+window.playerSkipTime = function(amount) {
+  const vid = document.getElementById('mobileRealVideo');
+  const hasRealVideo = vid && vid.style.display !== 'none';
+  const newTime = Math.max(0, Math.min(recipeData.duration, currentTime + amount));
+  
+  if (hasRealVideo) {
+    vid.currentTime = newTime;
+  }
+  currentTime = newTime;
+  updateStepFromTime(currentTime);
+  updateTimelineUI();
+  showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s ⏱️`);
+};
+
+function getPlayerProgressKey(recipeId) {
+  return `cooking_gps_player_progress_${recipeId}`;
+}
+
+function loadPlayerProgress(recipeId) {
+  playerCompletedSteps = new Set();
+  try {
+    const saved = localStorage.getItem(getPlayerProgressKey(recipeId));
+    if (saved) {
+      const arr = JSON.parse(saved);
+      playerCompletedSteps = new Set(arr);
+    }
+  } catch {}
+  updatePlayerProgressBar();
+}
+
+function savePlayerProgress(recipeId) {
+  localStorage.setItem(getPlayerProgressKey(recipeId), JSON.stringify([...playerCompletedSteps]));
+}
+
+window.togglePlayerStepDone = function(stepIndex) {
+  if (!activePlayerRecipeId) return;
+  if (playerCompletedSteps.has(stepIndex)) {
+    playerCompletedSteps.delete(stepIndex);
+  } else {
+    playerCompletedSteps.add(stepIndex);
+  }
+  savePlayerProgress(activePlayerRecipeId);
+  updatePlayerProgressBar();
+  renderStepChipsMobile();
+  updatePlayerMarkDoneButton();
+  
+  const total = recipeData.steps ? recipeData.steps.length : 0;
+  if (playerCompletedSteps.size === total && total > 0) {
+    setTimeout(() => showTip('🎉 Recipe complete! Every step done! Excellent cooking! 🍽️'), 300);
+  }
+};
+
+window.resetPlayerProgress = function() {
+  if (!activePlayerRecipeId) return;
+  playerCompletedSteps = new Set();
+  savePlayerProgress(activePlayerRecipeId);
+  updatePlayerProgressBar();
+  renderStepChipsMobile();
+  updatePlayerMarkDoneButton();
+  showTip('Progress reset 🔄');
+};
+
+function updatePlayerProgressBar() {
+  const total = recipeData.steps ? recipeData.steps.length : 0;
+  const done = playerCompletedSteps.size;
+  const readout = document.getElementById('playerProgressReadout');
+  const fill = document.getElementById('playerProgressFill');
+  const resetBtn = document.getElementById('playerResetProgressBtn');
+  
+  if (readout) {
+    readout.textContent = `${done} of ${total} completed`;
+  }
+  if (fill) {
+    fill.style.width = total > 0 ? `${Math.round((done / total) * 100)}%` : '0%';
+  }
+  if (resetBtn) {
+    resetBtn.style.display = done > 0 ? 'flex' : 'none';
+  }
+}
+
+function updatePlayerMarkDoneButton() {
+  const btn = document.getElementById('playerMarkDoneBtn');
+  if (!btn) return;
+  
+  const isDone = playerCompletedSteps.has(activeStepIndex);
+  if (isDone) {
+    btn.innerHTML = `<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Step Completed`;
+    btn.style.background = '#22c55e';
+    btn.style.color = '#fff';
+  } else {
+    btn.innerHTML = `<i data-lucide="circle" style="width: 14px; height: 14px;"></i> Mark Done`;
+    btn.style.background = 'rgba(74, 144, 217, 0.15)';
+    btn.style.color = 'var(--primary)';
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function updatePlayerEditButtonVisibility() {
+  const editBtn = document.getElementById('playerEditRecipeBtn');
+  if (!editBtn) return;
+  if (playerCurrentRecipe && currentUser && playerCurrentRecipe.creator === currentUser.email) {
+    editBtn.style.display = 'flex';
+  } else {
+    editBtn.style.display = 'none';
+  }
+}
+
+function renderPlayerTimelineMarkers() {
+  const container = document.getElementById('videoBoundariesContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const loops = recipeData.loops || [];
+  const duration = recipeData.duration || 10;
+  
+  loops.forEach((time, idx) => {
+    if (idx === loops.length - 1 && time >= duration) return;
+    if (time > duration) return;
+    
+    const pct = (time / duration) * 100;
+    const tick = document.createElement('div');
+    tick.className = 'player-timeline-tick';
+    tick.style.left = `${pct}%`;
+    
+    const stepTitle = recipeData.steps[idx]?.title || `Step ${idx + 1}`;
+    const min = Math.floor(time / 60);
+    const sec = Math.floor(time % 60);
+    tick.title = `${stepTitle} (${min}:${sec.toString().padStart(2, '0')})`;
+    
+    tick.onclick = (e) => {
+      e.stopPropagation();
+      seekToStep(idx);
+    };
+    
+    container.appendChild(tick);
+  });
+}
+
+window.loadRecipeToEditor = function(recipe) {
+  if (!recipe) return;
+  editingRecipeId = recipe.id;
+  
+  // Set stage 1 hidden, stage 2 shown
+  document.getElementById('createStage1').style.display = 'none';
+  document.getElementById('createStage2').style.display = 'flex';
+  document.getElementById('createStage3').style.display = 'none';
+
+  // Title
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  if (titleInput) titleInput.value = recipe.title || '';
+
+  // Video URL
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (videoEl) {
+    if (recipe.video_url) {
+      videoEl.src = recipe.video_url;
+    } else {
+      videoEl.src = '';
+    }
+  }
+
+  // Cover image / thumbnail
+  const coverInput = document.getElementById('newRecipeCoverInput');
+  if (coverInput) coverInput.value = recipe.thumbnail_url || recipe.bundle_mode || '';
+  window.updateCoverPreviewFromUrl(recipe.thumbnail_url || recipe.bundle_mode || '');
+
+  // Is public
+  createIsPublic = recipe.is_published || false;
+
+  // Map loops to createStepsArr
+  const parsed = parseLoops(recipe.loops);
+  createStepsArr = parsed.map((l, idx) => {
+    const t = l.start || 0;
+    const end = l.end != null ? l.end : null;
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, '0');
+    return {
+      time: t,
+      endTime: end,
+      label: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
+      displayTime: `${m}:${s}`,
+      description: l.description || '',
+    };
+  }).sort((a, b) => a.time - b.time);
+
+  renderCreateSteps();
+  renderTimeline();
+  switchView('create');
+  showTip(`Editing recipe: ${recipe.title} ✏️`);
+};
+
 let hlsInstance = null;
 
 window.loadPlayerRecipe = async function(recipeId) {
@@ -2211,6 +2449,12 @@ window.loadPlayerRecipe = async function(recipeId) {
     renderStepChipsMobile();
     updateStepDetailsUI();
     updateControlsUI();
+    
+    // Load progress, timeline stop ticks, and edit button permissions
+    playerCurrentRecipe = recipe;
+    loadPlayerProgress(recipeId);
+    renderPlayerTimelineMarkers();
+    updatePlayerEditButtonVisibility();
     
     // Comments Section display
     const isPublic = !recipe.private_recipe || recipe.is_published;
@@ -4313,15 +4557,32 @@ window.setKeyboardMode = function(mode) {
   const btnSteps = document.getElementById('kbModeSteps');
   const btnScrub = document.getElementById('kbModeScrub');
   const hint     = document.getElementById('kbModeHint');
+  
+  const pBtnSteps = document.getElementById('playerKbModeSteps');
+  const pBtnScrub = document.getElementById('playerKbModeScrub');
+  const pHint     = document.getElementById('playerKbModeHint');
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
     if (hint)  hint.textContent = 'Jump between loop stops';
+    
+    if (pBtnSteps) { pBtnSteps.style.background = 'var(--primary)'; pBtnSteps.style.color = '#fff'; }
+    if (pBtnScrub) { pBtnScrub.style.background = 'transparent';    pBtnScrub.style.color = 'var(--text-muted)'; }
+    if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
     if (hint)  hint.textContent = 'Seek video ±1 second';
+    
+    if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
+    if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
+    if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will seek forward or backward by 1 second.';
   }
+};
+
+window.setPlayerKeyboardMode = function(mode) {
+  window.setKeyboardMode(mode);
 };
 
 // Flash the on-screen arrow button briefly when keyboard triggers it
@@ -4358,13 +4619,17 @@ document.addEventListener('keydown', function(e) {
       }
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
-      if (vid && vid.style.display !== 'none') {
-        if (e.shiftKey || keyboardMode === 'scrub') {
-          vid.currentTime = Math.max(0, vid.currentTime - 1);
-          currentTime = vid.currentTime; // Sync simulation loop immediately
-        } else {
-          window.desktopPlayerPrev();
+      const hasRealVideo = vid && vid.style.display !== 'none';
+      if (e.shiftKey || keyboardMode === 'scrub') {
+        const newTime = Math.max(0, currentTime - 1);
+        if (hasRealVideo) {
+          vid.currentTime = newTime;
         }
+        currentTime = newTime;
+        updateStepFromTime(currentTime);
+        updateTimelineUI();
+      } else {
+        window.desktopPlayerPrev();
       }
     }
   } else if (e.key === 'ArrowRight') {
@@ -4379,13 +4644,17 @@ document.addEventListener('keydown', function(e) {
       }
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
-      if (vid && vid.style.display !== 'none') {
-        if (e.shiftKey || keyboardMode === 'scrub') {
-          vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1);
-          currentTime = vid.currentTime; // Sync simulation loop immediately
-        } else {
-          window.desktopPlayerNext();
+      const hasRealVideo = vid && vid.style.display !== 'none';
+      if (e.shiftKey || keyboardMode === 'scrub') {
+        const newTime = Math.min(recipeData.duration, currentTime + 1);
+        if (hasRealVideo) {
+          vid.currentTime = newTime;
         }
+        currentTime = newTime;
+        updateStepFromTime(currentTime);
+        updateTimelineUI();
+      } else {
+        window.desktopPlayerNext();
       }
     }
   } else if (e.key === ' ') {
@@ -4842,23 +5111,48 @@ window.saveNewRecipe = async function(targetFolderId) {
         showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
         throw new Error('Supabase video upload failed: ' + upErr.message);
       }
+    } else if (editingRecipeId && playerCurrentRecipe) {
+      // Preserve existing video URL
+      videoUrl = playerCurrentRecipe.video_url || null;
     } else {
       // No video uploaded (remix or empty)
       videoUrl = null;
     }
 
-    const savedRecipe = await createRecipe({
-      title,
-      creator:          currentUser.email,
-      duration,
-      steps,
-      loops,
-      video_url:        videoUrl,
-      thumbnail_url:    thumbnailUrl,
-      private_recipe:   !createIsPublic,
-      is_published:     createIsPublic,
-      shared_on_profile: createIsPublic,
-    });
+    let savedRecipe;
+    if (editingRecipeId) {
+      const { updateRecipe } = await import('./supabase-client.js');
+      
+      const updates = {
+        title,
+        duration,
+        steps,
+        loops,
+        video_url:        videoUrl,
+        thumbnail_url:    thumbnailUrl,
+        private_recipe:   !createIsPublic,
+        is_published:     createIsPublic,
+        shared_on_profile: createIsPublic,
+      };
+      
+      if (window._aiIngredients) updates.ingredients = window._aiIngredients;
+      
+      savedRecipe = await updateRecipe(editingRecipeId, updates);
+      showTip('Changes saved successfully! 💾');
+    } else {
+      savedRecipe = await createRecipe({
+        title,
+        creator:          currentUser.email,
+        duration,
+        steps,
+        loops,
+        video_url:        videoUrl,
+        thumbnail_url:    thumbnailUrl,
+        private_recipe:   !createIsPublic,
+        is_published:     createIsPublic,
+        shared_on_profile: createIsPublic,
+      });
+    }
 
     // If user chose a folder, add the recipe to it in localStorage
     if (targetFolderId && savedRecipe && savedRecipe.id) {
@@ -4917,6 +5211,7 @@ window.createAndAddToNewFolder = function() {};
 
 
 window.resetCreateView = function() {
+  editingRecipeId  = null;
   uploadedVideoUID = null;
   localVideoURL    = null;
   uploadedFile     = null;

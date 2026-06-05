@@ -1247,6 +1247,121 @@ h1, h2, h3, h4, h5 {
   .view-tabs { display: none; }
 }
 
+/* ====================================================
+   TIMELINE TICKS, UNIFIED CONTROLS, COMPLETED CHIPS
+   ==================================================== */
+#videoBoundariesContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.player-timeline-tick {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  border-radius: 99px;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.player-timeline-tick:hover {
+  background: #22c55e;
+  height: 14px;
+  width: 5px;
+  box-shadow: 0 0 6px #22c55e;
+  z-index: 10;
+}
+
+.player-controls-strip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.player-controls-strip .control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid var(--border-card);
+  color: var(--text-body);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-xs);
+  padding: 0;
+  outline: none;
+}
+
+.player-controls-strip .control-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #fff;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.player-controls-strip .control-btn.play-btn {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 4px 10px rgba(74, 144, 217, 0.25);
+}
+
+.player-controls-strip .control-btn.play-btn:hover {
+  background: #357abd;
+  border-color: #357abd;
+  color: #fff;
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 6px 14px rgba(74, 144, 217, 0.35);
+}
+
+.step-chip.done {
+  background: rgba(34, 197, 94, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #16a34a !important;
+}
+
+.step-chip.done .step-chip-num {
+  background: #22c55e !important;
+  color: #fff !important;
+}
+
+.step-chip.done:hover {
+  border-color: #22c55e !important;
+  color: #15803d !important;
+}
+
+.step-chip.active.done {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35) !important;
+}
+
+.step-chip.active.done .step-chip-num {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
