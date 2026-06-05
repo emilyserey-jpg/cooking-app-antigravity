@@ -1746,6 +1746,7 @@ a:focus-visible {
 .editor-carousel {
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden !important;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   width: 100%;
@@ -1764,7 +1765,7 @@ a:focus-visible {
   scroll-snap-stop: always;
   box-sizing: border-box;
   padding: 8px 12px 20px 12px;
-  overflow-y: auto;
+  overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
