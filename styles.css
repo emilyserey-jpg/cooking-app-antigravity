@@ -155,8 +155,10 @@ h1, h2, h3, h4, h5 {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-shrink: 0; /* avatar badge never shrinks */
+  gap: 0.75rem;
+  flex: 1;          /* take all space between logo and right edge */
+  min-width: 0;     /* allow flex children to shrink below natural size */
+  overflow: hidden; /* clip anything that overflows (tabs scroll internally) */
 }
 
 .view-tabs {
@@ -166,16 +168,17 @@ h1, h2, h3, h4, h5 {
   border-radius: var(--radius-pill);
   border: 2px solid var(--border-card);
   box-shadow: var(--shadow-xs);
-  /* scrollable when window is narrow */
+  /* fills available space, then scrolls horizontally */
+  flex: 1;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  flex-shrink: 1;
-  min-width: 0;
-  /* hide scrollbar track but keep scroll functionality */
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE/Edge */
+  /* hide the scrollbar track — still scrollable by touch/trackpad */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.view-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.view-tabs::-webkit-scrollbar { display: none; }
+
 
 .view-tab {
   padding: 7px 18px;
@@ -215,6 +218,8 @@ h1, h2, h3, h4, h5 {
   cursor: pointer;
   box-shadow: var(--shadow-xs);
   transition: box-shadow var(--ease-out);
+  flex-shrink: 0; /* never shrinks — always visible */
+  white-space: nowrap;
 }
 
 .user-profile-badge:hover { box-shadow: var(--shadow-sm); }
