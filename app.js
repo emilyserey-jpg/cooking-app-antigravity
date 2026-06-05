@@ -2521,6 +2521,9 @@ window.loadPlayerRecipe = async function(recipeId) {
   }
   isPlayerMultigridActive = false;
   playerSelectedSteps.clear();
+  if (typeof updateMultigridLayoutClass === 'function') {
+    updateMultigridLayoutClass();
+  }
   const toggleBtn = document.getElementById('playerMultigridToggleBtn');
   const container = document.getElementById('playerMultigridContainer');
   if (toggleBtn) {
@@ -4349,6 +4352,7 @@ window.togglePlayerMultigridMode = function() {
       canvas.style.display = 'block';
     }
     
+    updateMultigridLayoutClass();
     showTip("Returned to Single Player 🎬");
   }
 };
@@ -4408,10 +4412,23 @@ window.togglePlayerMultigridMute = function(event, idx) {
   if (window.lucide) lucide.createIcons();
 };
 
+function updateMultigridLayoutClass() {
+  const screen = document.querySelector('.phone-screen');
+  if (screen) {
+    if (isPlayerMultigridActive && playerGridLayout === 'row') {
+      screen.classList.add('multigrid-row-mode');
+    } else {
+      screen.classList.remove('multigrid-row-mode');
+    }
+  }
+}
+
 function renderPlayerMultigrid() {
   const tilesContainer = document.getElementById('playerMultigridTiles');
   const selectorList = document.getElementById('playerMultigridSelectorList');
   if (!tilesContainer || !recipeData || !recipeData.steps) return;
+  
+  updateMultigridLayoutClass();
   
   // Render selector checkboxes
   if (selectorList) {
@@ -4466,14 +4483,14 @@ function renderPlayerMultigrid() {
       scroll-snap-align: start;
     `;
     if (playerGridLayout === 'row') {
-      tile.style.width = '240px';
+      tile.style.width = '360px';
     } else {
       tile.style.width = '100%';
     }
 
     if (videoUrl) {
       tile.innerHTML = `
-        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:contain; display:block;"></video>
         <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
         
         <!-- Mute/Unmute floating button -->
@@ -4494,7 +4511,7 @@ function renderPlayerMultigrid() {
     } else {
       // Simulation mode fallback
       tile.innerHTML = `
-        <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:cover; display:block;"></canvas>
+        <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:contain; display:block;"></canvas>
         
         <!-- Step info badge -->
         <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
