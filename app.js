@@ -4639,6 +4639,11 @@ window.setKeyboardMode = function(mode) {
   const kbToggleIcon = document.getElementById('playerKbToggleIcon');
   const kbToggleBtn  = document.getElementById('playerKbToggleBtn');
 
+  const cKbToggleIcon = document.getElementById('createKbToggleIcon');
+  const cKbToggleBtn  = document.getElementById('createKbToggleBtn');
+  const navPrev = document.getElementById('navPrevBtn');
+  const navNext = document.getElementById('navNextBtn');
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
@@ -4653,6 +4658,21 @@ window.setKeyboardMode = function(mode) {
       kbToggleBtn.style.color = 'var(--text-body)';
       kbToggleBtn.style.borderColor = 'var(--border-card)';
     }
+
+    if (cKbToggleIcon && cKbToggleBtn) {
+      cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
+      cKbToggleBtn.style.color = 'var(--text-body)';
+      cKbToggleBtn.style.borderColor = 'var(--border-card)';
+    }
+
+    if (navPrev) {
+      navPrev.textContent = '←';
+      navPrev.title = 'Previous step (← key)';
+    }
+    if (navNext) {
+      navNext.textContent = '→';
+      navNext.title = 'Next step (→ key)';
+    }
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
@@ -4666,6 +4686,21 @@ window.setKeyboardMode = function(mode) {
       kbToggleBtn.style.background = 'var(--primary-soft)';
       kbToggleBtn.style.color = 'var(--primary-dark)';
       kbToggleBtn.style.borderColor = 'var(--primary)';
+    }
+
+    if (cKbToggleIcon && cKbToggleBtn) {
+      cKbToggleBtn.style.background = 'var(--primary-soft)';
+      cKbToggleBtn.style.color = 'var(--primary-dark)';
+      cKbToggleBtn.style.borderColor = 'var(--primary)';
+    }
+
+    if (navPrev) {
+      navPrev.textContent = '-1s';
+      navPrev.title = 'Rewind 1s (← key)';
+    }
+    if (navNext) {
+      navNext.textContent = '+1s';
+      navNext.title = 'Forward 1s (→ key)';
     }
   }
   if (window.lucide) lucide.createIcons();
@@ -4689,31 +4724,67 @@ window.togglePlayerKeyboardMode = function() {
   showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
 };
 
+window.toggleCreateKeyboardMode = function() {
+  window.togglePlayerKeyboardMode();
+};
+
+window.navOrScrub = function(dir) {
+  if (keyboardMode === 'steps') {
+    window.navStep(dir);
+  } else {
+    const vid = document.getElementById('uploadedVideoPlayer');
+    if (vid) {
+      vid.currentTime = Math.max(0, Math.min(vid.duration || Infinity, vid.currentTime + dir));
+    }
+  }
+};
+
 // Flash the on-screen arrow button briefly when keyboard triggers it
 function flashNavBtn(dir) {
   const btn = document.getElementById(dir < 0 ? 'navPrevBtn' : 'navNextBtn');
-  if (!btn) return;
+  if (!btn || btn.dataset.isFlashing === 'true') return;
+  
+  btn.dataset.isFlashing = 'true';
+  const origBg = btn.style.background;
+  const origColor = btn.style.color;
   btn.style.background = 'var(--primary)';
   btn.style.color = '#fff';
-  setTimeout(() => { btn.style.background = 'var(--bg-card-soft)'; btn.style.color = ''; }, 180);
+  
+  setTimeout(() => {
+    btn.style.background = origBg || 'var(--bg-card-soft)';
+    btn.style.color = origColor || '';
+    btn.dataset.isFlashing = 'false';
+  }, 180);
 }
 
 // Flash the mobile player control button briefly when keyboard triggers it
 function flashPlayerBtn(btnId) {
   const btn = document.getElementById(btnId);
-  if (!btn) return;
+  if (!btn || btn.dataset.isFlashing === 'true') return;
+  
+  btn.dataset.isFlashing = 'true';
   const origBg = btn.style.background;
   const origColor = btn.style.color;
   const origTransform = btn.style.transform;
   btn.style.background = 'var(--primary)';
   btn.style.color = '#fff';
   btn.style.transform = 'scale(0.9)';
+  
   setTimeout(() => {
-    btn.style.background = origBg;
-    btn.style.color = origColor;
-    btn.style.transform = origTransform;
+    btn.style.background = origBg || '';
+    btn.style.color = origColor || '';
+    btn.style.transform = origTransform || '';
+    btn.dataset.isFlashing = 'false';
   }, 180);
 }
+
+// Global button focus management: blur buttons after clicking so keyboard shortcuts aren't hijacked by browser focus
+document.addEventListener('click', function(e) {
+  const activeEl = document.activeElement;
+  if (activeEl && (activeEl.tagName === 'BUTTON' || activeEl.tagName === 'A' || activeEl.classList.contains('control-btn'))) {
+    activeEl.blur();
+  }
+});
 
 // ── Global arrow-key handler (active on Create page & Player page) ──────────────
 document.addEventListener('keydown', function(e) {
@@ -4730,13 +4801,8 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowLeft') {
     e.preventDefault();
     if (isCreateActive) {
-      if (keyboardMode === 'steps') {
-        flashNavBtn(-1);
-        window.navStep(-1);
-      } else {
-        const vid = document.getElementById('uploadedVideoPlayer');
-        if (vid) { vid.currentTime = Math.max(0, vid.currentTime - 1); flashNavBtn(-1); }
-      }
+      flashNavBtn(-1);
+      window.navOrScrub(-1);
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
       const hasRealVideo = vid && vid.style.display !== 'none';
@@ -4759,13 +4825,8 @@ document.addEventListener('keydown', function(e) {
   } else if (e.key === 'ArrowRight') {
     e.preventDefault();
     if (isCreateActive) {
-      if (keyboardMode === 'steps') {
-        flashNavBtn(1);
-        window.navStep(1);
-      } else {
-        const vid = document.getElementById('uploadedVideoPlayer');
-        if (vid) { vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1); flashNavBtn(1); }
-      }
+      flashNavBtn(1);
+      window.navOrScrub(1);
     } else if (isPlayerActive) {
       const vid = document.getElementById('mobileRealVideo');
       const hasRealVideo = vid && vid.style.display !== 'none';
@@ -4907,7 +4968,9 @@ window.previewStepLoop = function(i) {
 
   const labelEl = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
+  const loopBtn = document.getElementById('previewLoopBtn');
   if (labelEl) labelEl.style.display  = 'inline';
+  if (loopBtn) loopBtn.style.display   = 'none';
   if (stopBtn) stopBtn.style.display  = 'inline-block';
 
   // Use timeupdate (fires ~4× per second) for precise boundary detection
@@ -4934,8 +4997,10 @@ window.stopPreviewLoop = function() {
   }
   const labelEl = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
+  const loopBtn = document.getElementById('previewLoopBtn');
   if (labelEl) labelEl.style.display  = 'none';
   if (stopBtn) stopBtn.style.display  = 'none';
+  if (loopBtn) loopBtn.style.display   = 'inline-block';
 };
 
 // ── Drag to reorder ────────────────────────────────────────────────────────
