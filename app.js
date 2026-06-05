@@ -2805,6 +2805,7 @@ function libLoad() {
     libState.customOrder = [];
   }
   if (!libState.sort) libState.sort = 'az';
+  if (!libState.layout) libState.layout = 'grid';
 }
 
 function libSave() {
@@ -2883,6 +2884,7 @@ async function renderLibrary() {
 
     libRenderContent();
     libUpdateSortBtns();
+    libUpdateLayoutBtns();
   } catch (err) {
     console.error('renderLibrary error:', err);
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:#ef4444;font-family:var(--font);">
@@ -2962,7 +2964,14 @@ function libRenderContent() {
         ${q ? 'No recipes match your search' : 'All recipes are inside folders'}
       </div>`;
     } else {
-      html += `<div style="display:flex;flex-direction:column;gap:10px;" id="libLooseList">`;
+      const layout = libState.layout || 'grid';
+      let containerStyle = '';
+      if (layout === 'grid') {
+        containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;`;
+      } else {
+        containerStyle = `display:flex;flex-direction:column;gap:10px;`;
+      }
+      html += `<div style="${containerStyle}" id="libLooseList">`;
       loose.forEach(r => { if (r) html += libRecipeCardHTML(r, null); });
       html += `</div>`;
     }
@@ -3019,13 +3028,19 @@ function libRecipeCardHTML(r, folderId) {
     ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : '';
   const isDrag = libState.sort === 'custom';
+  const layout = libState.layout || 'grid';
 
   const removeBtn = folderId
     ? `<button onclick="event.stopPropagation();libRemoveFromFolder('${r.id}','${folderId}')" title="Move to loose"
-         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">&#x21A9; Remove</button>`
+         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">&#x21A9; Remove</button>`
     : '';
 
-  // Thumbnail: real image, video preview, or dark gradient placeholder
+  const deleteBtn = !folderId
+    ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete recipe"
+         style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">🗑️ Delete</button>`
+    : '';
+
+  // Thumbnail markup
   let thumbHtml = '';
   if (r.thumbnail_url) {
     thumbHtml = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
@@ -3043,44 +3058,130 @@ function libRecipeCardHTML(r, folderId) {
     ? `draggable="true" ondragstart="libOnDragStart(event,'recipe','${r.id}')"`
     : '';
 
-  return `
-    <div class="lib-recipe-card" id="libR_${r.id}"
-      style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;
-             cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"
-      onclick="libOpenRecipe('${r.id}')"
-      ${dragAttr}
-      onmouseenter="this.style.boxShadow='0 6px 22px rgba(74,144,217,0.16)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"
-      onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">
-
-      <!-- Thumbnail strip -->
-      <div style="position:relative;height:130px;background:#111;overflow:hidden;">
-        ${thumbHtml}
-        ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
-        <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
-          <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.15rem;">▶</div>
-        </div>
-      </div>
-
-      <!-- Info row -->
-      <div style="padding:10px 12px;display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:900;font-size:0.88rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">${r.title || 'Untitled'}</div>
-          <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;">
-            ${privBadge}
-            ${date ? `<span>${date}</span>` : ''}
+  if (layout === 'grid') {
+    return `
+      <div class="lib-recipe-card" id="libR_${r.id}"
+        style="background:#fff;border-radius:16px;border:2px solid var(--border-card);overflow:hidden;
+               cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;position:relative;"
+        onclick="libOpenRecipe('${r.id}')"
+        ${dragAttr}
+        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(74,144,217,0.14)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"
+        onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">
+        
+        <!-- Thumbnail -->
+        <div style="position:relative;height:140px;background:#111;overflow:hidden;flex-shrink:0;">
+          ${thumbHtml}
+          ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
+          <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">▶</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+
+        <!-- Info Body -->
+        <div style="padding:12px;flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
+          <div>
+            <div style="font-weight:900;font-size:0.86rem;color:var(--text-heading);margin-bottom:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:2.6rem;">${r.title || 'Untitled'}</div>
+            <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              ${privBadge}
+              ${date ? `<span>• ${date}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;" onclick="event.stopPropagation()">
+            ${removeBtn}
+            ${deleteBtn}
+            ${isDrag && !folderId ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (layout === 'list') {
+    return `
+      <div class="lib-recipe-card" id="libR_${r.id}"
+        style="background:#fff;border-radius:14px;border:2px solid var(--border-card);overflow:hidden;
+               cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;display:flex;align-items:stretch;position:relative;"
+        onclick="libOpenRecipe('${r.id}')"
+        ${dragAttr}
+        onmouseenter="this.style.boxShadow='0 6px 20px rgba(74,144,217,0.12)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"
+        onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">
+        
+        <!-- Thumbnail on the left -->
+        <div style="position:relative;width:150px;min-height:95px;background:#111;overflow:hidden;flex-shrink:0;">
+          ${thumbHtml}
+          ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
+          <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1rem;">▶</div>
+          </div>
+        </div>
+
+        <!-- Info on the right -->
+        <div style="padding:12px 16px;flex:1;display:flex;justify-content:space-between;align-items:center;gap:12px;min-width:0;">
+          <div style="min-width:0;">
+            <div style="font-weight:900;font-size:0.92rem;color:var(--text-heading);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title || 'Untitled'}</div>
+            <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:8px;align-items:center;">
+              ${privBadge}
+              ${date ? `<span>• ${date}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+            ${removeBtn}
+            ${deleteBtn}
+            ${isDrag && !folderId
+              ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:4px 8px;">⠿</div>`
+              : `<span style="font-size:0.85rem;color:var(--text-muted);padding:4px 8px;">›</span>`}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Compact layout
+  return `
+    <div class="lib-recipe-card" id="libR_${r.id}"
+      style="background:#fff;border-radius:10px;border:2px solid var(--border-card);overflow:hidden;
+             cursor:pointer;transition:background 0.1s,border-color 0.1s;display:flex;align-items:center;padding:6px 12px;position:relative;"
+      onclick="libOpenRecipe('${r.id}')"
+      ${dragAttr}
+      onmouseenter="this.style.borderColor='var(--primary)';this.style.background='var(--bg-card-soft)';"
+      onmouseleave="this.style.borderColor='var(--border-card)';this.style.background='#fff';">
+      
+      <!-- Tiny thumbnail representation -->
+      <div style="width:36px;height:36px;border-radius:6px;background:#111;overflow:hidden;flex-shrink:0;margin-right:10px;display:flex;align-items:center;justify-content:center;position:relative;">
+        ${r.thumbnail_url 
+          ? `<img src="${encodeURI(r.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover;">`
+          : (r.video_url
+             ? `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>`
+             : `<div style="font-size:1rem;">🎬</div>`
+            )}
+      </div>
+
+      <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div style="font-weight:900;font-size:0.82rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;">${r.title || 'Untitled'}</div>
+          ${privBadge}
+          ${mins ? `<span style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">(${mins})</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
           ${removeBtn}
+          ${deleteBtn}
           ${isDrag && !folderId
-            ? `<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">⠿</div>`
-            : `<span style="font-size:0.85rem;color:var(--text-muted);">›</span>`}
+            ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>`
+            : `<span style="font-size:0.8rem;color:var(--text-muted);padding:2px 6px;">›</span>`}
         </div>
       </div>
     </div>`;
 }
 
-
+window.libDeleteRecipe = async function(id) {
+  if (!confirm('Are you sure you want to delete this recipe permanently?')) return;
+  try {
+    const { deleteRecipeById } = await import('./supabase-client.js');
+    await deleteRecipeById(id);
+    showTip('Recipe deleted 🗑️');
+    renderLibrary();
+  } catch (err) {
+    showTip('Could not delete recipe: ' + err.message);
+  }
+};
 
 function libEmptyState(q) {
   if (q) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
@@ -3110,13 +3211,14 @@ function libRenderFolderView(content) {
   const f = libGetFolder(libOpenFolderId);
   if (!f) { libOpenFolderId = null; libRenderContent(); return; }
 
-  const recipes = libAllRecipes.filter(r => (f.recipeIds||[]).includes(r.id));
+  const recipes = libAllRecipes.filter(r => r && (f.recipeIds||[]).includes(r.id));
   const q = libSearchQuery.toLowerCase();
-  const filtered = q ? recipes.filter(r => (r.title||'').toLowerCase().includes(q)) : recipes;
+  const filtered = q ? recipes.filter(r => r && (r.title||'').toLowerCase().includes(q)) : recipes;
 
   // Find loose recipes NOT already in this folder for the "Add" picker
-  const allFolderIds = new Set(libState.folders.flatMap(ff => ff.recipeIds||[]));
-  const addable = libAllRecipes.filter(r => !allFolderIds.has(r.id));
+  const folders = (libState.folders || []).filter(ff => ff && typeof ff === 'object');
+  const allFolderIds = new Set(folders.flatMap(ff => ff.recipeIds||[]));
+  const addable = libAllRecipes.filter(r => r && !allFolderIds.has(r.id));
 
   let html = `
     <!-- Back + folder header -->
@@ -3150,8 +3252,15 @@ function libRenderFolderView(content) {
       <div style="font-weight:700;font-size:0.88rem;">${q ? 'No matching recipes' : 'This folder is empty — add recipes above'}</div>
     </div>`;
   } else {
-    html += `<div style="display:flex;flex-direction:column;gap:10px;">`;
-    filtered.forEach(r => { html += libRecipeCardHTML(r, f.id); });
+    const layout = libState.layout || 'grid';
+    let containerStyle = '';
+    if (layout === 'grid') {
+      containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;`;
+    } else {
+      containerStyle = `display:flex;flex-direction:column;gap:10px;`;
+    }
+    html += `<div style="${containerStyle}">`;
+    filtered.forEach(r => { if (r) html += libRecipeCardHTML(r, f.id); });
     html += `</div>`;
   }
 
@@ -3204,6 +3313,31 @@ function libUpdateSortBtns() {
     'custom': 'libSortCustom'
   };
   ['az','za','custom'].forEach(m => {
+    const btn = document.getElementById(idMap[m]);
+    if (!btn) return;
+    const active = m === mode;
+    btn.style.background = active ? 'var(--primary)' : 'transparent';
+    btn.style.color      = active ? '#fff' : 'var(--text-muted)';
+  });
+}
+
+// ── Layout ────────────────────────────────────────────────────────────────
+window.libSetLayout = function(mode) {
+  if (!libState) libLoad();
+  libState.layout = mode;
+  libSave();
+  libUpdateLayoutBtns();
+  libRenderContent();
+};
+
+function libUpdateLayoutBtns() {
+  const mode = libState?.layout || 'grid';
+  const idMap = {
+    'grid': 'libLayoutGrid',
+    'list': 'libLayoutList',
+    'compact': 'libLayoutCompact'
+  };
+  ['grid','list','compact'].forEach(m => {
     const btn = document.getElementById(idMap[m]);
     if (!btn) return;
     const active = m === mode;

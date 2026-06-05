@@ -201,6 +201,15 @@
             <button id="libSortCustom" onclick="libSetSort('custom')"
               style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">✦ Custom</button>
           </div>
+          <!-- Layout pills -->
+          <div style="display:flex;background:var(--bg-card-soft);border-radius:10px;border:2px solid var(--border-card);overflow:hidden;flex-shrink:0;">
+            <button id="libLayoutGrid" onclick="libSetLayout('grid')" title="Grid View"
+              style="padding:8px 13px;border:none;background:var(--primary);color:#fff;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">⊞ Grid</button>
+            <button id="libLayoutList" onclick="libSetLayout('list')" title="List View"
+              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">☰ List</button>
+            <button id="libLayoutCompact" onclick="libSetLayout('compact')" title="Compact View"
+              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">▤ Compact</button>
+          </div>
         </div>
 
         <!-- ── Main library content ── -->
