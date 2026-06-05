@@ -3406,13 +3406,22 @@ function renderTimeline() {
     // Full-height colored chapter band — label inside
     const band = document.createElement('div');
     band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:1;overflow:hidden;border-right:2px solid rgba(255,255,255,0.5);box-sizing:border-box;`;
-    // Number badge + label inside the band
+    // Number badge + label + delete button inside the band
     band.innerHTML = `
-      <div style="padding:3px 5px;display:flex;flex-direction:column;gap:1px;height:100%;">
-        <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1;">${i+1}</div>
+      <div style="padding:3px 5px;display:flex;flex-direction:column;gap:1px;height:100%;position:relative;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1;">${i+1}</div>
+          <button onclick="event.stopPropagation();removeCreateStep(${i})"
+            title="Delete stop ${i+1}"
+            style="background:rgba(200,0,0,0.15);border:none;border-radius:3px;width:14px;height:14px;font-size:0.65rem;font-weight:900;color:rgba(180,0,0,0.8);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity 0.15s;flex-shrink:0;line-height:1;"
+            class="band-delete-btn">×</button>
+        </div>
         <div style="font-size:0.6rem;font-weight:800;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
         <div style="font-size:0.5rem;font-weight:600;color:rgba(20,20,50,0.55);margin-top:auto;">${step.displayTime}</div>
       </div>`;
+    // Show delete button on hover
+    band.addEventListener('mouseenter', () => { const b = band.querySelector('.band-delete-btn'); if (b) b.style.opacity = '1'; });
+    band.addEventListener('mouseleave', () => { const b = band.querySelector('.band-delete-btn'); if (b) b.style.opacity = '0'; });
     markers.appendChild(band);
 
     // Draggable handle — thin vertical divider with circle dot at top
@@ -3631,7 +3640,9 @@ function renderCreateSteps() {
           <div style="width:18px;height:18px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#446;flex-shrink:0;">${i+1}</div>
           <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
             style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.75rem;font-weight:800;color:var(--text-heading);outline:none;">
-          <button onclick="removeCreateStep(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:0;flex-shrink:0;">×</button>
+          <button onclick="removeCreateStep(${i})" title="Delete this stop"
+            style="background:none;border:1px solid rgba(180,0,0,0.2);border-radius:4px;cursor:pointer;color:#c00;font-size:0.8rem;padding:0 4px;flex-shrink:0;line-height:1.4;font-weight:900;"
+            onmouseenter="this.style.background='rgba(200,0,0,0.1)'" onmouseleave="this.style.background='none'">×</button>
         </div>
         <div style="font-size:0.58rem;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;">${step.displayTime} → ${em}:${es}</div>
         <textarea placeholder="Add notes for this step…" rows="3"
