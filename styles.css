@@ -1240,3 +1240,111 @@ h1, h2, h3, h4, h5 {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ====================================================
+   DESKTOP RESPONSIVE PLAYER LAYOUT
+   ==================================================== */
+@media (min-width: 768px) {
+  .player-mobile-wrapper {
+    max-width: 1000px !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .phone-notch {
+    display: none !important;
+  }
+
+  .phone-screen {
+    padding-top: 0 !important;
+    background: transparent !important;
+    display: grid !important;
+    grid-template-columns: 1.25fr 1fr !important;
+    gap: 24px !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Left Side Column: Video + Modes + Controls */
+  .mobile-video-container {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+  }
+
+  .mode-selector-strip {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    margin-top: 12px !important;
+  }
+
+  .desktop-player-controls {
+    display: flex !important;
+    grid-column: 1 !important;
+    grid-row: 3 !important;
+    margin-top: 8px !important;
+  }
+
+  /* Right Side Column: Active Step Card + Chips Scroll List */
+  .mobile-player-body {
+    grid-column: 2 !important;
+    grid-row: 1 / span 3 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    height: 100% !important;
+    min-height: 500px !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .step-card-active {
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .step-nav-chips-container {
+    flex: 1 !important;
+    margin-top: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 350px !important;
+  }
+
+  .chips-scroll-x {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding-right: 6px !important;
+    white-space: normal !important;
+    scrollbar-width: thin !important;
+  }
+
+  /* Make chips render vertically like a checklist on desktop */
+  .chips-scroll-x .step-chip {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Hide mobile-only footer on desktop */
+  .mobile-player-footer {
+    display: none !important;
+  }
+
+  /* Position floating mic badge nicely next to player */
+  .voice-assistant-fab {
+    bottom: 24px !important;
+    right: 24px !important;
+  }
+}

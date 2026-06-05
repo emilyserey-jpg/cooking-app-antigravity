@@ -32,7 +32,7 @@
       <!-- Tabs to switch between view formats -->
       <div class="view-tabs">
         <button class="view-tab" onclick="switchView('mobile-player')">
-          <i data-lucide="smartphone"></i> Player
+          <i data-lucide="play-circle"></i> Player
         </button>
         <button class="view-tab" onclick="switchView('discover')">
           <i data-lucide="compass"></i> Discover
@@ -73,9 +73,9 @@
           <div class="mobile-video-container">
             <div class="mobile-video-placeholder">
               <!-- Animated Canvas representing video playback -->
-              <canvas id="mobileVideoCanvas" class="video-element-sim"></canvas>
+              <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
               <!-- Real Video Player -->
-              <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000;" playsinline></video>
+              <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline></video>
               
               <!-- Badges -->
               <div class="playback-controls-overlay">
@@ -100,6 +100,19 @@
             <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')">Loop</button>
             <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')">Wait</button>
             <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')">Continuous</button>
+          </div>
+
+          <!-- Desktop Player Controls (visible on desktop only) -->
+          <div class="desktop-player-controls" style="display:none; justify-content:center; align-items:center; gap:12px; margin-top:8px;">
+            <button onclick="desktopPlayerPrev()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
+              ⏮ Prev Step
+            </button>
+            <button id="desktopPlayPauseBtn" onclick="toggleVideoPlayback()" class="btn btn-primary" style="padding:10px 24px; font-weight:900; font-family:var(--font); border-radius:999px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(74,144,217,0.25); font-size:0.85rem;">
+              ▶ Play
+            </button>
+            <button onclick="desktopPlayerNext()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
+              Next Step ⏭
+            </button>
           </div>
 
           <!-- Mobile App Body -->

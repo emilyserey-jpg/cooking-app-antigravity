@@ -466,11 +466,17 @@ function updateControlsUI() {
     lucide.createIcons({attrs: {class: 'phone-play-pause-icon'}});
   }
   
-  // Desktop play btn
+  // Desktop play btn (workbench)
   const dPlayIcon = document.getElementById('desktopPlayIcon');
   if (dPlayIcon) {
     dPlayIcon.setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
     lucide.createIcons();
+  }
+
+  // Desktop player play btn
+  const dPlayPauseBtn = document.getElementById('desktopPlayPauseBtn');
+  if (dPlayPauseBtn) {
+    dPlayPauseBtn.innerHTML = isPlaying ? '⏸ Pause' : '▶ Play';
   }
 }
 
@@ -3548,6 +3554,20 @@ window.switchSidebarTab      = switchSidebarTab;
 window.toggleVideoPlayback   = toggleVideoPlayback;
 window.setPlaybackMode       = setPlaybackMode;
 window.seekToStep            = seekToStep;
+window.desktopPlayerNext     = function() {
+  if (activeStepIndex < recipeData.steps.length - 1) {
+    seekToStep(activeStepIndex + 1);
+  } else {
+    showTip("Last step reached.");
+  }
+};
+window.desktopPlayerPrev     = function() {
+  if (activeStepIndex > 0) {
+    seekToStep(activeStepIndex - 1);
+  } else {
+    showTip("First step reached.");
+  }
+};
 window.toggleBentoEditMode   = toggleBentoEditMode;
 window.matchBentoSizes       = matchBentoSizes;
 window.openWidgetRecipe      = openWidgetRecipe;
