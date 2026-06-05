@@ -7038,7 +7038,6 @@ window.setupResponsiveDrawers = function() {
   if (isMobile) {
     if (slideDetails) {
       if (titleCard && titleCard.parentElement !== slideDetails) slideDetails.appendChild(titleCard);
-      if (coverCard && coverCard.parentElement !== slideDetails) slideDetails.appendChild(coverCard);
       if (visibilityCard && visibilityCard.parentElement !== slideDetails) slideDetails.appendChild(visibilityCard);
     }
     if (slideAI && aiSection && aiSection.parentElement !== slideAI) {
@@ -7048,6 +7047,7 @@ window.setupResponsiveDrawers = function() {
       slideStops.appendChild(stopsSection);
     }
     if (slideSave) {
+      if (coverCard && coverCard.parentElement !== slideSave) slideSave.appendChild(coverCard);
       if (saveBtn && saveBtn.parentElement !== slideSave) slideSave.appendChild(saveBtn);
       if (saveDraftBtn && saveDraftBtn.parentElement !== slideSave) slideSave.appendChild(saveDraftBtn);
     }
