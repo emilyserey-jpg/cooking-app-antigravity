@@ -2515,6 +2515,20 @@ window.loadPlayerRecipe = async function(recipeId) {
   activePlayerRecipeId = recipeId;
   localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
 
+  // Reset player multigrid state on new recipe load
+  if (typeof stopAllPlayerMultigridLoops === 'function') {
+    stopAllPlayerMultigridLoops();
+  }
+  isPlayerMultigridActive = false;
+  playerSelectedSteps.clear();
+  const toggleBtn = document.getElementById('playerMultigridToggleBtn');
+  const container = document.getElementById('playerMultigridContainer');
+  if (toggleBtn) {
+    toggleBtn.style.background = 'rgba(0,0,0,0.5)';
+    toggleBtn.style.color = '#fff';
+  }
+  if (container) container.style.display = 'none';
+
   // Ensure voice guide is deactivated by default when opening a new recipe
   if (currentSpeechActive && recognition) {
     try {
@@ -4274,6 +4288,263 @@ window.desktopPlayerPrev     = function() {
     showTip("Beginning of video reached.");
   }
 };
+
+// ============================================================
+// MULTIGRID VIDEO PLAYER (Row vs Quad)
+// ============================================================
+let isPlayerMultigridActive = false;
+let playerGridLayout = 'quad'; // 'row' | 'quad'
+let playerSelectedSteps = new Set();
+let playerMultigridIntervals = {};
+let playerMultigridHlsInstances = {};
+
+window.togglePlayerMultigridMode = function() {
+  isPlayerMultigridActive = !isPlayerMultigridActive;
+  const toggleBtn = document.getElementById('playerMultigridToggleBtn');
+  const container = document.getElementById('playerMultigridContainer');
+  const canvas = document.getElementById('mobileVideoCanvas');
+  const realVideo = document.getElementById('mobileRealVideo');
+  
+  if (toggleBtn) {
+    if (isPlayerMultigridActive) {
+      toggleBtn.style.background = 'var(--primary)';
+      toggleBtn.style.color = '#fff';
+    } else {
+      toggleBtn.style.background = 'rgba(0,0,0,0.5)';
+      toggleBtn.style.color = '#fff';
+    }
+  }
+
+  if (isPlayerMultigridActive) {
+    // Initialize selected steps if empty
+    if (playerSelectedSteps.size === 0 && recipeData && recipeData.steps) {
+      recipeData.steps.forEach((_, idx) => playerSelectedSteps.add(idx));
+    }
+    
+    // Pause and hide single player
+    if (realVideo) {
+      realVideo.pause();
+      realVideo.style.display = 'none';
+    }
+    if (canvas) canvas.style.display = 'none';
+    
+    // Show grid
+    if (container) container.style.display = 'block';
+    
+    renderPlayerMultigrid();
+    showTip("Entered Multigrid Mode 🖥️");
+  } else {
+    // Stop grid loops
+    stopAllPlayerMultigridLoops();
+    
+    // Hide grid
+    if (container) container.style.display = 'none';
+    
+    // Restore single player
+    if (recipeData.video_url && realVideo) {
+      realVideo.style.display = 'block';
+    } else if (canvas) {
+      canvas.style.display = 'block';
+    }
+    
+    showTip("Returned to Single Player 🎬");
+  }
+};
+
+window.setPlayerGridLayout = function(layout) {
+  playerGridLayout = layout;
+  const rowBtn = document.getElementById('playerLayoutRowBtn');
+  const quadBtn = document.getElementById('playerLayoutQuadBtn');
+  
+  if (rowBtn) {
+    rowBtn.style.background = layout === 'row' ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+  }
+  if (quadBtn) {
+    quadBtn.style.background = layout === 'quad' ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+  }
+
+  renderPlayerMultigrid();
+};
+
+window.togglePlayerMultigridStep = function(idx) {
+  if (playerSelectedSteps.has(idx)) {
+    if (playerSelectedSteps.size <= 1) {
+      showTip("Please keep at least one step selected.");
+      renderPlayerMultigrid();
+      return;
+    }
+    playerSelectedSteps.delete(idx);
+  } else {
+    playerSelectedSteps.add(idx);
+  }
+  renderPlayerMultigrid();
+};
+
+window.togglePlayerMultigridMute = function(event, idx) {
+  if (event) event.stopPropagation();
+  const video = document.getElementById(`playerMultigridVid_${idx}`);
+  const btn = document.getElementById(`playerMultigridMuteBtn_${idx}`);
+  if (!video || !btn) return;
+  video.muted = !video.muted;
+  
+  if (video.muted) {
+    btn.innerHTML = `<i data-lucide="volume-x" style="width:12px; height:12px;"></i>`;
+  } else {
+    // Mute all other videos in the grid first
+    if (recipeData && recipeData.steps) {
+      recipeData.steps.forEach((_, otherIdx) => {
+        if (otherIdx !== idx) {
+          const otherVid = document.getElementById(`playerMultigridVid_${otherIdx}`);
+          const otherBtn = document.getElementById(`playerMultigridMuteBtn_${otherIdx}`);
+          if (otherVid) otherVid.muted = true;
+          if (otherBtn) otherBtn.innerHTML = `<i data-lucide="volume-x" style="width:12px; height:12px;"></i>`;
+        }
+      });
+    }
+    btn.innerHTML = `<i data-lucide="volume-2" style="width:12px; height:12px;"></i>`;
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+function renderPlayerMultigrid() {
+  const tilesContainer = document.getElementById('playerMultigridTiles');
+  const selectorList = document.getElementById('playerMultigridSelectorList');
+  if (!tilesContainer || !recipeData || !recipeData.steps) return;
+  
+  // Render selector checkboxes
+  if (selectorList) {
+    selectorList.innerHTML = recipeData.steps.map((step, idx) => {
+      const checked = playerSelectedSteps.has(idx) ? 'checked' : '';
+      return `
+        <label style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font); font-size:0.68rem; font-weight:800; color:#fff; background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:999px; cursor:pointer; user-select:none; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+          <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="accent-color:var(--primary); cursor:pointer;" />
+          Step ${idx + 1}
+        </label>
+      `;
+    }).join('');
+  }
+
+  // Clean up existing loops
+  stopAllPlayerMultigridLoops();
+  tilesContainer.innerHTML = '';
+  
+  // Apply layout styles
+  if (playerGridLayout === 'row') {
+    tilesContainer.style.display = 'flex';
+    tilesContainer.style.flexDirection = 'row';
+    tilesContainer.style.overflowX = 'auto';
+    tilesContainer.style.overflowY = 'hidden';
+    tilesContainer.style.flexWrap = 'nowrap';
+    tilesContainer.style.scrollSnapType = 'x mandatory';
+  } else {
+    tilesContainer.style.display = 'grid';
+    tilesContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    tilesContainer.style.overflowX = 'hidden';
+    tilesContainer.style.overflowY = 'auto';
+  }
+
+  const videoUrl = recipeData.video_url;
+  if (!videoUrl) {
+    tilesContainer.innerHTML = `<div style="color:rgba(255,255,255,0.5);font-size:0.75rem;padding:20px;text-align:center;width:100%;">No video available for this recipe.</div>`;
+    return;
+  }
+
+  recipeData.steps.forEach((step, idx) => {
+    if (!playerSelectedSteps.has(idx)) return;
+    
+    const startTime = recipeData.loops[idx] || 0;
+    const endTime = recipeData.loops[idx + 1] || recipeData.duration;
+    
+    const tile = document.createElement('div');
+    tile.className = 'multigrid-tile';
+    tile.style.cssText = `
+      position: relative;
+      background: #0f172a;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      aspect-ratio: 16/9;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    `;
+    if (playerGridLayout === 'row') {
+      tile.style.width = '240px';
+    } else {
+      tile.style.width = '100%';
+    }
+
+    tile.innerHTML = `
+      <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+      <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
+      
+      <!-- Mute/Unmute floating button -->
+      <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+        <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
+      </button>
+
+      <!-- Step info badge -->
+      <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
+        ${idx + 1}. ${step.title || 'Step'}
+      </div>
+    `;
+    tilesContainer.appendChild(tile);
+    if (window.lucide) lucide.createIcons();
+
+    const video = tile.querySelector('video');
+    setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime);
+  });
+}
+
+function setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime) {
+  const overlay = document.getElementById(`playerMultigridOverlay_${idx}`);
+  if (!video || !videoUrl) return;
+
+  if (videoUrl.includes('.m3u8')) {
+    if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({ maxBufferLength: 5 });
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      playerMultigridHlsInstances[idx] = hls;
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.currentTime = startTime;
+        video.play().catch(() => {});
+        if (overlay) overlay.style.display = 'none';
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = videoUrl;
+      video.currentTime = startTime;
+      video.play().catch(() => {});
+      if (overlay) overlay.style.display = 'none';
+    }
+  } else {
+    video.src = videoUrl;
+    video.currentTime = startTime;
+    video.play().catch(() => {});
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  const loopEnd = endTime ?? Infinity;
+  const intervalId = setInterval(() => {
+    if (!video || video.paused) return;
+    if (video.currentTime >= loopEnd - 0.1) {
+      video.currentTime = startTime;
+    }
+  }, 150);
+  playerMultigridIntervals[idx] = intervalId;
+}
+
+function stopAllPlayerMultigridLoops() {
+  for (const key in playerMultigridIntervals) {
+    clearInterval(playerMultigridIntervals[key]);
+  }
+  playerMultigridIntervals = {};
+
+  for (const key in playerMultigridHlsInstances) {
+    playerMultigridHlsInstances[key].destroy();
+  }
+  playerMultigridHlsInstances = {};
+}
+
 window.toggleBentoEditMode   = toggleBentoEditMode;
 window.matchBentoSizes       = matchBentoSizes;
 window.openWidgetRecipe      = openWidgetRecipe;

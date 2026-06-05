@@ -88,8 +88,12 @@
                   <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Edit
                 </button>
                 
-                <!-- Badges -->
-                <div class="playback-controls-overlay">
+                <!-- Badges & Grid Controls -->
+                <div class="playback-controls-overlay" style="align-items: center; gap: 8px;">
+                  <!-- Floating Multigrid Toggle Button -->
+                  <button id="playerMultigridToggleBtn" onclick="window.togglePlayerMultigridMode()" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+                    <i id="playerMultigridIcon" data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> <span id="playerMultigridBtnText">Multigrid</span>
+                  </button>
                   <span id="activeModeBadge" class="mode-badge loop">
                     <i data-lucide="repeat"></i> Loop Mode
                   </span>
@@ -98,6 +102,28 @@
                 <div class="video-overlay-details">
                   <span id="videoTimeReadout">0:00 / 6:00</span>
                   <span id="activeSpeedBadge">1.0x</span>
+                </div>
+
+                <!-- Multigrid Container (hidden by default) -->
+                <div id="playerMultigridContainer" style="display:none; position:absolute; inset:0; z-index:4; overflow-y:auto; background:#0f172a; padding:8px; box-sizing:border-box;">
+                  <!-- Grid layout controls (Layout: Row | Quad) -->
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
+                    <div style="display:flex; gap:6px;">
+                      <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="background:rgba(255,255,255,0.15); color:#fff; border:none; padding:4px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s;">Row Layout</button>
+                      <button onclick="window.setPlayerGridLayout('quad')" id="playerLayoutQuadBtn" style="background:var(--primary); color:#fff; border:none; padding:4px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s;">Quad Layout</button>
+                    </div>
+                  </div>
+                  <!-- Pick Sections (Horizontal scroll list of step checkboxes) -->
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;">
+                    <span style="font-size:0.62rem; font-weight:800; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.05em; margin-right:4px;">Show steps:</span>
+                    <div id="playerMultigridSelectorList" style="display:inline-flex; gap:6px;">
+                      <!-- Dynamic check toggles -->
+                    </div>
+                  </div>
+                  <!-- Grid of video tiles -->
+                  <div id="playerMultigridTiles" style="display:grid; gap:8px; grid-template-columns: 1fr;">
+                    <!-- Dynamically generated video tiles -->
+                  </div>
                 </div>
                 
                 <!-- Video Error Overlay -->
