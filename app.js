@@ -6184,8 +6184,23 @@ async function captureThumbnail(videoEl) {
   if (!videoEl || !videoEl.videoWidth) return null;
   try {
     const canvas = document.createElement('canvas');
-    canvas.width  = Math.min(videoEl.videoWidth,  640);
-    canvas.height = Math.min(videoEl.videoHeight, 360);
+    const maxDim = 640;
+    let w = videoEl.videoWidth;
+    let h = videoEl.videoHeight;
+    const ratio = w / h;
+    if (w > h) {
+      if (w > maxDim) {
+        w = maxDim;
+        h = Math.round(maxDim / ratio);
+      }
+    } else {
+      if (h > maxDim) {
+        h = maxDim;
+        w = Math.round(maxDim * ratio);
+      }
+    }
+    canvas.width  = w;
+    canvas.height = h;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
     return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/jpeg', 0.82));
@@ -6302,8 +6317,23 @@ window.captureLocalVideoPreview = function() {
   if (videoEl && videoEl.videoWidth > 0 && previewImg && placeholder) {
     try {
       const canvas = document.createElement('canvas');
-      canvas.width  = Math.min(videoEl.videoWidth, 640);
-      canvas.height = Math.min(videoEl.videoHeight, 360);
+      const maxDim = 640;
+      let w = videoEl.videoWidth;
+      let h = videoEl.videoHeight;
+      const ratio = w / h;
+      if (w > h) {
+        if (w > maxDim) {
+          w = maxDim;
+          h = Math.round(maxDim / ratio);
+        }
+      } else {
+        if (h > maxDim) {
+          h = maxDim;
+          w = Math.round(maxDim * ratio);
+        }
+      }
+      canvas.width  = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
       const localUrl = canvas.toDataURL('image/jpeg', 0.85);
