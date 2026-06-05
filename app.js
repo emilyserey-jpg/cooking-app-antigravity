@@ -78,6 +78,7 @@ function enableDragToScroll(el) {
 
   el.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return; // Left click only
+    if (typeof playerDescLayoutMode !== 'undefined' && playerDescLayoutMode !== 'row') return;
     isDown = true;
     hasMoved = false;
     startX = e.pageX - el.offsetLeft;
@@ -734,17 +735,53 @@ function updateStepDetailsUI() {
 
 window.renderMultigridDescriptions = function() {
   const container = document.getElementById('playerMultigridDescriptions');
+  const ctrlContainer = document.getElementById('playerMultigridDescControls');
   const activeCard = document.querySelector('.step-card-active');
   if (!container || !recipeData || !recipeData.steps) return;
 
   if (!isPlayerMultigridActive) {
     container.style.display = 'none';
+    if (ctrlContainer) ctrlContainer.style.display = 'none';
     if (activeCard) activeCard.style.display = 'flex';
     return;
   }
 
+  // Display the layout controls
+  if (ctrlContainer) ctrlContainer.style.display = 'flex';
   container.style.display = 'flex';
   if (activeCard) activeCard.style.display = 'none';
+
+  // Apply visual button active states
+  const rowBtn = document.getElementById('descViewRowBtn');
+  const colBtn = document.getElementById('descViewColBtn');
+  if (rowBtn && colBtn) {
+    if (playerDescLayoutMode === 'row') {
+      rowBtn.style.background = 'var(--primary)';
+      rowBtn.style.color = '#fff';
+      colBtn.style.background = 'transparent';
+      colBtn.style.color = 'var(--text-muted)';
+    } else {
+      colBtn.style.background = 'var(--primary)';
+      colBtn.style.color = '#fff';
+      rowBtn.style.background = 'transparent';
+      rowBtn.style.color = 'var(--text-muted)';
+    }
+  }
+
+  // Apply style overrides to the container based on current layout mode
+  if (playerDescLayoutMode === 'row') {
+    container.style.flexDirection = 'row';
+    container.style.overflowX = 'auto';
+    container.style.overflowY = 'hidden';
+    container.style.cursor = 'grab';
+    container.style.gap = '12px';
+  } else {
+    container.style.flexDirection = 'column';
+    container.style.overflowX = 'hidden';
+    container.style.overflowY = 'visible';
+    container.style.cursor = 'default';
+    container.style.gap = '12px';
+  }
 
   // Render cards for only the selected steps
   const selectedIndices = Array.from(playerSelectedSteps).sort((a, b) => a - b);
@@ -753,6 +790,14 @@ window.renderMultigridDescriptions = function() {
     container.innerHTML = `<div style="color:rgba(255,255,255,0.6); font-family:var(--font); font-size:0.75rem; font-style:italic; padding:12px; width:100%; text-align:center;">No steps selected. Check steps in the header to view descriptions.</div>`;
     return;
   }
+
+  const cardStyle = playerDescLayoutMode === 'row' 
+    ? 'flex-shrink:0; width:280px;' 
+    : 'flex-shrink:0; width:100%;';
+
+  const clampStyle = playerDescLayoutMode === 'row'
+    ? 'overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;'
+    : '';
 
   container.innerHTML = selectedIndices.map(idx => {
     const step = recipeData.steps[idx];
@@ -774,13 +819,13 @@ window.renderMultigridDescriptions = function() {
     const doneBtnColor = isCompleted ? '#22c55e' : 'var(--primary)';
 
     return `
-      <div class="multigrid-desc-card" style="flex-shrink:0; width:280px; background:rgba(255,255,255,0.9); border-radius:var(--radius-lg); border:2px solid rgba(74, 144, 217, 0.12); padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 12px rgba(74,144,217,0.08); box-sizing:border-box;">
+      <div class="multigrid-desc-card" style="${cardStyle} background:rgba(255,255,255,0.9); border-radius:var(--radius-lg); border:2px solid rgba(74, 144, 217, 0.12); padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 12px rgba(74,144,217,0.08); box-sizing:border-box;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">Step ${idx + 1} of ${recipeData.steps.length}</span>
           <span style="font-size:0.68rem; font-weight:800; color:var(--primary); background:rgba(74,144,217,0.08); padding:2px 8px; border-radius:999px;">${timeText}</span>
         </div>
         <h3 style="font-size:0.95rem; font-weight:800; color:var(--text-title); margin:0;">${step.title}</h3>
-        <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0; flex:1; white-space:normal; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;">${step.instruction}</p>
+        <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0; flex:1; white-space:normal; ${clampStyle}">${step.instruction}</p>
         
         <!-- Toggle Done button -->
         <button onclick="event.stopPropagation(); window.togglePlayerMultigridDescStepDone(${idx})" style="margin-top:6px; display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 12px; border:none; border-radius:8px; font-family:var(--font); font-size:0.72rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:${doneBtnBg}; color:${doneBtnColor};">
@@ -796,6 +841,11 @@ window.togglePlayerMultigridDescStepDone = function(stepIndex) {
   if (typeof renderMultigridDescriptions === 'function') {
     renderMultigridDescriptions();
   }
+};
+
+window.setPlayerDescLayout = function(mode) {
+  playerDescLayoutMode = mode;
+  renderMultigridDescriptions();
 };
 
 function renderStepChipsMobile() {
@@ -4427,6 +4477,7 @@ window.desktopPlayerPrev     = function() {
 let isPlayerMultigridActive = false;
 let playerGridLayout = 'quad'; // 'row' | 'quad'
 let playerSelectedSteps = new Set();
+let playerDescLayoutMode = 'row'; // 'row' | 'column'
 let playerMultigridIntervals = {};
 let playerMultigridHlsInstances = {};
 
