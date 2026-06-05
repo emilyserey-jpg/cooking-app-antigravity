@@ -1077,8 +1077,24 @@ function initSupabase() {
       loadRealRecipes();
       populateProfilePage(user);
       showTip(`Welcome back, ${user.email.split('@')[0]}!`);
+      if (typeof currentView !== 'undefined') {
+        if (currentView === 'grid-view') {
+          renderLibrary();
+        }
+        if (currentView === 'my-profile') {
+          openPublicProfile(user.email, 'my-profile');
+        }
+      }
     } else {
       resetProfilePage();
+      if (typeof currentView !== 'undefined') {
+        if (currentView === 'grid-view') {
+          renderLibrary();
+        }
+        if (currentView === 'my-profile' || currentView === 'profile') {
+          switchView('discover');
+        }
+      }
     }
   });
   // Always load discover (public recipes don't require login)
@@ -1751,9 +1767,25 @@ window.saveDraft = async function() {
 
   try {
     const videoEl = document.getElementById('uploadedVideoPlayer');
-    const videoUrl = uploadedVideoUID
-      ? `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`
-      : localVideoURL || null;
+    // Build video_url: prefer CF Stream, upload to Supabase if CF is not configured, fall back to local blob
+    let videoUrl = null;
+    if (uploadedVideoUID) {
+      videoUrl = `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`;
+    } else if (uploadedFile) {
+      if (btn) btn.textContent = 'Uploading video file...';
+      try {
+        const { uploadVideo } = await import('./supabase-client.js');
+        const supabaseUrl = await uploadVideo(uploadedFile, currentUser.email);
+        if (supabaseUrl) {
+          videoUrl = supabaseUrl;
+        }
+      } catch (upErr) {
+        console.error('Supabase video upload failed:', upErr);
+        videoUrl = localVideoURL || null;
+      }
+    } else {
+      videoUrl = localVideoURL || null;
+    }
 
     const { createRecipe } = await import('./supabase-client.js');
     await createRecipe({
