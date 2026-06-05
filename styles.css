@@ -1507,6 +1507,7 @@ h1, h2, h3, h4, h5 {
     min-height: 500px !important;
     padding: 0 !important;
     background: transparent !important;
+    min-width: 0 !important;
   }
 
   .step-card-active {
@@ -1639,5 +1640,10 @@ a:focus-visible {
 
 #playerMultigridDescriptions::-webkit-scrollbar-thumb:hover {
   background: rgba(74, 144, 217, 0.5) !important;
+}
+
+#playerMultigridDescriptions {
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
