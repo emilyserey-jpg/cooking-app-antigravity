@@ -670,6 +670,7 @@ function renderStepChipsMobile() {
     const isDone = playerCompletedSteps.has(idx);
     const chip = document.createElement('button');
     chip.className = `step-chip ${idx === activeStepIndex ? 'active' : ''} ${isDone ? 'done' : ''}`;
+    chip.tabIndex = -1;
     chip.onclick = () => seekToStep(idx);
     chip.innerHTML = `
       <span class="step-chip-num">${idx + 1}</span>
@@ -790,6 +791,8 @@ function renderTimelineMarkersDesktop() {
   });
 }
 
+let workbenchDragSrcIndex = null;
+
 function renderStepListDesktop() {
   const container = document.getElementById('editorStepListContainer');
   if (!container) return;
@@ -805,6 +808,53 @@ function renderStepListDesktop() {
     const row = document.createElement('div');
     row.className = `step-row-item ${idx === activeStepIndex ? 'active' : ''}`;
     row.onclick = () => seekToStep(idx);
+    
+    // Step reordering via drag-and-drop
+    row.draggable = true;
+    row.addEventListener('dragstart', (e) => {
+      workbenchDragSrcIndex = idx;
+      e.dataTransfer.effectAllowed = 'move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (workbenchDragSrcIndex === null || workbenchDragSrcIndex === idx) return;
+      
+      saveHistory();
+      
+      const stepDurations = recipeData.steps.map((_, i) => recipeData.loops[i+1] - recipeData.loops[i]);
+      
+      const movedStep = recipeData.steps.splice(workbenchDragSrcIndex, 1)[0];
+      recipeData.steps.splice(idx, 0, movedStep);
+      
+      const movedDuration = stepDurations.splice(workbenchDragSrcIndex, 1)[0];
+      stepDurations.splice(idx, 0, movedDuration);
+      
+      let accum = 0;
+      const newLoops = [0];
+      stepDurations.forEach(d => {
+        accum += d;
+        newLoops.push(accum);
+      });
+      recipeData.loops = newLoops;
+      
+      workbenchDragSrcIndex = null;
+      
+      renderStepListDesktop();
+      renderTimelineMarkersDesktop();
+      updateTimelineUI();
+      updateStepDetailsUI();
+      showTip("Steps reordered.");
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      workbenchDragSrcIndex = null;
+    });
+
     row.innerHTML = `
       <div class="step-row-drag-dot"><i data-lucide="grip-vertical"></i></div>
       <div class="step-row-num">${idx + 1}</div>
@@ -1180,8 +1230,12 @@ function switchView(viewId) {
   if (activeTab) activeTab.classList.add('active');
 
   // Toggle Views
-  document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-  document.getElementById(`view-${viewId}`).classList.add('active');
+  document.querySelectorAll('.view-section').forEach(sec => {
+    sec.style.display = '';
+    sec.classList.remove('active');
+  });
+  const targetSection = document.getElementById(`view-${viewId}`);
+  if (targetSection) targetSection.classList.add('active');
 
   resizeCanvas();
 
@@ -2226,7 +2280,15 @@ function updateStepFromTime(time) {
 window.playerSkipTime = function(amount) {
   const vid = document.getElementById('mobileRealVideo');
   const hasRealVideo = vid && vid.style.display !== 'none';
-  const newTime = Math.max(0, Math.min(recipeData.duration, currentTime + amount));
+  
+  let actualAmount = amount;
+  if (Math.abs(amount) === 1) {
+    const seekSelect = document.getElementById('seekStepSelect');
+    const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+    actualAmount = amount > 0 ? seekAmount : -seekAmount;
+  }
+  
+  const newTime = Math.max(0, Math.min(recipeData.duration, currentTime + actualAmount));
   
   if (hasRealVideo) {
     vid.currentTime = newTime;
@@ -2234,7 +2296,7 @@ window.playerSkipTime = function(amount) {
   currentTime = newTime;
   updateStepFromTime(currentTime);
   updateTimelineUI();
-  showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s ⏱️`);
+  showTip(`Skipped ${actualAmount > 0 ? '+' : ''}${actualAmount}s ⏱️`);
 };
 
 window.playerTimelineClick = function(e) {
@@ -4695,11 +4757,11 @@ window.setKeyboardMode = function(mode) {
     }
 
     if (navPrev) {
-      navPrev.textContent = '-1s';
+      navPrev.textContent = '←';
       navPrev.title = 'Rewind 1s (← key)';
     }
     if (navNext) {
-      navNext.textContent = '+1s';
+      navNext.textContent = '→';
       navNext.title = 'Forward 1s (→ key)';
     }
   }
@@ -4734,7 +4796,10 @@ window.navOrScrub = function(dir) {
   } else {
     const vid = document.getElementById('uploadedVideoPlayer');
     if (vid) {
-      vid.currentTime = Math.max(0, Math.min(vid.duration || Infinity, vid.currentTime + dir));
+      const seekSelect = document.getElementById('seekStepSelect');
+      const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+      const amount = dir > 0 ? seekAmount : -seekAmount;
+      vid.currentTime = Math.max(0, Math.min(vid.duration || Infinity, vid.currentTime + amount));
     }
   }
 };
@@ -4786,7 +4851,9 @@ document.addEventListener('keydown', function(e) {
       const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
       
       if (isSeeking) {
-        const newTime = Math.max(0, currentTime - 1);
+        const seekSelect = document.getElementById('seekStepSelect');
+        const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+        const newTime = Math.max(0, currentTime - seekAmount);
         if (hasRealVideo) {
           vid.currentTime = newTime;
         }
@@ -4810,7 +4877,9 @@ document.addEventListener('keydown', function(e) {
       const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
       
       if (isSeeking) {
-        const newTime = Math.min(recipeData.duration, currentTime + 1);
+        const seekSelect = document.getElementById('seekStepSelect');
+        const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+        const newTime = Math.min(recipeData.duration, currentTime + seekAmount);
         if (hasRealVideo) {
           vid.currentTime = newTime;
         }
@@ -4902,7 +4971,7 @@ function renderCreateSteps() {
           <div style="width:18px;height:18px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#446;flex-shrink:0;">${i+1}</div>
           <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
             style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.75rem;font-weight:800;color:var(--text-heading);outline:none;">
-          <button onclick="removeCreateStep(${i})" title="Delete this stop"
+          <button onclick="removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
             style="background:none;border:1px solid rgba(180,0,0,0.2);border-radius:4px;cursor:pointer;color:#c00;font-size:0.8rem;padding:0 4px;flex-shrink:0;line-height:1.4;font-weight:900;"
             onmouseenter="this.style.background='rgba(200,0,0,0.1)'" onmouseleave="this.style.background='none'">×</button>
         </div>
@@ -4911,9 +4980,9 @@ function renderCreateSteps() {
           onchange="updateStepDescription(${i},this.value)"
           style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:6px;padding:5px;font-family:var(--font);font-size:0.68rem;font-weight:500;color:var(--text-body);resize:none;outline:none;line-height:1.4;">${desc}</textarea>
         <div style="display:flex;gap:4px;">
-          <button onclick="previewStepLoop(${i})"
+          <button onclick="previewStepLoop(${i})" tabindex="-1"
             style="flex:1;background:${color};border:none;border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:#446;">▶ Loop</button>
-          <button onclick="navToStep(${i})"
+          <button onclick="navToStep(${i})" tabindex="-1"
             style="flex:1;background:transparent;border:1px solid var(--border-card);border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:var(--text-heading);">⏩ Go</button>
         </div>
       </div>`;
@@ -5861,4 +5930,24 @@ if (document.readyState === 'loading') {
 } else {
   initializeApp();
 }
+
+// Automatically blur active text input/textarea elements when the mouse pointer
+// hovers over key video player or scrubber controls. This releases text input focus,
+// prevents macOS from hiding the mouse cursor (arrow pointer), and allows arrow keys
+// to instantly control the video player.
+document.addEventListener('mouseover', function(e) {
+  const target = e.target;
+  if (!target) return;
+
+  const isPlayerRegion = target.closest(
+    '#uploadedVideoPlayer, #videoScrubber, .player-timeline-rail-container, .player-controls-strip, .mobile-video-container, #navPrevBtn, #navNextBtn, #previewLoopBtn, #stopPreviewBtn, #createKbToggleBtn, .desktop-player-controls, .step-navigator-row'
+  );
+
+  if (isPlayerRegion) {
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
+      active.blur();
+    }
+  }
+});
 

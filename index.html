@@ -79,12 +79,12 @@
                 <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline></video>
                 
                 <!-- Floating Back Button -->
-                <button onclick="window.playerGoBack()" class="player-back-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+                <button onclick="window.playerGoBack()" class="player-back-btn" tabindex="-1" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
                   <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
                 </button>
                 
                 <!-- Floating Edit Button (Only visible for recipe creators) -->
-                <button id="playerEditRecipeBtn" style="display: none; position: absolute; top: 10px; left: 88px; z-index: 10; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #eab308; color: #1e293b; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#facc15'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#eab308'; this.style.transform='scale(1)'">
+                <button id="playerEditRecipeBtn" tabindex="-1" style="display: none; position: absolute; top: 10px; left: 88px; z-index: 10; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #eab308; color: #1e293b; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#facc15'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#eab308'; this.style.transform='scale(1)'">
                   <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Edit
                 </button>
                 
@@ -124,39 +124,39 @@
             <!-- Unified Player Controls Strip (All-in-One Row) -->
             <div class="player-controls-strip" style="margin-top: 6px; margin-bottom: 2px; gap: 6px;">
               <!-- Mode Toggle -->
-              <button id="playerModeCycleBtn" onclick="window.cyclePlaybackMode()" class="control-btn" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Cycle Playback Mode">
+              <button id="playerModeCycleBtn" onclick="window.cyclePlaybackMode()" class="control-btn" tabindex="-1" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Cycle Playback Mode">
                 <i id="playerModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
               </button>
 
               <!-- Prev Step -->
-              <button id="playerPrevStepBtn" onclick="window.desktopPlayerPrev()" class="control-btn" title="Previous Step">
+              <button id="playerPrevStepBtn" onclick="window.desktopPlayerPrev()" class="control-btn" tabindex="-1" title="Previous Step">
                 <i data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
               </button>
 
               <!-- Rewind 1s -->
-              <button id="playerSkipBack1sBtn" onclick="window.playerSkipTime(-1)" class="control-btn" title="Rewind 1s">
+              <button id="playerSkipBack1sBtn" onclick="window.playerSkipTime(-1)" class="control-btn" tabindex="-1" title="Rewind 1s">
                 <i data-lucide="rewind" style="width: 15px; height: 15px;"></i>
                 <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
               </button>
 
               <!-- Play/Pause -->
-              <button id="playerStripPlayPauseBtn" onclick="toggleVideoPlayback()" class="control-btn play-btn" title="Play/Pause">
+              <button id="playerStripPlayPauseBtn" onclick="toggleVideoPlayback()" class="control-btn play-btn" tabindex="-1" title="Play/Pause">
                 <i data-lucide="play" style="width: 16px; height: 16px;"></i>
               </button>
 
               <!-- Forward 1s -->
-              <button id="playerSkipFwd1sBtn" onclick="window.playerSkipTime(1)" class="control-btn" title="Forward 1s">
+              <button id="playerSkipFwd1sBtn" onclick="window.playerSkipTime(1)" class="control-btn" tabindex="-1" title="Forward 1s">
                 <i data-lucide="fast-forward" style="width: 15px; height: 15px;"></i>
                 <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
               </button>
 
               <!-- Next Step -->
-              <button id="playerNextStepBtn" onclick="window.desktopPlayerNext()" class="control-btn" title="Next Step">
+              <button id="playerNextStepBtn" onclick="window.desktopPlayerNext()" class="control-btn" tabindex="-1" title="Next Step">
                 <i data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
               </button>
 
               <!-- Keyboard Toggle -->
-              <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="control-btn" title="Toggle Keyboard Mode">
+              <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Keyboard Mode">
                 <i id="playerKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
               </button>
             </div>
@@ -178,10 +178,10 @@
               
               <!-- Cooking Step Tracker Completion Controls -->
               <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <button id="playerMarkDoneBtn" onclick="togglePlayerStepDone(activeStepIndex)" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; background: rgba(74, 144, 217, 0.15); color: var(--primary);">
+                <button id="playerMarkDoneBtn" onclick="togglePlayerStepDone(activeStepIndex)" tabindex="-1" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; background: rgba(74, 144, 217, 0.15); color: var(--primary);">
                   <i data-lucide="circle" style="width: 14px; height: 14px;"></i> Mark Done
                 </button>
-                <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" style="display: none; align-items: center; justify-content: center; padding: 8px 12px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
+                <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 8px 12px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
                   Reset
                 </button>
               </div>
@@ -997,19 +997,19 @@
 
               <!-- Row 1: step navigator + loop/stop + keyboard toggle -->
               <div style="display:flex;align-items:center;gap:7px;">
-                <button onclick="window.navOrScrub(-1)" id="navPrevBtn"
+                <button onclick="window.navOrScrub(-1)" id="navPrevBtn" tabindex="-1"
                   style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;" title="Previous step (← key)">←</button>
                 <div style="flex:1;text-align:center;min-width:0;">
                   <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
                   <div id="stepNavCount" style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">Add stops or run AI</div>
                 </div>
-                <button onclick="window.navOrScrub(1)" id="navNextBtn"
+                <button onclick="window.navOrScrub(1)" id="navNextBtn" tabindex="-1"
                   style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;flex-shrink:0;" title="Next step (→ key)">→</button>
-                <button onclick="previewCurrentNavStep()" id="previewLoopBtn"
+                <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
-                <button onclick="stopPreviewLoop()" id="stopPreviewBtn"
+                <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
                   style="display:none;background:#f0f4ff;border:2px solid var(--primary);border-radius:8px;padding:6px 12px;color:var(--primary);cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">⏹ Stop</button>
-                <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn"
+                <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
                   style="background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Toggle Keyboard Mode">
                   <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
                 </button>

@@ -1553,3 +1553,22 @@ h1, h2, h3, h4, h5 {
     right: 24px !important;
   }
 }
+
+/* Suppress all default browser focus outlines on button controls to prevent distracting focus rings during arrow key use */
+button:focus,
+button:focus-visible,
+button:active,
+.control-btn:focus,
+.control-btn:focus-visible,
+.control-btn:active,
+a:focus,
+a:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.step-row-item.dragging {
+  opacity: 0.4;
+  border: 2px dashed var(--primary) !important;
+}
+
