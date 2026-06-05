@@ -4201,7 +4201,7 @@ window.desktopPlayerPrev     = function() {
   } else if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
-    if (Math.abs(currentTime - currentStepStart) < 0.5) {
+    if (currentTime <= currentStepStart || Math.abs(currentTime - currentStepStart) < 0.5) {
       currentTime = 0;
       const realVideo = document.getElementById('mobileRealVideo');
       if (realVideo && realVideo.style.display !== 'none') {
@@ -4964,8 +4964,14 @@ function refreshStepNavigator() {
 }
 
 window.navStep = function(dir) {
-  if (!createStepsArr.length) return;
   const vid = document.getElementById('uploadedVideoPlayer');
+  if (!createStepsArr.length) {
+    if (dir < 0 && vid) {
+      vid.currentTime = 0;
+      showTip("Beginning of video reached.");
+    }
+    return;
+  }
 
   if (vid) {
     const time = vid.currentTime;
@@ -5003,7 +5009,7 @@ window.navStep = function(dir) {
     } else {
       if (vid) {
         const currentStepStart = createStepsArr[0].time || 0;
-        if (Math.abs(vid.currentTime - currentStepStart) < 0.5) {
+        if (vid.currentTime <= currentStepStart || Math.abs(vid.currentTime - currentStepStart) < 0.5) {
           vid.currentTime = 0;
           showTip("Beginning of video reached.");
         } else {
