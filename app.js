@@ -38,7 +38,7 @@ const recipeData = {
 // Application UI States
 let currentUser = null;
 let authMode = 'signin'; // 'signin' or 'signup'
-let currentView = 'mobile-player';
+let currentView = 'create';
 let playbackMode = 'loop';
 let isPlaying = false;
 let currentTime = 75.0;
@@ -65,7 +65,7 @@ let animFrameId = null;
 let particles = [];
 
 // Initialize App
-window.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
   canvasMobile = document.getElementById('mobileVideoCanvas');
   ctxMobile = canvasMobile.getContext('2d');
   canvasDesktop = document.getElementById('desktopVideoCanvas');
@@ -84,7 +84,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // 🔌 Connect to Supabase
   initSupabase();
-});
+
+  // Load default landing view preference
+  const defaultView = localStorage.getItem('cooking_gps_landing_view') || 'create';
+  switchView(defaultView);
+  
+  // Set select input value in UI if it exists
+  const landingSelect = document.getElementById('defaultLandingViewSelect');
+  if (landingSelect) landingSelect.value = defaultView;
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
 
 function resizeCanvas() {
   if (canvasMobile) {
@@ -1034,13 +1048,10 @@ function switchView(viewId) {
 
   // Update Tabs
   document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
-  const activeTab = Array.from(document.querySelectorAll('.view-tab')).find(tab =>
-    (viewId === 'mobile-player'    && tab.innerText.includes('Player')) ||
-    (viewId === 'discover'         && tab.innerText.includes('Discover')) ||
-    (viewId === 'profile'          && tab.innerText.includes('Profile')) ||
-    (viewId === 'bento-dashboard'  && tab.innerText.includes('Dashboard')) ||
-    (viewId === 'desktop-workbench'&& tab.innerText.includes('Editor'))
-  );
+  const activeTab = Array.from(document.querySelectorAll('.view-tab')).find(tab => {
+    const onc = tab.getAttribute('onclick') || '';
+    return onc.includes(`'${viewId}'`) || onc.includes(`"${viewId}"`);
+  });
   if (activeTab) activeTab.classList.add('active');
 
   // Toggle Views
@@ -1054,6 +1065,10 @@ function switchView(viewId) {
   if (viewId === 'profile') {
     loadProfileRecipes();
     if (typeof mySpaceInit === 'function') mySpaceInit();
+    const landingSelect = document.getElementById('defaultLandingViewSelect');
+    if (landingSelect) {
+      landingSelect.value = localStorage.getItem('cooking_gps_landing_view') || 'create';
+    }
   }
   if (viewId === 'grid-view') {
     if (!libState) libLoad();
@@ -1193,7 +1208,7 @@ function initSupabase() {
         if (currentView === 'grid-view') {
           renderLibrary();
         }
-        if (currentView === 'my-profile' || currentView === 'profile') {
+        if (currentView === 'my-profile') {
           switchView('discover');
         }
       }
@@ -1419,15 +1434,15 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     const { supabase } = await import('./supabase-client.js');
     let { data: recipes, error } = await supabase
       .from('recipes')
-      .select('id, title, description, video_url, thumbnail_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
+      .select('id, title, description, video_url, bundle_mode, duration, created_at, loops, steps, creator, is_published, private_recipe')
       .eq('creator', creatorEmail)
       .eq('is_published', true)
       .eq('private_recipe', false)
       .order('created_at', { ascending: false });
 
     if (error) {
-      if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-        console.warn('[Supabase] Retrying openPublicProfile without thumbnail_url column');
+      if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+        console.warn('[Supabase] Retrying openPublicProfile without bundle_mode column');
         const retry = await supabase
           .from('recipes')
           .select('id, title, description, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
@@ -1440,6 +1455,12 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
       } else {
         throw error;
       }
+    }
+
+    if (recipes) {
+      recipes.forEach(r => {
+        r.thumbnail_url = r.bundle_mode || null;
+      });
     }
 
     const list = recipes || [];
@@ -1910,9 +1931,8 @@ window.publishDraft = async function(id) {
 window.deleteRecipeById = async function(id) {
   if (!confirm('Delete this recipe? This cannot be undone.')) return;
   try {
-    const { supabase } = await import('./supabase-client.js');
-    const { error } = await supabase.from('recipes').delete().eq('id', id);
-    if (error) throw error;
+    const { deleteRecipeById } = await import('./supabase-client.js');
+    await deleteRecipeById(id);
     showTip('Recipe deleted.');
     await loadProfileRecipes();
   } catch (err) {
@@ -1952,6 +1972,7 @@ window.saveDraft = async function() {
     }
 
     const { createRecipe } = await import('./supabase-client.js');
+    const thumbnailUrl = await ensureThumbnailUrl();
     await createRecipe({
       title,
       creator:  currentUser.email,
@@ -1960,6 +1981,7 @@ window.saveDraft = async function() {
       // Save full loop objects so viewers get exact AI-detected start+end times
       loops:    createStepsArr.map(s => ({ start: s.time, end: s.endTime ?? null, label: s.label })),
       video_url: videoUrl,
+      thumbnail_url: thumbnailUrl,
       is_draft: true,
     });
 
@@ -2827,23 +2849,29 @@ async function libFetchRecipes() {
     const { supabase } = await import('./supabase-client.js');
     let { data, error } = await supabase
       .from('recipes')
-      .select('id, title, video_url, thumbnail_url, duration, created_at, private_recipe')
+      .select('id, title, video_url, bundle_mode, duration, created_at, private_recipe')
       .eq('creator', currentUser.email)
       .order('created_at', { ascending: false });
     
     if (error) {
-      // If it's a schema/missing column error for thumbnail_url, retry without it
-      if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-        console.warn('[Supabase] Retrying libFetchRecipes without thumbnail_url column');
+      if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+        console.warn('[Supabase] Retrying libFetchRecipes without bundle_mode column');
         const retry = await supabase
           .from('recipes')
           .select('id, title, video_url, duration, created_at, private_recipe')
           .eq('creator', currentUser.email)
           .order('created_at', { ascending: false });
         if (retry.error) throw retry.error;
-        return retry.data || [];
+        const res = retry.data || [];
+        res.forEach(r => { r.thumbnail_url = null; });
+        return res;
       }
       throw error;
+    }
+    if (data) {
+      data.forEach(r => {
+        r.thumbnail_url = r.bundle_mode || null;
+      });
     }
     return data || [];
   } catch (err) {
@@ -3516,6 +3544,10 @@ window.togglePanel = function(bodyId, chevronId) {
 };
 
 window.switchView            = switchView;
+window.changeDefaultLandingView = function(view) {
+  localStorage.setItem('cooking_gps_landing_view', view);
+  showTip(`Default landing view set to: ${view === 'create' ? 'Create' : 'My Space'} 🏡`);
+};
 window.switchSidebarTab      = switchSidebarTab;
 window.toggleVideoPlayback   = toggleVideoPlayback;
 window.setPlaybackMode       = setPlaybackMode;
@@ -3764,6 +3796,16 @@ window.onVideoLoaded = function() {
     const timeStr = `${m}:${s}`;
     if (dur) dur.textContent = timeStr;
     if (cdl) cdl.textContent = timeStr;
+
+    // Auto-capture a local preview when metadata or data is loaded
+    videoEl.addEventListener('loadeddata', () => {
+      videoEl.currentTime = 0.5;
+    }, { once: true });
+    
+    videoEl.addEventListener('seeked', function onFirstSeek() {
+      window.captureLocalVideoPreview();
+      videoEl.removeEventListener('seeked', onFirstSeek);
+    });
 
     // Update playhead and current time as video plays
     videoEl.addEventListener('timeupdate', () => {
@@ -4378,6 +4420,106 @@ async function captureThumbnail(videoEl) {
   } catch { return null; }
 }
 
+async function ensureThumbnailUrl() {
+  let thumbnailUrl = document.getElementById('newRecipeCoverInput')?.value?.trim() || null;
+  if (!thumbnailUrl) {
+    try {
+      const videoEl = document.getElementById('uploadedVideoPlayer');
+      if (videoEl && videoEl.videoWidth > 0) {
+        const blob = await captureThumbnail(videoEl);
+        if (blob) {
+          const { supabase: sb } = await import('./supabase-client.js');
+          const ext    = 'jpg';
+          const folder = (currentUser?.email || 'anon').replace(/[@.]/g, '_');
+          const fname  = 'thumbnails/' + folder + '/' + Date.now() + '.' + ext;
+          const { error: upErr } = await sb.storage.from('videos').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
+          if (!upErr) {
+            const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+            thumbnailUrl = urlData.publicUrl;
+            const input = document.getElementById('newRecipeCoverInput');
+            if (input) input.value = thumbnailUrl;
+          }
+        }
+      }
+    } catch (tErr) {
+      console.warn('Thumbnail capture failed (non-fatal):', tErr);
+    }
+  }
+  return thumbnailUrl;
+}
+
+window.handleCoverFileSelect = async function(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showTip('Please select an image file (PNG, JPG, WebP)');
+    return;
+  }
+  const statusEl = document.getElementById('coverUploadStatus');
+  if (statusEl) statusEl.textContent = 'Uploading cover image...';
+  try {
+    const { supabase: sb } = await import('./supabase-client.js');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const folder = (currentUser?.email || 'anon').replace(/[@.]/g, '_');
+    const fname = 'thumbnails/' + folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+    
+    const { error: upErr } = await sb.storage.from('videos').upload(fname, file, { contentType: file.type, upsert: true });
+    if (upErr) throw upErr;
+    
+    const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+    const publicUrl = urlData.publicUrl;
+    
+    const coverInput = document.getElementById('newRecipeCoverInput');
+    if (coverInput) {
+      coverInput.value = publicUrl;
+    }
+    
+    window.updateCoverPreviewFromUrl(publicUrl);
+    if (statusEl) statusEl.textContent = 'Cover uploaded successfully! ✅';
+    showTip('Cover image uploaded! 🖼️');
+  } catch (err) {
+    console.error('Cover upload failed:', err);
+    if (statusEl) statusEl.textContent = 'Upload failed: ' + err.message;
+    showTip('Could not upload cover image: ' + err.message);
+  }
+};
+
+window.updateCoverPreviewFromUrl = function(url) {
+  const previewImg = document.getElementById('createThumbnailPreviewImg');
+  const placeholder = document.getElementById('createThumbnailPlaceholder');
+  if (previewImg && placeholder) {
+    if (url && url.trim()) {
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      placeholder.style.display = 'none';
+    } else {
+      previewImg.src = '';
+      previewImg.style.display = 'none';
+      placeholder.style.display = 'block';
+    }
+  }
+};
+
+window.captureLocalVideoPreview = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const previewImg = document.getElementById('createThumbnailPreviewImg');
+  const placeholder = document.getElementById('createThumbnailPlaceholder');
+  if (videoEl && videoEl.videoWidth > 0 && previewImg && placeholder) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.min(videoEl.videoWidth, 640);
+      canvas.height = Math.min(videoEl.videoHeight, 360);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+      const localUrl = canvas.toDataURL('image/jpeg', 0.85);
+      previewImg.src = localUrl;
+      previewImg.style.display = 'block';
+      placeholder.style.display = 'none';
+    } catch (err) {
+      console.warn('Local preview capture failed:', err);
+    }
+  }
+};
+
 window.saveNewRecipe = async function(targetFolderId) {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim();
@@ -4399,27 +4541,7 @@ window.saveNewRecipe = async function(targetFolderId) {
       description: s.description || '',
     }));
 
-    // Capture thumbnail from the video element
-    let thumbnailUrl = null;
-    try {
-      const videoEl2 = document.getElementById('uploadedVideoPlayer');
-      if (videoEl2 && videoEl2.videoWidth > 0) {
-        const blob = await captureThumbnail(videoEl2);
-        if (blob) {
-          const { supabase: sb } = await import('./supabase-client.js');
-          const ext    = 'jpg';
-          const folder = currentUser.email.replace(/[@.]/g, '_');
-          const fname  = 'thumbnails/' + folder + '/' + Date.now() + '.' + ext;
-          const { error: upErr } = await sb.storage.from('videos').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
-          if (!upErr) {
-            const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
-            thumbnailUrl = urlData.publicUrl;
-          }
-        }
-      }
-    } catch (tErr) {
-      console.warn('Thumbnail capture failed (non-fatal):', tErr);
-    }
+    const thumbnailUrl = await ensureThumbnailUrl();
 
     // Build video_url: prefer CF Stream, upload to Supabase if CF is not configured, fall back to local blob
     let videoUrl = null;
@@ -4529,6 +4651,12 @@ window.resetCreateView = function() {
   document.getElementById('uploadProgressBar').style.width = '0%';
   document.getElementById('uploadProgressBar').style.background = 'linear-gradient(90deg,var(--primary),#6aaee8)';
   document.getElementById('newRecipeTitleInput').value = '';
+
+  const coverInput = document.getElementById('newRecipeCoverInput');
+  if (coverInput) coverInput.value = '';
+  window.updateCoverPreviewFromUrl('');
+  const statusEl = document.getElementById('coverUploadStatus');
+  if (statusEl) statusEl.textContent = 'Captured from video or custom';
 
   // Reset AI section
   document.getElementById('aiStatus').style.display       = 'none';

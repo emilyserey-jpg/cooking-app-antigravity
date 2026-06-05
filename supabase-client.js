@@ -56,7 +56,7 @@ export function onAuthChange(callback) {
 export async function getPublicRecipes() {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, loops, steps, ingredients, video_url, thumbnail_url, is_published, shared_on_profile, created_at')
+    .select('id, title, creator, duration, loops, steps, ingredients, video_url, bundle_mode, is_published, shared_on_profile, created_at')
     .eq('is_published', true)
     .eq('private_recipe', false)
     .eq('is_draft', false)
@@ -64,8 +64,8 @@ export async function getPublicRecipes() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-      console.warn('[Supabase] Retrying getPublicRecipes without thumbnail_url column');
+    if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getPublicRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
         .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at')
@@ -75,9 +75,16 @@ export async function getPublicRecipes() {
         .eq('temp_recipe', false)
         .order('created_at', { ascending: false });
       if (retry.error) throw retry.error;
-      return retry.data ?? [];
+      const res = retry.data ?? [];
+      res.forEach(r => { r.thumbnail_url = null; });
+      return res;
     }
     throw error;
+  }
+  if (data) {
+    data.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
   }
   return data ?? [];
 }
@@ -86,7 +93,7 @@ export async function getPublicRecipes() {
 export async function getProfileRecipes(creator) {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, thumbnail_url, created_at')
+    .select('id, title, creator, duration, steps, video_url, bundle_mode, created_at')
     .eq('creator', creator)
     .eq('shared_on_profile', true)
     .eq('is_draft', false)
@@ -94,8 +101,8 @@ export async function getProfileRecipes(creator) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-      console.warn('[Supabase] Retrying getProfileRecipes without thumbnail_url column');
+    if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getProfileRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
         .select('id, title, creator, duration, steps, video_url, created_at')
@@ -105,9 +112,16 @@ export async function getProfileRecipes(creator) {
         .eq('temp_recipe', false)
         .order('created_at', { ascending: false });
       if (retry.error) throw retry.error;
-      return retry.data ?? [];
+      const res = retry.data ?? [];
+      res.forEach(r => { r.thumbnail_url = null; });
+      return res;
     }
     throw error;
+  }
+  if (data) {
+    data.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
   }
   return data ?? [];
 }
@@ -122,6 +136,11 @@ export async function getMyRecipesByDevice(deviceId) {
     .eq('temp_recipe', false)
     .order('updated_at', { ascending: false });
   if (error) throw error;
+  if (data) {
+    data.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
+  }
   return data ?? [];
 }
 
@@ -133,6 +152,9 @@ export async function getRecipeById(id) {
     .eq('id', id)
     .single();
   if (error) throw error;
+  if (data) {
+    data.thumbnail_url = data.bundle_mode || null;
+  }
   return data;
 }
 
@@ -140,14 +162,20 @@ export async function getRecipeById(id) {
 export async function saveRecipe(recipe) {
   const payload = {
     ...recipe,
+    bundle_mode: recipe.thumbnail_url || recipe.bundle_mode || null,
     updated_at: new Date().toISOString(),
   };
+  delete payload.thumbnail_url;
+  
   const { data, error } = await supabase
     .from('recipes')
     .upsert(payload)
     .select()
     .single();
   if (error) throw error;
+  if (data) {
+    data.thumbnail_url = data.bundle_mode || null;
+  }
   return data;
 }
 
@@ -155,7 +183,7 @@ export async function saveRecipe(recipe) {
 export async function searchRecipes(query) {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, thumbnail_url, created_at')
+    .select('id, title, creator, duration, steps, video_url, bundle_mode, created_at')
     .ilike('title', `%${query}%`)
     .eq('is_published', true)
     .eq('private_recipe', false)
@@ -163,8 +191,8 @@ export async function searchRecipes(query) {
     .limit(20);
 
   if (error) {
-    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-      console.warn('[Supabase] Retrying searchRecipes without thumbnail_url column');
+    if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying searchRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
         .select('id, title, creator, duration, steps, video_url, created_at')
@@ -174,9 +202,16 @@ export async function searchRecipes(query) {
         .eq('is_draft', false)
         .limit(20);
       if (retry.error) throw retry.error;
-      return retry.data ?? [];
+      const res = retry.data ?? [];
+      res.forEach(r => { r.thumbnail_url = null; });
+      return res;
     }
     throw error;
+  }
+  if (data) {
+    data.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
   }
   return data ?? [];
 }
@@ -233,7 +268,7 @@ export async function createRecipe(recipe) {
     steps:             recipe.steps || [],
     ingredients:       recipe.ingredients || [],
     video_url:         recipe.video_url || null,
-    thumbnail_url:     recipe.thumbnail_url || null,
+    bundle_mode:       recipe.thumbnail_url || null,
     private_recipe:    isDraft ? true : (recipe.private_recipe ?? true),
     is_published:      isDraft ? false : (recipe.is_published ?? false),
     shared_on_profile: isDraft ? false : (recipe.shared_on_profile ?? false),
@@ -250,19 +285,24 @@ export async function createRecipe(recipe) {
     .single();
 
   if (error) {
-    // If it's a schema cache/missing column error for thumbnail_url, retry without it
-    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-      console.warn('[Supabase] Retrying recipe insert without thumbnail_url column');
-      delete payload.thumbnail_url;
+    // If it's a schema cache/missing column error for bundle_mode, retry without it
+    if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying recipe insert without bundle_mode column');
+      delete payload.bundle_mode;
       const retry = await supabase
         .from('recipes')
         .insert(payload)
         .select()
         .single();
       if (retry.error) throw retry.error;
-      return retry.data;
+      const res = retry.data;
+      if (res) res.thumbnail_url = null;
+      return res;
     }
     throw error;
+  }
+  if (data) {
+    data.thumbnail_url = data.bundle_mode || null;
   }
   return data;
 }
@@ -274,14 +314,14 @@ export async function createRecipe(recipe) {
 export async function getUserAllRecipes(creator) {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, thumbnail_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
+    .select('id, title, creator, duration, steps, video_url, bundle_mode, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
     .eq('creator', creator)
     .eq('temp_recipe', false)
     .order('updated_at', { ascending: false });
 
   if (error) {
-    if (error.message && (error.message.includes('thumbnail_url') || error.message.includes('column'))) {
-      console.warn('[Supabase] Retrying getUserAllRecipes without thumbnail_url column');
+    if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+      console.warn('[Supabase] Retrying getUserAllRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
         .select('id, title, creator, duration, steps, video_url, is_published, private_recipe, is_draft, shared_on_profile, created_at, updated_at')
@@ -289,9 +329,16 @@ export async function getUserAllRecipes(creator) {
         .eq('temp_recipe', false)
         .order('updated_at', { ascending: false });
       if (retry.error) throw retry.error;
-      return retry.data ?? [];
+      const res = retry.data ?? [];
+      res.forEach(r => { r.thumbnail_url = null; });
+      return res;
     }
     throw error;
+  }
+  if (data) {
+    data.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
   }
   return data ?? [];
 }
@@ -300,14 +347,53 @@ export async function getUserAllRecipes(creator) {
 // Update a recipe (publish/unpublish, edit fields)
 // =====================================================
 export async function updateRecipe(id, updates) {
+  const payload = { ...updates, updated_at: new Date().toISOString() };
+  if (payload.thumbnail_url !== undefined) {
+    payload.bundle_mode = payload.thumbnail_url;
+    delete payload.thumbnail_url;
+  }
   const { data, error } = await supabase
     .from('recipes')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', id)
     .select()
     .single();
   if (error) throw error;
+  if (data) {
+    data.thumbnail_url = data.bundle_mode || null;
+  }
   return data;
+}
+
+// Delete a recipe permanently (only by its creator)
+export async function deleteRecipeById(id) {
+  const user = await getCurrentUser();
+  if (!user || !user.email) {
+    throw new Error("You must be signed in to delete a recipe.");
+  }
+
+  // Fetch the recipe to verify ownership
+  const { data: recipe, error: fetchError } = await supabase
+    .from('recipes')
+    .select('creator')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !recipe) {
+    throw new Error("Recipe not found.");
+  }
+
+  if (recipe.creator !== user.email) {
+    throw new Error("Only the creator of this recipe can delete it.");
+  }
+
+  const { error } = await supabase
+    .from('recipes')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  return true;
 }
 
 // =====================================================
