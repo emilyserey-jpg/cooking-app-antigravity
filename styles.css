@@ -652,6 +652,7 @@ h1, h2, h3, h4, h5 {
 .play-pause-circle:active { transform: scale(0.9); }
 
 .voice-assistant-fab {
+  display: none; /* Hidden by default in other views */
   position: fixed !important;
   bottom: 84px;
   right: 14px;
@@ -662,7 +663,6 @@ h1, h2, h3, h4, h5 {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
-  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -670,6 +670,11 @@ h1, h2, h3, h4, h5 {
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   z-index: 9999 !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Show only when the mobile player view is active */
+#view-mobile-player.active ~ .voice-assistant-fab {
+  display: flex !important;
 }
 
 .voice-assistant-fab:hover {
