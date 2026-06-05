@@ -4577,6 +4577,11 @@ function renderPlayerMultigrid() {
         <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:contain; display:block;"></video>
         <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
         
+        <!-- Close button (x) to remove step -->
+        <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
+          <i data-lucide="x" style="width:12px; height:12px;"></i>
+        </button>
+
         <!-- Mute/Unmute floating button -->
         <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
           <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
@@ -4597,6 +4602,11 @@ function renderPlayerMultigrid() {
       tile.innerHTML = `
         <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:contain; display:block;"></canvas>
         
+        <!-- Close button (x) to remove step -->
+        <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
+          <i data-lucide="x" style="width:12px; height:12px;"></i>
+        </button>
+
         <!-- Step info badge -->
         <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
           ${idx + 1}. ${step.title || 'Step'}
