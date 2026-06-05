@@ -1586,6 +1586,9 @@ a:focus-visible {
     width: 100% !important;
     min-height: auto !important;
   }
+  .phone-screen.multigrid-active:not(.multigrid-row-mode) {
+    grid-template-columns: 2.2fr 1fr !important;
+  }
 }
 
 /* Multigrid Active height overrides */

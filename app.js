@@ -4614,6 +4614,23 @@ function setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime) {
   const overlay = document.getElementById(`playerMultigridOverlay_${idx}`);
   if (!video || !videoUrl) return;
 
+  // Listen to loadedmetadata to set actual video aspect ratio on the card and adjust width in row layout if vertical
+  video.addEventListener('loadedmetadata', () => {
+    const tile = video.closest('.multigrid-tile');
+    if (tile && video.videoWidth && video.videoHeight) {
+      tile.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
+      
+      // If we are in row layout, adjust the tile width dynamically based on orientation
+      if (playerGridLayout === 'row') {
+        if (video.videoWidth < video.videoHeight) {
+          tile.style.width = '200px';
+        } else {
+          tile.style.width = '360px';
+        }
+      }
+    }
+  });
+
   if (videoUrl.includes('.m3u8')) {
     if (window.Hls && Hls.isSupported()) {
       const hls = new Hls({ maxBufferLength: 5 });
