@@ -1011,9 +1011,9 @@
             </div>
 
             <!-- Save buttons -->
-            <button id="saveRecipeBtn" onclick="saveNewRecipe()"
+            <button id="saveRecipeBtn" onclick="openFolderSaveModal()"
               style="width:100%;background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px;font-family:var(--font);font-size:0.88rem;font-weight:900;cursor:pointer;box-shadow:0 6px 18px rgba(92,184,92,0.3);flex-shrink:0;">
-              ✅ Save Recipe
+              &#x2705; Save Recipe
             </button>
             <button onclick="saveDraft()" id="saveDraftBtn"
               style="width:100%;background:#fff;color:var(--text-muted);border:2px solid var(--border-card);border-radius:999px;padding:9px;font-family:var(--font);font-size:0.8rem;font-weight:800;cursor:pointer;flex-shrink:0;margin-bottom:8px;">
@@ -1038,6 +1038,69 @@
     </section>
 
   </main>
+
+  <!-- ============================================
+       FOLDER SAVE MODAL — shown when pressing Save Recipe
+       ============================================ -->
+  <div id="folderSaveBackdrop" onclick="closeFolderSaveModal()"
+    style="display:none;position:fixed;inset:0;background:rgba(10,30,60,0.5);backdrop-filter:blur(6px);z-index:600;"></div>
+
+  <div id="folderSaveModal"
+    style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:601;width:100%;max-width:440px;padding:1rem;">
+    <div style="background:#fff;border-radius:24px;padding:1.75rem;box-shadow:0 24px 60px rgba(74,144,217,0.22);border:2px solid rgba(74,144,217,0.12);">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div>
+          <div style="font-size:1.5rem;font-weight:900;color:var(--text-heading);">&#x1F4C1; Save Recipe</div>
+          <div id="fsm-title" style="font-size:0.82rem;color:var(--text-muted);font-weight:600;margin-top:2px;"></div>
+        </div>
+        <button onclick="closeFolderSaveModal()"
+          style="width:32px;height:32px;border-radius:50%;background:#f0f4f8;border:none;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex-shrink:0;">&times;</button>
+      </div>
+
+      <!-- Existing folders -->
+      <div id="fsm-existing-wrap" style="margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:6px;">Add to Existing Folder</div>
+        <select id="fsm-folder-select"
+          style="width:100%;padding:10px 12px;border:2px solid var(--border-card);border-radius:12px;font-family:var(--font);font-size:0.88rem;background:#fff;color:var(--text-body);margin-bottom:0;">
+          <option value="">&#x2014; No folder (save loose) &#x2014;</option>
+        </select>
+      </div>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+        <div style="flex:1;height:1px;background:var(--border-card);"></div>
+        <span style="font-size:0.72rem;color:var(--text-muted);font-weight:700;">OR CREATE NEW</span>
+        <div style="flex:1;height:1px;background:var(--border-card);"></div>
+      </div>
+
+      <!-- New folder input -->
+      <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+        <input id="fsm-new-folder" type="text" placeholder="New folder name…"
+          style="flex:1;padding:10px 12px;border:2px solid var(--border-card);border-radius:12px;font-family:var(--font);font-size:0.85rem;outline:none;"
+          onkeydown="if(event.key==='Enter')document.getElementById('fsm-create-btn').click()">
+        <button id="fsm-create-btn" onclick="fsmCreateFolder()"
+          style="background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;padding:10px 14px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;color:var(--text-heading);white-space:nowrap;">
+          &#x2795; Create
+        </button>
+      </div>
+
+      <!-- Folder chips (shows after creation) -->
+      <div id="fsm-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;"></div>
+
+      <!-- Status message -->
+      <div id="fsm-msg" style="min-height:1.2em;font-size:0.78rem;font-weight:700;color:var(--primary);margin-bottom:0.75rem;"></div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:0.75rem;">
+        <button onclick="fsmSaveWithFolder()"
+          style="flex:1;background:linear-gradient(135deg,var(--green),#43b96a);color:#fff;border:none;border-radius:12px;padding:13px;font-family:var(--font);font-weight:900;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 14px rgba(92,184,92,0.35);">
+          &#x2705; Save Recipe
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================================
        AUTH MODAL — Sign In / Sign Up

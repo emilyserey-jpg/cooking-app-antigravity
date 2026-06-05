@@ -3771,7 +3771,106 @@ window.toggleCreatePrivacy = function() {
     : '🔒 Private — only you can see this';
 };
 
-window.saveNewRecipe = async function() {
+// ── Folder Save Modal (shown when clicking Save Recipe) ────────────────────────────
+let _fsmPendingFolderId = null;
+
+window.openFolderSaveModal = function() {
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  const title = titleInput ? titleInput.value.trim() : '';
+  if (!title) { showTip('Please enter a recipe title first!'); if (titleInput) titleInput.focus(); return; }
+  if (!currentUser) { showTip('Please sign in to save your recipe.'); window.openAuthModal(); return; }
+
+  _fsmPendingFolderId = null;
+
+  const select = document.getElementById('fsm-folder-select');
+  if (select) {
+    let folders = [];
+    try {
+      const raw = localStorage.getItem('cookingGPS_library_v1');
+      const lib = raw ? JSON.parse(raw) : {};
+      folders = lib.folders || [];
+    } catch {}
+    select.innerHTML = '<option value="">— No folder (save loose) —</option>'
+      + folders.map(f => '<option value="' + f.id + '">' + f.name + '</option>').join('');
+  }
+
+  const titleEl = document.getElementById('fsm-title');
+  if (titleEl) titleEl.textContent = '\u201c' + (titleInput ? titleInput.value.trim() : '') + '\u201d';
+
+  const msg   = document.getElementById('fsm-msg');
+  const chips = document.getElementById('fsm-chips');
+  const input = document.getElementById('fsm-new-folder');
+  if (msg)   msg.textContent = '';
+  if (chips) chips.innerHTML = '';
+  if (input) input.value    = '';
+
+  document.getElementById('folderSaveBackdrop').style.display = 'block';
+  document.getElementById('folderSaveModal').style.display    = 'block';
+};
+
+window.closeFolderSaveModal = function() {
+  document.getElementById('folderSaveBackdrop').style.display = 'none';
+  document.getElementById('folderSaveModal').style.display    = 'none';
+};
+
+window.fsmCreateFolder = function() {
+  const input = document.getElementById('fsm-new-folder');
+  const msg   = document.getElementById('fsm-msg');
+  const chips = document.getElementById('fsm-chips');
+  const name  = input ? input.value.trim() : '';
+  if (!name) { if (msg) { msg.style.color = '#ef4444'; msg.textContent = 'Enter a folder name first.'; } return; }
+
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
+    if (!lib.folders)     lib.folders     = [];
+    if (!lib.customOrder) lib.customOrder = [];
+
+    if (lib.folders.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+      if (msg) { msg.style.color = '#ef4444'; msg.textContent = 'A folder with that name already exists.'; }
+      return;
+    }
+
+    const colors = ['#4a90d9','#22c55e','#f59e0b','#a855f7','#ef4444','#06b6d4','#ec4899','#14b8a6'];
+    const newFolder = {
+      id:        'f_' + Date.now(),
+      name,
+      color:     colors[lib.folders.length % colors.length],
+      recipeIds: [],
+    };
+    lib.folders.push(newFolder);
+    lib.customOrder.push('folder:' + newFolder.id);
+    localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
+    _fsmPendingFolderId = newFolder.id;
+
+    if (chips) {
+      chips.innerHTML = '<div style="display:inline-flex;align-items:center;gap:5px;background:' + newFolder.color + '22;border:1.5px solid ' + newFolder.color + ';border-radius:8px;padding:4px 10px;font-size:0.78rem;font-weight:700;color:' + newFolder.color + ';">'
+        + '\ud83d\udcc1 ' + name + ' \u2714</div>';
+    }
+    if (msg)   { msg.style.color = '#22c55e'; msg.textContent = '\u2705 Folder created! Recipe will be added on save.'; }
+    if (input) input.value = '';
+
+    const select = document.getElementById('fsm-folder-select');
+    if (select) {
+      const opt = document.createElement('option');
+      opt.value = newFolder.id;
+      opt.textContent = newFolder.name;
+      opt.selected = true;
+      select.appendChild(opt);
+    }
+  } catch (e) {
+    if (msg) { msg.style.color = '#ef4444'; msg.textContent = 'Error: ' + e.message; }
+  }
+};
+
+window.fsmSaveWithFolder = async function() {
+  const select = document.getElementById('fsm-folder-select');
+  const chosenFolderId = (select && select.value) ? select.value : _fsmPendingFolderId;
+  closeFolderSaveModal();
+  await saveNewRecipe(chosenFolderId);
+};
+
+window.saveNewRecipe = async function(targetFolderId) {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim();
   if (!title) { showTip('Please enter a recipe title first!'); titleInput?.focus(); return; }
@@ -3809,6 +3908,19 @@ window.saveNewRecipe = async function() {
       shared_on_profile: createIsPublic,
     });
 
+    // If user chose a folder, add the recipe to it in localStorage
+    if (targetFolderId && savedRecipe && savedRecipe.id) {
+      try {
+        const _raw = localStorage.getItem('cookingGPS_library_v1');
+        const _lib = _raw ? JSON.parse(_raw) : { folders: [], customOrder: [] };
+        const _f   = (_lib.folders || []).find(f => f.id === targetFolderId);
+        if (_f) {
+          if (!_f.recipeIds) _f.recipeIds = [];
+          if (!_f.recipeIds.includes(savedRecipe.id)) _f.recipeIds.push(savedRecipe.id);
+          localStorage.setItem('cookingGPS_library_v1', JSON.stringify(_lib));
+        }
+      } catch {}
+    }
     document.getElementById('createStage2').style.display = 'none';
     showStage3WithFolderPicker(savedRecipe, createIsPublic);
     showTip('"' + title + '" saved!');
