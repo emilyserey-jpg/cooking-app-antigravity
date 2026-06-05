@@ -14,6 +14,23 @@ const GEMINI_API_KEY  = process.env.GEMINI_API_KEY;
 // OpenAI client (only created if key exists)
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
+// Helper to sanitize mime type and prevent 'application/octet-stream' errors
+function getValidMimeType(file) {
+  let mimeType = file.mimetype || 'video/mp4';
+  if (mimeType === 'application/octet-stream' || !mimeType.startsWith('video/')) {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (ext === '.mp4') mimeType = 'video/mp4';
+    else if (ext === '.mov') mimeType = 'video/quicktime';
+    else if (ext === '.webm') mimeType = 'video/webm';
+    else if (ext === '.avi') mimeType = 'video/x-msvideo';
+    else if (ext === '.mpeg' || ext === '.mpg') mimeType = 'video/mpeg';
+    else if (ext === '.3gp') mimeType = 'video/3gpp';
+    else if (ext === '.ogg') mimeType = 'video/ogg';
+    else mimeType = 'video/mp4'; // Default fallback
+  }
+  return mimeType;
+}
+
 // Multer: keep uploaded files in memory (max 25MB — Whisper's limit)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -85,7 +102,7 @@ app.post('/api/transcribe', upload.single('video'), async (req, res) => {
     const file = await toFile(
       req.file.buffer,
       req.file.originalname || 'video.mp4',
-      { type: req.file.mimetype || 'video/mp4' }
+      { type: getValidMimeType(req.file) }
     );
 
     const transcription = await openai.audio.transcriptions.create({
@@ -210,10 +227,10 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
   if (!req.file)
     return res.status(400).json({ error: 'No video file received.' });
 
-  const mimeType = req.file.mimetype || 'video/mp4';
+  const mimeType = getValidMimeType(req.file);
   // Auth header works with both AIzaSy and AQ. key formats
   const authHeader = { 'x-goog-api-key': GEMINI_API_KEY };
-  console.log(`[Gemini] File: ${req.file.originalname}, ${(req.file.size/1024/1024).toFixed(1)}MB`);
+  console.log(`[Gemini] File: ${req.file.originalname}, ${(req.file.size/1024/1024).toFixed(1)}MB, MIME: ${mimeType}`);
 
   try {
     // ── Step 1: Upload to Google File API ───────────────────────────────
