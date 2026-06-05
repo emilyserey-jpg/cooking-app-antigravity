@@ -4334,38 +4334,66 @@ function flashNavBtn(dir) {
 }
 
 // ── Global arrow-key handler (active on Create page) ──────────────────────
+// ── Global arrow-key handler (active on Create page & Player page) ──────────────
 document.addEventListener('keydown', function(e) {
   // Ignore if user is typing in an input, textarea, or contenteditable
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
-  // Only active when Create editor (stage 2) is visible
+  
   const stage2 = document.getElementById('createStage2');
-  if (!stage2 || stage2.style.display === 'none' || stage2.style.display === '') return;
+  const isCreateActive = stage2 && stage2.style.display !== 'none' && stage2.style.display !== '';
+  const isPlayerActive = (typeof currentView !== 'undefined' && currentView === 'mobile-player');
+
+  if (!isCreateActive && !isPlayerActive) return;
 
   if (e.key === 'ArrowLeft') {
     e.preventDefault();
-    if (keyboardMode === 'steps') {
-      flashNavBtn(-1);
-      window.navStep(-1);
-    } else {
-      const vid = document.getElementById('uploadedVideoPlayer');
-      if (vid) { vid.currentTime = Math.max(0, vid.currentTime - 1); flashNavBtn(-1); }
+    if (isCreateActive) {
+      if (keyboardMode === 'steps') {
+        flashNavBtn(-1);
+        window.navStep(-1);
+      } else {
+        const vid = document.getElementById('uploadedVideoPlayer');
+        if (vid) { vid.currentTime = Math.max(0, vid.currentTime - 1); flashNavBtn(-1); }
+      }
+    } else if (isPlayerActive) {
+      const vid = document.getElementById('mobileRealVideo');
+      if (vid && vid.style.display !== 'none') {
+        if (e.shiftKey || keyboardMode === 'scrub') {
+          vid.currentTime = Math.max(0, vid.currentTime - 1);
+          currentTime = vid.currentTime; // Sync simulation loop immediately
+        } else {
+          window.desktopPlayerPrev();
+        }
+      }
     }
   } else if (e.key === 'ArrowRight') {
     e.preventDefault();
-    if (keyboardMode === 'steps') {
-      flashNavBtn(1);
-      window.navStep(1);
-    } else {
-      const vid = document.getElementById('uploadedVideoPlayer');
-      if (vid) { vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1); flashNavBtn(1); }
+    if (isCreateActive) {
+      if (keyboardMode === 'steps') {
+        flashNavBtn(1);
+        window.navStep(1);
+      } else {
+        const vid = document.getElementById('uploadedVideoPlayer');
+        if (vid) { vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1); flashNavBtn(1); }
+      }
+    } else if (isPlayerActive) {
+      const vid = document.getElementById('mobileRealVideo');
+      if (vid && vid.style.display !== 'none') {
+        if (e.shiftKey || keyboardMode === 'scrub') {
+          vid.currentTime = Math.min(vid.duration || Infinity, vid.currentTime + 1);
+          currentTime = vid.currentTime; // Sync simulation loop immediately
+        } else {
+          window.desktopPlayerNext();
+        }
+      }
     }
   } else if (e.key === ' ') {
-    // Spacebar: play/pause
-    const stage2check = document.getElementById('createStage2');
-    if (stage2check && stage2check.style.display !== 'none') {
-      e.preventDefault();
+    e.preventDefault();
+    if (isCreateActive) {
       window.toggleVideoPlay?.();
+    } else if (isPlayerActive) {
+      window.toggleVideoPlayback();
     }
   }
 });
