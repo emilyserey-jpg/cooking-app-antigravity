@@ -1621,3 +1621,23 @@ a:focus-visible {
   overflow-y: visible !important;
 }
 
+/* Custom scrollbar for multigrid descriptions row */
+#playerMultigridDescriptions::-webkit-scrollbar {
+  height: 8px !important;
+}
+
+#playerMultigridDescriptions::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 99px;
+}
+
+#playerMultigridDescriptions::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 217, 0.3) !important;
+  border-radius: 99px;
+  border: 1.5px solid transparent;
+}
+
+#playerMultigridDescriptions::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 217, 0.5) !important;
+}
+

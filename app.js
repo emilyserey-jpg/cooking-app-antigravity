@@ -68,6 +68,57 @@ let animFrameId = null;
 // Sizzle animations particles for canvas
 let particles = [];
 
+// Helper to enable smooth click-and-drag horizontal scrolling on desktop viewports
+function enableDragToScroll(el) {
+  if (!el) return;
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+  let hasMoved = false;
+
+  el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Left click only
+    isDown = true;
+    hasMoved = false;
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+    el.style.cursor = 'grabbing';
+    el.style.userSelect = 'none';
+  });
+
+  el.addEventListener('mouseleave', () => {
+    isDown = false;
+    el.style.cursor = 'grab';
+    el.style.removeProperty('user-select');
+  });
+
+  el.addEventListener('mouseup', () => {
+    isDown = false;
+    el.style.cursor = 'grab';
+    el.style.removeProperty('user-select');
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 3) {
+      hasMoved = true;
+      e.preventDefault();
+      el.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  el.addEventListener('click', (e) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
+  el.style.cursor = 'grab';
+}
+
 // Initialize App
 function initializeApp() {
   canvasMobile = document.getElementById('mobileVideoCanvas');
@@ -86,6 +137,12 @@ function initializeApp() {
   updateDetailFields();
   setupSpeechRecognition();
   setupDashboardTimer();
+
+  // Enable drag-to-scroll on multigrid descriptions horizontal container
+  const multigridDescContainer = document.getElementById('playerMultigridDescriptions');
+  if (multigridDescContainer) {
+    enableDragToScroll(multigridDescContainer);
+  }
 
   // Update keyboard navigation buttons when seek amount is changed
   const seekSelect = document.getElementById('seekStepSelect');
