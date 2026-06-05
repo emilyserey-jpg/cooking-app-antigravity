@@ -87,6 +87,14 @@ function initializeApp() {
   setupSpeechRecognition();
   setupDashboardTimer();
 
+  // Update keyboard navigation buttons when seek amount is changed
+  const seekSelect = document.getElementById('seekStepSelect');
+  if (seekSelect) {
+    seekSelect.addEventListener('change', () => {
+      window.setKeyboardMode(keyboardMode);
+    });
+  }
+
   // Catch video loading/playback errors (e.g., expired local blob URLs)
   const realVideo = document.getElementById('mobileRealVideo');
   if (realVideo) {
@@ -2341,6 +2349,9 @@ function savePlayerProgress(recipeId) {
 }
 
 window.togglePlayerStepDone = function(stepIndex) {
+  if (stepIndex === undefined || typeof stepIndex !== 'number') {
+    stepIndex = activeStepIndex;
+  }
   const recipeId = activePlayerRecipeId || 'local_default';
   if (playerCompletedSteps.has(stepIndex)) {
     playerCompletedSteps.delete(stepIndex);
@@ -4746,11 +4757,14 @@ window.setKeyboardMode = function(mode) {
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
-    if (hint)  hint.textContent = 'Seek video ±1 second';
+    if (hint)  hint.textContent = 'Seek video';
     
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
-    if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will seek forward or backward by 1 second.';
+    
+    const seekSelect = document.getElementById('seekStepSelect');
+    const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+    if (pHint)  pHint.textContent = `Pressing Left / Right arrow keys will seek forward or backward by ${seekAmount} second${seekAmount === 1 ? '' : 's'}.`;
 
     if (kbToggleIcon && kbToggleBtn) {
       kbToggleBtn.style.background = 'var(--primary-soft)';
@@ -4765,12 +4779,12 @@ window.setKeyboardMode = function(mode) {
     }
 
     if (navPrev) {
-      navPrev.textContent = '←';
-      navPrev.title = 'Rewind 1s (← key)';
+      navPrev.textContent = `-${seekAmount}s`;
+      navPrev.title = `Rewind ${seekAmount}s (← key)`;
     }
     if (navNext) {
-      navNext.textContent = '→';
-      navNext.title = 'Forward 1s (→ key)';
+      navNext.textContent = `+${seekAmount}s`;
+      navNext.title = `Forward ${seekAmount}s (→ key)`;
     }
   }
   if (window.lucide) lucide.createIcons();
@@ -4778,7 +4792,9 @@ window.setKeyboardMode = function(mode) {
 
 window.setPlayerKeyboardMode = function(mode) {
   window.setKeyboardMode(mode);
-  showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
+  const seekSelect = document.getElementById('seekStepSelect');
+  const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+  showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
 };
 
 window.cyclePlaybackMode = function() {
@@ -4791,7 +4807,9 @@ window.cyclePlaybackMode = function() {
 window.togglePlayerKeyboardMode = function() {
   const newMode = (keyboardMode === 'steps') ? 'scrub' : 'steps';
   window.setKeyboardMode(newMode);
-  showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
+  const seekSelect = document.getElementById('seekStepSelect');
+  const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+  showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
 };
 
 window.toggleCreateKeyboardMode = function() {

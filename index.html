@@ -178,7 +178,7 @@
               
               <!-- Cooking Step Tracker Completion Controls -->
               <div style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                <button id="playerMarkDoneBtn" onclick="togglePlayerStepDone(activeStepIndex)" tabindex="-1" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; background: rgba(74, 144, 217, 0.15); color: var(--primary);">
+                <button id="playerMarkDoneBtn" onclick="window.togglePlayerStepDone()" tabindex="-1" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; background: rgba(74, 144, 217, 0.15); color: var(--primary);">
                   <i data-lucide="circle" style="width: 14px; height: 14px;"></i> Mark Done
                 </button>
                 <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 8px 12px; border: none; border-radius: 10px; font-family: var(--font); font-size: 0.8rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
