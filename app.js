@@ -2156,6 +2156,496 @@ window.resetGridProgress = function() {
   showTip('Progress reset 🔄');
 };
 
+// ══════════════════════════════════════════════════════════════════════════════
+// 📁 LIBRARY — Folders, search, sort, drag-and-drop
+// ══════════════════════════════════════════════════════════════════════════════
+
+const LIB_KEY          = 'cookingGPS_library_v1';
+const FOLDER_COLORS    = ['#a8d8f0','#b8f0c8','#f0d8a8','#d8b8f0','#f0b8c8','#a8f0e8','#f0ebb8','#c8b8f0','#ffd6a5','#caffbf'];
+let   libState         = null;   // loaded on first render
+let   libAllRecipes    = [];     // all recipes owned by user (from Supabase)
+let   libSearchQuery   = '';
+let   libOpenFolderId  = null;   // null = root; string = folder id being viewed
+let   libEditFolderId  = null;   // null = create mode; string = edit mode
+let   libDragItem      = null;   // { type:'folder'|'recipe', id }
+let   libSelectedColor = FOLDER_COLORS[0];
+
+// ── State helpers ──────────────────────────────────────────────────────────
+function libLoad() {
+  try {
+    const raw = localStorage.getItem(LIB_KEY);
+    libState = raw ? JSON.parse(raw) : { sort:'az', folders:[], customOrder:[] };
+  } catch { libState = { sort:'az', folders:[], customOrder:[] }; }
+  // Ensure required keys
+  if (!libState.folders)     libState.folders     = [];
+  if (!libState.customOrder) libState.customOrder = [];
+  if (!libState.sort)        libState.sort        = 'az';
+}
+
+function libSave() {
+  localStorage.setItem(LIB_KEY, JSON.stringify(libState));
+}
+
+function libGetFolder(id) {
+  return libState.folders.find(f => f.id === id);
+}
+
+function libMakeId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+// ── Fetch user recipes from Supabase ──────────────────────────────────────
+async function libFetchRecipes() {
+  if (!currentUser) return [];
+  try {
+    const { supabase } = await import('./supabase-client.js');
+    const { data } = await supabase
+      .from('recipes')
+      .select('id, title, video_url, duration, created_at, private_recipe')
+      .eq('creator', currentUser.email)
+      .order('created_at', { ascending: false });
+    return data || [];
+  } catch { return []; }
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+async function renderLibrary() {
+  const content = document.getElementById('libContent');
+  if (!content) return;
+
+  if (!libState) libLoad();
+
+  // Show loading spinner while fetching
+  content.innerHTML = `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
+    <div style="font-size:2rem;margin-bottom:0.75rem;">⏳</div>
+    <div style="font-weight:700;font-size:0.9rem;">Loading your library…</div>
+  </div>`;
+
+  libAllRecipes = await libFetchRecipes();
+
+  // Sync customOrder: add new recipe/folder ids not yet present
+  const allIds = new Set(libState.customOrder);
+  libState.folders.forEach(f => { if (!allIds.has('folder:' + f.id)) libState.customOrder.push('folder:' + f.id); });
+  libAllRecipes.forEach(r => { if (!allIds.has('recipe:' + r.id)) libState.customOrder.push('recipe:' + r.id); });
+  libSave();
+
+  libRenderContent();
+  libUpdateSortBtns();
+}
+
+function libRenderContent() {
+  const content = document.getElementById('libContent');
+  if (!content || !libState) return;
+
+  // If drilling into a folder, show folder view
+  if (libOpenFolderId) {
+    libRenderFolderView(content);
+    return;
+  }
+
+  const q = libSearchQuery.toLowerCase();
+
+  // Build ordered list respecting current sort
+  let folders = [...libState.folders];
+  let loose   = libAllRecipes.filter(r => !libState.folders.some(f => (f.recipeIds||[]).includes(r.id)));
+
+  // Apply sort
+  if (libState.sort === 'az') {
+    folders.sort((a, b) => a.name.localeCompare(b.name));
+    loose.sort((a, b) => (a.title||'').localeCompare(b.title||''));
+  } else if (libState.sort === 'za') {
+    folders.sort((a, b) => b.name.localeCompare(a.name));
+    loose.sort((a, b) => (b.title||'').localeCompare(a.title||''));
+  } else {
+    // Custom: use customOrder array
+    const orderMap = {};
+    libState.customOrder.forEach((k, i) => { orderMap[k] = i; });
+    folders.sort((a, b) => (orderMap['folder:'+a.id] ?? 999) - (orderMap['folder:'+b.id] ?? 999));
+    loose.sort((a, b) => (orderMap['recipe:'+a.id] ?? 999) - (orderMap['recipe:'+b.id] ?? 999));
+  }
+
+  // Apply search filter
+  if (q) {
+    folders = folders.filter(f => f.name.toLowerCase().includes(q));
+    loose   = loose.filter(r => (r.title||'').toLowerCase().includes(q));
+  }
+
+  let html = '';
+
+  // ── Folders section ──
+  if (folders.length) {
+    html += `<div style="margin-bottom:1.5rem;">
+      <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
+        📁 Folders (${folders.length})
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;" id="libFolderGrid">`;
+    folders.forEach(f => { html += libFolderCardHTML(f); });
+    html += `</div></div>`;
+  }
+
+  // ── Loose recipes section ──
+  const looseLabel = q ? `Results (${loose.length})` : `Loose Recipes (${loose.length})`;
+  html += `<div>
+    <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
+      🎬 ${looseLabel}
+    </div>`;
+
+  if (!loose.length && !folders.length) {
+    html += libEmptyState(q);
+  } else if (!loose.length) {
+    html += `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.85rem;font-weight:600;">
+      ${q ? 'No recipes match your search' : 'All recipes are inside folders'}
+    </div>`;
+  } else {
+    html += `<div style="display:flex;flex-direction:column;gap:10px;" id="libLooseList">`;
+    loose.forEach(r => { html += libRecipeCardHTML(r, null); });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  content.innerHTML = html;
+
+  // Attach drag events after render
+  libAttachDragEvents();
+}
+
+function libFolderCardHTML(f) {
+  const count = (f.recipeIds || []).length;
+  const isDrag = libState.sort === 'custom';
+  return `
+    <div class="lib-folder-card" id="libF_${f.id}"
+      style="background:${f.color};border-radius:16px;padding:16px 14px 14px;cursor:pointer;
+             position:relative;transition:transform 0.15s,box-shadow 0.15s;
+             box-shadow:0 2px 10px rgba(0,0,0,0.08);min-height:110px;display:flex;flex-direction:column;justify-content:space-between;"
+      onclick="libOpenFolder('${f.id}')"
+      ${isDrag ? `draggable="true" ondragstart="libOnDragStart(event,'folder','${f.id}')"` : ''}
+      ondragover="libOnDragOver(event,'${f.id}')"
+      ondrop="libOnDrop(event,'folder','${f.id}')"
+      ondragleave="libOnDragLeave(event)">
+      <!-- Actions menu -->
+      <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;" onclick="event.stopPropagation()">
+        <button onclick="libRenameFolder('${f.id}')" title="Rename"
+          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
+        <button onclick="libDeleteFolder('${f.id}')" title="Delete"
+          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑️</button>
+      </div>
+      <div style="font-size:2rem;line-height:1;margin-bottom:6px;">📁</div>
+      <div>
+        <div style="font-weight:900;font-size:0.88rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
+        <div style="font-size:0.7rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} recipe${count !== 1 ? 's' : ''}</div>
+      </div>
+      ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;">⠿ drag</div>' : ''}
+    </div>`;
+}
+
+function libRecipeCardHTML(r, folderId) {
+  const mins = r.duration ? `${Math.floor(r.duration/60)}:${Math.floor(r.duration%60).toString().padStart(2,'0')}` : '';
+  const date = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  const isDrag = libState.sort === 'custom';
+  const removeBtn = folderId
+    ? `<button onclick="event.stopPropagation();libRemoveFromFolder('${r.id}','${folderId}')" title="Move to loose"
+         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 9px;font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">↩ Remove</button>`
+    : '';
+  return `
+    <div class="lib-recipe-card" id="libR_${r.id}"
+      style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:12px 14px;
+             display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s;"
+      onclick="libOpenRecipe('${r.id}')"
+      ${isDrag && !folderId ? `draggable="true" ondragstart="libOnDragStart(event,'recipe','${r.id}')"` : ''}
+      onmouseenter="this.style.boxShadow='0 4px 18px rgba(74,144,217,0.13)';this.style.borderColor='var(--primary)'"
+      onmouseleave="this.style.boxShadow='';this.style.borderColor='var(--border-card)'">
+      <!-- Thumbnail placeholder -->
+      <div style="width:52px;height:52px;border-radius:9px;background:linear-gradient(135deg,#e0eaf8,#d0d8f0);flex-shrink:0;
+                  display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🎬</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:900;font-size:0.9rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title||'Untitled'}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;margin-top:2px;">${[mins,date].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        ${removeBtn}
+        <span style="font-size:0.7rem;color:var(--text-muted);">›</span>
+      </div>
+      ${isDrag && !folderId ? '<div style="font-size:0.65rem;color:var(--text-muted);font-weight:700;flex-shrink:0;">⠿</div>' : ''}
+    </div>`;
+}
+
+function libEmptyState(q) {
+  if (q) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔍</div>
+    <div style="font-weight:800;font-size:1rem;">No results for "${q}"</div>
+  </div>`;
+  if (!currentUser) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">Sign in to see your library</div>
+    <button onclick="openAuthModal()" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;margin-top:0.5rem;">Sign In</button>
+  </div>`;
+  return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">No recipes yet</div>
+    <div style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;">Create your first recipe to see it here</div>
+    <button onclick="switchView('create')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;">+ Create Recipe</button>
+  </div>`;
+}
+
+// ── Folder drill-down ──────────────────────────────────────────────────────
+window.libOpenFolder = function(id) {
+  libOpenFolderId = id;
+  libRenderContent();
+};
+
+function libRenderFolderView(content) {
+  const f = libGetFolder(libOpenFolderId);
+  if (!f) { libOpenFolderId = null; libRenderContent(); return; }
+
+  const recipes = libAllRecipes.filter(r => (f.recipeIds||[]).includes(r.id));
+  const q = libSearchQuery.toLowerCase();
+  const filtered = q ? recipes.filter(r => (r.title||'').toLowerCase().includes(q)) : recipes;
+
+  // Find loose recipes NOT already in this folder for the "Add" picker
+  const allFolderIds = new Set(libState.folders.flatMap(ff => ff.recipeIds||[]));
+  const addable = libAllRecipes.filter(r => !allFolderIds.has(r.id));
+
+  let html = `
+    <!-- Back + folder header -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+      <button onclick="libCloseFolder()"
+        style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:9px;padding:7px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">← Back</button>
+      <div style="width:36px;height:36px;border-radius:10px;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">📁</div>
+      <div>
+        <div style="font-weight:900;font-size:1.1rem;color:var(--text-heading);">${f.name}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;">${recipes.length} recipe${recipes.length!==1?'s':''}</div>
+      </div>
+    </div>`;
+
+  // Add recipe dropdown
+  if (addable.length) {
+    html += `<div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:12px 14px;margin-bottom:1rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:0.75rem;font-weight:800;color:var(--text-muted);white-space:nowrap;">Add recipe:</span>
+      <select id="libAddRecipePicker" style="flex:1;min-width:140px;border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;font-family:var(--font);font-weight:700;font-size:0.82rem;outline:none;background:#fff;">
+        <option value="">— pick a recipe —</option>
+        ${addable.map(r => `<option value="${r.id}">${r.title||'Untitled'}</option>`).join('')}
+      </select>
+      <button onclick="libAddRecipeToFolder(document.getElementById('libAddRecipePicker').value,'${f.id}')"
+        style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:var(--font);font-weight:800;font-size:0.8rem;cursor:pointer;white-space:nowrap;">+ Add</button>
+    </div>`;
+  }
+
+  // Recipes list
+  if (!filtered.length) {
+    html += `<div style="text-align:center;padding:3rem;color:var(--text-muted);">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+      <div style="font-weight:700;font-size:0.88rem;">${q ? 'No matching recipes' : 'This folder is empty — add recipes above'}</div>
+    </div>`;
+  } else {
+    html += `<div style="display:flex;flex-direction:column;gap:10px;">`;
+    filtered.forEach(r => { html += libRecipeCardHTML(r, f.id); });
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+}
+
+window.libCloseFolder = function() {
+  libOpenFolderId = null;
+  libRenderContent();
+};
+
+window.libAddRecipeToFolder = function(recipeId, folderId) {
+  if (!recipeId) return;
+  const f = libGetFolder(folderId);
+  if (!f) return;
+  if (!f.recipeIds) f.recipeIds = [];
+  if (!f.recipeIds.includes(recipeId)) f.recipeIds.push(recipeId);
+  libSave();
+  libRenderContent();
+};
+
+window.libRemoveFromFolder = function(recipeId, folderId) {
+  const f = libGetFolder(folderId);
+  if (!f) return;
+  f.recipeIds = (f.recipeIds||[]).filter(id => id !== recipeId);
+  libSave();
+  libRenderContent();
+};
+
+window.libOpenRecipe = function(id) {
+  // Switch to player and load the recipe
+  switchView('mobile-player');
+  const r = libAllRecipes.find(r => r.id === id);
+  if (r) showTip(`Opening "${r.title}"…`);
+  // If profile has a loadRecipe function, use it
+  if (typeof window.loadProfileRecipe === 'function') window.loadProfileRecipe(id);
+};
+
+// ── Sort ──────────────────────────────────────────────────────────────────
+window.libSetSort = function(mode) {
+  if (!libState) libLoad();
+  libState.sort = mode;
+  libSave();
+  libUpdateSortBtns();
+  libRenderContent();
+};
+
+function libUpdateSortBtns() {
+  const mode = libState?.sort || 'az';
+  ['az','za','custom'].forEach(m => {
+    const btn = document.getElementById('libSort' + m.charAt(0).toUpperCase() + m.slice(1));
+    if (!btn) return;
+    const active = m === mode;
+    btn.style.background = active ? 'var(--primary)' : 'transparent';
+    btn.style.color      = active ? '#fff' : 'var(--text-muted)';
+  });
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
+window.libSearch = function(q) {
+  libSearchQuery = q || '';
+  libRenderContent();
+};
+
+// ── Folder CRUD ───────────────────────────────────────────────────────────
+window.libCreateFolder = function() {
+  libEditFolderId  = null;
+  libSelectedColor = FOLDER_COLORS[libState.folders.length % FOLDER_COLORS.length];
+  const title = document.getElementById('libModalTitle');
+  const input = document.getElementById('libFolderNameInput');
+  if (title) title.textContent = '📁 New Folder';
+  if (input) input.value = '';
+  libRenderSwatches();
+  const modal = document.getElementById('libFolderModal');
+  if (modal) { modal.style.display = 'flex'; setTimeout(() => input?.focus(), 60); }
+};
+
+window.libRenameFolder = function(id) {
+  const f = libGetFolder(id);
+  if (!f) return;
+  libEditFolderId  = id;
+  libSelectedColor = f.color;
+  const title = document.getElementById('libModalTitle');
+  const input = document.getElementById('libFolderNameInput');
+  if (title) title.textContent = '✏️ Rename Folder';
+  if (input) input.value = f.name;
+  libRenderSwatches();
+  const modal = document.getElementById('libFolderModal');
+  if (modal) { modal.style.display = 'flex'; setTimeout(() => { input?.focus(); input?.select(); }, 60); }
+};
+
+window.libSaveFolder = function() {
+  const input = document.getElementById('libFolderNameInput');
+  const name  = input?.value?.trim();
+  if (!name) { input?.focus(); return; }
+
+  if (libEditFolderId) {
+    const f = libGetFolder(libEditFolderId);
+    if (f) { f.name = name; f.color = libSelectedColor; }
+  } else {
+    const newFolder = { id: libMakeId(), name, color: libSelectedColor, recipeIds: [] };
+    libState.folders.push(newFolder);
+    libState.customOrder.push('folder:' + newFolder.id);
+  }
+  libSave();
+  libCloseModal();
+  libRenderContent();
+};
+
+window.libDeleteFolder = function(id) {
+  if (!confirm('Delete this folder? Recipes inside will be moved back to loose.')) return;
+  libState.folders = libState.folders.filter(f => f.id !== id);
+  libState.customOrder = libState.customOrder.filter(k => k !== 'folder:' + id);
+  libSave();
+  if (libOpenFolderId === id) libOpenFolderId = null;
+  libRenderContent();
+};
+
+window.libCloseModal = function() {
+  const modal = document.getElementById('libFolderModal');
+  if (modal) modal.style.display = 'none';
+  libEditFolderId = null;
+};
+
+function libRenderSwatches() {
+  const box = document.getElementById('libColorSwatches');
+  if (!box) return;
+  box.innerHTML = FOLDER_COLORS.map(c => `
+    <div onclick="libPickColor('${c}')" id="swatch_${c.slice(1)}"
+      style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;
+             border:3px solid ${c === libSelectedColor ? '#3b82f6' : 'transparent'};
+             transition:border-color 0.15s;flex-shrink:0;"></div>`).join('');
+}
+
+window.libPickColor = function(c) {
+  libSelectedColor = c;
+  document.querySelectorAll('[id^="swatch_"]').forEach(el => {
+    el.style.borderColor = '#' + el.id.slice(6) === c.slice(1) ? '#3b82f6' : 'transparent';
+  });
+  // Re-render just the swatches
+  libRenderSwatches();
+};
+
+// ── Drag-and-drop ─────────────────────────────────────────────────────────
+window.libOnDragStart = function(e, type, id) {
+  libDragItem = { type, id };
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.getElementById((type==='folder'?'libF_':'libR_') + id);
+    if (el) el.style.opacity = '0.4';
+  }, 0);
+};
+
+window.libOnDragOver = function(e, folderId) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const el = document.getElementById('libF_' + folderId);
+  if (el) el.style.outline = '3px solid var(--primary)';
+};
+
+window.libOnDragLeave = function(e) {
+  e.currentTarget.style.outline = '';
+};
+
+window.libOnDrop = function(e, targetType, targetId) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '';
+  if (!libDragItem) return;
+
+  // If dropping a recipe onto a folder card → move recipe into folder
+  if (libDragItem.type === 'recipe' && targetType === 'folder') {
+    const f = libGetFolder(targetId);
+    if (f && !f.recipeIds.includes(libDragItem.id)) {
+      f.recipeIds.push(libDragItem.id);
+      libSave();
+    }
+  }
+  // If custom sort: reorder customOrder
+  else if (libState.sort === 'custom') {
+    const dragKey   = libDragItem.type + ':' + libDragItem.id;
+    const targetKey = targetType + ':' + targetId;
+    const order     = libState.customOrder.filter(k => k !== dragKey);
+    const tIdx      = order.indexOf(targetKey);
+    order.splice(tIdx >= 0 ? tIdx : order.length, 0, dragKey);
+    libState.customOrder = order;
+    libSave();
+  }
+
+  libDragItem = null;
+  libRenderContent();
+};
+
+function libAttachDragEvents() {
+  // Reset opacity on all cards after render
+  document.querySelectorAll('[id^="libF_"],[id^="libR_"]').forEach(el => { el.style.opacity = '1'; });
+}
+
+// ── Trigger render when tab is opened ─────────────────────────────────────
+const _origSwitchView = window.switchView;
+window.switchView = function(view) {
+  _origSwitchView?.(view);
+  if (view === 'grid-view') {
+    if (!libState) libLoad();
+    renderLibrary();
+  }
+};
+
 window.handleDiscoverSearch = function(query) {
   if (!query.trim()) {
     renderDiscoverGrid(allDiscoverRecipes);
