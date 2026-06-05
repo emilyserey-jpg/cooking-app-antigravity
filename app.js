@@ -83,6 +83,20 @@ function initializeApp() {
   setupSpeechRecognition();
   setupDashboardTimer();
 
+  // Catch video loading/playback errors (e.g., expired local blob URLs)
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (realVideo) {
+    realVideo.addEventListener('error', () => {
+      console.warn('[Player] Video failed to load source:', realVideo.src);
+      const src = realVideo.src || '';
+      if (src.startsWith('blob:')) {
+        showTip('⚠️ This video was saved locally in your browser and has expired. Please re-upload it.');
+      } else if (src) {
+        showTip('⚠️ Video file could not be loaded. Please ensure it has uploaded fully.');
+      }
+    });
+  }
+
   // 🔌 Connect to Supabase
   initSupabase();
 

@@ -363,6 +363,11 @@ h1, h2, h3, h4, h5 {
   background: #f4f9ff;
 }
 
+.player-left-column {
+  display: flex;
+  flex-direction: column;
+}
+
 .mobile-video-container {
   width: 100%;
   aspect-ratio: 16/9;
@@ -1267,38 +1272,41 @@ h1, h2, h3, h4, h5 {
     gap: 24px !important;
     overflow: visible !important;
     height: auto !important;
+    align-items: start !important;
+  }
+
+  .player-left-column {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
   }
 
   /* Left Side Column: Video + Modes + Controls */
   .mobile-video-container {
-    grid-column: 1 !important;
-    grid-row: 1 !important;
     border-radius: 16px !important;
     overflow: hidden !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
   }
 
   .mode-selector-strip {
-    grid-column: 1 !important;
-    grid-row: 2 !important;
-    margin-top: 12px !important;
+    margin: 0 !important;
   }
 
   .desktop-player-controls {
     display: flex !important;
-    grid-column: 1 !important;
-    grid-row: 3 !important;
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
   /* Right Side Column: Active Step Card + Chips Scroll List */
   .mobile-player-body {
     grid-column: 2 !important;
-    grid-row: 1 / span 3 !important;
+    grid-row: 1 !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
-    height: 100% !important;
+    height: auto !important;
     min-height: 500px !important;
     padding: 0 !important;
     background: transparent !important;

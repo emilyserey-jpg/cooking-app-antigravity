@@ -431,9 +431,49 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+async function initStorageBucket() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('[Supabase Storage] SUPABASE_URL or SUPABASE_SERVICE_KEY/SUPABASE_ANON_KEY not set. Skipping bucket initialization.');
+    return;
+  }
+
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false }
+    });
+
+    const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets();
+    if (listError) throw listError;
+
+    const hasVideos = buckets.some(b => b.name === 'videos');
+    if (!hasVideos) {
+      console.log('[Supabase Storage] Creating "videos" bucket...');
+      const { error: createError } = await supabaseAdmin.storage.createBucket('videos', {
+        public: true,
+        allowedMimeTypes: ['video/*', 'image/*'],
+        fileSizeLimit: 524288000 // 500MB
+      });
+      if (createError) throw createError;
+      console.log('[Supabase Storage] "videos" bucket created successfully.');
+    } else {
+      console.log('[Supabase Storage] "videos" bucket already exists.');
+    }
+  } catch (err) {
+    console.error('[Supabase Storage] Error initializing storage bucket:', err.message);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 Server on port ${PORT}`);
   console.log(`   Cloudflare Stream: ${CF_ACCOUNT_ID ? '✅' : '❌ not configured'}`);
   console.log(`   OpenAI / Whisper:  ${OPENAI_API_KEY ? '✅' : '❌ not configured'}`);
   console.log(`   Gemini:            ${GEMINI_API_KEY ? '✅ key starts with ' + GEMINI_API_KEY.slice(0,6) + '...' : '❌ GEMINI_API_KEY not set'}`);
+  
+  // Initialize storage bucket
+  initStorageBucket();
 });
+

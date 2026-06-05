@@ -69,56 +69,59 @@
         <div class="phone-notch"></div>
         
         <div class="phone-screen">
-          <!-- Video Section -->
-          <div class="mobile-video-container">
-            <div class="mobile-video-placeholder">
-              <!-- Animated Canvas representing video playback -->
-              <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
-              <!-- Real Video Player -->
-              <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline></video>
-              
-              <!-- Floating Back Button -->
-              <button onclick="window.playerGoBack()" class="player-back-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
-                <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
+          <div class="player-left-column">
+            <!-- Video Section -->
+            <div class="mobile-video-container">
+              <div class="mobile-video-placeholder">
+                <!-- Animated Canvas representing video playback -->
+                <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
+                <!-- Real Video Player -->
+                <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline></video>
+                
+                <!-- Floating Back Button -->
+                <button onclick="window.playerGoBack()" class="player-back-btn" style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+                  <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
+                </button>
+                
+                <!-- Badges -->
+                <div class="playback-controls-overlay">
+                  <span id="activeModeBadge" class="mode-badge loop">
+                    <i data-lucide="repeat"></i> Loop Mode
+                  </span>
+                </div>
+                
+                <div class="video-overlay-details">
+                  <span id="videoTimeReadout">0:00 / 6:00</span>
+                  <span id="activeSpeedBadge">1.0x</span>
+                </div>
+                
+                <!-- Timeline/Loop bounds -->
+                <div id="videoProgressLine" class="playback-loop-progress" style="width: 0%"></div>
+                <div id="videoBoundariesContainer"></div>
+              </div>
+            </div>
+
+            <!-- Segmented Mode Control -->
+            <div class="mode-selector-strip">
+              <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')">Loop</button>
+              <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')">Wait</button>
+              <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')">Continuous</button>
+            </div>
+
+            <!-- Desktop Player Controls (visible on desktop only) -->
+            <div class="desktop-player-controls" style="display:none; justify-content:center; align-items:center; gap:12px; margin-top:8px;">
+              <button onclick="desktopPlayerPrev()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
+                ⏮ Prev Step
               </button>
-              
-              <!-- Badges -->
-              <div class="playback-controls-overlay">
-                <span id="activeModeBadge" class="mode-badge loop">
-                  <i data-lucide="repeat"></i> Loop Mode
-                </span>
-              </div>
-              
-              <div class="video-overlay-details">
-                <span id="videoTimeReadout">0:00 / 6:00</span>
-                <span id="activeSpeedBadge">1.0x</span>
-              </div>
-              
-              <!-- Timeline/Loop bounds -->
-              <div id="videoProgressLine" class="playback-loop-progress" style="width: 0%"></div>
-              <div id="videoBoundariesContainer"></div>
+              <button id="desktopPlayPauseBtn" onclick="toggleVideoPlayback()" class="btn btn-primary" style="padding:10px 24px; font-weight:900; font-family:var(--font); border-radius:999px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(74,144,217,0.25); font-size:0.85rem;">
+                ▶ Play
+              </button>
+              <button onclick="desktopPlayerNext()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
+                Next Step ⏭
+              </button>
             </div>
           </div>
 
-          <!-- Segmented Mode Control -->
-          <div class="mode-selector-strip">
-            <button id="modeBtnLoop" class="mode-switch-btn active loop" onclick="setPlaybackMode('loop')">Loop</button>
-            <button id="modeBtnWait" class="mode-switch-btn wait" onclick="setPlaybackMode('wait')">Wait</button>
-            <button id="modeBtnContinuous" class="mode-switch-btn continuous" onclick="setPlaybackMode('continuous')">Continuous</button>
-          </div>
-
-          <!-- Desktop Player Controls (visible on desktop only) -->
-          <div class="desktop-player-controls" style="display:none; justify-content:center; align-items:center; gap:12px; margin-top:8px;">
-            <button onclick="desktopPlayerPrev()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
-              ⏮ Prev Step
-            </button>
-            <button id="desktopPlayPauseBtn" onclick="toggleVideoPlayback()" class="btn btn-primary" style="padding:10px 24px; font-weight:900; font-family:var(--font); border-radius:999px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(74,144,217,0.25); font-size:0.85rem;">
-              ▶ Play
-            </button>
-            <button onclick="desktopPlayerNext()" class="btn" style="padding:8px 14px; font-weight:800; display:flex; align-items:center; gap:4px; font-family:var(--font); border-radius:10px; border:2px solid var(--border-card); background:var(--bg-card-soft); cursor:pointer; color:var(--text-heading); font-size:0.8rem;">
-              Next Step ⏭
-            </button>
-          </div>
 
           <!-- Mobile App Body -->
           <div class="mobile-player-body">
