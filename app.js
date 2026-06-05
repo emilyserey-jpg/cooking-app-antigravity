@@ -4319,7 +4319,8 @@ window.togglePlayerMultigridMode = function() {
   if (isPlayerMultigridActive) {
     // Initialize selected steps if empty
     if (playerSelectedSteps.size === 0 && recipeData && recipeData.steps) {
-      recipeData.steps.forEach((_, idx) => playerSelectedSteps.add(idx));
+      // Initialize with only the currently active step
+      playerSelectedSteps.add(activeStepIndex);
     }
     
     // Pause and hide single player
