@@ -78,6 +78,7 @@ function initializeApp() {
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   
+  loadPlayerProgress(activePlayerRecipeId || 'local_default');
   renderStepChipsMobile();
   renderTimelineMarkersDesktop();
   renderStepListDesktop();
@@ -668,7 +669,7 @@ function renderStepChipsMobile() {
   container.innerHTML = '';
   recipeData.steps.forEach((step, idx) => {
     const isDone = playerCompletedSteps.has(idx);
-    const chip = document.createElement('button');
+    const chip = document.createElement('div');
     chip.className = `step-chip ${idx === activeStepIndex ? 'active' : ''} ${isDone ? 'done' : ''}`;
     chip.tabIndex = -1;
     chip.onclick = () => seekToStep(idx);
@@ -2317,13 +2318,15 @@ window.playerTimelineClick = function(e) {
 };
 
 function getPlayerProgressKey(recipeId) {
-  return `cooking_gps_player_progress_${recipeId}`;
+  const id = recipeId || 'local_default';
+  return `cooking_gps_player_progress_${id}`;
 }
 
 function loadPlayerProgress(recipeId) {
+  const id = recipeId || 'local_default';
   playerCompletedSteps = new Set();
   try {
-    const saved = localStorage.getItem(getPlayerProgressKey(recipeId));
+    const saved = localStorage.getItem(getPlayerProgressKey(id));
     if (saved) {
       const arr = JSON.parse(saved);
       playerCompletedSteps = new Set(arr);
@@ -2333,17 +2336,18 @@ function loadPlayerProgress(recipeId) {
 }
 
 function savePlayerProgress(recipeId) {
-  localStorage.setItem(getPlayerProgressKey(recipeId), JSON.stringify([...playerCompletedSteps]));
+  const id = recipeId || 'local_default';
+  localStorage.setItem(getPlayerProgressKey(id), JSON.stringify([...playerCompletedSteps]));
 }
 
 window.togglePlayerStepDone = function(stepIndex) {
-  if (!activePlayerRecipeId) return;
+  const recipeId = activePlayerRecipeId || 'local_default';
   if (playerCompletedSteps.has(stepIndex)) {
     playerCompletedSteps.delete(stepIndex);
   } else {
     playerCompletedSteps.add(stepIndex);
   }
-  savePlayerProgress(activePlayerRecipeId);
+  savePlayerProgress(recipeId);
   updatePlayerProgressBar();
   renderStepChipsMobile();
   updatePlayerMarkDoneButton();
@@ -2355,9 +2359,9 @@ window.togglePlayerStepDone = function(stepIndex) {
 };
 
 window.resetPlayerProgress = function() {
-  if (!activePlayerRecipeId) return;
+  const recipeId = activePlayerRecipeId || 'local_default';
   playerCompletedSteps = new Set();
-  savePlayerProgress(activePlayerRecipeId);
+  savePlayerProgress(recipeId);
   updatePlayerProgressBar();
   renderStepChipsMobile();
   updatePlayerMarkDoneButton();
@@ -4180,9 +4184,13 @@ window.desktopPlayerNext     = function() {
   }
 };
 window.desktopPlayerPrev     = function() {
-  if (activeStepIndex > 0) {
+  const currentStepStart = recipeData.loops[activeStepIndex] || 0;
+  if (currentTime > currentStepStart + 2) {
+    seekToStep(activeStepIndex);
+  } else if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
+    seekToStep(0);
     showTip("First step reached.");
   }
 };
@@ -4827,6 +4835,16 @@ document.addEventListener('keydown', function(e) {
   // Ignore if user is typing in an input, textarea, or contenteditable
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+  
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    // Force mouse cursor to remain visible/reappear on macOS by toggling cursor style
+    const oldCursor = document.body.style.cursor;
+    document.body.style.cursor = 'none';
+    document.body.offsetHeight; // trigger reflow
+    setTimeout(() => {
+      document.body.style.cursor = oldCursor || '';
+    }, 10);
+  }
   
   // Blur focused buttons to prevent browser focus rings or highlight rings from hijacking navigation
   const activeEl = document.activeElement;
