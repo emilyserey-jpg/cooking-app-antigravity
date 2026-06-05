@@ -1265,16 +1265,29 @@ function renderDiscoverGrid(recipes) {
 let pubCurrentCreator   = null; // { email, name, recipes[] }
 let pubHeroRecipe       = null; // currently featured recipe
 let pubPreviousView     = 'discover'; // where to go Back
+let pubFromTab          = false; // true when opened via My Profile nav tab
 
 // ── Open a creator's public profile ──────────────────────────────────────
 window.openPublicProfile = async function(creatorEmail, fromView) {
   pubPreviousView = fromView || 'discover';
+  pubFromTab      = (fromView === 'my-profile');
 
   // Show the section immediately with loading state
   document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
   const section = document.getElementById('view-public-profile');
   if (!section) return;
   section.style.display = '';
+
+  // Show/hide Back button depending on entry point
+  const backBtn = section.querySelector('button[onclick="pubProfileBack()"]');
+  if (backBtn) backBtn.style.display = pubFromTab ? 'none' : 'inline-flex';
+
+  // Highlight the correct nav tab
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+  if (pubFromTab) {
+    const myProfileTab = document.getElementById('myProfileTab');
+    if (myProfileTab) myProfileTab.classList.add('active');
+  }
 
   // Reset header while loading
   const nameEl    = document.getElementById('pubName');
@@ -2954,13 +2967,31 @@ function libAttachDragEvents() {
 // ── Trigger render when tab is opened ─────────────────────────────────────
 const _origSwitchView = window.switchView;
 window.switchView = function(view) {
+  // Hide the public-profile overlay when switching away
+  if (view !== 'my-profile' && pubFromTab) {
+    const pp = document.getElementById('view-public-profile');
+    if (pp) pp.style.display = 'none';
+    pubFromTab = false;
+  }
+
   _origSwitchView?.(view);
+
   if (view === 'grid-view') {
     if (!libState) libLoad();
     renderLibrary();
   }
   if (view === 'profile') {
     mySpaceInit();
+  }
+  if (view === 'my-profile') {
+    // Load own public channel
+    if (!currentUser) {
+      openAuthModal();
+      // Revert to previous view
+      return;
+    }
+    pubFromTab = true;
+    openPublicProfile(currentUser.email, 'my-profile');
   }
 };
 
