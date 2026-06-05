@@ -6804,9 +6804,15 @@ async function tryGeminiFor(task) {
 // ── AI: Write Ingredients only ─────────────────────────────────────────────
 window.aiWriteIngredients = async function() {
   setAIStatus('✍️ Writing ingredients...', true);
+  let gem = null;
   try {
     // Try Gemini first
-    const gem = await tryGeminiFor('ingredients');
+    gem = await tryGeminiFor('ingredients');
+  } catch (gemError) {
+    console.warn('Gemini failed to write ingredients, trying Whisper fallback:', gemError);
+  }
+
+  try {
     if (gem?.ingredients?.length) {
       const box = document.getElementById('ingredientsText');
       if (box) box.value = gem.ingredients.join('\n');
@@ -6830,9 +6836,15 @@ window.aiWriteIngredients = async function() {
 // ── AI: Write Steps only ───────────────────────────────────────────────────
 window.aiWriteSteps = async function() {
   setAIStatus('📋 Writing step instructions...', true);
+  let gem = null;
   try {
     // Try Gemini first
-    const gem = await tryGeminiFor('steps');
+    gem = await tryGeminiFor('steps');
+  } catch (gemError) {
+    console.warn('Gemini failed to write steps, trying Whisper fallback:', gemError);
+  }
+
+  try {
     if (gem?.steps?.length) {
       const box = document.getElementById('stepsText');
       if (box) box.value = gem.steps.join('\n');
@@ -6890,8 +6902,14 @@ window.aiWriteStepDescriptions = async function() {
 window.aiDoEverything = async function() {
   setAIStatus('⚡ Running all AI features...', true);
   const btn = document.getElementById('aiLoopBtn');
+  let gem = null;
   try {
-    const gem = await tryGeminiFor('all');
+    gem = await tryGeminiFor('all');
+  } catch (gemError) {
+    console.warn('Gemini failed in aiDoEverything, trying Whisper fallback:', gemError);
+  }
+
+  try {
     if (gem?.loops?.length) {
       // Apply all Gemini results
       if (gem.title) {
@@ -6965,10 +6983,15 @@ window.doItAll = async function() {
 
   showTip('🤖 Gemini is analyzing your video for loop points. Please wait... 🎬');
 
+  let gem = null;
   try {
     setAIStatus('🤖 Gemini is analyzing your video...', true);
-    const gem = await tryGeminiFor('loops');
+    gem = await tryGeminiFor('loops');
+  } catch (gemError) {
+    console.warn('Gemini loop analysis failed, trying Whisper fallback:', gemError);
+  }
 
+  try {
     if (gem?.loops?.length) {
       // ✅ Gemini worked — apply loops + optionally title
       if (gem.title) {
