@@ -1703,7 +1703,7 @@ a:focus-visible {
     height: calc(100dvh - 120px) !important;
     max-height: calc(100dvh - 120px) !important;
     overflow: hidden !important;
-    display: flex !important;
+    display: flex;
     flex-direction: column !important;
     position: relative !important;
     padding-bottom: 60px !important; /* space for toolbar */

@@ -6502,6 +6502,9 @@ window.createAndAddToNewFolder = function() {};
 
 
 window.resetCreateView = function() {
+  if (typeof window.closeAllMobileDrawers === 'function') {
+    window.closeAllMobileDrawers();
+  }
   editingRecipeId  = null;
   uploadedVideoUID = null;
   localVideoURL    = null;
