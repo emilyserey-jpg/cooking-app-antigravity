@@ -2503,8 +2503,9 @@ window.playerSkipTime = function(amount) {
   
   let actualAmount = amount;
   if (Math.abs(amount) === 1) {
+    const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
     const seekSelect = document.getElementById('seekStepSelect');
-    const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+    const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
     actualAmount = amount > 0 ? seekAmount : -seekAmount;
   }
   
@@ -5662,8 +5663,9 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
     
+    const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
     const seekSelect = document.getElementById('seekStepSelect');
-    const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+    const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
     if (pHint)  pHint.textContent = `Pressing Left / Right arrow keys will seek forward or backward by ${seekAmount} second${seekAmount === 1 ? '' : 's'}.`;
 
     if (kbToggleIcon && kbToggleBtn) {
@@ -5692,8 +5694,9 @@ window.setKeyboardMode = function(mode) {
 
 window.setPlayerKeyboardMode = function(mode) {
   window.setKeyboardMode(mode);
+  const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
   const seekSelect = document.getElementById('seekStepSelect');
-  const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+  const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
   showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
 };
 
@@ -5707,8 +5710,9 @@ window.cyclePlaybackMode = function() {
 window.togglePlayerKeyboardMode = function() {
   const newMode = (keyboardMode === 'steps') ? 'scrub' : 'steps';
   window.setKeyboardMode(newMode);
+  const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
   const seekSelect = document.getElementById('seekStepSelect');
-  const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+  const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
   showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
 };
 
@@ -5722,8 +5726,9 @@ window.navOrScrub = function(dir) {
   } else {
     const vid = document.getElementById('uploadedVideoPlayer');
     if (vid) {
+      const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
       const seekSelect = document.getElementById('seekStepSelect');
-      const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+      const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
       const amount = dir > 0 ? seekAmount : -seekAmount;
       vid.currentTime = Math.max(0, Math.min(vid.duration || Infinity, vid.currentTime + amount));
     }
@@ -5787,8 +5792,9 @@ document.addEventListener('keydown', function(e) {
       const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
       
       if (isSeeking) {
+        const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
         const seekSelect = document.getElementById('seekStepSelect');
-        const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+        const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
         const newTime = Math.max(0, currentTime - seekAmount);
         if (hasRealVideo) {
           vid.currentTime = newTime;
@@ -5813,8 +5819,9 @@ document.addEventListener('keydown', function(e) {
       const isSeeking = (keyboardMode === 'scrub') ? !e.shiftKey : e.shiftKey;
       
       if (isSeeking) {
+        const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
         const seekSelect = document.getElementById('seekStepSelect');
-        const seekAmount = seekSelect ? parseInt(seekSelect.value) || 1 : 1;
+        const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
         const newTime = Math.min(recipeData.duration, currentTime + seekAmount);
         if (hasRealVideo) {
           vid.currentTime = newTime;
@@ -7118,7 +7125,7 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Details', 'Stops', 'AI', 'Save'];
+  const tabs = ['Details', 'Stops', 'Save', 'AI'];
   tabs.forEach((tab, i) => {
     const btn = document.getElementById(`btnToolbar${tab}`);
     if (btn) {
@@ -7134,7 +7141,7 @@ function updateToolbarButtonStates(activeIndex) {
       stopsBody.style.display = '';
       if (stopsChevron) stopsChevron.style.transform = '';
     }
-  } else if (activeIndex === 2) { // AI Tools tab
+  } else if (activeIndex === 3) { // Steps/AI Tools tab
     const aiBody = document.getElementById('aiBody');
     const aiChevron = document.getElementById('aiChevron');
     if (aiBody) {
