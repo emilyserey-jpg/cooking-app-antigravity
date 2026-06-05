@@ -4602,6 +4602,9 @@ window.setKeyboardMode = function(mode) {
   const pBtnScrub = document.getElementById('playerKbModeScrub');
   const pHint     = document.getElementById('playerKbModeHint');
 
+  const kbToggleBtn = document.getElementById('playerKbToggleBtn');
+  const kbToggleLabel = document.getElementById('playerKbToggleLabel');
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
@@ -4610,6 +4613,13 @@ window.setKeyboardMode = function(mode) {
     if (pBtnSteps) { pBtnSteps.style.background = 'var(--primary)'; pBtnSteps.style.color = '#fff'; }
     if (pBtnScrub) { pBtnScrub.style.background = 'transparent';    pBtnScrub.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
+
+    if (kbToggleLabel) kbToggleLabel.textContent = 'Steps';
+    if (kbToggleBtn) {
+      kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
+      kbToggleBtn.style.borderColor = 'rgba(74, 144, 217, 0.15)';
+      kbToggleBtn.style.color = 'var(--text-body)';
+    }
   } else {
     if (btnScrub) { btnScrub.style.background = 'var(--primary)'; btnScrub.style.color = '#fff'; }
     if (btnSteps) { btnSteps.style.background = 'transparent';    btnSteps.style.color = 'var(--text-muted)'; }
@@ -4618,11 +4628,24 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will seek forward or backward by 1 second.';
+
+    if (kbToggleLabel) kbToggleLabel.textContent = '1s Seek';
+    if (kbToggleBtn) {
+      kbToggleBtn.style.background = 'var(--primary-soft)';
+      kbToggleBtn.style.borderColor = 'var(--primary)';
+      kbToggleBtn.style.color = 'var(--primary-dark)';
+    }
   }
 };
 
 window.setPlayerKeyboardMode = function(mode) {
   window.setKeyboardMode(mode);
+};
+
+window.togglePlayerKeyboardMode = function() {
+  const newMode = (keyboardMode === 'steps') ? 'scrub' : 'steps';
+  window.setKeyboardMode(newMode);
+  showTip(`Arrow keys behavior: ${newMode === 'steps' ? 'Jump Steps' : 'Seek 1s'} ⌨️`);
 };
 
 // Flash the on-screen arrow button briefly when keyboard triggers it

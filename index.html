@@ -93,6 +93,10 @@
                   <span id="activeModeBadge" class="mode-badge loop">
                     <i data-lucide="repeat"></i> Loop Mode
                   </span>
+                  <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="mode-badge" style="cursor:pointer; background:rgba(255,255,255,0.95); border:2px solid rgba(74, 144, 217, 0.15); font-family:var(--font); outline:none; transition: all 0.2s;" title="Toggle Arrow Key Mode">
+                    <i data-lucide="keyboard" style="width: 12px; height: 12px; color:var(--primary);"></i>
+                    <span id="playerKbToggleLabel" style="font-weight: 800; font-size: 0.68rem; margin-left: 2px;">Steps</span>
+                  </button>
                 </div>
                 
                 <div class="video-overlay-details">
@@ -190,22 +194,7 @@
               </div>
             </div>
             
-            <!-- Arrow Keys Keyboard Behavior Toggle -->
-            <div class="glass-card" style="padding: 12px; margin-top: 10px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; border: 1.5px solid rgba(74,144,217,0.08); background: rgba(255,255,255,0.7); box-shadow: var(--shadow-xs);">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--text-heading); display: flex; align-items: center; gap: 4px;">
-                  <i data-lucide="keyboard" style="width: 14px; height: 14px; color: var(--primary);"></i> Arrow Keys Behavior
-                </span>
-                <!-- Pill toggler -->
-                <div style="display: flex; background: var(--bg-card-soft); border-radius: 999px; padding: 2px; border: 1.5px solid var(--border-card); overflow: hidden; flex-shrink: 0;">
-                  <button id="playerKbModeSteps" onclick="setPlayerKeyboardMode('steps')" style="padding: 3px 10px; border: none; border-radius: 999px; background: var(--primary); color: #fff; font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">⏭ Steps</button>
-                  <button id="playerKbModeScrub" onclick="setPlayerKeyboardMode('scrub')" style="padding: 3px 10px; border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-family: var(--font); font-weight: 800; font-size: 0.65rem; cursor: pointer; white-space: nowrap; transition: all 0.2s;">⏩ 1s Seek</button>
-                </div>
-              </div>
-              <p id="playerKbModeHint" style="margin: 0; font-size: 0.65rem; color: var(--text-muted); line-height: 1.3;">
-                Pressing Left / Right arrow keys will jump between recipe steps.
-              </p>
-            </div>
+
 
             <!-- Voice Guide Assist tip -->
             <div class="glass-card" style="padding: 12px; margin-top: auto; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
