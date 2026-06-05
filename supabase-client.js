@@ -472,3 +472,56 @@ export async function saveTranslation(recipeId, language, steps, ingredients) {
              { onConflict: 'recipe_id,language' });
   if (error) throw error;
 }
+
+// =====================================================
+// Comments — fetch and create with localStorage fallback
+// =====================================================
+
+export async function getRecipeComments(recipeId) {
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('recipe_id', recipeId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  } catch (err) {
+    console.warn('[Comments] Supabase read failed, falling back to local storage:', err.message);
+    const local = localStorage.getItem(`cooking_comments_${recipeId}`);
+    return local ? JSON.parse(local) : [];
+  }
+}
+
+export async function createRecipeComment(recipeId, body, authorEmail) {
+  const comment = {
+    id: 'comment_' + Math.random().toString(36).slice(2, 11),
+    recipe_id: recipeId,
+    author_id: authorEmail,
+    user_id: authorEmail,
+    body: body,
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        recipe_id: recipeId,
+        body: body,
+        author_id: authorEmail
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn('[Comments] Supabase insert failed, falling back to local storage:', err.message);
+    const local = localStorage.getItem(`cooking_comments_${recipeId}`);
+    const comments = local ? JSON.parse(local) : [];
+    comments.push(comment);
+    localStorage.setItem(`cooking_comments_${recipeId}`, JSON.stringify(comments));
+    return comment;
+  }
+}
+

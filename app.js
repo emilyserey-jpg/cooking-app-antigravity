@@ -39,6 +39,7 @@ const recipeData = {
 let currentUser = null;
 let authMode = 'signin'; // 'signin' or 'signup'
 let currentView = 'create';
+let playerPreviousView = 'create';
 let playbackMode = 'loop';
 let isPlaying = false;
 let currentTime = 75.0;
@@ -1039,6 +1040,12 @@ function speakFeedback(phrase) {
 // INTERFACE VIEW SWITCHER / HELPER SHEETS
 // ----------------------------------------------------
 function switchView(viewId) {
+  if (viewId === 'mobile-player') {
+    if (currentView && currentView !== 'mobile-player') {
+      playerPreviousView = currentView;
+    }
+  }
+
   // Hide the public-profile overlay when switching away
   if (viewId !== 'my-profile' && pubFromTab) {
     const pp = document.getElementById('view-public-profile');
@@ -1192,6 +1199,9 @@ function initSupabase() {
   onAuthChange((user) => {
     currentUser = user;
     updateUserBadge(user);
+    if (typeof activePlayerRecipeId !== 'undefined' && activePlayerRecipeId) {
+      renderCommentForm(activePlayerRecipeId);
+    }
     if (user) {
       loadRealRecipes();
       populateProfilePage(user);
@@ -1547,14 +1557,7 @@ function pubRenderGrid(recipes) {
     var mins = r.duration
       ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
       : '';
-    var mediaHtml = '';
-    if (r.thumbnail_url) {
-      mediaHtml = '<img src="' + encodeURI(r.thumbnail_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">';
-    } else if (r.video_url) {
-      mediaHtml = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>';
-    } else {
-      mediaHtml = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,0.5);">\ud83c\udfac</div>';
-    }
+    var mediaHtml = getRecipeCardThumbnail(r);
     var html = '<div onclick="openPubLightbox(' + idx + ')" style="position:relative;aspect-ratio:1/1;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);cursor:pointer;overflow:hidden;">';
     html += mediaHtml;
     html += '<div class="pub-ov" style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background 0.18s;" onmouseenter="this.style.background=\'rgba(0,0,0,0.32)\';this.querySelector(\'.pov\').style.opacity=\'1\'" onmouseleave="this.style.background=\'rgba(0,0,0,0)\';this.querySelector(\'.pov\').style.opacity=\'0\'">';
@@ -1579,14 +1582,9 @@ function pubRenderHighlights(recipes) {
   var palette = ['#f09433,#e6683c,#dc2743', '#4a90d9,#2d5986', '#5cb85c,#338a3e', '#a855f7,#7c3aed'];
   row.innerHTML = keys.map(function(k, i) {
     var r = groups[k];
-    var inner = '';
+    var inner = getRecipeCardThumbnail(r);
     var bgStyle = '';
-    if (r.thumbnail_url) {
-      inner = '<img src="' + encodeURI(r.thumbnail_url) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;">';
-    } else if (r.video_url) {
-      inner = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>';
-    } else {
-      inner = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:rgba(255,255,255,0.5);">\ud83c\udf73</div>';
+    if (!r.thumbnail_url && !r.video_url) {
       bgStyle = 'background:linear-gradient(45deg,' + palette[i % palette.length] + ');';
     }
     return '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;">'
@@ -1606,16 +1604,8 @@ window.openPubLightbox = function(idx) {
   lb.style.display = 'flex';
   var thumbEl = document.getElementById('pubLightboxThumb');
   if (thumbEl) {
-    if (r.thumbnail_url) {
-      thumbEl.style.background = 'url(' + encodeURI(r.thumbnail_url) + ') center/cover no-repeat';
-      thumbEl.innerHTML = '';
-    } else if (r.video_url) {
-      thumbEl.style.background = '#000';
-      thumbEl.innerHTML = '<video src="' + encodeURI(r.video_url) + '#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>';
-    } else {
-      thumbEl.style.background = 'linear-gradient(135deg,#1a1a2e,#0f3460)';
-      thumbEl.innerHTML = '<span style="font-size:4rem;">\ud83c\udfac</span>';
-    }
+    thumbEl.innerHTML = getRecipeCardThumbnail(r);
+    thumbEl.style.background = 'transparent';
   }
   var displayName = pubCurrentCreator.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   var avatarEl = document.getElementById('pubLightboxAvatar');
@@ -1791,14 +1781,7 @@ function renderRecipeCard(r, isOwner) {
   }
 
   // Thumbnail markup
-  let thumbHtml = '';
-  if (r.thumbnail_url) {
-    thumbHtml = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
-  } else if (r.video_url) {
-    thumbHtml = `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>`;
-  } else {
-    thumbHtml = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:2.2rem;">🍳</div>`;
-  }
+  let thumbHtml = getRecipeCardThumbnail(r);
 
   // Owner action buttons
   let ownerActions = '';
@@ -2176,6 +2159,23 @@ window.loadPlayerRecipe = async function(recipeId) {
     updateStepDetailsUI();
     updateControlsUI();
     
+    // Comments Section display
+    const isPublic = !recipe.private_recipe || recipe.is_published;
+    const commentsSec = document.getElementById('playerCommentsSection');
+    if (commentsSec) {
+      if (isPublic) {
+        commentsSec.style.display = 'flex';
+        loadPlayerComments(recipeId);
+        renderCommentForm(recipeId);
+        // Refresh Lucide icons in comments section
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      } else {
+        commentsSec.style.display = 'none';
+      }
+    }
+
     showTip(`Loaded: ${recipeData.title} 🎬`);
   } catch (err) {
     console.error('[Player] Load error:', err);
@@ -2188,6 +2188,203 @@ window.loadRecipeById = async function(id) {
   if (!id) return;
   switchView('mobile-player');
   await window.loadPlayerRecipe(id);
+};
+
+// ----------------------------------------------------
+// PLAYER COMMENTS SECTION & BACK NAVIGATION LOGIC
+// ----------------------------------------------------
+window.playerGoBack = function() {
+  const prev = playerPreviousView || 'create';
+  switchView(prev);
+};
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function getRecipeCardThumbnail(r) {
+  if (r.thumbnail_url) {
+    return `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+  }
+  if (r.video_url) {
+    const title = r.title || 'Cooking Guide';
+    const hash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+    const gradients = [
+      'linear-gradient(135deg, #ff6b6b, #ff8e53)', // Sunset Warm
+      'linear-gradient(135deg, #4facfe, #00f2fe)', // Cool Blue
+      'linear-gradient(135deg, #43e97b, #38f9d7)', // Mint Green
+      'linear-gradient(135deg, #fa709a, #fee140)', // Sweet Candy
+      'linear-gradient(135deg, #30cfd0, #330867)', // Deep Purple
+      'linear-gradient(135deg, #f093fb, #f5576c)', // Pink Rose
+      'linear-gradient(135deg, #a1c4fd, #c2e9fb)', // Soft Blue
+      'linear-gradient(135deg, #84fab0, #8fd3f4)'  // Mint Splash
+    ];
+    const gradient = gradients[hash % gradients.length];
+    const emojis = ['🍳', '🥗', '🍲', '🍰', '🍜', '🍣', '🍕', '🥞', '🥐', '🍔'];
+    const emoji = emojis[hash % emojis.length];
+
+    return `
+      <div style="width:100%;height:100%;background:${gradient};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;color:#fff;padding:8px;text-align:center;font-family:var(--font);box-sizing:border-box;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.12);z-index:1;"></div>
+        <div style="z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;">
+          <span style="font-size:1.6rem;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.25));">${emoji}</span>
+          <div style="font-size:0.7rem;font-weight:900;max-width:95%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.4);">${escapeHTML(title)}</div>
+          <div style="display:flex;align-items:center;gap:2px;background:rgba(255,255,255,0.22);backdrop-filter:blur(2px);padding:2px 6px;border-radius:10px;border:1px solid rgba(255,255,255,0.25);margin-top:2px;">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:#fff;"><path d="M8 5v14l11-7z"/></svg>
+            <span style="font-size:0.5rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;text-shadow:0 1px 2px rgba(0,0,0,0.2);">Watch</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
+}
+
+function getCompactRecipeThumbnail(r) {
+  if (r.thumbnail_url) {
+    return `<img src="${encodeURI(r.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover;">`;
+  }
+  if (r.video_url) {
+    const hash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+    const gradients = [
+      'linear-gradient(135deg, #ff6b6b, #ff8e53)',
+      'linear-gradient(135deg, #4facfe, #00f2fe)',
+      'linear-gradient(135deg, #43e97b, #38f9d7)',
+      'linear-gradient(135deg, #fa709a, #fee140)',
+      'linear-gradient(135deg, #30cfd0, #330867)',
+      'linear-gradient(135deg, #f093fb, #f5576c)'
+    ];
+    const gradient = gradients[hash % gradients.length];
+    const emojis = ['🍳', '🥗', '🍲', '🍰', '🍜', '🍣', '🍕', '🥞', '🥐', '🍔'];
+    const emoji = emojis[hash % emojis.length];
+    return `<div style="width:100%;height:100%;background:${gradient};display:flex;align-items:center;justify-content:center;font-size:1.1rem;position:relative;"><div style="position:absolute;inset:0;background:rgba(0,0,0,0.1);z-index:1;"></div><span style="z-index:2;">${emoji}</span></div>`;
+  }
+  return `<div style="font-size:1rem;">🎬</div>`;
+}
+
+function timeAgo(dateString) {
+  try {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffMs = now - past;
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) return 'just now';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    const diffDays = Math.floor(diffHr / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return past.toLocaleDateString();
+  } catch {
+    return 'some time ago';
+  }
+}
+
+let activePlayerRecipeId = null;
+
+async function loadPlayerComments(recipeId) {
+  activePlayerRecipeId = recipeId;
+  const listEl = document.getElementById('playerCommentsList');
+  const badgeEl = document.getElementById('playerCommentsCountBadge');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:10px;">Loading comments...</div>';
+
+  try {
+    const { getRecipeComments } = await import('./supabase-client.js');
+    const comments = await getRecipeComments(recipeId);
+    
+    if (badgeEl) badgeEl.textContent = comments.length;
+
+    if (!comments.length) {
+      listEl.innerHTML = '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:15px;font-weight:600;">No comments yet. Be the first! 💬</div>';
+      return;
+    }
+
+    listEl.innerHTML = comments.map(c => {
+      const email = c.author_id || c.user_id || 'Anonymous';
+      const name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+      const dateText = timeAgo(c.created_at || c.createdAt);
+      return `
+        <div style="background:rgba(74,144,217,0.04);padding:8px 10px;border-radius:8px;border:1px solid rgba(74,144,217,0.08);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;">
+            <span style="font-size:0.7rem;font-weight:800;color:var(--primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(name)}</span>
+            <span style="font-size:0.58rem;color:var(--text-muted);font-weight:600;flex-shrink:0;">${dateText}</span>
+          </div>
+          <p style="font-size:0.72rem;color:var(--text-body);line-height:1.35;margin:0;word-break:break-word;">${escapeHTML(c.body)}</p>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('[Player Comments] Error loading comments:', err);
+    listEl.innerHTML = '<div style="font-size:0.7rem;color:#f87171;text-align:center;padding:10px;">Could not load comments.</div>';
+  }
+}
+
+function renderCommentForm(recipeId) {
+  const wrap = document.getElementById('playerAddCommentWrap');
+  if (!wrap) return;
+
+  if (currentUser) {
+    wrap.innerHTML = `
+      <textarea id="playerCommentInput" placeholder="Add a public comment..." style="width:100%;min-height:42px;max-height:80px;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;font-family:var(--font);font-size:0.72rem;color:var(--text-heading);outline:none;resize:vertical;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"></textarea>
+      <div style="display:flex;justify-content:flex-end;">
+        <button id="playerPostCommentBtn" onclick="submitPlayerComment()" class="btn btn-primary" style="padding:4px 14px;font-size:0.7rem;font-weight:800;border-radius:8px;cursor:pointer;font-family:var(--font);">
+          Post
+        </button>
+      </div>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <div style="background:rgba(0,0,0,0.02);border:1.5px dashed var(--border-card);padding:8px 10px;border-radius:8px;text-align:center;">
+        <p style="font-size:0.68rem;color:var(--text-muted);margin:0 0 6px 0;font-weight:600;">You must be signed in to post comments.</p>
+        <button onclick="openAuthModal()" class="btn" style="padding:4px 10px;font-size:0.65rem;font-weight:800;border-radius:6px;cursor:pointer;background:var(--bg-card-soft);border:1.5px solid var(--border-card);font-family:var(--font);">
+          🔑 Sign In
+        </button>
+      </div>
+    `;
+  }
+}
+
+window.submitPlayerComment = async function() {
+  if (!currentUser) {
+    showTip('Please sign in to post comments.');
+    return;
+  }
+  if (!activePlayerRecipeId) return;
+
+  const input = document.getElementById('playerCommentInput');
+  const btn = document.getElementById('playerPostCommentBtn');
+  if (!input) return;
+
+  const body = input.value.trim();
+  if (!body) {
+    showTip('Please write a comment first!');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Posting...';
+  }
+
+  try {
+    const { createRecipeComment } = await import('./supabase-client.js');
+    await createRecipeComment(activePlayerRecipeId, body, currentUser.email);
+    input.value = '';
+    showTip('Comment posted! 💬');
+    await loadPlayerComments(activePlayerRecipeId);
+  } catch (err) {
+    console.error('[Comments] Post failed:', err);
+    showTip('Could not post comment: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Post';
+    }
+  }
 };
 
 // ── Helper: normalize loop data (supports old number arrays AND new object arrays) ──
@@ -3071,14 +3268,7 @@ function libRecipeCardHTML(r, folderId) {
     : '';
 
   // Thumbnail markup
-  let thumbHtml = '';
-  if (r.thumbnail_url) {
-    thumbHtml = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
-  } else if (r.video_url) {
-    thumbHtml = `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;" muted playsinline></video>`;
-  } else {
-    thumbHtml = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
-  }
+  let thumbHtml = getRecipeCardThumbnail(r);
 
   const privBadge = r.private_recipe
     ? `<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">🔒 Private</span>`
@@ -3176,12 +3366,7 @@ function libRecipeCardHTML(r, folderId) {
       
       <!-- Tiny thumbnail representation -->
       <div style="width:36px;height:36px;border-radius:6px;background:#111;overflow:hidden;flex-shrink:0;margin-right:10px;display:flex;align-items:center;justify-content:center;position:relative;">
-        ${r.thumbnail_url 
-          ? `<img src="${encodeURI(r.thumbnail_url)}" style="width:100%;height:100%;object-fit:cover;">`
-          : (r.video_url
-             ? `<video src="${encodeURI(r.video_url)}#t=0.5" preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video>`
-             : `<div style="font-size:1rem;">🎬</div>`
-            )}
+        ${getCompactRecipeThumbnail(r)}
       </div>
 
       <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
