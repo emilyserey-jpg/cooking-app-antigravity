@@ -280,9 +280,10 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
   "title": "short recipe name",
   "ingredients": ["item 1", "item 2"],
   "steps": ["step description 1", "step description 2"],
-  "loops": [{ "start": 0, "end": 15, "label": "Action phrase" }]
+  "loops": [{ "start": 0, "end": 15, "label": "Action phrase" }],
+  "text_overlays": [{ "start": 0.0, "end": 5.0, "text": "transcribed speech or narration text during this timeframe" }]
 }
-Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.`;
+Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds. Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
 
     const gemRes = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
@@ -312,7 +313,8 @@ Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole secon
 
     res.json({ ok: true, source: 'gemini',
       title: result.title || '', ingredients: result.ingredients || [],
-      steps: result.steps || [], loops: result.loops || [] });
+      steps: result.steps || [], loops: result.loops || [],
+      text_overlays: result.text_overlays || [] });
 
   } catch (err) {
     console.error('[Gemini]', err.message);

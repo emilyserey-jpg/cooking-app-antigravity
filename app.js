@@ -6851,11 +6851,6 @@ window.transcribeVideo = async function() {
     return;
   }
 
-  if (uploadedFile.size > 25 * 1024 * 1024) {
-    showTip('Video is over 25MB — Whisper has a 25MB limit. Try a shorter clip.');
-    return;
-  }
-
   // Use cache if already transcribed
   if (cachedTranscript) {
     showTip('Already transcribed! Use the buttons below to generate content.');
@@ -6863,6 +6858,64 @@ window.transcribeVideo = async function() {
   }
 
   const btn = document.getElementById('transcribeBtn');
+
+  async function transcribeWithGeminiFallback(reason) {
+    console.log('[AI] Running Gemini transcription fallback due to:', reason);
+    showTip('Using Gemini to analyze video and extract subtitles... 🚀');
+    setAIStatus('🤖 Video analyze/transcribe via Gemini...', true);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing (Gemini)...'; }
+    try {
+      const gem = await tryGeminiFor('transcribe');
+      if (gem && Array.isArray(gem.text_overlays) && gem.text_overlays.length > 0) {
+        cachedSegments = gem.text_overlays;
+        cachedTranscript = gem.text_overlays.map(s => s.text).join(' ');
+
+        // If Gemini returned title, loops, steps, copy them to createStepsArr if empty
+        if (gem.loops && gem.loops.length > 0 && createStepsArr.length === 0) {
+          if (gem.title) {
+            const t = document.getElementById('newRecipeTitleInput');
+            if (t && !t.value) t.value = gem.title;
+          }
+          createStepsArr = gem.loops.map((l, i) => {
+            const t   = Number(l.start ?? l.time) || 0;
+            const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
+            const mm  = Math.floor(t / 60);
+            const ss  = Math.floor(t % 60).toString().padStart(2, '0');
+            return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+          }).sort((a, b) => a.time - b.time);
+          renderCreateSteps();
+          renderTimeline();
+        }
+
+        // Show transcript preview
+        const preview = document.getElementById('transcriptPreview');
+        const textEl  = document.getElementById('transcriptText');
+        if (preview) preview.style.display = 'block';
+        if (textEl)  textEl.textContent    = cachedTranscript;
+
+        // Show AI action buttons
+        const actions = document.getElementById('aiActions');
+        if (actions) actions.style.display = 'block';
+
+        setAIStatus('✅ Subtitles transcribed by Gemini! Play video to view.', true);
+        if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed (Gemini)'; }
+        showTip('Transcription complete!');
+      } else {
+        throw new Error('Gemini model did not return any subtitle text.');
+      }
+    } catch (gemErr) {
+      console.error('[AI] Gemini fallback failed:', gemErr);
+      setAIStatus('❌ Transcription failed: ' + gemErr.message);
+      if (btn) { btn.disabled = false; btn.textContent = '🎤 Transcribe audio only'; }
+      showTip('Transcription failed: ' + gemErr.message);
+    }
+  }
+
+  if (uploadedFile.size > 25 * 1024 * 1024) {
+    await transcribeWithGeminiFallback("File size > 25MB (Whisper limit)");
+    return;
+  }
+
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing...'; }
   setAIStatus('🎤 Sending to OpenAI Whisper...');
 
@@ -6888,15 +6941,13 @@ window.transcribeVideo = async function() {
     const actions = document.getElementById('aiActions');
     if (actions) actions.style.display = 'block';
 
-    setAIStatus('✅ Transcription done! Now generate content below.');
-    if (btn) { btn.textContent = '✅ Transcribed'; }
-    showTip('Transcription complete! Tap any button to generate content.');
+    setAIStatus('✅ Transcription done! Play video to view subtitles.');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
+    showTip('Transcription complete! Play video to view subtitles.');
 
   } catch (err) {
-    console.error('[AI] Transcription error:', err);
-    setAIStatus('❌ ' + (err.message || 'Transcription failed.'));
-    if (btn) { btn.disabled = false; btn.textContent = '🎤 Step 1: Transcribe Video'; }
-    showTip('Transcription failed: ' + err.message);
+    console.warn('[AI] Whisper transcription failed, trying Gemini fallback...', err.message);
+    await transcribeWithGeminiFallback(err.message);
   }
 };
 
@@ -7178,6 +7229,10 @@ window.aiDoEverything = async function() {
         window._aiStepsText = gem.steps.join('\n');
         const r = document.getElementById('stepsTextResult'); if (r) r.style.display='block';
       }
+      if (Array.isArray(gem.text_overlays)) {
+        cachedSegments = gem.text_overlays;
+        cachedTranscript = gem.text_overlays.map(o => o.text).join(' ');
+      }
       createStepsArr = gem.loops.map((l, i) => {
         const t   = Number(l.start ?? l.time) || 0;
         const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
@@ -7250,6 +7305,10 @@ window.doItAll = async function() {
       if (gem.title) {
         const t = document.getElementById('newRecipeTitleInput');
         if (t && !t.value) t.value = gem.title;
+      }
+      if (Array.isArray(gem.text_overlays)) {
+        cachedSegments = gem.text_overlays;
+        cachedTranscript = gem.text_overlays.map(o => o.text).join(' ');
       }
       createStepsArr = gem.loops.map((l, i) => {
         const t   = Number(l.start ?? l.time) || 0;
