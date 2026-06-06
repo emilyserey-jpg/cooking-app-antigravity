@@ -7661,6 +7661,43 @@ window.updateSubtitles = function(timeSource, overlayId, segments) {
   }
 };
 
+// Copy share link of the active recipe
+window.shareCurrentRecipe = function() {
+  if (!playerCurrentRecipe || !playerCurrentRecipe.id) {
+    showTip('No recipe loaded to share.');
+    return;
+  }
+  const shareUrl = window.location.origin + window.location.pathname + '#mobile-player?id=' + playerCurrentRecipe.id;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showTip('Copied share link to clipboard! 🔗');
+    }).catch(err => {
+      console.error('Clipboard copy failed:', err);
+      copyFallback(shareUrl);
+    });
+  } else {
+    copyFallback(shareUrl);
+  }
+};
+
+function copyFallback(text) {
+  const dummy = document.createElement('textarea');
+  dummy.style.position = 'absolute';
+  dummy.style.left = '-9999px';
+  document.body.appendChild(dummy);
+  dummy.value = text;
+  dummy.select();
+  try {
+    document.execCommand('copy');
+    showTip('Copied share link to clipboard! 🔗');
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+    showTip('Failed to copy. URL: ' + text);
+  }
+  document.body.removeChild(dummy);
+}
+
 // ── App execution trigger ──
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', initializeApp);

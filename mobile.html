@@ -115,6 +115,11 @@
                   <button id="playerRemixRecipeBtn" onclick="triggerRemix()" tabindex="-1" style="display: none; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #8b5cf6; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#a78bfa'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#8b5cf6'; this.style.transform='scale(1)'">
                     <i data-lucide="git-fork" style="width: 13px; height: 13px;"></i> Remix
                   </button>
+
+                  <!-- Floating Share Button -->
+                  <button id="playerShareRecipeBtn" onclick="window.shareCurrentRecipe()" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'; this.style.transform='scale(1)'">
+                    <i data-lucide="share-2" style="width: 13px; height: 13px;"></i> Share
+                  </button>
                 </div>
                 
                 <!-- Badges & Grid Controls -->
