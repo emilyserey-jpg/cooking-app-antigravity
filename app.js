@@ -144,6 +144,16 @@ function initializeApp() {
   setupSpeechRecognition();
   setupDashboardTimer();
 
+  // Initialize muted state based on preference
+  const isMutedPref = localStorage.getItem('cooking_gps_player_muted') === 'true';
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (realVideo) {
+    realVideo.muted = isMutedPref;
+  }
+  if (typeof updateMuteUI === 'function') {
+    updateMuteUI();
+  }
+
   // Enable drag-to-scroll on multigrid descriptions horizontal container
   const multigridDescContainer = document.getElementById('playerMultigridDescriptions');
   if (multigridDescContainer) {
@@ -260,7 +270,16 @@ function startVideoSimulation() {
     if (isRealVideoActive) {
       if (isPlaying) {
         if (realVideo.paused) {
-          realVideo.play().catch(() => {});
+          realVideo.play().catch((err) => {
+            console.warn('[Player] Unmuted playback blocked in simulation, retrying muted:', err);
+            realVideo.muted = true;
+            if (typeof updateMuteUI === 'function') updateMuteUI();
+            realVideo.play().catch((e) => {
+              console.error('[Player] Muted playback in simulation also failed:', e);
+              isPlaying = false;
+              updateControlsUI();
+            });
+          });
         }
         if (Math.abs(realVideo.currentTime - currentTime) > 0.5) {
           realVideo.currentTime = currentTime;
@@ -598,7 +617,16 @@ function toggleVideoPlayback() {
   const realVideo = document.getElementById('mobileRealVideo');
   if (realVideo && realVideo.style.display !== 'none') {
     if (isPlaying) {
-      realVideo.play().catch(() => {});
+      realVideo.play().catch((err) => {
+        console.warn('[Player] Unmuted playback blocked, retrying muted:', err);
+        realVideo.muted = true;
+        if (typeof updateMuteUI === 'function') updateMuteUI();
+        realVideo.play().catch((e) => {
+          console.error('[Player] Muted playback also failed:', e);
+          isPlaying = false;
+          updateControlsUI();
+        });
+      });
     } else {
       realVideo.pause();
     }
@@ -631,6 +659,38 @@ function updateControlsUI() {
   if (stripPlayBtn) {
     stripPlayBtn.innerHTML = isPlaying ? `<i data-lucide="pause" style="width: 16px; height: 16px;"></i>` : `<i data-lucide="play" style="width: 16px; height: 16px;"></i>`;
     if (window.lucide) lucide.createIcons();
+  }
+}
+
+// Mute/Unmute Player Controls
+window.togglePlayerMute = function() {
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (!realVideo) return;
+  realVideo.muted = !realVideo.muted;
+  localStorage.setItem('cooking_gps_player_muted', realVideo.muted);
+  updateMuteUI();
+};
+
+function updateMuteUI() {
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (!realVideo) return;
+  const muteBtn = document.getElementById('playerMuteBtn');
+  const muteIcon = document.getElementById('playerMuteIcon');
+  if (!muteBtn || !muteIcon) return;
+
+  if (realVideo.muted) {
+    muteIcon.setAttribute('data-lucide', 'volume-x');
+    muteBtn.title = 'Unmute';
+    muteBtn.style.color = 'var(--red)';
+    muteBtn.style.background = 'rgba(224, 92, 92, 0.08)';
+  } else {
+    muteIcon.setAttribute('data-lucide', 'volume-2');
+    muteBtn.title = 'Mute';
+    muteBtn.style.color = '';
+    muteBtn.style.background = '';
+  }
+  if (window.lucide) {
+    lucide.createIcons();
   }
 }
 
@@ -2845,6 +2905,14 @@ window.loadPlayerRecipe = async function(recipeId) {
       } else {
         realVideo.src = recipe.video_url;
       }
+
+      // Initialize muted state based on preference
+      const isMutedPref = localStorage.getItem('cooking_gps_player_muted') === 'true';
+      realVideo.muted = isMutedPref;
+      if (typeof updateMuteUI === 'function') {
+        updateMuteUI();
+      }
+
       realVideo.load();
       realVideo.currentTime = 0;
     } else {
