@@ -7661,14 +7661,35 @@ window.updateSubtitles = function(timeSource, overlayId, segments) {
   }
 };
 
-// Copy share link of the active recipe
+// Copy or share link of the active recipe using Web Share API
 window.shareCurrentRecipe = function() {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) {
     showTip('No recipe loaded to share.');
     return;
   }
   const shareUrl = window.location.origin + window.location.pathname + '#mobile-player?id=' + playerCurrentRecipe.id;
+  const title = playerCurrentRecipe.title || 'CookingGPS Recipe';
 
+  if (navigator.share) {
+    navigator.share({
+      title: title,
+      text: `Check out this cooking recipe step-by-step video loop on CookingGPS: ${title}!`,
+      url: shareUrl
+    }).then(() => {
+      showTip('Shared successfully! 🚀');
+    }).catch(err => {
+      console.warn('Native share failed or cancelled:', err);
+      // Fallback only if sharing wasn't cancelled by the user
+      if (err.name !== 'AbortError') {
+        copyToClipboardHelper(shareUrl);
+      }
+    });
+  } else {
+    copyToClipboardHelper(shareUrl);
+  }
+};
+
+function copyToClipboardHelper(shareUrl) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(shareUrl).then(() => {
       showTip('Copied share link to clipboard! 🔗');
@@ -7679,7 +7700,7 @@ window.shareCurrentRecipe = function() {
   } else {
     copyFallback(shareUrl);
   }
-};
+}
 
 function copyFallback(text) {
   const dummy = document.createElement('textarea');
