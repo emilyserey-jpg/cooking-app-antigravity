@@ -2762,6 +2762,11 @@ window.loadRecipeToEditor = function(recipe) {
   // Video URL
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (videoEl) {
+    const isMutedPref = localStorage.getItem('cooking_gps_editor_muted') !== 'false';
+    videoEl.muted = isMutedPref;
+    if (typeof window.updateEditorMuteUI === 'function') {
+      window.updateEditorMuteUI();
+    }
     if (recipe.video_url) {
       videoEl.src = recipe.video_url;
     } else {
@@ -5385,7 +5390,14 @@ function showEditorStage(videoUrl) {
   } else {
     videoEl.src = videoUrl;
   }
-  
+
+  // Initialize muted state based on preference
+  const isMutedPref = localStorage.getItem('cooking_gps_editor_muted') !== 'false';
+  videoEl.muted = isMutedPref;
+  if (typeof window.updateEditorMuteUI === 'function') {
+    window.updateEditorMuteUI();
+  }
+
   videoEl.load();
 
   videoEl.addEventListener('timeupdate', () => {
@@ -5407,6 +5419,38 @@ function showEditorStage(videoUrl) {
 // Step colors — one per step, Wii-style pastels
 const STEP_COLORS = ['#a8d8f0','#b8f0c8','#f0d8a8','#d8b8f0','#f0b8c8','#a8f0e8','#f0ebb8','#c8b8f0'];
 
+// Mute/Unmute Editor Controls
+window.toggleEditorMute = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (!videoEl) return;
+  videoEl.muted = !videoEl.muted;
+  localStorage.setItem('cooking_gps_editor_muted', videoEl.muted);
+  window.updateEditorMuteUI();
+};
+
+window.updateEditorMuteUI = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (!videoEl) return;
+  const muteBtn = document.getElementById('editorMuteBtn');
+  const muteIcon = document.getElementById('editorMuteIcon');
+  if (!muteBtn || !muteIcon) return;
+
+  if (videoEl.muted) {
+    muteIcon.setAttribute('data-lucide', 'volume-x');
+    muteBtn.title = 'Unmute';
+    muteBtn.style.color = '#ef4444';
+    muteBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+  } else {
+    muteIcon.setAttribute('data-lucide', 'volume-2');
+    muteBtn.title = 'Mute';
+    muteBtn.style.color = '#ffffff';
+    muteBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+  }
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+};
+
 let videoDuration   = 0;
 let previewInterval = null;
 let dragSrcIndex    = null;
@@ -5414,6 +5458,11 @@ let dragSrcIndex    = null;
 window.onVideoLoaded = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (videoEl) {
+    const isMutedPref = localStorage.getItem('cooking_gps_editor_muted') !== 'false';
+    videoEl.muted = isMutedPref;
+    if (typeof window.updateEditorMuteUI === 'function') {
+      window.updateEditorMuteUI();
+    }
     videoDuration = videoEl.duration || 0;
     const m = Math.floor(videoDuration / 60);
     const s = Math.floor(videoDuration % 60).toString().padStart(2, '0');
@@ -5499,13 +5548,27 @@ window.setStepEnd = function(i) {
 };
 
 // ── Timeline renderer ──────────────────────────────────────────────────────
-// ── Custom Video Player controls ──────────────────────────────────────────
 window.toggleVideoPlay = function() {
   const vid = document.getElementById('uploadedVideoPlayer');
   const btn = document.getElementById('videoPlayBtn');
   if (!vid) return;
-  if (vid.paused) { vid.play(); if (btn) btn.textContent = '⏸'; }
-  else            { vid.pause(); if (btn) btn.textContent = '▶'; }
+  if (vid.paused) {
+    const playPromise = vid.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.warn("Unmuted editor video playback blocked by browser, falling back to muted:", err);
+        vid.muted = true;
+        if (typeof window.updateEditorMuteUI === 'function') {
+          window.updateEditorMuteUI();
+        }
+        vid.play().catch(e => console.error("Muted editor video playback also blocked:", e));
+      });
+    }
+    if (btn) btn.textContent = '⏸';
+  } else {
+    vid.pause();
+    if (btn) btn.textContent = '▶';
+  }
 };
 
 window.videoScrubberSeek = function(e) {
@@ -6113,7 +6176,17 @@ window.previewStepLoop = function(i) {
 
   // Seek to step start and play
   videoEl.currentTime = step.time;
-  videoEl.play();
+  const playPromise = videoEl.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      console.warn("Unmuted editor video loop playback blocked by browser, falling back to muted:", err);
+      videoEl.muted = true;
+      if (typeof window.updateEditorMuteUI === 'function') {
+        window.updateEditorMuteUI();
+      }
+      videoEl.play().catch(e => console.error("Muted editor video loop playback also blocked:", e));
+    });
+  }
 
   const labelEl = document.getElementById('previewingLabel');
   const stopBtn = document.getElementById('stopPreviewBtn');
