@@ -7507,7 +7507,7 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Stops', 'AI', 'Details', 'Save'];
+  const tabs = ['Stops', 'Ingredients', 'AI', 'Details', 'Save'];
   tabs.forEach((tab, i) => {
     const btn = document.getElementById(`btnToolbar${tab}`);
     if (btn) {
@@ -7516,14 +7516,14 @@ function updateToolbarButtonStates(activeIndex) {
   });
 
   // Auto-expand accordion body when sliding to its tab
-  if (activeIndex === 0) { // Stops tab (now index 0)
+  if (activeIndex === 0) { // Stops tab (index 0)
     const stopsBody = document.getElementById('stopsBody');
     const stopsChevron = document.getElementById('stopsChevron');
     if (stopsBody) {
       stopsBody.style.display = '';
       if (stopsChevron) stopsChevron.style.transform = '';
     }
-  } else if (activeIndex === 1) { // Steps/AI Tools tab (now index 1)
+  } else if (activeIndex === 2) { // Steps/AI Tools tab (now index 2)
     const aiBody = document.getElementById('aiBody');
     const aiChevron = document.getElementById('aiChevron');
     if (aiBody) {

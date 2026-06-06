@@ -343,9 +343,10 @@ The video has been divided into ${steps.length} loop stop sections:
 
 ${stepList}
 
-For each step, write a single clear sentence (max 15 words) describing what the cook should do during that section.
+For each step, write a clear, action-oriented instruction describing what the cook should do during that section, AND list the specific ingredients used/needed for that step.
+Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
-["Add oil and heat pan on medium-high.", "Season shrimp with salt, pepper, and garlic powder."]`;
+["Heat the pan on medium-high. Ingredients: Cooking oil.", "Season the shrimp in a bowl. Ingredients: Shrimp, salt, pepper, garlic powder."]`;
 
   try {
     const response = await fetch(

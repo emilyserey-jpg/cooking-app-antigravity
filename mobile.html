@@ -1137,7 +1137,20 @@
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
                 <div id="createStepsList" style="display:flex; flex-direction:column; gap:5px; max-height:200px; overflow-y:auto;"></div>
+          </div>
+
+          <!-- Slide 2: Ingredients -->
+          <div class="carousel-slide" id="slideIngredients">
+            <div class="glass-card" style="padding:12px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin:0;">Ingredients List</label>
+                <button type="button" onclick="aiWriteIngredients()" id="ingredientsAiBtn"
+                  style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:7px; padding:4px 10px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer;">
+                  ✍️ AI: Write Ingredients
+                </button>
               </div>
+              <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
+                style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.82rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
             </div>
           </div>
 
@@ -1184,15 +1197,7 @@
                   </div>
                 </div>
 
-                <div id="ingredientsResult" style="display:none; margin-top:6px; border:1px solid rgba(124,58,237,0.15); border-radius:8px; overflow:hidden;">
-                  <div onclick="togglePanel('ingredientsBody','ingredientsChevron')" style="display:flex; align-items:center; justify-content:space-between; padding:6px 9px; cursor:pointer; background:#f5f0ff;">
-                    <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; color:#7c3aed;">Ingredients ✏️</span>
-                    <span id="ingredientsChevron" style="font-size:0.7rem; color:#7c3aed; transition:transform 0.2s;">▾</span>
-                  </div>
-                  <div id="ingredientsBody" style="padding:6px;">
-                    <textarea id="ingredientsText" rows="3" style="width:100%; background:#fff; border:1px solid rgba(124,58,237,0.15); border-radius:6px; padding:6px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
-                  </div>
-                </div>
+
 
                 <div id="stepsTextResult" style="display:none; margin-top:6px; border:1px solid rgba(124,58,237,0.15); border-radius:8px; overflow:hidden;">
                   <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex; align-items:center; justify-content:space-between; padding:6px 9px; cursor:pointer; background:#f5f0ff;">
@@ -1269,15 +1274,19 @@
             <span class="icon">📍</span>
             <span class="label">Stops</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarAI" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarIngredients" class="toolbar-btn">
+            <span class="icon">🥦</span>
+            <span class="label">Ingredients</span>
+          </button>
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarAI" class="toolbar-btn">
             <span class="icon">🤖</span>
             <span class="label">Steps</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarDetails" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarDetails" class="toolbar-btn">
             <span class="icon">📝</span>
             <span class="label">Details</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(4)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>
