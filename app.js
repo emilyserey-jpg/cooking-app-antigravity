@@ -638,6 +638,21 @@ function toggleVideoPlayback() {
       realVideo.pause();
     }
   }
+
+  // Voiceover audio play/pause sync
+  if (typeof window.playVoiceoverForStep === 'function') {
+    if (isPlaying) {
+      if (window._stepVoiceoverAudio && window._stepVoiceoverAudio.paused) {
+        window._stepVoiceoverAudio.play().catch(() => {});
+      } else {
+        window.playVoiceoverForStep(activeStepIndex);
+      }
+    } else {
+      if (window._stepVoiceoverAudio) {
+        window._stepVoiceoverAudio.pause();
+      }
+    }
+  }
 }
 
 function updateControlsUI() {
@@ -783,6 +798,9 @@ function seekToStep(index) {
   activeStepIndex = index;
   currentTime = recipeData.loops[index];
 
+  // Force voiceover replay on manual seek
+  currentVoiceoverUrl = null;
+
   // Real video seek sync
   const realVideo = document.getElementById('mobileRealVideo');
   if (realVideo && realVideo.style.display !== 'none') {
@@ -832,6 +850,10 @@ function updateStepDetailsUI() {
   // Render multigrid description cards if active
   if (typeof renderMultigridDescriptions === 'function') {
     renderMultigridDescriptions();
+  }
+
+  if (typeof window.playVoiceoverForStep === 'function') {
+    window.playVoiceoverForStep(activeStepIndex);
   }
 }
 
@@ -2444,7 +2466,13 @@ window.saveDraft = async function() {
       duration: videoEl?.duration || 0,
       steps:    createStepsArr.map(s => s.label),
       // Save full loop objects so viewers get exact AI-detected start+end times
-      loops:    createStepsArr.map(s => ({ start: s.time, end: s.endTime ?? null, label: s.label })),
+      loops:    createStepsArr.map(s => ({
+        start:       s.time,
+        end:         s.endTime ?? null,
+        label:       s.label,
+        description: s.description || '',
+        audio_url:   s.audio_url || s.audioUrl || '',
+      })),
       video_url: videoUrl,
       thumbnail_url: thumbnailUrl,
       is_draft: true,
@@ -2831,6 +2859,7 @@ window.loadRecipeToEditor = function(recipe) {
       label: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
       displayTime: `${m}:${s}`,
       description: l.description || '',
+      audio_url: l.audio_url || l.audioUrl || '',
     };
   }).sort((a, b) => a.time - b.time);
 
@@ -2901,6 +2930,7 @@ window.loadPlayerRecipe = async function(recipeId) {
       recipeData.steps = parsed.map((l, idx) => ({
         title: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
         instruction: l.description || '',
+        audio_url: l.audio_url || l.audioUrl || '',
       }));
     } else {
       recipeData.loops = [0, recipeData.duration];
@@ -6223,6 +6253,10 @@ function renderCreateSteps() {
             style="flex:1;background:${color};border:none;border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:#446;">▶ Loop</button>
           <button onclick="navToStep(${i})" tabindex="-1"
             style="flex:1;background:transparent;border:1px solid var(--border-card);border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:var(--text-heading);">⏩ Go</button>
+          ${step.audio_url || step.audioUrl ? `
+            <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}')" title="Play Voiceover"
+              style="background:transparent;border:1px solid var(--border-card);border-radius:6px;padding:5px 6px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">🔊</button>
+          ` : ''}
         </div>
       </div>`;
   }).join('');
@@ -6643,6 +6677,7 @@ window.saveNewRecipe = async function(targetFolderId) {
       end:         s.endTime ?? null,
       label:       s.label,
       description: s.description || '',
+      audio_url:   s.audio_url || s.audioUrl || '',
     }));
 
     const thumbnailUrl = await ensureThumbnailUrl();
@@ -6912,7 +6947,46 @@ window.transcribeVideo = async function() {
   }
 
   if (uploadedFile.size > 25 * 1024 * 1024) {
-    await transcribeWithGeminiFallback("File size > 25MB (Whisper limit)");
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading large video...'; }
+    setAIStatus('📤 Uploading large video to Supabase Storage for transcription...', true);
+    showTip('Uploading large video (>25MB) to Supabase Storage so Replicate can transcribe it... 🚀');
+    
+    try {
+      const { uploadVideo } = await import('./supabase-client.js');
+      const supabaseUrl = await uploadVideo(uploadedFile, currentUser?.email || 'anon');
+      
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing (Replicate)...'; }
+      setAIStatus('🤖 Running Whisper on Replicate...', true);
+      showTip('Transcribing video via Whisper on Replicate...');
+      
+      const repRes = await fetch('/api/ai/replicate-transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoUrl: supabaseUrl })
+      });
+      const repData = await repRes.json();
+      if (!repRes.ok || repData.error) throw new Error(repData.error || 'Replicate transcribe failed');
+      
+      cachedTranscript = repData.transcript;
+      cachedSegments = repData.segments || [];
+      
+      // Show transcript preview
+      const preview = document.getElementById('transcriptPreview');
+      const textEl  = document.getElementById('transcriptText');
+      if (preview) preview.style.display = 'block';
+      if (textEl)  textEl.textContent    = cachedTranscript;
+  
+      // Show AI action buttons
+      const actions = document.getElementById('aiActions');
+      if (actions) actions.style.display = 'block';
+  
+      setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
+      if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
+      showTip('Transcription complete! Play video to view subtitles.');
+    } catch (err) {
+      console.warn('[AI] Replicate Whisper failed, trying Gemini fallback...', err.message);
+      await transcribeWithGeminiFallback(err.message);
+    }
     return;
   }
 
@@ -7718,6 +7792,184 @@ function copyFallback(text) {
   }
   document.body.removeChild(dummy);
 }
+
+// ============================================================
+// REPLICATE AI INTEGRATION — COVER, VOICEOVER, & PLAYBACK
+// ============================================================
+let currentVoiceoverUrl = null;
+
+window.playVoiceoverForStep = function(stepIndex) {
+  if (!recipeData || !recipeData.steps) return;
+  const step = recipeData.steps[stepIndex];
+  if (!step) return;
+
+  const audioUrl = step.audio_url || step.audioUrl;
+  if (!audioUrl) {
+    if (window._stepVoiceoverAudio) {
+      window._stepVoiceoverAudio.pause();
+      window._stepVoiceoverAudio = null;
+      currentVoiceoverUrl = null;
+    }
+    return;
+  }
+
+  // If this audio url is already playing, don't restart it
+  if (currentVoiceoverUrl === audioUrl && window._stepVoiceoverAudio && !window._stepVoiceoverAudio.paused) {
+    return;
+  }
+
+  // Stop preview audio if any
+  if (window._previewVoiceoverAudio) {
+    window._previewVoiceoverAudio.pause();
+    window._previewVoiceoverAudio = null;
+  }
+
+  // Stop currently playing voiceover
+  if (window._stepVoiceoverAudio) {
+    window._stepVoiceoverAudio.pause();
+  }
+
+  console.log(`[Voiceover] Playing step ${stepIndex} audio:`, audioUrl);
+  currentVoiceoverUrl = audioUrl;
+  
+  const audio = new Audio(audioUrl);
+  window._stepVoiceoverAudio = audio;
+  
+  // Set up cleanup when it ends
+  audio.addEventListener('ended', () => {
+    if (window._stepVoiceoverAudio === audio) {
+      currentVoiceoverUrl = null;
+    }
+  });
+
+  if (isPlaying) {
+    audio.play().catch(err => {
+      console.warn('[Voiceover] Playback failed/blocked:', err);
+    });
+  }
+};
+
+window.playVoiceoverAudio = function(url) {
+  if (window._previewVoiceoverAudio) {
+    window._previewVoiceoverAudio.pause();
+  }
+  console.log('[Voiceover] Previewing voiceover audio:', url);
+  window._previewVoiceoverAudio = new Audio(url);
+  window._previewVoiceoverAudio.play().catch(err => {
+    console.warn('[Voiceover] Preview play failed/blocked:', err);
+  });
+};
+
+window.generateAICover = async function() {
+  const title = document.getElementById('newRecipeTitleInput')?.value?.trim() || '';
+  const ingredients = document.getElementById('ingredientsText')?.value?.trim() || '';
+  
+  if (!title) {
+    showTip('Please enter a recipe title first so AI knows what to cook! 🍲');
+    return;
+  }
+
+  // Create prompt
+  let prompt = title;
+  if (ingredients) {
+    const lines = ingredients.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 5);
+    prompt += ` featuring ${lines.join(', ')}`;
+  }
+
+  const btn = event?.currentTarget;
+  const originalText = btn ? btn.innerHTML : '🪄 AI Cover';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Generating...';
+  }
+  showTip('🪄 Generating gourmet cover image via Flux on Replicate...');
+
+  try {
+    const res = await fetch('/api/ai/generate-cover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Server error generating cover');
+
+    if (data.imageUrl) {
+      const coverInput = document.getElementById('newRecipeCoverInput');
+      if (coverInput) {
+        coverInput.value = data.imageUrl;
+      }
+      window.updateCoverPreviewFromUrl(data.imageUrl);
+      showTip('✅ Gourmet Cover generated and saved to Supabase! 🖼️');
+    } else {
+      throw new Error('No imageUrl returned');
+    }
+  } catch (err) {
+    console.error('[Generate Cover Error]:', err);
+    showTip('❌ Cover generation failed: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+};
+
+window.generateAllVoiceovers = async function() {
+  if (!createStepsArr.length) {
+    showTip('Add loop stops first, then tap 🎙️ AI Voiceovers.');
+    return;
+  }
+
+  const btn = document.getElementById('aiVoiceoverBtn');
+  const mBtn = document.getElementById('aiVoiceoverBtnMobile');
+  
+  const originalText = btn ? btn.innerHTML : '🎙️ AI Voiceover';
+  const originalMText = mBtn ? mBtn.innerHTML : '🎙️ AI Voiceover';
+
+  const updateButtons = (text, disabled) => {
+    if (btn) { btn.disabled = disabled; btn.innerHTML = text; }
+    if (mBtn) { mBtn.disabled = disabled; mBtn.innerHTML = text; }
+  };
+
+  updateButtons('⏳ Preparing...', true);
+  showTip('🎙️ Generating AI voiceovers for each step...');
+
+  try {
+    const recipeId = editingRecipeId || 'new_recipe_' + Date.now();
+    for (let i = 0; i < createStepsArr.length; i++) {
+      const step = createStepsArr[i];
+      const text = step.description?.trim() || step.label?.trim() || `Step ${i + 1}`;
+      
+      updateButtons(`🎙️ Step ${i + 1}/${createStepsArr.length}...`, true);
+      
+      const res = await fetch('/api/ai/generate-voiceover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          stepIndex: i,
+          recipeId
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `Failed to generate voiceover for step ${i + 1}`);
+
+      if (data.audioUrl) {
+        step.audio_url = data.audioUrl;
+        step.audioUrl = data.audioUrl;
+      }
+    }
+
+    renderCreateSteps();
+    showTip('✅ All AI Voiceovers generated and synced to steps! 🎙️');
+  } catch (err) {
+    console.error('[Generate Voiceovers Error]:', err);
+    showTip('❌ Voiceover generation failed: ' + err.message);
+  } finally {
+    updateButtons(originalText, false);
+    if (mBtn) mBtn.innerHTML = originalMText;
+  }
+};
 
 // ── App execution trigger ──
 if (document.readyState === 'loading') {

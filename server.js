@@ -2,6 +2,7 @@ const express = require('express');
 const multer  = require('multer');
 const path    = require('path');
 const OpenAI  = require('openai');
+const replicate = require('./replicate-client');
 
 const app  = express();
 const PORT = process.env.PORT || 8000;
@@ -381,6 +382,152 @@ Reply ONLY with a JSON array of strings, one description per step, in order. Exa
     const descriptions = JSON.parse(match[0]);
     res.json({ descriptions });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Replicate: Transcribe video from public URL ─────────────────────────
+app.post('/api/ai/replicate-transcribe', async (req, res) => {
+  if (!replicate) return res.status(500).json({ error: 'Replicate API not configured. Check REPLICATE_API_TOKEN.' });
+  const { videoUrl } = req.body;
+  if (!videoUrl) return res.status(400).json({ error: 'No videoUrl provided.' });
+
+  try {
+    console.log('[Replicate] Starting transcription for:', videoUrl);
+    const output = await replicate.run(
+      "openai/whisper:4d507922b92f1b9649292dbbbd030999ee45f1b53f1d3e8e2b10cfb7f2a1599d",
+      {
+        input: {
+          audio: videoUrl,
+          model: "large-v3",
+          translate: false,
+          temperature: 0,
+          transcription: "plain text",
+          response_format: "json",
+          timestamp: "chunk"
+        }
+      }
+    );
+
+    if (!output || !output.transcription) {
+      throw new Error('Replicate Whisper did not return transcription data.');
+    }
+
+    // Map segments to our app's format (start, end, text)
+    const rawSegments = output.segments || [];
+    const segments = rawSegments.map((seg, idx) => ({
+      id: seg.id ?? idx,
+      start: seg.start,
+      end: seg.end,
+      text: seg.text || ''
+    }));
+
+    res.json({
+      ok: true,
+      transcript: output.transcription,
+      segments
+    });
+  } catch (err) {
+    console.error('[Replicate Transcribe Error]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Replicate: Generate Cover Image from prompt ─────────────────────────
+app.post('/api/ai/generate-cover', async (req, res) => {
+  if (!replicate) return res.status(500).json({ error: 'Replicate API not configured. Check REPLICATE_API_TOKEN.' });
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'No prompt provided.' });
+
+  try {
+    console.log('[Replicate] Generating cover image for:', prompt);
+    const output = await replicate.run(
+      "black-forest-labs/flux-schnell",
+      {
+        input: {
+          prompt: `High-end gourmet food photography of: ${prompt}, professional presentation, beautiful plating, studio light, top-down view, 4k resolution`,
+          aspect_ratio: "1:1",
+          disable_safety_checker: true
+        }
+      }
+    );
+
+    const tempUrl = Array.isArray(output) ? output[0] : output;
+    if (!tempUrl) throw new Error('No image URL returned from Replicate.');
+
+    // Download image buffer
+    const imgRes = await fetch(tempUrl);
+    if (!imgRes.ok) throw new Error(`Failed to download image from Replicate CDN: ${imgRes.statusText}`);
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+
+    // Upload to Supabase Storage permanently
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
+    );
+    const ext = 'jpg';
+    const fname = `thumbnails/ai_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error: uploadError } = await sb.storage.from('videos').upload(fname, buffer, {
+      contentType: 'image/jpeg',
+      upsert: true
+    });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+    res.json({ ok: true, imageUrl: urlData.publicUrl });
+  } catch (err) {
+    console.error('[Replicate Generate Cover Error]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Replicate: Generate Voiceover MP3 from text ─────────────────────────
+app.post('/api/ai/generate-voiceover', async (req, res) => {
+  if (!replicate) return res.status(500).json({ error: 'Replicate API not configured. Check REPLICATE_API_TOKEN.' });
+  const { text, stepIndex, recipeId } = req.body;
+  if (!text) return res.status(400).json({ error: 'No text provided.' });
+
+  try {
+    console.log(`[Replicate] Generating voiceover for step ${stepIndex || 0}:`, text);
+    const output = await replicate.run(
+      "lucataco/openai-tts:aac2a60c7d81a9ae938f4d96a798b3c9b7f525bf60d84a7e8006fb4284d72863",
+      {
+        input: {
+          model: "tts-1",
+          voice: "alloy",
+          input: text,
+          response_format: "mp3"
+        }
+      }
+    );
+
+    const tempUrl = Array.isArray(output) ? output[0] : output;
+    if (!tempUrl) throw new Error('No audio URL returned from Replicate.');
+
+    // Download audio buffer
+    const audioRes = await fetch(tempUrl);
+    if (!audioRes.ok) throw new Error(`Failed to download audio from Replicate CDN: ${audioRes.statusText}`);
+    const buffer = Buffer.from(await audioRes.arrayBuffer());
+
+    // Upload to Supabase Storage permanently
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ''
+    );
+    const rFolder = (recipeId || 'temp_voiceovers').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fname = `voiceovers/${rFolder}/step_${stepIndex || 0}_${Date.now()}.mp3`;
+    const { error: uploadError } = await sb.storage.from('videos').upload(fname, buffer, {
+      contentType: 'audio/mpeg',
+      upsert: true
+    });
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = sb.storage.from('videos').getPublicUrl(fname);
+    res.json({ ok: true, audioUrl: urlData.publicUrl });
+  } catch (err) {
+    console.error('[Replicate Generate Voiceover Error]:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
