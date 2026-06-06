@@ -7072,7 +7072,16 @@ async function tryGeminiFor(task) {
 
   // Return cached result if same file (free reuse)
   if (_geminiCache && _geminiCacheFile === uploadedFile) {
-    return _geminiCache;
+    const hasLoops = Array.isArray(_geminiCache.loops) && _geminiCache.loops.length > 0;
+    const hasTranscripts = Array.isArray(_geminiCache.text_overlays) && _geminiCache.text_overlays.length > 0;
+
+    if (task === 'transcribe' && !hasTranscripts) {
+      console.log('[Gemini] Cache lacks transcripts, forcing fresh analysis');
+    } else if (task === 'loops' && !hasLoops) {
+      console.log('[Gemini] Cache lacks loops, forcing fresh analysis');
+    } else {
+      return _geminiCache;
+    }
   }
 
   setAIStatus('🤖 Uploading to Gemini…', true);
@@ -7635,7 +7644,11 @@ window.updateSubtitles = function(timeSource, overlayId, segments) {
   }
 
   const currentTime = (typeof timeSource === 'number') ? timeSource : timeSource.currentTime;
-  const currentSegment = segments.find(seg => currentTime >= seg.start && currentTime <= seg.end);
+  const currentSegment = segments.find(seg => {
+    const start = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
+    const end   = Number(seg.end ?? seg.endTime ?? seg.end_time) || 0;
+    return currentTime >= start && currentTime <= end;
+  });
 
   if (currentSegment) {
     const span = overlay.querySelector('span');
