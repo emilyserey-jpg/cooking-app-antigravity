@@ -146,9 +146,9 @@ function initializeApp() {
 
   // Initialize muted state based on preference
   const isMutedPref = localStorage.getItem('cooking_gps_player_muted') === 'true';
-  const realVideo = document.getElementById('mobileRealVideo');
-  if (realVideo) {
-    realVideo.muted = isMutedPref;
+  const initVideo = document.getElementById('mobileRealVideo');
+  if (initVideo) {
+    initVideo.muted = isMutedPref;
   }
   if (typeof updateMuteUI === 'function') {
     updateMuteUI();
@@ -5206,7 +5206,16 @@ window.handleDrop = function(e) {
 // ── Main file handler ─────────────────────────────────────────
 window.handleFileSelect = async function(file) {
   if (!file) return;
-  if (!file.type.startsWith('video/')) { showTip('Please select a video file (MP4, MOV, WebM)'); return; }
+  
+  const type = file.type || '';
+  const ext = (file.name || '').split('.').pop().toLowerCase();
+  const validExtensions = ['mp4', 'mov', 'webm', 'avi', 'mpeg', 'mpg', '3gp', 'ogg', 'm4v'];
+  const isVideoExt = validExtensions.includes(ext);
+
+  if (!type.startsWith('video/') && !isVideoExt) {
+    showTip('Please select a video file (MP4, MOV, WebM)');
+    return;
+  }
   if (file.size > 500 * 1024 * 1024) { showTip('File too large — max 500MB'); return; }
 
   // Show local preview immediately
