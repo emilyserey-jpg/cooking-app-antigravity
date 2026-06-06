@@ -94,6 +94,11 @@
                 <!-- Real Video Player -->
                 <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
                 
+                <!-- Subtitle Overlay -->
+                <div id="playerSubtitleOverlay" style="position: absolute; bottom: 50px; left: 10px; right: 10px; z-index: 5; pointer-events: none; display: none; justify-content: center; text-align: center;">
+                  <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; line-height: 1.4; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); max-width: 90%; word-break: break-word;"></span>
+                </div>
+                
                 <!-- Floating Controls Row -->
                 <div style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; align-items: center;">
                   <!-- Floating Back Button -->
@@ -1027,6 +1032,11 @@
             style="width:100%; height:100%; object-fit:contain; display:block;"
             preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
             onclick="toggleVideoPlay()"></video>
+
+          <!-- Subtitle Overlay -->
+          <div id="editorSubtitleOverlay" style="position: absolute; bottom: 40px; left: 10px; right: 10px; z-index: 5; pointer-events: none; display: none; justify-content: center; text-align: center;">
+            <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; line-height: 1.4; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); max-width: 90%; word-break: break-word;"></span>
+          </div>
         </div>
 
         <!-- Video Overlay Controls (Sibling of player wrapper, fixes iOS touch swallowing) -->

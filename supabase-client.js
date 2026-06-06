@@ -56,7 +56,7 @@ export function onAuthChange(callback) {
 export async function getPublicRecipes() {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, loops, steps, ingredients, video_url, bundle_mode, is_published, shared_on_profile, created_at')
+    .select('id, title, creator, duration, loops, steps, ingredients, video_url, bundle_mode, is_published, shared_on_profile, created_at, text_overlays')
     .eq('is_published', true)
     .eq('private_recipe', false)
     .eq('is_draft', false)
@@ -68,7 +68,7 @@ export async function getPublicRecipes() {
       console.warn('[Supabase] Retrying getPublicRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
-        .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at')
+        .select('id, title, creator, duration, loops, steps, ingredients, video_url, is_published, shared_on_profile, created_at, text_overlays')
         .eq('is_published', true)
         .eq('private_recipe', false)
         .eq('is_draft', false)
@@ -93,7 +93,7 @@ export async function getPublicRecipes() {
 export async function getProfileRecipes(creator) {
   let { data, error } = await supabase
     .from('recipes')
-    .select('id, title, creator, duration, steps, video_url, bundle_mode, created_at')
+    .select('id, title, creator, duration, steps, video_url, bundle_mode, created_at, text_overlays')
     .eq('creator', creator)
     .eq('shared_on_profile', true)
     .eq('is_draft', false)
@@ -105,7 +105,7 @@ export async function getProfileRecipes(creator) {
       console.warn('[Supabase] Retrying getProfileRecipes without bundle_mode column');
       const retry = await supabase
         .from('recipes')
-        .select('id, title, creator, duration, steps, video_url, created_at')
+        .select('id, title, creator, duration, steps, video_url, created_at, text_overlays')
         .eq('creator', creator)
         .eq('shared_on_profile', true)
         .eq('is_draft', false)

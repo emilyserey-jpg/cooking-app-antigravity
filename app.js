@@ -149,6 +149,10 @@ function initializeApp() {
   const initVideo = document.getElementById('mobileRealVideo');
   if (initVideo) {
     initVideo.muted = isMutedPref;
+    initVideo.addEventListener('timeupdate', () => {
+      const segments = (recipeData && recipeData.text_overlays) || [];
+      window.updateSubtitles(initVideo, 'playerSubtitleOverlay', segments);
+    });
   }
   if (typeof updateMuteUI === 'function') {
     updateMuteUI();
@@ -378,6 +382,9 @@ function startVideoSimulation() {
           updateControlsUI();
         }
       }
+      // Update subtitles in canvas simulation mode
+      const segments = (recipeData && recipeData.text_overlays) || [];
+      window.updateSubtitles(currentTime, 'playerSubtitleOverlay', segments);
     }
     
     // Draw Simulated Frame and Update Timeline displays
@@ -1917,7 +1924,7 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     const { supabase } = await import('./supabase-client.js');
     let { data: recipes, error } = await supabase
       .from('recipes')
-      .select('id, title, description, video_url, bundle_mode, duration, created_at, loops, steps, creator, is_published, private_recipe')
+      .select('id, title, description, video_url, bundle_mode, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays')
       .eq('creator', creatorEmail)
       .eq('is_published', true)
       .eq('private_recipe', false)
@@ -1928,7 +1935,7 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
         console.warn('[Supabase] Retrying openPublicProfile without bundle_mode column');
         const retry = await supabase
           .from('recipes')
-          .select('id, title, description, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe')
+          .select('id, title, description, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays')
           .eq('creator', creatorEmail)
           .eq('is_published', true)
           .eq('private_recipe', false)
@@ -2441,6 +2448,7 @@ window.saveDraft = async function() {
       video_url: videoUrl,
       thumbnail_url: thumbnailUrl,
       is_draft: true,
+      text_overlays: cachedSegments || [],
     });
 
     const msg = document.getElementById('savedRecipeMsg');
@@ -2769,6 +2777,14 @@ function renderPlayerTimelineMarkers() {
 window.loadRecipeToEditor = function(recipe) {
   if (!recipe) return;
   editingRecipeId = recipe.id;
+
+  // Load saved subtitles / transcription
+  cachedSegments = recipe.text_overlays || [];
+  cachedTranscript = cachedSegments.map(s => s.text).join(' ');
+  const preview = document.getElementById('transcriptPreview');
+  const textEl  = document.getElementById('transcriptText');
+  if (preview) preview.style.display = cachedTranscript ? 'block' : 'none';
+  if (textEl) textEl.textContent = cachedTranscript || '';
   
   // Set stage 1 hidden, stage 2 shown
   document.getElementById('createStage1').style.display = 'none';
@@ -2872,6 +2888,7 @@ window.loadPlayerRecipe = async function(recipeId) {
     recipeData.title = recipe.title || 'Untitled Recipe';
     recipeData.duration = recipe.duration || 10;
     recipeData.video_url = recipe.video_url || '';
+    recipeData.text_overlays = recipe.text_overlays || [];
     
     // Normalize loops and steps
     const parsed = parseLoops(recipe.loops);
@@ -5433,6 +5450,8 @@ function showEditorStage(videoUrl) {
     const s = Math.floor(t % 60).toString().padStart(2, '0');
     const el = document.getElementById('createCurrentTime');
     if (el) el.textContent = `${m}:${s}`;
+    // Update subtitles overlay
+    window.updateSubtitles(videoEl, 'editorSubtitleOverlay', cachedSegments);
   });
 
   createStepsArr = [];
@@ -5548,6 +5567,8 @@ window.onVideoLoaded = function() {
       if (el) el.textContent = `${cm}:${cs}`;
       // Drive custom scrubber fill + thumb
       updateVideoScrubber(videoEl);
+      // Update subtitles overlay
+      window.updateSubtitles(videoEl, 'editorSubtitleOverlay', cachedSegments);
     });
 
     // Sync play/pause button icon
@@ -6665,6 +6686,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         private_recipe:   !createIsPublic,
         is_published:     createIsPublic,
         shared_on_profile: createIsPublic,
+        text_overlays:    cachedSegments || [],
       };
       
       if (window._aiIngredients) updates.ingredients = window._aiIngredients;
@@ -6684,6 +6706,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         is_published:     createIsPublic,
         shared_on_profile: createIsPublic,
         ingredients:      window._aiIngredients || '',
+        text_overlays:    cachedSegments || [],
       });
     }
 
@@ -7512,6 +7535,30 @@ window.addManualStep = function() {
   renderTimeline();
   window.closeManualTimestampModal();
   showTip(`Manual step added at ${m}:${s}`);
+};
+
+// Dynamic Subtitle overlays
+window.updateSubtitles = function(timeSource, overlayId, segments) {
+  const overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+
+  if (!segments || !segments.length) {
+    overlay.style.display = 'none';
+    return;
+  }
+
+  const currentTime = (typeof timeSource === 'number') ? timeSource : timeSource.currentTime;
+  const currentSegment = segments.find(seg => currentTime >= seg.start && currentTime <= seg.end);
+
+  if (currentSegment) {
+    const span = overlay.querySelector('span');
+    if (span) {
+      span.textContent = currentSegment.text.trim();
+    }
+    overlay.style.display = 'flex';
+  } else {
+    overlay.style.display = 'none';
+  }
 };
 
 // ── App execution trigger ──
