@@ -1152,6 +1152,13 @@
                 <span id="aiChevron" style="font-size:0.75rem; color:#7c3aed; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
               </div>
               <div id="aiBody" style="padding:0 12px 12px; max-height:220px; overflow-y:auto;">
+                <!-- Force fresh AI option -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; margin-bottom:8px; padding:2px 4px; background:#f5f0ff; border-radius:6px; border:1px solid rgba(124,58,237,0.15);">
+                  <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.68rem; color:#7c3aed; font-weight:700; cursor:pointer; user-select:none; width:100%;">
+                    <input type="checkbox" id="aiForceFresh" style="accent-color:#7c3aed; cursor:pointer;">
+                    🔄 Force fresh AI (ignore cache)
+                  </label>
+                </div>
                 <div id="aiStatus" style="display:none; text-align:center; padding:7px; font-size:0.75rem; font-weight:700; color:#7c3aed; background:#f5f0ff; border-radius:8px; margin-bottom:6px;">
                   <span id="aiStatusText">Analyzing...</span>
                 </div>

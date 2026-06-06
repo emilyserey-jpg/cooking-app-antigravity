@@ -6843,6 +6843,9 @@ function setAIStatus(msg, show = true) {
 
 // ── Step 1: Transcribe ─────────────────────────────────────────────────────
 window.transcribeVideo = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
   if (!uploadedFile) {
     showTip('Upload a video first before transcribing.');
     return;
@@ -6996,6 +6999,19 @@ window.generateLoops = async function() {
   }
 };
 
+// Force fresh AI helper (bypasses cache)
+function checkForceFreshAI() {
+  const checkbox = document.getElementById('aiForceFresh');
+  if (checkbox && checkbox.checked) {
+    _geminiCache = null;
+    _geminiCacheFile = null;
+    cachedTranscript = null;
+    cachedSegments = null;
+    checkbox.checked = false; // reset after triggering
+    console.log('[AI] Cache cleared for fresh generation');
+  }
+}
+
 // ── On-demand Gemini — called once per file, result cached for all AI buttons ─
 let _geminiCache     = null; // cached result for current file
 let _geminiCacheFile = null; // which file was analyzed (detect new uploads)
@@ -7028,6 +7044,9 @@ async function tryGeminiFor(task) {
 
 // ── AI: Write Ingredients only ─────────────────────────────────────────────
 window.aiWriteIngredients = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
   setAIStatus('✍️ Writing ingredients...', true);
   let gem = null;
   try {
@@ -7060,6 +7079,9 @@ window.aiWriteIngredients = async function() {
 
 // ── AI: Write Steps only ───────────────────────────────────────────────────
 window.aiWriteSteps = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
   setAIStatus('📋 Writing step instructions...', true);
   let gem = null;
   try {
@@ -7125,6 +7147,9 @@ window.aiWriteStepDescriptions = async function() {
 
 // ── AI: Do Everything ──────────────────────────────────────────────────────
 window.aiDoEverything = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
   setAIStatus('⚡ Running all AI features...', true);
   const btn = document.getElementById('aiLoopBtn');
   let gem = null;
@@ -7183,6 +7208,9 @@ window.aiDoEverything = async function() {
 
 // ── Place Loop Stops (primary AI button) ──────────────────────────────────
 window.doItAll = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
   const btn = document.getElementById('aiLoopBtn');
   const overlayBtn = document.getElementById('overlayAiBtn');
   
