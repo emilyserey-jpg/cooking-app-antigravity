@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     function checkViewport() {
+      // Do not redirect on resize if the user is in the middle of editing/publishing
+      const stage2 = document.getElementById('createStage2');
+      const stage3 = document.getElementById('createStage3');
+      const isEditing = (stage2 && stage2.style.display !== 'none') || 
+                        (stage3 && stage3.style.display !== 'none');
+      if (isEditing) return;
+
       if (window.innerWidth <= 768) {
         window.location.replace('/mobile.html' + window.location.hash);
       }
@@ -206,6 +213,10 @@
               <!-- Mute/Unmute -->
               <button id="playerMuteBtn" onclick="window.togglePlayerMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
                 <i id="playerMuteIcon" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+              </button>
+              <!-- Speed Control -->
+              <button id="playerSpeedBtn" onclick="window.cyclePlayerSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
+                <span id="playerSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
               </button>
             </div>
           </div>
@@ -1029,6 +1040,12 @@
                   style="background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;color:#fff;cursor:pointer;font-size:0.9rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;"
                   title="Mute/Unmute">
                   <i id="editorMuteIcon" data-lucide="volume-x" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button onclick="window.cycleEditorSpeed()" id="editorSpeedBtn"
+                  style="background:rgba(255,255,255,0.2);border:none;border-radius:18px;height:32px;padding:0 8px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:4px;"
+                  title="Playback Speed">
+                  <i data-lucide="gauge" style="width: 13px; height: 13px;"></i>
+                  <span id="editorSpeedLabel">1.0x</span>
                 </button>
                 <div style="flex:1;">
                   <span id="createCurrentTime" style="font-size:0.65rem;color:rgba(255,255,255,0.8);font-weight:700;font-variant-numeric:tabular-nums;">0:00</span>

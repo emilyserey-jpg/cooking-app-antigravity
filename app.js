@@ -338,7 +338,7 @@ function startVideoSimulation() {
     } else {
       if (isPlaying) {
         // Apply play speed
-        const speed = currentView === 'mobile-player' ? 1.0 : parseFloat(document.getElementById('activeSpeedBadge').innerText) || 1.0;
+        const speed = currentView === 'mobile-player' ? (window.playerPlaybackSpeed || 1.0) : parseFloat(document.getElementById('activeSpeedBadge').innerText) || 1.0;
         currentTime += delta * speed;
         
         const stepStart = recipeData.loops[activeStepIndex];
@@ -693,6 +693,26 @@ function updateMuteUI() {
     lucide.createIcons();
   }
 }
+
+// Player Playback Speed Controls
+let playerPlaybackSpeedIndex = 1; // Default to 1.0
+const PLAYER_SPEEDS = [0.5, 1.0, 1.25, 1.5, 2.0];
+window.playerPlaybackSpeed = 1.0; // Global for canvas simulation sync
+
+window.cyclePlayerSpeed = function() {
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (!realVideo) return;
+
+  playerPlaybackSpeedIndex = (playerPlaybackSpeedIndex + 1) % PLAYER_SPEEDS.length;
+  const speed = PLAYER_SPEEDS[playerPlaybackSpeedIndex];
+  realVideo.playbackRate = speed;
+  window.playerPlaybackSpeed = speed;
+
+  const label = document.getElementById('playerSpeedLabel');
+  if (label) {
+    label.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
+  }
+};
 
 function setPlaybackMode(mode) {
   playbackMode = mode;
@@ -2919,6 +2939,13 @@ window.loadPlayerRecipe = async function(recipeId) {
       }
 
       realVideo.load();
+      // Re-apply playback speed preference
+      const speed = PLAYER_SPEEDS[playerPlaybackSpeedIndex];
+      realVideo.playbackRate = speed;
+      const speedLabel = document.getElementById('playerSpeedLabel');
+      if (speedLabel) {
+        speedLabel.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
+      }
       realVideo.currentTime = 0;
     } else {
       if (realVideo) {
@@ -5451,6 +5478,24 @@ window.updateEditorMuteUI = function() {
   }
 };
 
+// Editor Playback Speed Controls
+let editorPlaybackSpeedIndex = 1; // Default to 1.0
+const EDITOR_SPEEDS = [0.5, 1.0, 1.25, 1.5, 2.0];
+
+window.cycleEditorSpeed = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  if (!videoEl) return;
+
+  editorPlaybackSpeedIndex = (editorPlaybackSpeedIndex + 1) % EDITOR_SPEEDS.length;
+  const speed = EDITOR_SPEEDS[editorPlaybackSpeedIndex];
+  videoEl.playbackRate = speed;
+
+  const label = document.getElementById('editorSpeedLabel');
+  if (label) {
+    label.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
+  }
+};
+
 let videoDuration   = 0;
 let previewInterval = null;
 let dragSrcIndex    = null;
@@ -5462,6 +5507,13 @@ window.onVideoLoaded = function() {
     videoEl.muted = isMutedPref;
     if (typeof window.updateEditorMuteUI === 'function') {
       window.updateEditorMuteUI();
+    }
+    // Re-apply playback speed
+    const speed = EDITOR_SPEEDS[editorPlaybackSpeedIndex];
+    videoEl.playbackRate = speed;
+    const speedLabel = document.getElementById('editorSpeedLabel');
+    if (speedLabel) {
+      speedLabel.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
     }
     videoDuration = videoEl.duration || 0;
     const m = Math.floor(videoDuration / 60);
