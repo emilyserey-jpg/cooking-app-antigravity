@@ -161,7 +161,7 @@ app.post('/api/ai/steps', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'You are a recipe writer. Convert a cooking video transcript into clear, numbered step-by-step instructions. Each step = one distinct action. Write in second person ("Add the flour..."). Be clear and concise. Maximum 10 steps.',
+          content: 'You are a recipe writer. Convert a cooking video transcript into clear, numbered step-by-step instructions. Each step must represent one distinct action. You MUST include all ingredient measurements (such as cups, tablespoons, teaspoons, grams, ounces, counts, etc.) mentioned in the transcript for each step. Write in the second person (e.g. "Add 4 cups of spinach..."). Be clear, descriptive, and concise. Maximum 10 steps.',
         },
         { role: 'user', content: `Write step-by-step instructions from this transcript:\n\n${transcript}` },
       ],
@@ -278,12 +278,12 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
 Identify distinct cooking steps and return ONLY this JSON (no markdown):
 {
   "title": "short recipe name",
-  "ingredients": ["item 1", "item 2"],
-  "steps": ["step description 1", "step description 2"],
+  "ingredients": ["quantity/unit ingredient name", "e.g. 4 cups fresh spinach", "1 block feta cheese"],
+  "steps": ["detailed step instruction including specific measurements, e.g. Add 4 cups of spinach and 2 cups of cherry tomatoes around the salmon"],
   "loops": [{ "start": 0, "end": 15, "label": "Action phrase" }],
   "text_overlays": [{ "start": 0.0, "end": 5.0, "text": "transcribed speech or narration text during this timeframe" }]
 }
-Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds. Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
+Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds. Ensure the ingredients lists and step instructions contain the exact measurements (cups, spoons, grams, counts, etc.) mentioned in the speech or shown in the video. Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
 
     const gemRes = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
@@ -328,15 +328,31 @@ app.post('/api/ai/gemini-loops', (req, res) => res.status(410).json({ error: 'De
 
 // ─── AI: Write a description for each loop stop ───────────────────────────
 app.post('/api/ai/describe-steps', async (req, res) => {
-  const { steps } = req.body;
+  const { steps, segments } = req.body;
   if (!steps || !steps.length) return res.status(400).json({ error: 'No steps provided.' });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured.' });
 
-  const stepList = steps.map((s, i) =>
-    `Step ${i + 1}: "${s.label}" (${formatTime(s.startTime)} → ${formatTime(s.endTime)})`
-  ).join('\n');
+  const stepList = steps.map((s, i) => {
+    const stepStart = s.startTime || 0;
+    const stepEnd = s.endTime || (stepStart + 5);
+
+    // Correlate with matching subtitles segments
+    let matchingText = '';
+    if (Array.isArray(segments)) {
+      matchingText = segments
+        .filter(seg => {
+          const segStart = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
+          return segStart >= stepStart - 2 && segStart <= stepEnd + 2; // 2s padding
+        })
+        .map(seg => seg.text)
+        .join(' ');
+    }
+
+    return `Step ${i + 1}: "${s.label}" (${formatTime(stepStart)} → ${formatTime(stepEnd)})
+Spoken/subtitled text during this timeframe: "${matchingText || 'No direct transcription'}"`;
+  }).join('\n\n');
 
   const prompt = `You are writing concise cooking instructions for a recipe video editor.
 The video has been divided into ${steps.length} loop stop sections:
@@ -344,9 +360,10 @@ The video has been divided into ${steps.length} loop stop sections:
 ${stepList}
 
 For each step, write a clear, action-oriented instruction describing what the cook should do during that section, AND list the specific ingredients used/needed for that step.
-Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
+IMPORTANT: You MUST include the exact ingredient measurements (e.g. 4 cups, 2 teaspoons, grams, etc.) mentioned in the spoken/subtitled text for each step. Do not omit the quantities!
+Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients and their exact quantities used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
-["Heat the pan on medium-high. Ingredients: Cooking oil.", "Season the shrimp in a bowl. Ingredients: Shrimp, salt, pepper, garlic powder."]`;
+["Heat the pan on medium-high. Ingredients: 2 tablespoons cooking oil.", "Season the shrimp in a bowl. Ingredients: 1 pound shrimp, 1 teaspoon salt, 1/2 teaspoon black pepper, 1/2 teaspoon garlic powder."]`;
 
   try {
     const response = await fetch(
