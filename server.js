@@ -285,8 +285,8 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
     "start": 0, 
     "end": 15, 
     "label": "Action phrase",
-    "instruction": "detailed step instruction describing ONLY the specific action that physically happens during this start/end window, e.g. Cut the carrots into large chunks.",
-    "ingredients": ["specific ingredients added or prepped during this time range, e.g. 2 carrots"]
+    "instruction": "detailed step instruction describing the action that happens during or immediately surrounding this start/end window (including prepped ingredients like pork belly). Make sure no ingredients or actions mentioned are left out.",
+    "ingredients": ["all ingredients prepped, cut, or added during or near this time range (e.g. pork belly, onion)"]
   }],
   "text_overlays": [{ "start": 0.0, "end": 5.0, "text": "transcribed speech or narration text during this timeframe" }]
 }
