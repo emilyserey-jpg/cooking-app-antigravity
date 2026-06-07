@@ -294,9 +294,10 @@ Rules:
 - 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
 - Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
 - Avoid creating loop stops for trivial, brief micro-actions (such as unpacking ingredients, opening lids, or turning on burners). Merge these trivial prep actions into the main adjacent step (e.g. merge "unpacking pork" into "seasoning pork" or "cooking pork").
+- Do NOT leave out any ingredients or actions that are mentioned in the transcript or shown in the video slightly outside the step's timestamps (e.g. if pork is prepped at 0:06 but the step is 0:03-0:06, include it in that step). Nothing must be left out!
 - Minimum duration for any loop is 3 seconds. Never output 1-second or 2-second steps.
-- Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video for that specific timeframe.
-- Be strictly chronological: each loop's instruction must ONLY describe what happens during its start/end window.
+- Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video.
+- Be chronological: each loop's instruction should describe the actions during and immediately surrounding its start/end window.
 - Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
 
     const gemRes = await fetch(
@@ -352,15 +353,15 @@ app.post('/api/ai/describe-steps', async (req, res) => {
     const stepStart = s.startTime || 0;
     const stepEnd = s.endTime || (stepStart + 5);
 
-    // Correlate with matching subtitles segments (using a robust interval overlap check)
+    // Correlate with matching subtitles segments (using a broader overlap check to avoid leaving out nearby actions)
     let matchingText = '';
     if (Array.isArray(segments)) {
       matchingText = segments
         .filter(seg => {
           const segStart = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
           const segEnd = Number(seg.end ?? seg.endTime ?? seg.end_time) || (segStart + 5);
-          // Check if segment overlaps with the step time window (with a tight 0.5s padding/tolerance)
-          return (segStart <= stepEnd + 0.5) && (segEnd >= stepStart - 0.5);
+          // Check if segment overlaps with the step time window (with a broader 2.5s padding/tolerance to capture trailing speech)
+          return (segStart <= stepEnd + 2.5) && (segEnd >= stepStart - 2.5);
         })
         .map(seg => seg.text)
         .join(' ');
@@ -375,9 +376,9 @@ The video has been divided into ${steps.length} loop stop sections:
 
 ${stepList}
 
-For each step, write a clear, action-oriented instruction describing ONLY the specific action that physically happens during that step's time range, and ONLY list the ingredients that are actually added or prepared during that exact time window.
-Be strictly chronological: do not describe future actions or list ingredients that are used in later steps.
-IMPORTANT: You MUST include the exact ingredient measurements (e.g. 4 cups, 2 teaspoons, grams, etc.) mentioned in the spoken/subtitled text for each step. Do not omit the quantities!
+For each step, write a clear, action-oriented instruction describing the specific action that happens during that step's time range, and list the ingredients that are added or prepared.
+Do NOT leave out any ingredients or actions (such as prepping, cutting, or adding items) mentioned in the speech/transcript immediately surrounding the time window. Make sure nothing is left out!
+IMPORTANT: You MUST include the exact ingredient measurements (e.g. 4 cups, 2 teaspoons, grams, etc.) mentioned in the spoken/subtitled text. Do not omit the quantities!
 Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients and their exact quantities used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
 ["Heat the pan on medium-high. Ingredients: 2 tablespoons cooking oil.", "Season the shrimp in a bowl. Ingredients: 1 pound shrimp, 1 teaspoon salt, 1/2 teaspoon black pepper, 1/2 teaspoon garlic powder."]`;
