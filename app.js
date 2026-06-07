@@ -5729,24 +5729,28 @@ function updateVideoScrubber(vid) {
 }
 
 window.ensureContinuousSteps = function() {
-  if (!window.createStepsArr || window.createStepsArr.length === 0) return;
+  if (!createStepsArr || createStepsArr.length === 0) return;
   
   // Sort steps chronologically
-  window.createStepsArr.sort((a, b) => a.time - b.time);
+  createStepsArr.sort((a, b) => a.time - b.time);
   
   // Force the first step to start at 0:00 to eliminate any initial dead zone
-  if (window.createStepsArr[0]) {
-    window.createStepsArr[0].time = 0;
-    window.createStepsArr[0].displayTime = '00:00';
+  if (createStepsArr[0]) {
+    createStepsArr[0].time = 0;
   }
   
-  window.createStepsArr.forEach((step, idx) => {
-    const next = window.createStepsArr[idx + 1];
+  createStepsArr.forEach((step, idx) => {
+    const next = createStepsArr[idx + 1];
     if (next) {
       step.endTime = next.time;
     } else {
-      step.endTime = window.videoDuration || (step.time + 15);
+      step.endTime = videoDuration || (step.time + 15);
     }
+    
+    // Format displayTime based on step.time
+    const m = Math.floor(step.time / 60);
+    const s = Math.floor(step.time % 60).toString().padStart(2, '0');
+    step.displayTime = `${m}:${s}`;
   });
 };
 
@@ -6243,6 +6247,9 @@ window.previewCurrentNavStep = function() {
 };
 
 function renderCreateSteps() {
+  if (typeof window.ensureContinuousSteps === 'function') {
+    window.ensureContinuousSteps();
+  }
   const list  = document.getElementById('createStepsList');
   const count = document.getElementById('createStepCount');
   if (!list) return;

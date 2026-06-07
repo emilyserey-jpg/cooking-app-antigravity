@@ -1145,6 +1145,19 @@
                 <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem; color:var(--text-muted); font-weight:900; margin-left:2px; transition:transform 0.2s; cursor:pointer;">▾</span>
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
+                <!-- AI buttons moved from AI Tools -->
+                <div style="display:flex;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;">
+                  <button id="aiLoopBtn" onclick="doItAll()"
+                    style="flex:1;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                    <span>🔁 AI: Place Loop Stops</span>
+                    <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                  </button>
+                  <button id="aiWriteStepsBtn" onclick="aiWriteSteps()" 
+                    style="flex:1;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                    <span>📋 AI Steps</span>
+                    <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
+                  </button>
+                </div>
                 <div id="createStepsList" style="margin-top:6px;"></div>
               </div>
             </div>
@@ -1153,12 +1166,15 @@
           <!-- Slide 2: Ingredients -->
           <div class="carousel-slide" id="slideIngredients">
             <div class="glass-card" style="padding:12px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
+              <!-- AI Ingredients button moved from AI Tools -->
+              <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
+                style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
+                <span>✍️ AI Ingredients</span>
+                <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+              </button>
+              
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin:0;">Ingredients List</label>
-                <button type="button" onclick="aiWriteIngredients()" id="ingredientsAiBtn"
-                  style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:7px; padding:4px 10px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer;">
-                  ✍️ AI: Write Ingredients
-                </button>
               </div>
               <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
                 style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.82rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
@@ -1192,27 +1208,6 @@
                   style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
                   <span>⚡ AI: Do Everything</span>
                   <span class="check-do-everything" style="display:none;color:#22c55e;font-size:0.9rem;">✓</span>
-                </button>
-
-                <!-- 2. AI: Place Loop Stops -->
-                <button id="aiLoopBtn" onclick="doItAll()"
-                  style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:9px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.2);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>🔁 AI: Place Loop Stops</span>
-                  <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.9rem;background:#fff;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
-                </button>
-
-                <!-- 3. AI Steps -->
-                <button id="aiWriteStepsBtn" onclick="aiWriteSteps()"
-                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>📋 AI Steps</span>
-                  <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
-                </button>
-
-                <!-- 4. AI Ingredients -->
-                <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()"
-                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>✍️ AI Ingredients</span>
-                  <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
                 </button>
 
                 <!-- 5. Transcribe audio only -->
@@ -1509,6 +1504,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=2.2"></script>
+  <script type="module" src="app.js?v=3.1"></script>
 </body>
 </html>
