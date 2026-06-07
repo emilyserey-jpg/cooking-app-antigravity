@@ -1025,7 +1025,7 @@
 
         <!-- Header row -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;flex-shrink:0;">
-          <h2 style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Recipe</h2>
+          <h2 style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Video</h2>
           <button onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;"><i data-lucide="arrow-left"></i> New Video</button>
         </div>
 
@@ -1145,7 +1145,7 @@
                 <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem; color:var(--text-muted); font-weight:900; margin-left:2px; transition:transform 0.2s; cursor:pointer;">▾</span>
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
-                <div id="createStepsList" style="display:flex; flex-direction:column; gap:5px; max-height:200px; overflow-y:auto;"></div>
+                <div id="createStepsList" style="margin-top:6px;"></div>
               </div>
             </div>
           </div>
@@ -1186,16 +1186,42 @@
                 <div id="aiStatus" style="display:none; text-align:center; padding:7px; font-size:0.75rem; font-weight:700; color:#7c3aed; background:#f5f0ff; border-radius:8px; margin-bottom:6px;">
                   <span id="aiStatusText">Analyzing...</span>
                 </div>
-                <button id="aiLoopBtn" onclick="doItAll()"
-                  style="width:100%; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:9px; padding:10px; font-family:var(--font); font-weight:900; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 12px rgba(124,58,237,0.3); margin-bottom:5px; display:flex; align-items:center; justify-content:center; gap:7px;">
-                  <span>🔁</span><span>AI: Place Loop Stops</span>
+
+                <!-- 1. AI: Do Everything -->
+                <button id="aiDoEverythingBtn" onclick="aiDoEverything()"
+                  style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>⚡ AI: Do Everything</span>
+                  <span class="check-do-everything" style="display:none;color:#22c55e;font-size:0.9rem;">✓</span>
                 </button>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:5px;">
-                  <button onclick="aiWriteIngredients()" style="background:#fff; border:2px solid rgba(124,58,237,0.2); border-radius:8px; padding:8px 5px; font-family:var(--font); font-weight:800; font-size:0.75rem; cursor:pointer; color:#7c3aed;">✍️ Ingredients</button>
-                  <button onclick="aiWriteSteps()" style="background:#fff; border:2px solid rgba(124,58,237,0.2); border-radius:8px; padding:8px 5px; font-family:var(--font); font-weight:800; font-size:0.75rem; cursor:pointer; color:#7c3aed;">📋 Steps</button>
-                </div>
-                <button onclick="aiDoEverything()" style="width:100%; background:#1e1b4b; color:#c4b5fd; border:none; border-radius:8px; padding:8px; font-family:var(--font); font-weight:900; font-size:0.78rem; cursor:pointer; margin-bottom:5px;">⚡ AI: Do Everything</button>
-                <button id="transcribeBtn" onclick="transcribeVideo()" style="width:100%; background:transparent; border:1px solid rgba(124,58,237,0.2); border-radius:7px; padding:5px; font-family:var(--font); font-weight:700; font-size:0.68rem; cursor:pointer; color:var(--text-muted);">🎤 Transcribe audio only</button>
+
+                <!-- 2. AI: Place Loop Stops -->
+                <button id="aiLoopBtn" onclick="doItAll()"
+                  style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:9px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.2);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>🔁 AI: Place Loop Stops</span>
+                  <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.9rem;background:#fff;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                </button>
+
+                <!-- 3. AI Steps -->
+                <button id="aiWriteStepsBtn" onclick="aiWriteSteps()"
+                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>📋 AI Steps</span>
+                  <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+                </button>
+
+                <!-- 4. AI Ingredients -->
+                <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()"
+                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>✍️ AI Ingredients</span>
+                  <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+                </button>
+
+                <!-- 5. Transcribe audio only -->
+                <button id="transcribeBtn" onclick="transcribeVideo()"
+                  style="width:100%;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px;font-family:var(--font);font-weight:700;font-size:0.68rem;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>🎤 Transcribe audio only</span>
+                  <span class="check-transcribe" style="display:none;color:#22c55e;font-size:0.8rem;">✓</span>
+                </button>
+
                 <div id="aiActions" style="display:block;"></div>
 
                 <div id="transcriptPreview" style="display:none; margin-top:6px; border:1px solid rgba(124,58,237,0.15); border-radius:8px; overflow:hidden;">

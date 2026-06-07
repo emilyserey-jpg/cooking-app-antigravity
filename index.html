@@ -1024,16 +1024,21 @@
       <div id="createStage2" style="display:none; height:calc(100vh - 110px); display:none; flex-direction:column; overflow:hidden;">
 
         <!-- Header row -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-shrink:0;">
-          <h2 style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Recipe</h2>
-          <button onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;"><i data-lucide="arrow-left"></i> New Video</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-shrink:0;gap:1.5rem;">
+          <div style="display:flex;align-items:center;gap:1.5rem;flex:1;">
+            <h2 id="editVideoHeader" style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;white-space:nowrap;">Edit Video</h2>
+            <div id="headerTitleContainer" style="flex:1;max-width:500px;display:flex;align-items:center;">
+              <!-- editorTitleCard will be appended here dynamically on desktop -->
+            </div>
+          </div>
+          <button onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;flex-shrink:0;"><i data-lucide="arrow-left"></i> New Video</button>
         </div>
 
         <!-- Main 2-col workbench -->
-        <div id="workbenchGrid" style="display:grid;grid-template-columns:1fr 330px;gap:1rem;flex:1;min-height:0;overflow:hidden;">
+        <div id="workbenchGrid" style="display:flex;flex-direction:row;gap:0;flex:1;min-height:0;overflow:hidden;">
 
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
-          <div id="workbenchLeft" style="display:flex;flex-direction:column;gap:0.5rem;overflow:hidden;">
+          <div id="workbenchLeft" style="width:460px;flex-shrink:0;display:flex;flex-direction:column;gap:0.5rem;overflow:hidden;">
 
             <!-- Video (overlay: only play/pause + add stop) -->
             <div id="workbenchVideoWrapper" style="flex:1;min-height:0;border-radius:16px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
@@ -1104,32 +1109,6 @@
               </div>
             </div>
 
-            <!-- Preview Cover -->
-            <div class="glass-card" id="editorCoverCard" style="padding:10px 13px;flex-shrink:0;margin-top:2px;">
-              <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Preview Cover (Thumbnail)</label>
-              <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
-                <div id="createThumbnailPreviewContainer" style="width:96px;height:54px;border-radius:8px;background:#1a2235;overflow:hidden;border:2px solid var(--border-card);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
-                  <span id="createThumbnailPlaceholder" style="font-size:1.1rem;">🖼️</span>
-                  <img id="createThumbnailPreviewImg" style="width:100%;height:100%;object-fit:cover;display:none;border-radius:6px;">
-                </div>
-                <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
-                  <div style="display:flex;gap:6px;">
-                    <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="flex:1;padding:6px 12px;font-size:0.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px;background:var(--bg-card-soft);border:2px solid var(--border-card);cursor:pointer;border-radius:8px;justify-content:center;font-family:var(--font);box-shadow:var(--shadow-xs);">
-                      📁 Choose Image
-                    </button>
-                    <button type="button" onclick="window.generateAICover()" class="btn" style="flex:1;padding:6px 12px;font-size:0.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border-radius:8px;justify-content:center;font-family:var(--font);box-shadow:var(--shadow-xs);background:linear-gradient(135deg,#7c3aed,#6366f1);border:none;color:#fff;">
-                      🪄 AI Cover
-                    </button>
-                  </div>
-                  <span id="coverUploadStatus" style="font-size:0.58rem;color:var(--text-muted);font-weight:600;line-height:1.2;">Captured from video or custom</span>
-                </div>
-              </div>
-              <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="handleCoverFileSelect(this.files[0])">
-              <input id="newRecipeCoverInput" type="text" placeholder="Or paste image URL..."
-                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-heading);outline:none;"
-                oninput="updateCoverPreviewFromUrl(this.value)">
-            </div>
-
             <!-- ── Nav controls bar ── -->
             <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
 
@@ -1165,136 +1144,218 @@
             <div id="createTimeline" style="display:none;"><div id="timelinePlayhead" style="display:none;"></div></div>
           </div>
 
-          <!-- ══ RIGHT: Scrollable recipe panel ══ -->
-          <div id="workbenchRight" style="overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding-right:2px;">
+          <!-- Resizable Divider -->
+          <div id="workbenchResizer" 
+            style="width: 16px; cursor: col-resize; flex-shrink: 0; background: transparent; position: relative; display: flex; align-items: center; justify-content: center; z-index: 100; transition: background 0.2s;"
+            onmouseenter="this.style.background='rgba(74,144,217,0.08)';"
+            onmouseleave="this.style.background='transparent';">
+            <div style="width: 2px; height: 60px; background: var(--border-card); border-radius: 99px; transition: background 0.2s;" id="resizerLine"></div>
+          </div>
 
-            <!-- Recipe Title (statically first in right panel on desktop) -->
-            <div class="glass-card" id="editorTitleCard" style="padding:10px 13px;flex-shrink:0;">
-              <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
-              <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
-                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;"
-                onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+          <!-- ══ RIGHT: Scrollable recipe panel (tabbed flow on desktop) ══ -->
+          <div id="workbenchRight" style="overflow:hidden;display:flex;flex-direction:column;gap:0.75rem;flex:1;padding-left:8px;padding-bottom:10px;">
+            
+            <!-- Desktop Editor Tab Bar -->
+            <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
+              <button id="tabBtnAI" onclick="switchEditorTab('ai')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;">
+                🤖 AI Tools
+              </button>
+              <button id="tabBtnStops" onclick="switchEditorTab('stops')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+                📍 Loop Stops
+              </button>
+              <button id="tabBtnIngredients" onclick="switchEditorTab('ingredients')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+                📝 Ingredients
+              </button>
+              <button id="tabBtnSave" onclick="switchEditorTab('save')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+                🖼️ Preview & Save
+              </button>
             </div>
 
-            <!-- Ingredients Card -->
-            <div class="glass-card" id="editorIngredientsCard" style="padding:10px 13px;flex-shrink:0;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:0;">Ingredients List</label>
-                <button type="button" onclick="aiWriteIngredients()" id="ingredientsAiBtn"
-                  style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:7px;padding:3px 9px;font-family:var(--font);font-weight:800;font-size:0.65rem;cursor:pointer;">
-                  ✍️ AI: Write Ingredients
+            <!-- Col 1: Title -->
+            <div id="rightColTitle" style="width:0;flex-shrink:0;display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;box-sizing:border-box;">
+              <!-- Recipe Title (statically first in right panel on desktop) -->
+              <div class="glass-card" id="editorTitleCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
+                <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
+                <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
+                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;"
+                  onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+              </div>
+            </div>
+
+            <!-- Col 2: AI Tools -->
+            <div id="rightColAI" style="display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- ▾ AI Tools accordion -->
+              <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
+                <!-- Header (click to toggle) -->
+                <div onclick="togglePanel('aiBody','aiChevron')" style="display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;">
+                  <span style="font-size:1rem;">🤖</span>
+                  <div style="font-weight:900;color:#7c3aed;font-size:0.85rem;flex:1;">AI Tools</div>
+                  <span id="aiStatusBadge" style="font-size:0.6rem;background:#ede9ff;color:#7c3aed;padding:2px 7px;border-radius:999px;font-weight:800;">checking...</span>
+                  <span id="aiChevron" style="font-size:0.75rem;color:#7c3aed;font-weight:900;margin-left:4px;transition:transform 0.2s;">▾</span>
+                </div>
+                <!-- Collapsible body -->
+                <div id="aiBody" style="padding:0 12px 12px;">
+                  <!-- Force fresh AI option -->
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;margin-bottom:8px;padding:2px 4px;background:#f5f0ff;border-radius:6px;border:1px solid rgba(124,58,237,0.15);">
+                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.68rem;color:#7c3aed;font-weight:700;cursor:pointer;user-select:none;width:100%;">
+                      <input type="checkbox" id="aiForceFresh" style="accent-color:#7c3aed;cursor:pointer;">
+                      🔄 Force fresh AI (ignore cache)
+                    </label>
+                  </div>
+                  <div id="aiStatus" style="display:none;text-align:center;padding:7px;font-size:0.75rem;font-weight:700;color:#7c3aed;background:#f5f0ff;border-radius:8px;margin-bottom:6px;">
+                    <span id="aiStatusText">Analyzing...</span>
+                  </div>
+                  <!-- 1. AI: Do Everything -->
+                  <button id="aiDoEverythingBtn" onclick="aiDoEverything()" 
+                    style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span>⚡ AI: Do Everything</span>
+                    <span class="check-do-everything" style="display:none;color:#22c55e;font-size:0.9rem;">✓</span>
+                  </button>
+
+
+                  <!-- 5. Transcribe audio only -->
+                  <button id="transcribeBtn" onclick="transcribeVideo()" 
+                    style="width:100%;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px;font-family:var(--font);font-weight:700;font-size:0.68rem;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span>🎤 Transcribe audio only</span>
+                    <span class="check-transcribe" style="display:none;color:#22c55e;font-size:0.8rem;">✓</span>
+                  </button>
+                  <div id="aiActions" style="display:block;"></div>
+
+                  <!-- ▾ Transcript (nested) -->
+                  <div id="transcriptPreview" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
+                    <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
+                      <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Transcript</span>
+                      <span id="transcriptChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                    </div>
+                    <div id="transcriptBody" style="padding:6px;">
+                      <div id="transcriptText" style="font-size:0.72rem;color:var(--text-body);background:#f8f6ff;border-radius:6px;padding:6px;max-height:60px;overflow-y:auto;font-weight:500;"></div>
+                    </div>
+                  </div>
+
+                  <!-- ▾ Step Instructions (nested) -->
+                  <div id="stepsTextResult" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
+                    <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
+                      <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Step Instructions ✏️</span>
+                      <span id="stepsTextChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                    </div>
+                    <div id="stepsTextBody" style="padding:6px;">
+                      <textarea id="stepsText" rows="4" style="width:100%;background:#fff;border:1px solid rgba(124,58,237,0.15);border-radius:6px;padding:6px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Col 3: Loop Stops -->
+            <div id="rightColStops" style="display:none;flex-direction:column;gap:0.5rem;overflow:hidden;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- ▾ Loop Stops accordion -->
+              <div class="glass-card" id="editorStopsCard" style="padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;height:100%;">
+                <!-- Header row: title + AI btn + chevron -->
+                <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;user-select:none;flex-shrink:0;">
+                  <div onclick="togglePanel('stopsBody','stopsChevron')" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;flex:1;cursor:pointer;">
+                    Loop Stops <span id="createStepCount" style="color:var(--text-muted);font-weight:600;">(0)</span>
+                  </div>
+                  <button onclick="aiWriteStepDescriptions()" title="AI writes a description for each loop stop"
+                    style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                    ✍️ AI Descriptions
+                  </button>
+                  <button id="aiVoiceoverBtn" onclick="window.generateAllVoiceovers()" title="AI generates voiceover narration for all steps"
+                    style="background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:2px;">
+                    🎙️ AI Voiceover
+                  </button>
+                  <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem;color:var(--text-muted);font-weight:900;margin-left:2px;transition:transform 0.2s;cursor:pointer;">▾</span>
+                </div>
+                <div id="stopsBody" style="padding:0 12px 10px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                  <!-- AI buttons moved from AI Tools -->
+                  <div style="display:flex;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;">
+                    <button id="aiLoopBtn" onclick="doItAll()"
+                      style="flex:1;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                      <span>🔁 AI: Place Loop Stops</span>
+                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                    </button>
+                    <button id="aiWriteStepsBtn" onclick="aiWriteSteps()" 
+                      style="flex:1;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                      <span>📋 AI Steps</span>
+                      <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
+                    </button>
+                  </div>
+                  <div id="createStepsList" style="margin-top:6px;flex:1;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Col 4: Ingredients & Visibility -->
+            <div id="rightColIngredients" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- Ingredients Card -->
+              <div class="glass-card" id="editorIngredientsCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
+                <!-- AI Ingredients button moved from AI Tools -->
+                <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
+                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
+                  <span>✍️ AI Ingredients</span>
+                  <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+                </button>
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:0;">Ingredients List</label>
+                </div>
+                <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
+                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
+              </div>
+
+              <!-- Visibility -->
+              <div class="glass-card" id="editorVisibilityCard" style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;flex-shrink:0;box-sizing:border-box;">
+                <div>
+                  <div style="font-weight:800;color:var(--text-heading);font-size:0.82rem;">Visibility</div>
+                  <div id="privacyLabel" style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">🔒 Private</div>
+                </div>
+                <div onclick="toggleCreatePrivacy()" id="privacyToggle"
+                  style="width:48px;height:26px;border-radius:999px;background:#e0eaf4;cursor:pointer;position:relative;transition:background 0.25s;border:2px solid rgba(74,144,217,0.15);">
+                  <div id="privacyThumb" style="position:absolute;top:1px;left:1px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.15);transition:left 0.25s;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Col 5: Cover & Save Buttons -->
+            <div id="rightColSave" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- Preview Cover -->
+              <div class="glass-card" id="editorCoverCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
+                <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Preview Cover (Thumbnail)</label>
+                <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+                  <div id="createThumbnailPreviewContainer" style="width:96px;height:54px;border-radius:8px;background:#1a2235;overflow:hidden;border:2px solid var(--border-card);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
+                    <span id="createThumbnailPlaceholder" style="font-size:1.1rem;">🖼️</span>
+                    <img id="createThumbnailPreviewImg" style="width:100%;height:100%;object-fit:cover;display:none;border-radius:6px;">
+                  </div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="flex:1;padding:6px 12px;font-size:0.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px;background:var(--bg-card-soft);border:2px solid var(--border-card);cursor:pointer;border-radius:8px;justify-content:center;font-family:var(--font);box-shadow:var(--shadow-xs);">
+                        📁 Choose Image
+                      </button>
+                      <button type="button" onclick="window.generateAICover()" class="btn" style="flex:1;padding:6px 12px;font-size:0.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border-radius:8px;justify-content:center;font-family:var(--font);box-shadow:var(--shadow-xs);background:linear-gradient(135deg,#7c3aed,#6366f1);border:none;color:#fff;">
+                        🪄 AI Cover
+                      </button>
+                    </div>
+                    <span id="coverUploadStatus" style="font-size:0.58rem;color:var(--text-muted);font-weight:600;line-height:1.2;">Captured from video or custom</span>
+                  </div>
+                </div>
+                <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="handleCoverFileSelect(this.files[0])">
+                <input id="newRecipeCoverInput" type="text" placeholder="Or paste image URL..."
+                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-heading);outline:none;box-sizing:border-box;"
+                  oninput="updateCoverPreviewFromUrl(this.value)">
+              </div>
+
+              <!-- Save buttons wrapped in card -->
+              <div class="glass-card" id="editorSaveButtonsCard" style="padding:12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;box-sizing:border-box;">
+                <button id="saveRecipeBtn" onclick="openFolderSaveModal()"
+                  style="width:100%;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:12px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.92rem;cursor:pointer;box-shadow:0 4px 12px rgba(22,163,74,0.35);display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>✅</span><span>Save Recipe (local preview only)</span>
+                </button>
+                <button onclick="saveDraft()" id="saveDraftBtn"
+                  style="width:100%;background:#fff;border:2px solid var(--border-card);color:var(--text-body);border-radius:12px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;gap:6px;">
+                  <span>💾</span><span>Save as Draft</span>
                 </button>
               </div>
-              <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
-                style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;"></textarea>
             </div>
 
-
-
-            <!-- ▾ AI Tools accordion -->
-            <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:0;flex-shrink:0;overflow:hidden;">
-              <!-- Header (click to toggle) -->
-              <div onclick="togglePanel('aiBody','aiChevron')" style="display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;">
-                <span style="font-size:1rem;">🤖</span>
-                <div style="font-weight:900;color:#7c3aed;font-size:0.85rem;flex:1;">AI Tools</div>
-                <span id="aiStatusBadge" style="font-size:0.6rem;background:#ede9ff;color:#7c3aed;padding:2px 7px;border-radius:999px;font-weight:800;">checking...</span>
-                <span id="aiChevron" style="font-size:0.75rem;color:#7c3aed;font-weight:900;margin-left:4px;transition:transform 0.2s;">▾</span>
-              </div>
-              <!-- Collapsible body -->
-              <div id="aiBody" style="padding:0 12px 12px;">
-                <!-- Force fresh AI option -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;margin-bottom:8px;padding:2px 4px;background:#f5f0ff;border-radius:6px;border:1px solid rgba(124,58,237,0.15);">
-                  <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.68rem;color:#7c3aed;font-weight:700;cursor:pointer;user-select:none;width:100%;">
-                    <input type="checkbox" id="aiForceFresh" style="accent-color:#7c3aed;cursor:pointer;">
-                    🔄 Force fresh AI (ignore cache)
-                  </label>
-                </div>
-                <div id="aiStatus" style="display:none;text-align:center;padding:7px;font-size:0.75rem;font-weight:700;color:#7c3aed;background:#f5f0ff;border-radius:8px;margin-bottom:6px;">
-                  <span id="aiStatusText">Analyzing...</span>
-                </div>
-                <button id="aiLoopBtn" onclick="doItAll()"
-                  style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:9px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.3);margin-bottom:5px;display:flex;align-items:center;justify-content:center;gap:7px;">
-                  <span>🔁</span><span>AI: Place Loop Stops</span>
-                </button>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;">
-                  <button onclick="aiWriteIngredients()" style="background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px 5px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;">✍️ Ingredients</button>
-                  <button onclick="aiWriteSteps()" style="background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px 5px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;">📋 Steps</button>
-                </div>
-                <button onclick="aiDoEverything()" style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.78rem;cursor:pointer;margin-bottom:5px;">⚡ AI: Do Everything</button>
-                <button id="transcribeBtn" onclick="transcribeVideo()" style="width:100%;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:5px;font-family:var(--font);font-weight:700;font-size:0.68rem;cursor:pointer;color:var(--text-muted);">🎤 Transcribe audio only</button>
-                <div id="aiActions" style="display:block;"></div>
-
-                <!-- ▾ Transcript (nested) -->
-                <div id="transcriptPreview" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                  <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
-                    <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Transcript</span>
-                    <span id="transcriptChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
-                  </div>
-                  <div id="transcriptBody" style="padding:6px;">
-                    <div id="transcriptText" style="font-size:0.72rem;color:var(--text-body);background:#f8f6ff;border-radius:6px;padding:6px;max-height:60px;overflow-y:auto;font-weight:500;"></div>
-                  </div>
-                </div>
-
-
-
-                <!-- ▾ Step Instructions (nested) -->
-                <div id="stepsTextResult" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                  <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
-                    <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Step Instructions ✏️</span>
-                    <span id="stepsTextChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
-                  </div>
-                  <div id="stepsTextBody" style="padding:6px;">
-                    <textarea id="stepsText" rows="4" style="width:100%;background:#fff;border:1px solid rgba(124,58,237,0.15);border-radius:6px;padding:6px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;"></textarea>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ▾ Loop Stops accordion -->
-            <div class="glass-card" id="editorStopsCard" style="padding:0;flex-shrink:0;overflow:hidden;">
-              <!-- Header row: title + AI btn + chevron -->
-              <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;user-select:none;">
-                <div onclick="togglePanel('stopsBody','stopsChevron')" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;flex:1;cursor:pointer;">
-                  Loop Stops <span id="createStepCount" style="color:var(--text-muted);font-weight:600;">(0)</span>
-                </div>
-                <button onclick="aiWriteStepDescriptions()" title="AI writes a description for each loop stop"
-                  style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-                  ✍️ AI Descriptions
-                </button>
-                <button id="aiVoiceoverBtn" onclick="window.generateAllVoiceovers()" title="AI generates voiceover narration for all steps"
-                  style="background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:2px;">
-                  🎙️ AI Voiceover
-                </button>
-                <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem;color:var(--text-muted);font-weight:900;margin-left:2px;transition:transform 0.2s;cursor:pointer;">▾</span>
-              </div>
-              <div id="stopsBody" style="padding:0 12px 10px;">
-                <div id="createStepsList" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;"></div>
-              </div>
-            </div>
-
-
-
-            <!-- Visibility (moved to bottom) -->
-            <div class="glass-card" id="editorVisibilityCard" style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;flex-shrink:0;">
-              <div>
-                <div style="font-weight:800;color:var(--text-heading);font-size:0.82rem;">Visibility</div>
-                <div id="privacyLabel" style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">🔒 Private</div>
-              </div>
-              <div onclick="toggleCreatePrivacy()" id="privacyToggle"
-                style="width:48px;height:26px;border-radius:999px;background:#e0eaf4;cursor:pointer;position:relative;transition:background 0.25s;border:2px solid rgba(74,144,217,0.15);">
-                <div id="privacyThumb" style="position:absolute;top:1px;left:1px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.15);transition:left 0.25s;"></div>
-              </div>
-            </div>
-
-            <!-- Save buttons -->
-            <button id="saveRecipeBtn" onclick="openFolderSaveModal()"
-              style="width:100%;background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px;font-family:var(--font);font-size:0.88rem;font-weight:900;cursor:pointer;box-shadow:0 6px 18px rgba(92,184,92,0.3);flex-shrink:0;">
-              &#x2705; Save Recipe
-            </button>
-            <button onclick="saveDraft()" id="saveDraftBtn"
-              style="width:100%;background:#fff;color:var(--text-muted);border:2px solid var(--border-card);border-radius:999px;padding:9px;font-family:var(--font);font-size:0.8rem;font-weight:800;cursor:pointer;flex-shrink:0;margin-bottom:8px;">
-              💾 Save as Draft
-            </button>
           </div>
         </div>
 

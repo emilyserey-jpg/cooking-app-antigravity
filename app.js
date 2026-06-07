@@ -243,6 +243,14 @@ function initializeApp() {
     const defaultPref = localStorage.getItem('cooking_gps_landing_view') || 'create';
     landingSelect.value = defaultPref;
   }
+  setupWorkbenchResizer();
+  
+  // Wire updateAIChecklists to ingredientsText input edits
+  const ingTextEl = document.getElementById('ingredientsText');
+  if (ingTextEl) {
+    ingTextEl.addEventListener('input', window.updateAIChecklists);
+  }
+  window.updateAIChecklists();
 }
 
 // App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
@@ -2471,6 +2479,7 @@ window.saveDraft = async function() {
         end:         s.endTime ?? null,
         label:       s.label,
         description: s.description || '',
+        ingredients: s.ingredients || [],
         audio_url:   s.audio_url || s.audioUrl || '',
       })),
       video_url: videoUrl,
@@ -2853,12 +2862,14 @@ window.loadRecipeToEditor = function(recipe) {
     const end = l.end != null ? l.end : null;
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60).toString().padStart(2, '0');
+    const details = window.parseDescriptionAndIngredients(l.description || '', l.ingredients);
     return {
       time: t,
       endTime: end,
       label: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
       displayTime: `${m}:${s}`,
-      description: l.description || '',
+      description: details.description,
+      ingredients: details.ingredients,
       audio_url: l.audio_url || l.audioUrl || '',
     };
   }).sort((a, b) => a.time - b.time);
@@ -5422,7 +5433,7 @@ async function autoAnalyzeWithAI() {
         const end = l.endTime != null ? Number(l.endTime) : null;
         const m   = Math.floor(t / 60);
         const s   = Math.floor(t % 60).toString().padStart(2, '0');
-        return { time: t, endTime: end, label: l.label || 'Step', displayTime: `${m}:${s}` };
+        return { time: t, endTime: end, label: l.label || 'Step', displayTime: `${m}:${s}`, description: '', ingredients: [] };
       }).sort((a, b) => a.time - b.time);
 
       renderCreateSteps();
@@ -6219,13 +6230,16 @@ function renderCreateSteps() {
     return;
   }
 
-  // Horizontal scrolling row of cards
-  list.style.flexDirection = 'row';
-  list.style.flexWrap      = 'nowrap';
-  list.style.overflowX     = 'auto';
-  list.style.overflowY     = 'hidden';
-  list.style.gap           = '8px';
-  list.style.paddingBottom = '6px';
+  // Modern horizontal scroll/swipe layout for loop stops
+  list.style.display                 = 'flex';
+  list.style.flexDirection           = 'row';
+  list.style.gap                     = '12px';
+  list.style.paddingBottom           = '10px';
+  list.style.flexWrap                = 'nowrap';
+  list.style.overflowX               = 'auto';
+  list.style.overflowY               = 'hidden';
+  list.style.webkitOverflowScrolling = 'touch';
+  list.style.maxHeight               = 'none';
 
   list.innerHTML = createStepsArr.map((step, i) => {
     const color  = STEP_COLORS[i % STEP_COLORS.length];
@@ -6233,35 +6247,148 @@ function renderCreateSteps() {
     const em = Math.floor(rawEnd / 60);
     const es = Math.floor(rawEnd % 60).toString().padStart(2, '0');
     const desc = (step.description || '').replace(/"/g, '&quot;');
+    const stepIngsText = Array.isArray(step.ingredients) ? step.ingredients.join('\n') : '';
+
     return `
       <div id="stepRow_${i}"
-        style="min-width:168px;max-width:168px;flex-shrink:0;background:var(--bg-card-soft);border-radius:12px;border:2px solid ${color};padding:8px;display:flex;flex-direction:column;gap:5px;">
-        <div style="display:flex;align-items:center;gap:5px;">
-          <div style="width:18px;height:18px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#446;flex-shrink:0;">${i+1}</div>
+        style="width:280px;flex-shrink:0;background:rgba(255,255,255,0.7);backdrop-filter:blur(8px);border-radius:14px;border:2px solid ${color};padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.03);box-sizing:border-box;transition:transform 0.2s ease,box-shadow 0.2s ease;height:100%;min-height:320px;"
+        class="loop-stop-card"
+        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)'"
+        onmouseleave="this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)'">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:22px;height:22px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;color:#446;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.1);">${i+1}</div>
           <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
-            style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.75rem;font-weight:800;color:var(--text-heading);outline:none;">
+            style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.8rem;font-weight:800;color:var(--text-heading);outline:none;border-bottom:1px dashed transparent;"
+            onfocus="this.style.borderBottomColor='var(--primary)'" onblur="this.style.borderBottomColor='transparent'">
+          ${i < createStepsArr.length - 1 ? `
+            <button onclick="window.mergeCreateStep(${i})" title="Merge with next step" tabindex="-1"
+              style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:6px;cursor:pointer;color:#16a34a;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
+              onmouseenter="this.style.background='rgba(22,163,74,0.18)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(22,163,74,0.08)';this.style.transform='none';">🔗</button>
+          ` : ''}
           <button onclick="removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
-            style="background:none;border:1px solid rgba(180,0,0,0.2);border-radius:4px;cursor:pointer;color:#c00;font-size:0.8rem;padding:0 4px;flex-shrink:0;line-height:1.4;font-weight:900;"
-            onmouseenter="this.style.background='rgba(200,0,0,0.1)'" onmouseleave="this.style.background='none'">×</button>
+            style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:6px;cursor:pointer;color:#dc2626;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
+            onmouseenter="this.style.background='rgba(220,38,38,0.15)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(220,38,38,0.06)';this.style.transform='none';">×</button>
         </div>
-        <div style="font-size:0.58rem;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;">${step.displayTime} → ${em}:${es}</div>
-        <textarea placeholder="Add notes for this step…" rows="3"
+        <div style="font-size:0.68rem;font-weight:800;color:var(--primary);background:rgba(74,144,217,0.08);padding:4px 8px;border-radius:6px;width:fit-content;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;">
+          <span>⏱️</span> <span>${step.displayTime} → ${em}:${es}</span>
+        </div>
+        <textarea placeholder="Add notes for this step…" rows="4"
           onchange="updateStepDescription(${i},this.value)"
-          style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:6px;padding:5px;font-family:var(--font);font-size:0.68rem;font-weight:500;color:var(--text-body);resize:none;outline:none;line-height:1.4;">${desc}</textarea>
-        <div style="display:flex;gap:4px;">
+          style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.45;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);">${desc}</textarea>
+        
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <label style="font-size:0.62rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;margin-top:2px;">Step Ingredients (one per line)</label>
+          <textarea placeholder="e.g. 1 onion&#10;2 cloves garlic" rows="2"
+            onchange="window.updateStepIngredientsText(${i},this.value)"
+            style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);outline:none;line-height:1.35;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);resize:vertical;">${stepIngsText}</textarea>
+        </div>
+
+        <div style="display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:4px;">
           <button onclick="previewStepLoop(${i})" tabindex="-1"
-            style="flex:1;background:${color};border:none;border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:#446;">▶ Loop</button>
+            style="background:${color};border:none;border-radius:7px;padding:6px 8px;font-family:var(--font);font-size:0.7rem;font-weight:900;cursor:pointer;color:#446;flex:1;display:flex;align-items:center;justify-content:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.05);transition:transform 0.1s;"
+            onmouseenter="this.style.transform='scale(1.02)'" onmouseleave="this.style.transform='none'">▶ Loop</button>
           <button onclick="navToStep(${i})" tabindex="-1"
-            style="flex:1;background:transparent;border:1px solid var(--border-card);border-radius:6px;padding:5px 2px;font-family:var(--font);font-size:0.65rem;font-weight:900;cursor:pointer;color:var(--text-heading);">⏩ Go</button>
+            style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px 8px;font-family:var(--font);font-size:0.7rem;font-weight:900;cursor:pointer;color:var(--text-heading);flex:1;display:flex;align-items:center;justify-content:center;gap:3px;transition:transform 0.1s;"
+            onmouseenter="this.style.transform='scale(1.02)'" onmouseleave="this.style.transform='none'">⏩ Go</button>
+          <button onclick="window.redoStepDescription(${i})" title="Regenerate description for this step's time range" tabindex="-1"
+            style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;aspect-ratio:1;flex-shrink:0;transition:background 0.15s,transform 0.1s;"
+            onmouseenter="this.style.background='rgba(0,0,0,0.05)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='none';this.style.transform='none';">🔄</button>
           ${step.audio_url || step.audioUrl ? `
             <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}')" title="Play Voiceover"
-              style="background:transparent;border:1px solid var(--border-card);border-radius:6px;padding:5px 6px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">🔊</button>
+              style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;aspect-ratio:1;flex-shrink:0;transition:background 0.15s,transform 0.1s;"
+              onmouseenter="this.style.background='rgba(0,0,0,0.05)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='none';this.style.transform='none';">🔊</button>
           ` : ''}
         </div>
       </div>`;
   }).join('');
   refreshStepNavigator();
+  if (typeof window.updateAIChecklists === 'function') {
+    window.updateAIChecklists();
+  }
 }
+
+window.mergeCreateStep = function(i) {
+  if (i < 0 || i >= createStepsArr.length - 1) return;
+
+  const current = createStepsArr[i];
+  const next = createStepsArr[i + 1];
+
+  // 1. Merge labels
+  let newLabel = current.label;
+  if (next.label && !newLabel.includes(next.label) && !next.label.startsWith('Step ')) {
+    newLabel = `${newLabel} & ${next.label}`;
+  }
+
+  // 2. Merge descriptions
+  let newDesc = current.description || '';
+  let nextDesc = next.description || '';
+  if (newDesc && nextDesc) {
+    newDesc = `${newDesc} ${nextDesc}`;
+  } else {
+    newDesc = newDesc || nextDesc;
+  }
+
+  // 3. New endTime is the endTime of the next step
+  const newEndTime = next.endTime ?? (createStepsArr[i + 2]?.time ?? videoDuration);
+
+  // Update the current step
+  current.label = newLabel;
+  current.description = newDesc;
+  current.endTime = newEndTime;
+  
+  // Clear voiceover references so they can be regenerated for the merged step
+  current.audio_url = null;
+  current.audioUrl = null;
+
+  // 4. Remove the next step
+  createStepsArr.splice(i + 1, 1);
+
+  // 5. Redraw
+  renderCreateSteps();
+  renderTimeline();
+  showTip(`Merged step ${i+1} with step ${i+2}!`);
+};
+
+window.redoStepDescription = async function(i) {
+  const step = createStepsArr[i];
+  if (!step) return;
+
+  const originalText = step.description;
+  step.description = "⏳ AI is rewriting...";
+  renderCreateSteps();
+
+  try {
+    const steps = [{
+      index: 0,
+      label: step.label,
+      startTime: step.time,
+      endTime: step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration),
+    }];
+
+    const videoUrl = document.getElementById('uploadedVideoPlayer')?.src || window._uploadedVideoUrl || '';
+    const res = await fetch('/api/ai/describe-steps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ steps, videoUrl, segments: cachedSegments }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const newDesc = data.descriptions?.[0];
+    if (newDesc) {
+      step.description = newDesc;
+      showTip(`✅ Regenerated description for step ${i + 1}!`);
+    } else {
+      step.description = originalText;
+      showTip('⚠️ AI returned no description.');
+    }
+  } catch (err) {
+    step.description = originalText;
+    showTip('❌ ' + (err.message || 'Failed to regenerate.'));
+  } finally {
+    renderCreateSteps();
+  }
+};
 
 
 // ── Preview loop ───────────────────────────────────────────────────────────
@@ -6369,6 +6496,25 @@ window.stepDragEnd = function(e) {
 
 window.updateStepLabel       = (i, v) => { if (createStepsArr[i]) createStepsArr[i].label = v; renderTimeline(); };
 window.updateStepDescription = (i, v) => { if (createStepsArr[i]) createStepsArr[i].description = v; };
+window.updateStepIngredientsText = (i, val) => {
+  if (createStepsArr[i]) {
+    createStepsArr[i].ingredients = val.split('\n').map(x => x.trim()).filter(Boolean);
+  }
+};
+window.parseDescriptionAndIngredients = function(text, existingIngs) {
+  let description = (text || '').trim();
+  let ingredients = Array.isArray(existingIngs) ? [...existingIngs] : [];
+
+  const match = description.match(/Ingredients:\s*(.*)/i);
+  if (match) {
+    const ingPart = match[1].trim();
+    description = description.replace(/[\s.,;]*Ingredients:\s*.*/i, '').trim();
+    if (ingredients.length === 0) {
+      ingredients = ingPart.split(/[,;\n]+/).map(i => i.trim()).filter(Boolean);
+    }
+  }
+  return { description, ingredients };
+};
 window.navToStep = function(i) {
   const vid = document.getElementById('uploadedVideoPlayer');
   if (!vid || !createStepsArr[i]) return;
@@ -6677,6 +6823,7 @@ window.saveNewRecipe = async function(targetFolderId) {
       end:         s.endTime ?? null,
       label:       s.label,
       description: s.description || '',
+      ingredients: s.ingredients || [],
       audio_url:   s.audio_url || s.audioUrl || '',
     }));
 
@@ -6916,7 +7063,15 @@ window.transcribeVideo = async function() {
             const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
             const mm  = Math.floor(t / 60);
             const ss  = Math.floor(t % 60).toString().padStart(2, '0');
-            return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+            
+            return {
+              time: t,
+              endTime: end,
+              label: l.label || `Step ${i+1}`,
+              description: l.instruction || gem.steps?.[i] || '',
+              ingredients: l.ingredients || [],
+              displayTime: `${mm}:${ss}`
+            };
           }).sort((a, b) => a.time - b.time);
           renderCreateSteps();
           renderTimeline();
@@ -6935,6 +7090,7 @@ window.transcribeVideo = async function() {
         setAIStatus('✅ Subtitles transcribed by Gemini! Play video to view.', true);
         if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed (Gemini)'; }
         showTip('Transcription complete!');
+        if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
       } else {
         throw new Error('Gemini model did not return any subtitle text.');
       }
@@ -6983,6 +7139,7 @@ window.transcribeVideo = async function() {
       setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
       if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
       showTip('Transcription complete! Play video to view subtitles.');
+      if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
     } catch (err) {
       console.warn('[AI] Replicate Whisper failed, trying Gemini fallback...', err.message);
       await transcribeWithGeminiFallback(err.message);
@@ -7018,7 +7175,7 @@ window.transcribeVideo = async function() {
     setAIStatus('✅ Transcription done! Play video to view subtitles.');
     if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
     showTip('Transcription complete! Play video to view subtitles.');
-
+    if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
   } catch (err) {
     console.warn('[AI] Whisper transcription failed, trying Gemini fallback...', err.message);
     await transcribeWithGeminiFallback(err.message);
@@ -7109,7 +7266,9 @@ window.generateLoops = async function() {
         time:        t,
         endTime:     end,
         label:       l.label || 'Step',
-        displayTime: `${m}:${s}`
+        displayTime: `${m}:${s}`,
+        description: '',
+        ingredients: []
       };
     }).sort((a, b) => a.time - b.time);
 
@@ -7199,6 +7358,7 @@ window.aiWriteIngredients = async function() {
       if (r) r.style.display = 'block';
       setAIStatus('✅ Ingredients written by Gemini!', true);
       showTip('✍️ Ingredients filled in — edit as needed.');
+      if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
       return;
     }
     // Fallback: Whisper → GPT
@@ -7206,6 +7366,7 @@ window.aiWriteIngredients = async function() {
     if (!cachedTranscript) { setAIStatus('❌ Need transcript first — video may be over 25MB.', true); return; }
     await window.generateIngredients();
     setAIStatus('✅ Ingredients written!', true);
+    if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
   } catch (err) {
     setAIStatus('❌ ' + (err.message || 'Failed to write ingredients.'), true);
   }
@@ -7321,7 +7482,15 @@ window.aiDoEverything = async function() {
         const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
         const mm  = Math.floor(t / 60);
         const ss  = Math.floor(t % 60).toString().padStart(2, '0');
-        return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+        
+        return {
+          time: t,
+          endTime: end,
+          label: l.label || `Step ${i+1}`,
+          description: l.instruction || gem.steps?.[i] || '',
+          ingredients: l.ingredients || [],
+          displayTime: `${mm}:${ss}`
+        };
       }).sort((a, b) => a.time - b.time);
       renderCreateSteps(); renderTimeline();
       setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
@@ -7398,7 +7567,15 @@ window.doItAll = async function() {
         const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
         const mm  = Math.floor(t / 60);
         const ss  = Math.floor(t % 60).toString().padStart(2, '0');
-        return { time: t, endTime: end, label: l.label || gem.steps?.[i] || `Step ${i+1}`, displayTime: `${mm}:${ss}` };
+        
+        return {
+          time: t,
+          endTime: end,
+          label: l.label || `Step ${i+1}`,
+          description: l.instruction || gem.steps?.[i] || '',
+          ingredients: l.ingredients || [],
+          displayTime: `${mm}:${ss}`
+        };
       }).sort((a, b) => a.time - b.time);
       renderCreateSteps();
       renderTimeline();
@@ -7500,7 +7677,28 @@ window.setupResponsiveDrawers = function() {
   
   if (isMobile) {
     if (slideDetails) {
-      if (titleCard && titleCard.parentElement !== slideDetails) slideDetails.appendChild(titleCard);
+      if (titleCard && titleCard.parentElement !== slideDetails) {
+        slideDetails.appendChild(titleCard);
+        // Reset styles for mobile drawer
+        titleCard.style.padding = '10px 13px';
+        titleCard.style.display = 'block';
+        titleCard.style.width = 'auto';
+        titleCard.style.flex = 'none';
+        titleCard.style.margin = '';
+        const label = titleCard.querySelector('label');
+        if (label) {
+          label.style.display = 'block';
+          label.style.marginBottom = '4px';
+        }
+        const input = document.getElementById('newRecipeTitleInput');
+        if (input) {
+          input.style.width = '100%';
+          input.style.border = '2px solid var(--border-card)';
+          input.style.background = 'var(--bg-card-soft)';
+          input.style.padding = '8px 10px';
+          input.style.borderRadius = '10px';
+        }
+      }
       if (visibilityCard && visibilityCard.parentElement !== slideDetails) slideDetails.appendChild(visibilityCard);
     }
     if (slideAI && aiSection && aiSection.parentElement !== slideAI) {
@@ -7523,20 +7721,78 @@ window.setupResponsiveDrawers = function() {
     // Wire swipe scroll listeners
     window.setupCarouselListeners();
   } else {
-    // Restore to desktop 2-column sidebar positions in exact original order
-    if (rightPanel) {
-      if (titleCard && titleCard.parentElement !== rightPanel) rightPanel.appendChild(titleCard);
-      if (coverCard && coverCard.parentElement !== rightPanel) rightPanel.appendChild(coverCard);
-      if (aiSection && aiSection.parentElement !== rightPanel) rightPanel.appendChild(aiSection);
-      if (visibilityCard && visibilityCard.parentElement !== rightPanel) rightPanel.appendChild(visibilityCard);
-      if (stopsSection && stopsSection.parentElement !== rightPanel) rightPanel.appendChild(stopsSection);
-      if (saveBtn && saveBtn.parentElement !== rightPanel) rightPanel.appendChild(saveBtn);
-      if (saveDraftBtn && saveDraftBtn.parentElement !== rightPanel) rightPanel.appendChild(saveDraftBtn);
+    // Restore to desktop horizontal columns in exact order
+    const headerContainer = document.getElementById('headerTitleContainer');
+    const colAI = document.getElementById('rightColAI');
+    const colStops = document.getElementById('rightColStops');
+    const colIngredients = document.getElementById('rightColIngredients');
+    const colSave = document.getElementById('rightColSave');
+    const saveButtonsCard = document.getElementById('editorSaveButtonsCard');
+    const ingredientsCard = document.getElementById('editorIngredientsCard');
+
+    if (headerContainer && titleCard && titleCard.parentElement !== headerContainer) {
+      headerContainer.appendChild(titleCard);
+      // Premium compact inline style for header pill
+      titleCard.style.padding = '4px 12px';
+      titleCard.style.display = 'flex';
+      titleCard.style.alignItems = 'center';
+      titleCard.style.gap = '8px';
+      titleCard.style.width = '100%';
+      titleCard.style.flex = '1';
+      titleCard.style.margin = '0';
+      const label = titleCard.querySelector('label');
+      if (label) {
+        label.style.display = 'inline-block';
+        label.style.marginBottom = '0';
+        label.style.whiteSpace = 'nowrap';
+      }
+      const input = document.getElementById('newRecipeTitleInput');
+      if (input) {
+        input.style.width = '100%';
+        input.style.border = 'none';
+        input.style.background = 'transparent';
+        input.style.padding = '4px 0';
+        input.style.borderRadius = '0';
+      }
+    }
+    if (colAI && aiSection && aiSection.parentElement !== colAI) {
+      colAI.appendChild(aiSection);
+    }
+    if (colStops && stopsSection && stopsSection.parentElement !== colStops) {
+      colStops.appendChild(stopsSection);
+    }
+    if (colIngredients) {
+      if (ingredientsCard && ingredientsCard.parentElement !== colIngredients) {
+        colIngredients.appendChild(ingredientsCard);
+      }
+      if (visibilityCard && visibilityCard.parentElement !== colIngredients) {
+        colIngredients.appendChild(visibilityCard);
+      }
+    }
+    if (colSave) {
+      if (coverCard && coverCard.parentElement !== colSave) {
+        colSave.appendChild(coverCard);
+      }
+      if (saveButtonsCard) {
+        if (saveButtonsCard.parentElement !== colSave) {
+          colSave.appendChild(saveButtonsCard);
+        }
+        if (saveBtn && saveBtn.parentElement !== saveButtonsCard) {
+          saveButtonsCard.appendChild(saveBtn);
+        }
+        if (saveDraftBtn && saveDraftBtn.parentElement !== saveButtonsCard) {
+          saveButtonsCard.appendChild(saveDraftBtn);
+        }
+      }
     }
     
     // Restore #videoOverlayControls back inside #workbenchVideoWrapper on desktop
     if (videoWrapper && videoOverlayControls && videoOverlayControls.parentElement !== videoWrapper) {
       videoWrapper.appendChild(videoOverlayControls);
+    }
+    
+    if (typeof window.switchEditorTab === 'function') {
+      window.switchEditorTab(window.activeEditorTab || 'ai');
     }
   }
 };
@@ -7971,12 +8227,6 @@ window.generateAllVoiceovers = async function() {
   }
 };
 
-// ── App execution trigger ──
-if (document.readyState === 'loading') {
-  window.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-  initializeApp();
-}
 
 // Automatically blur active text input/textarea elements when the mouse pointer
 // hovers over key video player or scrubber controls. This releases text input focus,
@@ -7998,3 +8248,140 @@ document.addEventListener('mouseover', function(e) {
   }
 });
 
+function setupWorkbenchResizer() {
+  const resizer = document.getElementById('workbenchResizer');
+  const leftSide = document.getElementById('workbenchLeft');
+  const grid = document.getElementById('workbenchGrid');
+  if (!resizer || !leftSide || !grid) return;
+
+  let startX = 0;
+  let startWidth = 0;
+
+  function onMouseDown(e) {
+    startX = e.clientX;
+    startWidth = parseInt(document.defaultView.getComputedStyle(leftSide).width, 10);
+    
+    // Add event listeners for dragging
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    // Disable text selection during drag
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    
+    const line = document.getElementById('resizerLine');
+    if (line) line.style.background = 'var(--primary)';
+    resizer.style.background = 'rgba(74,144,217,0.1)';
+  }
+
+  function onMouseMove(e) {
+    const deltaX = e.clientX - startX;
+    // Calculate new width, constrained between 320px and 800px (or 60% of window size)
+    const minW = 320;
+    const maxW = Math.min(800, window.innerWidth * 0.6);
+    let newWidth = startWidth + deltaX;
+    if (newWidth < minW) newWidth = minW;
+    if (newWidth > maxW) newWidth = maxW;
+
+    leftSide.style.width = newWidth + 'px';
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    
+    const line = document.getElementById('resizerLine');
+    if (line) {
+      line.style.background = 'var(--border-card)';
+    }
+    resizer.style.background = 'transparent';
+  }
+
+  resizer.addEventListener('mousedown', onMouseDown);
+}
+
+window.updateAIChecklists = function() {
+  // 1. Place Loop Stops: done if createStepsArr has elements
+  const hasStops = window.createStepsArr && window.createStepsArr.length > 0;
+  
+  // 2. Write Steps: done if hasStops and at least one step has a non-empty description
+  const hasStepsDesc = hasStops && window.createStepsArr.some(s => s.description && s.description.trim().length > 0);
+  
+  // 3. Write Ingredients: done if ingredientsText value is not empty, or any step has ingredients
+  const ingredientsInput = document.getElementById('ingredientsText');
+  const hasIngredients = (ingredientsInput && ingredientsInput.value.trim().length > 0) || 
+                          (window.createStepsArr && window.createStepsArr.some(s => s.ingredients && s.ingredients.length > 0));
+
+  // 4. Transcribe audio only: done if cachedTranscript is not empty
+  const hasTranscript = typeof window.cachedTranscript === 'string' && window.cachedTranscript.trim().length > 0;
+
+  // 5. Do Everything: done if all sub-tasks are done
+  const isDoEverythingDone = hasStops && hasStepsDesc && hasIngredients && hasTranscript;
+
+  // Toggle visibility of checkmark elements
+  document.querySelectorAll('.check-place-stops').forEach(el => {
+    el.style.display = hasStops ? 'inline-flex' : 'none';
+  });
+  document.querySelectorAll('.check-write-steps').forEach(el => {
+    el.style.display = hasStepsDesc ? 'inline-flex' : 'none';
+  });
+  document.querySelectorAll('.check-write-ingredients').forEach(el => {
+    el.style.display = hasIngredients ? 'inline-flex' : 'none';
+  });
+  document.querySelectorAll('.check-transcribe').forEach(el => {
+    el.style.display = hasTranscript ? 'inline-flex' : 'none';
+  });
+  document.querySelectorAll('.check-do-everything').forEach(el => {
+    el.style.display = isDoEverythingDone ? 'inline-flex' : 'none';
+  });
+};
+
+window.activeEditorTab = 'ai';
+window.switchEditorTab = function(tabName) {
+  window.activeEditorTab = tabName;
+  const tabs = {
+    ai: { colId: 'rightColAI', btnId: 'tabBtnAI' },
+    stops: { colId: 'rightColStops', btnId: 'tabBtnStops' },
+    ingredients: { colId: 'rightColIngredients', btnId: 'tabBtnIngredients' },
+    save: { colId: 'rightColSave', btnId: 'tabBtnSave' }
+  };
+  
+  Object.keys(tabs).forEach(key => {
+    const col = document.getElementById(tabs[key].colId);
+    const btn = document.getElementById(tabs[key].btnId);
+    if (key === tabName) {
+      if (col) {
+        col.style.display = 'flex';
+        col.style.width = '100%';
+        col.style.flex = '1';
+      }
+      if (btn) {
+        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'transparent';
+        btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
+      }
+    } else {
+      if (col) {
+        col.style.display = 'none';
+      }
+      if (btn) {
+        btn.style.background = 'var(--bg-card-soft)';
+        btn.style.color = 'var(--text-body)';
+        btn.style.borderColor = 'var(--border-card)';
+        btn.style.boxShadow = 'none';
+      }
+    }
+  });
+};
+
+// ── App execution trigger at very bottom ──
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}

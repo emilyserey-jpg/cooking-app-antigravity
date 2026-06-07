@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const multer  = require('multer');
 const path    = require('path');
@@ -203,6 +204,8 @@ Rules:
 - Each step's endTime should be just before the next action starts
 - The final step's endTime should be near the end of that action, not the end of the whole video
 - Minimum 2 steps, maximum 12 steps
+- Each step should represent a meaningful, distinct cooking action that is useful to loop/repeat. Avoid creating separate steps for trivial micro-actions like opening packaging, unpacking, or turning on burners. Merge them into the adjacent cooking/prep actions.
+- Each step must have a minimum duration of at least 3 seconds. Do not create 1-second or 2-second steps.
 - Look for transitions: "now", "next", "then", "add", "place", "stir", "cook", "remove"
 - Labels should be action verbs ("Chop onions", "Add flour", "Stir mixture")`,
         },
@@ -237,11 +240,10 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
     // ── Step 1: Upload to Google File API ───────────────────────────────
     console.log('[Gemini] Uploading to File API...');
     const uploadRes = await fetch(
-      'https://generativelanguage.googleapis.com/upload/v1beta/files',
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
-          ...authHeader,
           'Content-Type': mimeType,
           'X-Goog-Upload-Content-Type': mimeType,
           'X-Goog-Upload-Protocol': 'raw',
@@ -265,8 +267,7 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
     while (fileState === 'PROCESSING' && attempts < 30) {
       await new Promise(r => setTimeout(r, 3000));
       const s = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/${fileName}`,
-        { headers: authHeader }
+        `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`
       );
       fileState = (await s.json()).state;
       attempts++;
@@ -280,17 +281,29 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
 {
   "title": "short recipe name",
   "ingredients": ["quantity/unit ingredient name", "e.g. 4 cups fresh spinach", "1 block feta cheese"],
-  "steps": ["detailed step instruction including specific measurements, e.g. Add 4 cups of spinach and 2 cups of cherry tomatoes around the salmon"],
-  "loops": [{ "start": 0, "end": 15, "label": "Action phrase" }],
+  "loops": [{ 
+    "start": 0, 
+    "end": 15, 
+    "label": "Action phrase",
+    "instruction": "detailed step instruction describing ONLY the specific action that physically happens during this start/end window, e.g. Cut the carrots into large chunks.",
+    "ingredients": ["specific ingredients added or prepped during this time range, e.g. 2 carrots"]
+  }],
   "text_overlays": [{ "start": 0.0, "end": 5.0, "text": "transcribed speech or narration text during this timeframe" }]
 }
-Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds. Ensure the ingredients lists and step instructions contain the exact measurements (cups, spoons, grams, counts, etc.) mentioned in the speech or shown in the video. Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
+Rules:
+- 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
+- Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
+- Avoid creating loop stops for trivial, brief micro-actions (such as unpacking ingredients, opening lids, or turning on burners). Merge these trivial prep actions into the main adjacent step (e.g. merge "unpacking pork" into "seasoning pork" or "cooking pork").
+- Minimum duration for any loop is 3 seconds. Never output 1-second or 2-second steps.
+- Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video for that specific timeframe.
+- Be strictly chronological: each loop's instruction must ONLY describe what happens during its start/end window.
+- Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
 
     const gemRes = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
           generationConfig: { temperature: 0.2 },
@@ -309,8 +322,8 @@ Rules: 3-12 loops, labels are 2-5 word action phrases, timestamps in whole secon
     console.log(`[Gemini] ✅ ${result.loops?.length} loops — "${result.title}"`);
 
     // Cleanup (fire and forget)
-    fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}`,
-      { method: 'DELETE', headers: authHeader }).catch(() => {});
+    fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`,
+      { method: 'DELETE' }).catch(() => {});
 
     res.json({ ok: true, source: 'gemini',
       title: result.title || '', ingredients: result.ingredients || [],
@@ -339,13 +352,15 @@ app.post('/api/ai/describe-steps', async (req, res) => {
     const stepStart = s.startTime || 0;
     const stepEnd = s.endTime || (stepStart + 5);
 
-    // Correlate with matching subtitles segments
+    // Correlate with matching subtitles segments (using a robust interval overlap check)
     let matchingText = '';
     if (Array.isArray(segments)) {
       matchingText = segments
         .filter(seg => {
           const segStart = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
-          return segStart >= stepStart - 2 && segStart <= stepEnd + 2; // 2s padding
+          const segEnd = Number(seg.end ?? seg.endTime ?? seg.end_time) || (segStart + 5);
+          // Check if segment overlaps with the step time window (with a tight 0.5s padding/tolerance)
+          return (segStart <= stepEnd + 0.5) && (segEnd >= stepStart - 0.5);
         })
         .map(seg => seg.text)
         .join(' ');
@@ -360,7 +375,8 @@ The video has been divided into ${steps.length} loop stop sections:
 
 ${stepList}
 
-For each step, write a clear, action-oriented instruction describing what the cook should do during that section, AND list the specific ingredients used/needed for that step.
+For each step, write a clear, action-oriented instruction describing ONLY the specific action that physically happens during that step's time range, and ONLY list the ingredients that are actually added or prepared during that exact time window.
+Be strictly chronological: do not describe future actions or list ingredients that are used in later steps.
 IMPORTANT: You MUST include the exact ingredient measurements (e.g. 4 cups, 2 teaspoons, grams, etc.) mentioned in the spoken/subtitled text for each step. Do not omit the quantities!
 Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients and their exact quantities used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
@@ -368,10 +384,10 @@ Reply ONLY with a JSON array of strings, one description per step, in order. Exa
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       }
     );
