@@ -5730,6 +5730,16 @@ function updateVideoScrubber(vid) {
 
 window.ensureContinuousSteps = function() {
   if (!window.createStepsArr || window.createStepsArr.length === 0) return;
+  
+  // Sort steps chronologically
+  window.createStepsArr.sort((a, b) => a.time - b.time);
+  
+  // Force the first step to start at 0:00 to eliminate any initial dead zone
+  if (window.createStepsArr[0]) {
+    window.createStepsArr[0].time = 0;
+    window.createStepsArr[0].displayTime = '00:00';
+  }
+  
   window.createStepsArr.forEach((step, idx) => {
     const next = window.createStepsArr[idx + 1];
     if (next) {
