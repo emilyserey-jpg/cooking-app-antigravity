@@ -5728,8 +5728,23 @@ function updateVideoScrubber(vid) {
   if (thumb) thumb.style.left = `${pct}%`;
 }
 
+window.ensureContinuousSteps = function() {
+  if (!window.createStepsArr || window.createStepsArr.length === 0) return;
+  window.createStepsArr.forEach((step, idx) => {
+    const next = window.createStepsArr[idx + 1];
+    if (next) {
+      step.endTime = next.time;
+    } else {
+      step.endTime = window.videoDuration || (step.time + 15);
+    }
+  });
+};
+
 // ── Timeline renderer — markers on the video scrubber ──────────────────────
 function renderTimeline() {
+  if (typeof window.ensureContinuousSteps === 'function') {
+    window.ensureContinuousSteps();
+  }
   const scrubber = document.getElementById('videoScrubber');
   const markers  = document.getElementById('videoMarkers');
   if (!scrubber || !markers || videoDuration <= 0) return;
