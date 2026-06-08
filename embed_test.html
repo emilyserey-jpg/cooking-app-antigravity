@@ -195,6 +195,25 @@
           Load Video
         </button>
       </div>
+
+      <!-- Row 2: Recipe Title, Folder, and Save Button -->
+      <div id="save-row" style="display:none; gap:12px; align-items:center; width:100%; margin-top: 8px; padding-top: 12px; border-top: 1.5px dashed var(--border-card); flex-wrap: wrap;">
+        <div style="flex:1.2; min-width: 250px;">
+          <div style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Recipe Title</div>
+          <input type="text" id="recipe-title-input" class="input-field" placeholder="Enter recipe title..." style="width:100%; box-sizing:border-box;">
+        </div>
+
+        <div style="flex:0.8; min-width: 180px;">
+          <div style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Select Library Folder</div>
+          <select id="folder-select" class="input-field" style="width:100%; box-sizing:border-box; height: 38px; padding: 0 10px; font-weight: 700; color: var(--text-heading);">
+            <option value="">— No folder (save loose) —</option>
+          </select>
+        </div>
+
+        <button onclick="saveEmbeddedRecipe()" class="btn" style="background:var(--green); color:#fff; border:none; padding: 0 24px; font-size: 0.82rem; border-radius: 10px; align-self: flex-end; height: 38px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);">
+          💾 Save Recipe
+        </button>
+      </div>
     </div>
 
     <!-- Main Prototype Workspace -->
@@ -546,7 +565,24 @@
         `;
         if (stateLbl) stateLbl.textContent = "Waiting for input";
         if (timeLbl) timeLbl.textContent = "Inactive";
+        const saveRow = document.getElementById('save-row');
+        if (saveRow) saveRow.style.display = 'none';
         return;
+      }
+
+      // Always show the save row once a URL is loaded
+      const saveRow = document.getElementById('save-row');
+      if (saveRow) saveRow.style.display = 'flex';
+      
+      const titleInput = document.getElementById('recipe-title-input');
+      if (titleInput) {
+        if (activePlatform === 'youtube') {
+          titleInput.value = "Analyzing video title...";
+        } else if (activePlatform === 'tiktok') {
+          titleInput.value = "TikTok Cooking Video";
+        } else if (activePlatform === 'instagram') {
+          titleInput.value = "Instagram Reel Cooking Video";
+        }
       }
 
       if (activePlatform === 'youtube') {
@@ -598,6 +634,9 @@
               logText.textContent = `AI Status: ✅ Loaded ${data.loops.length} steps.`;
               logText.style.color = '#15803d';
             }
+            if (titleInput && data.title) {
+              titleInput.value = data.title;
+            }
             if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
               ytPlayer.seekTo(steps[0].start, true);
             }
@@ -619,6 +658,9 @@
           ];
           activeStepIndex = 0;
           renderPrototypeSteps();
+          if (titleInput) {
+            titleInput.value = "My YouTube Cooking Video";
+          }
           if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
             ytPlayer.seekTo(steps[0].start, true);
           }
@@ -691,8 +733,88 @@
       return (match && match[2].length == 11) ? match[2] : null;
     }
 
+    function populateFolders() {
+      const select = document.getElementById('folder-select');
+      if (!select) return;
+      try {
+        const raw = localStorage.getItem('cookingGPS_library_v1');
+        const lib = raw ? JSON.parse(raw) : {};
+        const folders = lib.folders || [];
+        select.innerHTML = '<option value="">— No folder (save loose) —</option>'
+          + folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+      } catch (e) {
+        console.error("Failed to load folders for selection:", e);
+      }
+    }
+
+    function saveEmbeddedRecipe() {
+      const titleInput = document.getElementById('recipe-title-input');
+      const title = titleInput ? titleInput.value.trim() : '';
+      const url = document.getElementById('url-input').value.trim();
+      const select = document.getElementById('folder-select');
+      const folderId = select ? select.value : '';
+
+      if (!title || title === "Analyzing video title...") {
+        alert("Please enter a valid recipe title first!");
+        if (titleInput) titleInput.focus();
+        return;
+      }
+
+      if (!url) {
+        alert("Please load a video URL first!");
+        return;
+      }
+
+      let videoId = getYouTubeId(url);
+      let thumbnailUrl = '';
+      let finalVideoUrl = url;
+
+      if (activePlatform === 'youtube') {
+        if (!videoId) {
+          alert("Could not parse YouTube video ID.");
+          return;
+        }
+        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        finalVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      } else if (activePlatform === 'tiktok') {
+        thumbnailUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80'; // fallback placeholder
+      } else if (activePlatform === 'instagram') {
+        thumbnailUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80'; // fallback placeholder
+      }
+
+      const loops = steps.map(s => ({
+        start: Number(s.start) || 0,
+        end: Number(s.end) || 0,
+        label: s.label || 'Step',
+        description: s.desc || '',
+        ingredients: [],
+        timers: []
+      }));
+
+      const stepsList = steps.map(s => s.label);
+
+      const recipeData = {
+        title: title,
+        duration: steps.length > 0 ? Number(steps[steps.length - 1].end) : 0,
+        steps: stepsList,
+        loops: loops,
+        video_url: finalVideoUrl,
+        thumbnail_url: thumbnailUrl,
+        private_recipe: false,
+        is_published: true,
+        shared_on_profile: true
+      };
+
+      if (typeof window.saveNewEmbeddedRecipe === 'function') {
+        window.saveNewEmbeddedRecipe(recipeData, folderId);
+      } else {
+        alert("Save system is initializing... please try again in a moment.");
+      }
+    }
+
     // Initial load
     window.onload = function() {
+      populateFolders();
       // Small timeout to let YouTube script load
       setTimeout(() => {
         if (window.YT && window.YT.Player) {
@@ -700,6 +822,63 @@
         }
       }, 500);
     }
+  </script>
+
+  <!-- Supabase integration module -->
+  <script type="module">
+    import { supabase, getCurrentUser, createRecipe } from './supabase-client.js';
+
+    window.saveNewEmbeddedRecipe = async function(recipeData, folderId) {
+      const saveBtn = document.querySelector('#save-row button');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const user = await getCurrentUser();
+        if (!user) {
+          alert('🔑 Please sign in to Cooking GPS (on the main page) before saving recipes!');
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save Recipe';
+          }
+          return;
+        }
+
+        recipeData.creator = user.email;
+
+        // Save metadata to Supabase
+        const saved = await createRecipe(recipeData);
+        if (!saved || !saved.id) {
+          throw new Error("Failed to insert recipe record into Supabase.");
+        }
+
+        // If a folder was selected, save to library folders locally
+        if (folderId) {
+          const raw = localStorage.getItem('cookingGPS_library_v1');
+          const lib = raw ? JSON.parse(raw) : { folders: [], customOrder: [] };
+          const folder = (lib.folders || []).find(f => f.id === folderId);
+          if (folder) {
+            folder.recipeIds = folder.recipeIds || [];
+            if (!folder.recipeIds.includes(saved.id)) {
+              folder.recipeIds.push(saved.id);
+            }
+            localStorage.setItem('cookingGPS_library_v1', JSON.stringify(lib));
+          }
+        }
+
+        alert(`🎉 "${recipeData.title}" has been saved to your library!`);
+      } catch (err) {
+        console.error("Supabase Save Error:", err);
+        alert(`❌ Could not save recipe: ${err.message}`);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = '💾 Save Recipe';
+        }
+      }
+    };
   </script>
 </body>
 </html>
