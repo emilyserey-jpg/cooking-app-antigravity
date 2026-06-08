@@ -90,6 +90,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 h1, h2, h3, h4, h5 {
@@ -243,6 +244,7 @@ h1, h2, h3, h4, h5 {
   width: 100%;
   margin: 0 auto;
   padding: 0.5rem 2rem;
+  overflow-y: visible;
 }
 
 .view-section {
@@ -250,6 +252,7 @@ h1, h2, h3, h4, h5 {
   opacity: 0;
   transform: translateY(12px);
   transition: opacity var(--ease-out), transform var(--ease-out);
+  overflow-y: visible;
 }
 
 .view-section.active {
