@@ -399,7 +399,7 @@
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
           <div>
             <h2 style="font-size:1.7rem;font-weight:900;color:var(--text-heading);margin-bottom:3px;">📁 My Library</h2>
-            <p style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">Your saved recipes — organized your way</p>
+            <p style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">Your saved videos — organized your way</p>
           </div>
           <button onclick="libCreateFolder()"
             style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(74,144,217,0.3);white-space:nowrap;">
@@ -412,28 +412,28 @@
           <!-- Search -->
           <div style="flex:1;min-width:200px;position:relative;">
             <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none;">🔍</span>
-            <input id="libSearchInput" oninput="libSearch(this.value)" placeholder="Search folders & recipes…"
+            <input id="libSearchInput" oninput="libSearch(this.value)" placeholder="Search folders & videos…"
               style="width:100%;box-sizing:border-box;padding:10px 14px 10px 36px;border-radius:12px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.88rem;font-weight:600;color:var(--text-heading);outline:none;transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
           </div>
           <!-- Sort pills -->
-          <div style="display:flex;background:var(--bg-card-soft);border-radius:10px;border:2px solid var(--border-card);overflow:hidden;flex-shrink:0;">
-            <button id="libSortAZ" onclick="libSetSort('az')"
-              style="padding:8px 13px;border:none;background:var(--primary);color:#fff;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">A → Z</button>
-            <button id="libSortZA" onclick="libSetSort('za')"
-              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">Z → A</button>
-            <button id="libSortCustom" onclick="libSetSort('custom')"
-              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">✦ Custom</button>
-          </div>
+          <select id="libSortSelect" onchange="libSetSort(this.value)"
+            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 140px;"
+            onfocus="this.style.borderColor='var(--primary)'" 
+            onblur="this.style.borderColor='var(--border-card)'">
+            <option value="az">Sort: A → Z</option>
+            <option value="za">Sort: Z → A</option>
+            <option value="custom">Sort: Custom</option>
+          </select>
           <!-- Layout pills -->
-          <div style="display:flex;background:var(--bg-card-soft);border-radius:10px;border:2px solid var(--border-card);overflow:hidden;flex-shrink:0;">
-            <button id="libLayoutGrid" onclick="libSetLayout('grid')" title="Grid View"
-              style="padding:8px 13px;border:none;background:var(--primary);color:#fff;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">⊞ Grid</button>
-            <button id="libLayoutList" onclick="libSetLayout('list')" title="List View"
-              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">☰ List</button>
-            <button id="libLayoutCompact" onclick="libSetLayout('compact')" title="Compact View"
-              style="padding:8px 13px;border:none;background:transparent;color:var(--text-muted);font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;white-space:nowrap;">▤ Compact</button>
-          </div>
+          <select id="libLayoutSelect" onchange="libSetLayout(this.value)"
+            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 145px;"
+            onfocus="this.style.borderColor='var(--primary)'" 
+            onblur="this.style.borderColor='var(--border-card)'">
+            <option value="grid">Layout: ⊞ Grid</option>
+            <option value="list">Layout: ☰ List</option>
+            <option value="compact">Layout: ▤ Compact</option>
+          </select>
         </div>
 
         <!-- ── Main library content ── -->

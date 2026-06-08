@@ -4978,7 +4978,7 @@ function libRenderContent() {
     }
 
     // ── Loose recipes section ──
-    const looseLabel = q ? `Results (${loose.length})` : `Loose Recipes (${loose.length})`;
+    const looseLabel = q ? `Results (${loose.length})` : `Loose Videos (${loose.length})`;
     html += `<div>
       <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
         🎬 ${looseLabel}
@@ -4988,7 +4988,7 @@ function libRenderContent() {
       html += libEmptyState(q);
     } else if (!loose.length) {
       html += `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.85rem;font-weight:600;">
-        ${q ? 'No recipes match your search' : 'All recipes are inside folders'}
+        ${q ? 'No videos match your search' : 'All videos are inside folders'}
       </div>`;
     } else {
       const layout = libState.layout || 'grid';
@@ -5041,7 +5041,7 @@ function libFolderCardHTML(f) {
       <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;">📁</div>
       <div>
         <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
-        <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} recipe${count !== 1 ? 's' : ''}</div>
+        <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
       </div>
       ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;">⠿ drag</div>' : ''}
     </div>`;
@@ -5063,7 +5063,7 @@ function libRecipeCardHTML(r, folderId) {
     : '';
 
   const deleteBtn = !folderId
-    ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete recipe"
+    ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete video"
          style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">🗑️ Delete</button>`
     : '';
 
@@ -5187,14 +5187,14 @@ function libRecipeCardHTML(r, folderId) {
 }
 
 window.libDeleteRecipe = async function(id) {
-  if (!confirm('Are you sure you want to delete this recipe permanently?')) return;
+  if (!confirm('Are you sure you want to delete this video permanently?')) return;
   try {
     const { deleteRecipeById } = await import('./supabase-client.js');
     await deleteRecipeById(id);
-    showTip('Recipe deleted 🗑️');
+    showTip('Video deleted 🗑️');
     renderLibrary();
   } catch (err) {
-    showTip('Could not delete recipe: ' + err.message);
+    showTip('Could not delete video: ' + err.message);
   }
 };
 
@@ -5210,9 +5210,9 @@ function libEmptyState(q) {
   </div>`;
   return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
     <div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>
-    <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">No recipes yet</div>
-    <div style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;">Create your first recipe to see it here</div>
-    <button onclick="switchView('create')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;">+ Create Recipe</button>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">No videos yet</div>
+    <div style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;">Create your first video to see it here</div>
+    <button onclick="switchView('create')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;">+ Create Video</button>
   </div>`;
 }
 
@@ -5243,16 +5243,16 @@ function libRenderFolderView(content) {
       <div style="width:36px;height:36px;border-radius:10px;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">📁</div>
       <div>
         <div style="font-weight:900;font-size:1.1rem;color:var(--text-heading);">${f.name}</div>
-        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;">${recipes.length} recipe${recipes.length!==1?'s':''}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;">${recipes.length} video${recipes.length!==1?'s':''}</div>
       </div>
     </div>`;
 
   // Add recipe dropdown
   if (addable.length) {
     html += `<div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:12px 14px;margin-bottom:1rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <span style="font-size:0.75rem;font-weight:800;color:var(--text-muted);white-space:nowrap;">Add recipe:</span>
+      <span style="font-size:0.75rem;font-weight:800;color:var(--text-muted);white-space:nowrap;">Add video:</span>
       <select id="libAddRecipePicker" style="flex:1;min-width:140px;border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;font-family:var(--font);font-weight:700;font-size:0.82rem;outline:none;background:#fff;">
-        <option value="">— pick a recipe —</option>
+        <option value="">— pick a video —</option>
         ${addable.map(r => `<option value="${r.id}">${r.title||'Untitled'}</option>`).join('')}
       </select>
       <button onclick="libAddRecipeToFolder(document.getElementById('libAddRecipePicker').value,'${f.id}')"
@@ -5264,7 +5264,7 @@ function libRenderFolderView(content) {
   if (!filtered.length) {
     html += `<div style="text-align:center;padding:3rem;color:var(--text-muted);">
       <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
-      <div style="font-weight:700;font-size:0.88rem;">${q ? 'No matching recipes' : 'This folder is empty — add recipes above'}</div>
+      <div style="font-weight:700;font-size:0.88rem;">${q ? 'No matching videos' : 'This folder is empty — add videos above'}</div>
     </div>`;
   } else {
     const layout = libState.layout || 'grid';
@@ -5322,18 +5322,10 @@ window.libSetSort = function(mode) {
 
 function libUpdateSortBtns() {
   const mode = libState?.sort || 'az';
-  const idMap = {
-    'az': 'libSortAZ',
-    'za': 'libSortZA',
-    'custom': 'libSortCustom'
-  };
-  ['az','za','custom'].forEach(m => {
-    const btn = document.getElementById(idMap[m]);
-    if (!btn) return;
-    const active = m === mode;
-    btn.style.background = active ? 'var(--primary)' : 'transparent';
-    btn.style.color      = active ? '#fff' : 'var(--text-muted)';
-  });
+  const select = document.getElementById('libSortSelect');
+  if (select) {
+    select.value = mode;
+  }
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────
@@ -5347,18 +5339,10 @@ window.libSetLayout = function(mode) {
 
 function libUpdateLayoutBtns() {
   const mode = libState?.layout || 'grid';
-  const idMap = {
-    'grid': 'libLayoutGrid',
-    'list': 'libLayoutList',
-    'compact': 'libLayoutCompact'
-  };
-  ['grid','list','compact'].forEach(m => {
-    const btn = document.getElementById(idMap[m]);
-    if (!btn) return;
-    const active = m === mode;
-    btn.style.background = active ? 'var(--primary)' : 'transparent';
-    btn.style.color      = active ? '#fff' : 'var(--text-muted)';
-  });
+  const select = document.getElementById('libLayoutSelect');
+  if (select) {
+    select.value = mode;
+  }
 }
 
 // ── Search ────────────────────────────────────────────────────────────────
@@ -5413,7 +5397,7 @@ window.libSaveFolder = function() {
 };
 
 window.libDeleteFolder = function(id) {
-  if (!confirm('Delete this folder? Recipes inside will be moved back to loose.')) return;
+  if (!confirm('Delete this folder? Videos inside will be moved back to loose.')) return;
   libState.folders = libState.folders.filter(f => f.id !== id);
   libState.customOrder = libState.customOrder.filter(k => k !== 'folder:' + id);
   libSave();
