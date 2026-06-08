@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cooking GPS — YouTube Embed Loop Prototype</title>
+  <link rel="stylesheet" href="styles.css?v=3.7">
+  <style>
+    body {
+      background-color: var(--bg-page);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border-card);
+      padding-bottom: 1rem;
+    }
+    .input-card {
+      background: #fff;
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .input-field {
+      flex: 1;
+      background: var(--bg-card-soft);
+      border: 2px solid var(--border-card);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      outline: none;
+    }
+    .input-field:focus {
+      border-color: var(--primary);
+    }
+    .workbench {
+      display: flex;
+      gap: 1.5rem;
+      flex: 1;
+      min-height: 0;
+    }
+    .player-column {
+      flex: 1.3;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .video-container {
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+    .video-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .controls-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+    .step-card {
+      background: rgba(255,255,255,0.75);
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .step-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .step-card.active {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 16px rgba(74, 144, 217, 0.25);
+    }
+    .time-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      width: fit-content;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <a href="/index.html" class="logo-container">
+      <div class="logo-icon">🎬</div>
+      <div class="logo-text">Cooking<span>GPS</span></div>
+    </a>
+    <div style="font-weight: 800; color: var(--text-muted); font-size: 0.9rem;">
+      YouTube Embed & Auto-Loop Prototype
+    </div>
+    <button onclick="window.location.href='/index.html'" class="btn" style="font-size:0.75rem; padding:6px 14px;">
+      ← Back to App
+    </button>
+  </header>
+
+  <div class="container">
+    
+    <!-- Input URL Card -->
+    <div class="input-card">
+      <div style="font-size: 1.3rem;">🔗</div>
+      <div style="flex:1;">
+        <div style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
+        <input type="text" id="yt-url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/shorts/zRz7QvVlEJs">
+      </div>
+      <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px; margin-top: 12px;">
+        Load Video
+      </button>
+    </div>
+
+    <!-- Main Prototype Workspace -->
+    <div class="workbench">
+      
+      <!-- Left: YouTube Player -->
+      <div class="player-column">
+        <div class="video-container">
+          <div id="yt-player"></div>
+        </div>
+        
+        <!-- Live Playback Status overlay card -->
+        <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Player State</div>
+            <div id="player-state-lbl" style="font-size:0.9rem; font-weight:800; color:var(--text-heading);">Loading...</div>
+          </div>
+          <div>
+            <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; text-align:right;">Current Time</div>
+            <div id="player-time-lbl" style="font-size:1.1rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; text-align:right;">0:00.0</div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding:14px; background:#f4f9ff; border:2px dashed rgba(74,144,217,0.25);">
+          <h4 style="font-size:0.85rem; color:#1a3a5c; margin-bottom:6px;">💡 How this prototype works:</h4>
+          <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0;">
+            This page embeds a standard YouTube video using Google's official <strong>YouTube Player API</strong>. 
+            Because we have programmatic control, the Javascript runs a high-precision background timer. 
+            When the video goes outside the boundaries of the active step, the script instantly triggers a <code>player.seekTo()</code> command back to the start timestamp, achieving a 100% database-free, ad-funded loop experience.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Steps Loop list -->
+      <div class="controls-column">
+        <div style="font-weight:900; font-size:1.05rem; color:var(--text-heading); display:flex; justify-content:space-between; align-items:center;">
+          <span>📋 Recipe Steps</span>
+          <button onclick="addNewStep()" class="btn" style="font-size:0.68rem; padding:4px 10px; border-radius:6px; background:#fff;">＋ Add Step</button>
+        </div>
+
+        <div id="steps-list" style="display:flex; flex-direction:column; gap:10px;">
+          <!-- Steps will be dynamically injected here -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Initial prototype loop steps
+    let steps = [
+      { label: "1. Prepare vegetables & slice beef", start: 0, end: 7, desc: "Slice onions, potatoes, and carrots. Cut beef into bite-sized pieces." },
+      { label: "2. Sauté meat and potatoes", start: 7, end: 14, desc: "Heat sesame oil in a pot. Sauté beef first, then add vegetables and stir fry." },
+      { label: "3. Pour dashi and simmer", start: 14, end: 23, desc: "Add dashi broth, soy sauce, mirin, sake, and sugar. Simmer on medium-low." },
+      { label: "4. Let it absorb & plate", start: 23, end: 32, desc: "Cook until the liquid reduces and potatoes are fork-tender. Plate and serve!" }
+    ];
+
+    let activeStepIndex = 0;
+    let ytPlayer = null;
+    let loopInterval = null;
+
+    // Called automatically by YouTube Iframe API
+    function onYouTubeIframeAPIReady() {
+      // Extract default video ID
+      const defaultUrl = document.getElementById('yt-url-input').value;
+      const defaultId = getYouTubeId(defaultUrl) || "zRz7QvVlEJs";
+
+      ytPlayer = new YT.Player('yt-player', {
+        height: '100%',
+        width: '100%',
+        videoId: defaultId,
+        playerVars: {
+          'playsinline': 1,
+          'controls': 1,
+          'rel': 0,
+          'modestbranding': 1,
+          'enablejsapi': 1
+        },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerReady(event) {
+      document.getElementById('player-state-lbl').textContent = "Ready to Play";
+      renderPrototypeSteps();
+      startPlaybackWatcher();
+    }
+
+    function onPlayerStateChange(event) {
+      const stateLbl = document.getElementById('player-state-lbl');
+      switch (event.data) {
+        case YT.PlayerState.UNSTARTED:
+          stateLbl.textContent = "Unstarted";
+          break;
+        case YT.PlayerState.ENDED:
+          stateLbl.textContent = "Ended";
+          break;
+        case YT.PlayerState.PLAYING:
+          stateLbl.textContent = "Playing 🟢";
+          break;
+        case YT.PlayerState.PAUSED:
+          stateLbl.textContent = "Paused ⏸️";
+          break;
+        case YT.PlayerState.BUFFERING:
+          stateLbl.textContent = "Buffering... ⏳";
+          break;
+        case YT.PlayerState.CUED:
+          stateLbl.textContent = "Video Cued";
+          break;
+      }
+    }
+
+    // High-precision poll watcher (runs 10 times per second for smooth looping)
+    function startPlaybackWatcher() {
+      if (loopInterval) clearInterval(loopInterval);
+      
+      loopInterval = setInterval(() => {
+        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+        
+        try {
+          const currentTime = ytPlayer.getCurrentTime();
+          const state = ytPlayer.getPlayerState();
+          
+          // Update time label in UI
+          const minutes = Math.floor(currentTime / 60);
+          const seconds = (currentTime % 60).toFixed(1).padStart(4, '0');
+          document.getElementById('player-time-lbl').textContent = `${minutes}:${seconds}`;
+
+          // Only enforce bounds if video is playing
+          if (state === YT.PlayerState.PLAYING) {
+            const activeStep = steps[activeStepIndex];
+            if (activeStep) {
+              // Loop Check: If playhead goes beyond the step's end boundary, loop back to the start!
+              if (currentTime >= activeStep.end) {
+                ytPlayer.seekTo(activeStep.start, true);
+              } else if (currentTime < activeStep.start) {
+                // If user clicks or seeks before the start boundary, snap them forward to start
+                ytPlayer.seekTo(activeStep.start, true);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('API polling warning:', e);
+        }
+      }, 100);
+    }
+
+    function renderPrototypeSteps() {
+      const container = document.getElementById('steps-list');
+      container.innerHTML = steps.map((s, i) => {
+        const isActive = i === activeStepIndex;
+        return `
+          <div class="step-card ${isActive ? 'active' : ''}" onclick="selectStep(${i})">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+              <h4 style="font-size:0.82rem; font-weight:800; color:var(--text-heading); margin:0;">${s.label}</h4>
+              <div class="time-badge">⏱️ ${s.start}s → ${s.end}s</div>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-body); margin:4px 0 0; line-height:1.4;">${s.desc}</p>
+            <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+              <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">Start:</span>
+              <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.start}" onchange="updateStepTime(${i}, 'start', this.value)" onclick="event.stopPropagation()">
+              <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">End:</span>
+              <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.end}" onchange="updateStepTime(${i}, 'end', this.value)" onclick="event.stopPropagation()">
+              <button onclick="deleteStep(event, ${i})" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:0.8rem; margin-left:auto;">×</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectStep(index) {
+      if (index < 0 || index >= steps.length) return;
+      activeStepIndex = index;
+      renderPrototypeSteps();
+      
+      // Instantly seek to the beginning of the selected loop step
+      if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+        ytPlayer.seekTo(steps[activeStepIndex].start, true);
+        
+        // Auto play if paused
+        if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+          ytPlayer.playVideo();
+        }
+      }
+    }
+
+    function updateStepTime(index, field, val) {
+      const num = Number(val);
+      if (isNaN(num) || num < 0) return;
+      steps[index][field] = num;
+      renderPrototypeSteps();
+    }
+
+    function addNewStep() {
+      const lastStep = steps[steps.length - 1];
+      const start = lastStep ? lastStep.end : 0;
+      const end = start + 5;
+      steps.push({
+        label: `Step ${steps.length + 1}`,
+        start: start,
+        end: end,
+        desc: "Add instruction details for this new step..."
+      });
+      renderPrototypeSteps();
+    }
+
+    function deleteStep(e, index) {
+      e.stopPropagation();
+      steps.splice(index, 1);
+      if (activeStepIndex >= steps.length) {
+        activeStepIndex = Math.max(0, steps.length - 1);
+      }
+      renderPrototypeSteps();
+    }
+
+    // Load custom pasted video
+    function loadCustomVideo() {
+      const url = document.getElementById('yt-url-input').value.trim();
+      const id = getYouTubeId(url);
+      if (!id) {
+        alert("Could not parse a valid YouTube Video or Shorts ID. Please check the URL!");
+        return;
+      }
+
+      if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+        ytPlayer.loadVideoById({
+          videoId: id,
+          startSeconds: steps[0] ? steps[0].start : 0
+        });
+        activeStepIndex = 0;
+        renderPrototypeSteps();
+      }
+    }
+
+    // Helpers
+    function getYouTubeId(url) {
+      var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=||shorts\/)([^#\&\?]*).*/;
+      var match = url.match(regExp);
+      return (match && match[2].length == 11) ? match[2] : null;
+    }
+  </script>
+</body>
+</html>
