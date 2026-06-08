@@ -1682,6 +1682,378 @@ function triggerRemix() {
   }, 1000);
 }
 
+// ─── Bento Dashboard Calendar & Grocery Checklist logic ───────────────────
+function formatLocalDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function addDateToCookedHistory(date) {
+  const history = getCookedHistory();
+  const dateStr = formatLocalDate(date); // YYYY-MM-DD local
+  if (!history.includes(dateStr)) {
+    history.push(dateStr);
+    localStorage.setItem('cooking_gps_cooked_history', JSON.stringify(history));
+  }
+  updateStreakCount();
+  renderBentoCalendar();
+}
+
+function getCookedHistory() {
+  const val = localStorage.getItem('cooking_gps_cooked_history');
+  if (!val) return [];
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return [];
+  }
+}
+
+function updateStreakCount() {
+  const history = getCookedHistory();
+  if (!history.length) {
+    const streakEl = document.getElementById('profileStreakCount');
+    if (streakEl) streakEl.textContent = '0 Days';
+    return;
+  }
+  
+  const sortedDates = [...new Set(history)].sort((a, b) => new Date(b) - new Date(a));
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const todayStr = formatLocalDate(today);
+  const yesterdayStr = formatLocalDate(yesterday);
+  
+  if (!sortedDates.includes(todayStr) && !sortedDates.includes(yesterdayStr)) {
+    const streakEl = document.getElementById('profileStreakCount');
+    if (streakEl) streakEl.textContent = '0 Days';
+    return;
+  }
+  
+  let currentCheck = sortedDates.includes(todayStr) ? today : yesterday;
+  while (true) {
+    const checkStr = formatLocalDate(currentCheck);
+    if (sortedDates.includes(checkStr)) {
+      streak++;
+      currentCheck.setDate(currentCheck.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  const streakEl = document.getElementById('profileStreakCount');
+  if (streakEl) streakEl.textContent = `${streak} Day${streak > 1 ? 's' : ''}`;
+}
+
+function renderBentoCalendar() {
+  const gridEl = document.getElementById('bentoCalendarGrid');
+  if (!gridEl) return;
+  
+  gridEl.innerHTML = '';
+  
+  const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  days.forEach(day => {
+    const lbl = document.createElement('div');
+    lbl.className = 'bento-calendar-day-label';
+    lbl.textContent = day;
+    gridEl.appendChild(lbl);
+  });
+  
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthNameEl = document.getElementById('calendarMonthName');
+  if (monthNameEl) {
+    monthNameEl.textContent = `${monthNames[month]} ${year}`;
+  }
+  
+  const firstDay = new Date(year, month, 1);
+  const startDayOfWeek = firstDay.getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  
+  for (let i = 0; i < startDayOfWeek; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'bento-calendar-day empty';
+    gridEl.appendChild(empty);
+  }
+  
+  const history = getCookedHistory();
+  const todayStr = formatLocalDate(now);
+  
+  for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'bento-calendar-day';
+    dayEl.textContent = dayNum;
+    
+    // Construct local YYYY-MM-DD
+    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    
+    if (dStr === todayStr) {
+      dayEl.classList.add('today');
+    }
+    if (history.includes(dStr)) {
+      dayEl.classList.add('cooked');
+    }
+    
+    dayEl.onclick = () => {
+      toggleDateCooked(dStr);
+    };
+    
+    gridEl.appendChild(dayEl);
+  }
+}
+
+function toggleDateCooked(dateStr) {
+  let history = getCookedHistory();
+  if (history.includes(dateStr)) {
+    history = history.filter(d => d !== dateStr);
+  } else {
+    history.push(dateStr);
+  }
+  localStorage.setItem('cooking_gps_cooked_history', JSON.stringify(history));
+  updateStreakCount();
+  renderBentoCalendar();
+}
+
+// Grocery Checklist logic
+function getGroceryList() {
+  const val = localStorage.getItem('cooking_gps_grocery_list');
+  if (!val) return [];
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveGroceryList(list) {
+  localStorage.setItem('cooking_gps_grocery_list', JSON.stringify(list));
+}
+
+function renderBentoGrocery() {
+  const container = document.getElementById('bentoGroceryContainer');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  const list = getGroceryList();
+  
+  if (list.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'grocery-empty-state';
+    empty.textContent = '🛒 Your grocery list is empty.';
+    container.appendChild(empty);
+    return;
+  }
+  
+  list.forEach(item => {
+    const div = document.createElement('div');
+    div.className = `grocery-item ${item.checked ? 'checked' : ''}`;
+    
+    const left = document.createElement('div');
+    left.className = 'grocery-item-left';
+    left.onclick = () => toggleGroceryItemChecked(item.id);
+    
+    const cb = document.createElement('div');
+    cb.className = 'grocery-item-checkbox';
+    if (item.checked) cb.textContent = '✓';
+    
+    const textSpan = document.createElement('span');
+    textSpan.className = 'grocery-item-text';
+    textSpan.textContent = item.text;
+    
+    left.appendChild(cb);
+    left.appendChild(textSpan);
+    
+    const del = document.createElement('button');
+    del.className = 'grocery-delete-btn';
+    del.innerHTML = '✕';
+    del.onclick = (e) => {
+      e.stopPropagation();
+      deleteGroceryItem(item.id);
+    };
+    
+    div.appendChild(left);
+    div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+function addManualGroceryItem() {
+  const input = document.getElementById('groceryNewItemInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const list = getGroceryList();
+  list.push({
+    id: 'gr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    text: text,
+    checked: false
+  });
+  saveGroceryList(list);
+  input.value = '';
+  renderBentoGrocery();
+}
+
+function toggleGroceryItemChecked(itemId) {
+  const list = getGroceryList();
+  const item = list.find(i => i.id === itemId);
+  if (item) {
+    item.checked = !item.checked;
+    saveGroceryList(list);
+    renderBentoGrocery();
+  }
+}
+
+function deleteGroceryItem(itemId) {
+  let list = getGroceryList();
+  list = list.filter(i => i.id !== itemId);
+  saveGroceryList(list);
+  renderBentoGrocery();
+}
+
+function clearCompletedGroceryItems() {
+  let list = getGroceryList();
+  list = list.filter(i => !i.checked);
+  saveGroceryList(list);
+  renderBentoGrocery();
+}
+
+// Recipe Player Ingredients logic
+function renderPlayerIngredients() {
+  const panel = document.getElementById('playerIngredientsPanel');
+  const listEl = document.getElementById('playerIngredientsList');
+  if (!panel || !listEl) return;
+  
+  if (!activePlayerRecipeId) {
+    panel.style.display = 'none';
+    return;
+  }
+  
+  const recipeData = getActiveRecipeData();
+  const ingredientsStr = recipeData ? recipeData.ingredients : '';
+  
+  if (!ingredientsStr || !ingredientsStr.trim()) {
+    panel.style.display = 'none';
+    return;
+  }
+  
+  panel.style.display = 'flex';
+  listEl.innerHTML = '';
+  
+  const ingredients = ingredientsStr
+    .split(/[\n;]/)
+    .map(i => i.trim())
+    .filter(i => i.length > 0);
+    
+  ingredients.forEach((ing) => {
+    const itemDiv = document.createElement('div');
+    itemDiv.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid rgba(0,0,0,0.05); cursor:pointer; transition:background 0.2s; border-radius:6px;';
+    
+    const checkbox = document.createElement('div');
+    checkbox.style.cssText = 'width:14px; height:14px; border:1.5px solid var(--border-card); border-radius:3px; display:flex; align-items:center; justify-content:center; background:#fff; font-size:0.6rem; color:#fff; flex-shrink:0;';
+    
+    const textSpan = document.createElement('span');
+    textSpan.style.cssText = 'transition:all 0.15s; flex:1;';
+    textSpan.textContent = ing;
+    
+    itemDiv.onclick = () => {
+      const isDone = itemDiv.classList.toggle('checked');
+      if (isDone) {
+        itemDiv.style.background = 'rgba(34, 197, 94, 0.05)';
+        checkbox.style.background = 'var(--primary)';
+        checkbox.style.borderColor = 'var(--primary)';
+        checkbox.textContent = '✓';
+        textSpan.style.textDecoration = 'line-through';
+        textSpan.style.color = 'var(--text-muted)';
+      } else {
+        itemDiv.style.background = 'transparent';
+        checkbox.style.background = '#fff';
+        checkbox.style.borderColor = 'var(--border-card)';
+        checkbox.textContent = '';
+        textSpan.style.textDecoration = 'none';
+        textSpan.style.color = '';
+      }
+    };
+    
+    itemDiv.appendChild(checkbox);
+    itemDiv.appendChild(textSpan);
+    listEl.appendChild(itemDiv);
+  });
+}
+
+function getActiveRecipeData() {
+  if (typeof activeRecipe !== 'undefined' && activeRecipe) return activeRecipe;
+  if (window.recipeData) return window.recipeData;
+  return null;
+}
+
+function addRecipeIngredientsToGrocery() {
+  const recipeData = getActiveRecipeData();
+  const ingredientsStr = recipeData ? recipeData.ingredients : '';
+  if (!ingredientsStr || !ingredientsStr.trim()) {
+    showTip('No ingredients found to add 🛒');
+    return;
+  }
+  
+  const ingredients = ingredientsStr
+    .split(/[\n;]/)
+    .map(i => i.trim())
+    .filter(i => i.length > 0);
+    
+  const list = getGroceryList();
+  let addedCount = 0;
+  
+  ingredients.forEach(ing => {
+    if (!list.some(item => item.text.toLowerCase() === ing.toLowerCase())) {
+      list.push({
+        id: 'gr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        text: ing,
+        checked: false
+      });
+      addedCount++;
+    }
+  });
+  
+  if (addedCount > 0) {
+    saveGroceryList(list);
+    showTip(`Added ${addedCount} ingredients to Grocery List! 🛒`);
+    renderBentoGrocery();
+  } else {
+    showTip('Ingredients already in Grocery List! 🛒');
+  }
+}
+
+function mySpaceInit() {
+  renderBentoCalendar();
+  renderBentoGrocery();
+  updateStreakCount();
+}
+
+// Expose bento and ingredients logic globally for inline HTML click handlers
+window.addDateToCookedHistory = addDateToCookedHistory;
+window.getCookedHistory = getCookedHistory;
+window.updateStreakCount = updateStreakCount;
+window.renderBentoCalendar = renderBentoCalendar;
+window.toggleDateCooked = toggleDateCooked;
+window.getGroceryList = getGroceryList;
+window.saveGroceryList = saveGroceryList;
+window.renderBentoGrocery = renderBentoGrocery;
+window.addManualGroceryItem = addManualGroceryItem;
+window.toggleGroceryItemChecked = toggleGroceryItemChecked;
+window.deleteGroceryItem = deleteGroceryItem;
+window.clearCompletedGroceryItems = clearCompletedGroceryItems;
+window.renderPlayerIngredients = renderPlayerIngredients;
+window.addRecipeIngredientsToGrocery = addRecipeIngredientsToGrocery;
+window.mySpaceInit = mySpaceInit;
+
 // Quick UI notification toast (Wii-style light theme)
 function showTip(message) {
   const existing = document.getElementById('uiToastNotify');
@@ -2212,6 +2584,75 @@ window.pubOpenVideo = function(id) {
   var idx = pubCurrentCreator.recipes.findIndex(function(r) { return r.id === id; });
   if (idx >= 0) openPubLightbox(idx);
 };
+
+// Reusable grocery list import helper
+function addIngredientsListToGrocery(title, ingredientsStr) {
+  if (!ingredientsStr || !ingredientsStr.trim()) {
+    showTip('This recipe has no ingredients list.');
+    return;
+  }
+  
+  const ingredients = ingredientsStr
+    .split(/[\n;]/)
+    .map(i => i.trim())
+    .filter(i => i.length > 0);
+    
+  const list = getGroceryList();
+  let addedCount = 0;
+  
+  ingredients.forEach(ing => {
+    if (!list.some(item => item.text.toLowerCase() === ing.toLowerCase())) {
+      list.push({
+        id: 'gr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        text: ing,
+        checked: false
+      });
+      addedCount++;
+    }
+  });
+  
+  if (addedCount > 0) {
+    saveGroceryList(list);
+    showTip(`Added ${addedCount} ingredients from "${title}" to Grocery List! 🛒`);
+    if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
+  } else {
+    showTip('All ingredients are already in your Grocery List! 🛒');
+  }
+}
+
+window.addIngredientsFromCard = function(recipeId) {
+  let recipe = null;
+  if (typeof allDiscoverRecipes !== 'undefined') {
+    recipe = allDiscoverRecipes.find(rec => rec.id === recipeId);
+  }
+  if (!recipe && typeof allMyRecipes !== 'undefined') {
+    recipe = allMyRecipes.find(rec => rec.id === recipeId);
+  }
+  if (!recipe && typeof pubCurrentCreator !== 'undefined' && pubCurrentCreator && pubCurrentCreator.recipes) {
+    recipe = pubCurrentCreator.recipes.find(rec => rec.id === recipeId);
+  }
+  if (!recipe) {
+    const activeData = getActiveRecipeData();
+    if (activeData && activeData.id === recipeId) {
+      recipe = activeData;
+    }
+  }
+  
+  if (!recipe) {
+    showTip('Recipe details not found.');
+    return;
+  }
+  
+  addIngredientsListToGrocery(recipe.title, recipe.ingredients);
+};
+
+window.pubLightboxAddToGrocery = function() {
+  if (!pubHeroRecipe) {
+    showTip('No recipe selected.');
+    return;
+  }
+  addIngredientsListToGrocery(pubHeroRecipe.title, pubHeroRecipe.ingredients);
+};
 function pubRenderSeries()    {}
 function pubRenderVideoGrid() {}
 function pubRenderHero()      {}
@@ -2422,15 +2863,26 @@ function renderRecipeCard(r, isOwner) {
         <h3 style="font-size:0.95rem;font-weight:900;color:var(--text-heading);margin-bottom:6px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${r.title || 'Untitled Recipe'}
         </h3>
-        <p style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin:0;">
-          ${!isOwner && r.creator
-            ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
-                 style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
-                 onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
-                 📺 ${r.creator.split('@')[0]}
-               </span>`
-            : `by ${r.creator || 'Chef'}`
-          }
+        <p style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin:0;display:flex;justify-content:space-between;align-items:center;">
+          <span>
+            ${!isOwner && r.creator
+              ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
+                   style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
+                   onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
+                   📺 ${r.creator.split('@')[0]}
+                 </span>`
+              : `by ${r.creator || 'Chef'}`
+            }
+          </span>
+          ${r.ingredients ? `
+            <button onclick="event.stopPropagation(); window.addIngredientsFromCard('${r.id}')"
+              style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;"
+              onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
+              onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';"
+              title="Add ingredients to Grocery List">
+              🛒 Add List
+            </button>
+          ` : ''}
         </p>
         ${ownerActions}
       </div>
@@ -2768,6 +3220,9 @@ window.togglePlayerStepDone = function(stepIndex) {
   
   const total = recipeData.steps ? recipeData.steps.length : 0;
   if (playerCompletedSteps.size === total && total > 0) {
+    if (typeof addDateToCookedHistory === 'function') {
+      addDateToCookedHistory(new Date());
+    }
     setTimeout(() => showTip('🎉 Recipe complete! Every step done! Excellent cooking! 🍽️'), 300);
   }
 };
@@ -2996,6 +3451,7 @@ window.loadPlayerRecipe = async function(recipeId) {
     recipeData.duration = recipe.duration || 10;
     recipeData.video_url = recipe.video_url || '';
     recipeData.text_overlays = recipe.text_overlays || [];
+    recipeData.ingredients = recipe.ingredients || '';
     
     // Normalize loops and steps
     const parsed = parseLoops(recipe.loops);
@@ -3110,6 +3566,7 @@ window.loadPlayerRecipe = async function(recipeId) {
       }
     }
 
+    if (typeof renderPlayerIngredients === 'function') renderPlayerIngredients();
     showTip(`Loaded: ${recipeData.title} 🎬`);
   } catch (err) {
     console.error('[Player] Load error:', err);

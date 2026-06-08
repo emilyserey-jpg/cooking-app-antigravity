@@ -1807,4 +1807,286 @@ a:focus-visible {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ====================================================
+   BENTO GRID DASHBOARD & WIDGETS
+   ==================================================== */
+.bento-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1.25rem;
+  box-sizing: border-box;
+}
+
+.bento-widget {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid var(--border-card);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bento-widget:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(74, 144, 217, 0.3);
+}
+
+.bento-widget.span-2 {
+  grid-column: span 2;
+}
+
+.bento-widget.span-3 {
+  grid-column: span 3;
+}
+
+/* User Profile Widget Styling */
+.bento-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 100%;
+}
+
+/* Meal Calendar Widget Styling */
+.bento-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bento-calendar-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bento-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+}
+
+.bento-calendar-day-label {
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  padding-bottom: 4px;
+}
+
+.bento-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.78rem;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-heading);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.bento-calendar-day.empty {
+  cursor: default;
+  color: transparent;
+  background: none;
+}
+
+.bento-calendar-day.today {
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.bento-calendar-day.cooked {
+  background: var(--green) !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.bento-calendar-day:hover:not(.empty):not(.cooked) {
+  background: rgba(74, 144, 217, 0.1);
+}
+
+/* Grocery checklist widget styling */
+.grocery-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.grocery-widget-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grocery-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.grocery-list-container {
+  overflow-y: auto;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+  flex: 1;
+}
+
+.grocery-list-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.grocery-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.grocery-list-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 99px;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.grocery-item:hover {
+  background: #fff;
+  border-color: rgba(74, 144, 217, 0.2);
+}
+
+.grocery-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-body);
+  cursor: pointer;
+  user-select: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.grocery-item-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  background: #fff;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+}
+
+.grocery-item.checked .grocery-item-checkbox {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.grocery-item-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.15s;
+}
+
+.grocery-item.checked .grocery-item-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.grocery-delete-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.grocery-delete-btn:hover {
+  opacity: 1;
+  background: #fef2f2;
+}
+
+/* Empty state styling */
+.grocery-empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+/* Mobile responsive layout overrides */
+@media (max-width: 768px) {
+  .bento-dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 1rem !important;
+  }
+  .bento-widget.span-2,
+  .bento-widget.span-3 {
+    grid-column: span 1 !important;
+  }
+  .bento-profile-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
 
