@@ -1809,13 +1809,6 @@ async function loadRealRecipes() {
 
 // Auth modal controls (exposed globally for HTML onclick)
 window.openAuthModal = function() {
-  if (currentUser) {
-    // If already signed in, show sign-out option
-    if (confirm(`Sign out of ${currentUser.email}?`)) {
-      signOut().then(() => showTip('Signed out successfully.')).catch(console.error);
-    }
-    return;
-  }
   authMode = 'signin';
   document.getElementById('authModal').style.display = 'block';
   document.getElementById('authModalBackdrop').style.display = 'block';
@@ -1823,6 +1816,53 @@ window.openAuthModal = function() {
   document.getElementById('authEmail').value = '';
   document.getElementById('authPassword').value = '';
 };
+
+// Header User Dropdown Controls
+window.toggleUserDropdown = function(event) {
+  event.stopPropagation();
+  if (!currentUser) {
+    window.openAuthModal();
+    return;
+  }
+  const dropdown = document.getElementById('userDropdownMenu');
+  if (dropdown) {
+    const isClosed = dropdown.style.display === 'none' || dropdown.style.display === '';
+    dropdown.style.display = isClosed ? 'flex' : 'none';
+  }
+};
+
+window.handleDropdownMySpace = function(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('userDropdownMenu');
+  if (dropdown) dropdown.style.display = 'none';
+  switchView('profile');
+};
+
+window.handleDropdownMyChannel = function(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('userDropdownMenu');
+  if (dropdown) dropdown.style.display = 'none';
+  switchView('my-profile');
+};
+
+window.handleDropdownSignOut = async function(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById('userDropdownMenu');
+  if (dropdown) dropdown.style.display = 'none';
+  try {
+    await signOut();
+    showTip('Signed out successfully.');
+  } catch (err) {
+    console.error('Sign out error:', err);
+    showTip('Failed to sign out.');
+  }
+};
+
+// Dismiss dropdown when clicking elsewhere
+document.addEventListener('click', () => {
+  const dropdown = document.getElementById('userDropdownMenu');
+  if (dropdown) dropdown.style.display = 'none';
+});
 
 window.closeAuthModal = function() {
   document.getElementById('authModal').style.display = 'none';
