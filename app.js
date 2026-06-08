@@ -1846,16 +1846,18 @@ window.handleDropdownMyChannel = function(event) {
 };
 
 window.handleDropdownSignOut = async function(event) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   const dropdown = document.getElementById('userDropdownMenu');
   if (dropdown) dropdown.style.display = 'none';
   try {
     await signOut();
-    showTip('Signed out successfully.');
   } catch (err) {
-    console.error('Sign out error:', err);
-    showTip('Failed to sign out.');
+    console.warn('Sign out warning (forced local logout):', err);
   }
+  currentUser = null;
+  updateUserBadge(null);
+  showTip('Signed out successfully.');
+  window.location.reload();
 };
 
 // Dismiss dropdown when clicking elsewhere
