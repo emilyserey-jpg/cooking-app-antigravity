@@ -67,11 +67,27 @@
         </button>
       </div>
 
-      <!-- User Info Badge -->
-      <div class="user-profile-badge" id="userProfileBadge" onclick="openAuthModal()" style="cursor:pointer;">
-        <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
-        <span id="userBadgeLabel">Sign In</span>
-        <i data-lucide="chevron-down"></i>
+      <!-- User Info Badge Container -->
+      <div style="position:relative; display:inline-block; flex-shrink:0;">
+        <div class="user-profile-badge" id="userProfileBadge" onclick="toggleUserDropdown(event)" style="cursor:pointer;">
+          <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
+          <span id="userBadgeLabel">Sign In</span>
+          <i data-lucide="chevron-down"></i>
+        </div>
+        
+        <!-- User Dropdown Menu -->
+        <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; width:160px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+          <button onclick="handleDropdownMySpace(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:700; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='var(--bg-card-soft)';this.style.color='var(--primary)';" onmouseleave="this.style.background='none';this.style.color='var(--text-body)';">
+            <span>🏡</span> My Space
+          </button>
+          <button onclick="handleDropdownMyChannel(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:700; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='var(--bg-card-soft)';this.style.color='var(--primary)';" onmouseleave="this.style.background='none';this.style.color='var(--text-body)';">
+            <span>📺</span> My Profile
+          </button>
+          <div style="height:1px; background:var(--border-card); margin:4px 0;"></div>
+          <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
+            <span>🚪</span> Log Out
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -1029,7 +1045,7 @@
             onmouseenter="this.style.borderColor='var(--primary)';"
             onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
             <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🔗</div>
-            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">YouTube & Socials</h3>
+            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Embed a Video</h3>
             <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
               Load online videos via URL.<br>Supports YouTube, Shorts, TikTok & Reels.
             </p>
