@@ -1842,6 +1842,10 @@ a:focus-visible {
   border-color: rgba(74, 144, 217, 0.3);
 }
 
+.bento-widget.span-1 {
+  grid-column: span 1;
+}
+
 .bento-widget.span-2 {
   grid-column: span 2;
 }

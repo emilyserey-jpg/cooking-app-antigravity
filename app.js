@@ -2061,6 +2061,68 @@ function mySpaceInit() {
   if (typeof renderBentoCalendar === 'function') renderBentoCalendar();
   if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
   if (typeof updateStreakCount === 'function') updateStreakCount();
+  
+  // Initialize Calendar Size
+  if (typeof initCalendarSize === 'function') initCalendarSize();
+}
+
+function toggleCalendarSize() {
+  const widget = document.getElementById('bentoCalendarWidget');
+  if (!widget) return;
+  
+  // Cycle order: span-2 (Medium) -> span-3 (Large) -> span-1 (Small) -> span-2
+  let currentSize = 'span-2';
+  if (widget.classList.contains('span-3')) {
+    currentSize = 'span-3';
+  } else if (widget.classList.contains('span-1')) {
+    currentSize = 'span-1';
+  }
+  
+  let nextSize = 'span-2';
+  let sizeLabel = 'Medium';
+  
+  if (currentSize === 'span-2') {
+    nextSize = 'span-3';
+    sizeLabel = 'Large';
+  } else if (currentSize === 'span-3') {
+    nextSize = 'span-1';
+    sizeLabel = 'Small';
+  } else {
+    nextSize = 'span-2';
+    sizeLabel = 'Medium';
+  }
+  
+  // Remove existing size classes
+  widget.classList.remove('span-1', 'span-2', 'span-3');
+  // Add new size class
+  widget.classList.add(nextSize);
+  
+  // Save to localStorage
+  localStorage.setItem('cooking_gps_calendar_size', nextSize);
+  
+  // Update button text if it exists
+  const btn = document.getElementById('calendarResizeBtn');
+  if (btn) {
+    btn.innerHTML = `↔ Size: ${sizeLabel}`;
+  }
+}
+
+function initCalendarSize() {
+  const widget = document.getElementById('bentoCalendarWidget');
+  if (!widget) return;
+  
+  const savedSize = localStorage.getItem('cooking_gps_calendar_size') || 'span-2';
+  widget.classList.remove('span-1', 'span-2', 'span-3');
+  widget.classList.add(savedSize);
+  
+  let sizeLabel = 'Medium';
+  if (savedSize === 'span-3') sizeLabel = 'Large';
+  if (savedSize === 'span-1') sizeLabel = 'Small';
+  
+  const btn = document.getElementById('calendarResizeBtn');
+  if (btn) {
+    btn.innerHTML = `↔ Size: ${sizeLabel}`;
+  }
 }
 
 // Expose bento and ingredients logic globally for inline HTML click handlers
@@ -2068,6 +2130,8 @@ window.addDateToCookedHistory = addDateToCookedHistory;
 window.getCookedHistory = getCookedHistory;
 window.updateStreakCount = updateStreakCount;
 window.renderBentoCalendar = renderBentoCalendar;
+window.toggleCalendarSize = toggleCalendarSize;
+window.initCalendarSize = initCalendarSize;
 window.toggleDateCooked = toggleDateCooked;
 window.getGroceryList = getGroceryList;
 window.saveGroceryList = saveGroceryList;

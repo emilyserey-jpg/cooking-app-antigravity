@@ -997,12 +997,15 @@
         </div>
         
         <!-- Widget 3: Meal Calendar Tracker (Span 2) -->
-        <div class="bento-widget span-2">
+        <div class="bento-widget span-2" id="bentoCalendarWidget">
           <div class="bento-calendar-header">
             <div class="bento-calendar-title">
               📅 Cooked Meal History
             </div>
-            <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
+              <button onclick="toggleCalendarSize()" id="calendarResizeBtn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">↔ Size: Medium</button>
+            </div>
           </div>
           <div class="bento-calendar-grid" id="bentoCalendarGrid">
             <!-- Rendered dynamically by JS -->
