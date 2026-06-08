@@ -2062,67 +2062,120 @@ function mySpaceInit() {
   if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
   if (typeof updateStreakCount === 'function') updateStreakCount();
   
-  // Initialize Calendar Size
-  if (typeof initCalendarSize === 'function') initCalendarSize();
+  // Initialize Dashboard Widgets Sizes
+  if (typeof initAllWidgetSizes === 'function') initAllWidgetSizes();
 }
 
-function toggleCalendarSize() {
-  const widget = document.getElementById('bentoCalendarWidget');
+function toggleDashboardEditMode() {
+  const bGrid = document.getElementById('profileBentoGrid');
+  if (!bGrid) return;
+  const profileView = document.getElementById('view-profile');
+  
+  const btn = document.getElementById('dashboardEditBtn');
+  const isEditing = bGrid.classList.contains('dashboard-editing');
+  
+  if (isEditing) {
+    bGrid.classList.remove('dashboard-editing');
+    if (profileView) profileView.classList.remove('dashboard-editing');
+    if (btn) {
+      btn.innerHTML = '⚙️ Customize Layout';
+      btn.style.background = 'rgba(74,144,217,0.1)';
+      btn.style.color = 'var(--primary)';
+    }
+    showTip("Dashboard layout saved.");
+  } else {
+    bGrid.classList.add('dashboard-editing');
+    if (profileView) profileView.classList.add('dashboard-editing');
+    if (btn) {
+      btn.innerHTML = '✅ Save Layout';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#fff';
+    }
+    showTip("Edit Mode active. Click Size/Color buttons on widgets & folders.");
+  }
+  
+  // Re-render folder strip to show/hide customizers
+  if (typeof mySpaceRenderFolderStrip === 'function') {
+    mySpaceRenderFolderStrip();
+  }
+}
+
+function toggleWidgetSize(widgetId) {
+  const widget = document.getElementById(widgetId);
   if (!widget) return;
   
-  // Cycle order: span-2 (Medium) -> span-3 (Large) -> span-1 (Small) -> span-2
-  let currentSize = 'span-2';
-  if (widget.classList.contains('span-3')) {
+  // Cycle order: span-1 (Small) -> span-2 (Medium) -> span-3 (Large) -> span-1
+  let currentSize = 'span-1';
+  if (widget.classList.contains('span-2')) {
+    currentSize = 'span-2';
+  } else if (widget.classList.contains('span-3')) {
     currentSize = 'span-3';
-  } else if (widget.classList.contains('span-1')) {
-    currentSize = 'span-1';
   }
   
-  let nextSize = 'span-2';
-  let sizeLabel = 'Medium';
+  let nextSize = 'span-1';
+  let sizeLabel = 'Small';
   
-  if (currentSize === 'span-2') {
-    nextSize = 'span-3';
-    sizeLabel = 'Large';
-  } else if (currentSize === 'span-3') {
-    nextSize = 'span-1';
-    sizeLabel = 'Small';
-  } else {
+  if (currentSize === 'span-1') {
     nextSize = 'span-2';
     sizeLabel = 'Medium';
+  } else if (currentSize === 'span-2') {
+    nextSize = 'span-3';
+    sizeLabel = 'Large';
+  } else {
+    nextSize = 'span-1';
+    sizeLabel = 'Small';
   }
   
-  // Remove existing size classes
   widget.classList.remove('span-1', 'span-2', 'span-3');
-  // Add new size class
   widget.classList.add(nextSize);
   
   // Save to localStorage
-  localStorage.setItem('cooking_gps_calendar_size', nextSize);
+  localStorage.setItem(`cooking_gps_widget_size_${widgetId}`, nextSize);
   
-  // Update button text if it exists
-  const btn = document.getElementById('calendarResizeBtn');
+  // Update button text
+  const btn = document.getElementById(`resizeBtn_${widgetId}`);
   if (btn) {
     btn.innerHTML = `↔ Size: ${sizeLabel}`;
+  }
+  
+  // If calendar widget was resized, re-render it to fit properly
+  if (widgetId === 'bentoCalendarWidget' && typeof renderBentoCalendar === 'function') {
+    renderBentoCalendar();
   }
 }
 
+function initAllWidgetSizes() {
+  const widgets = [
+    { id: 'bentoIdentityWidget', default: 'span-2' },
+    { id: 'bentoStatsWidget', default: 'span-1' },
+    { id: 'bentoCalendarWidget', default: 'span-2' },
+    { id: 'bentoGroceryWidget', default: 'span-1' }
+  ];
+  
+  widgets.forEach(w => {
+    const el = document.getElementById(w.id);
+    if (!el) return;
+    const savedSize = localStorage.getItem(`cooking_gps_widget_size_${w.id}`) || w.default;
+    el.classList.remove('span-1', 'span-2', 'span-3');
+    el.classList.add(savedSize);
+    
+    let sizeLabel = 'Small';
+    if (savedSize === 'span-2') sizeLabel = 'Medium';
+    if (savedSize === 'span-3') sizeLabel = 'Large';
+    
+    const btn = document.getElementById(`resizeBtn_${w.id}`);
+    if (btn) {
+      btn.innerHTML = `↔ Size: ${sizeLabel}`;
+    }
+  });
+}
+
+function toggleCalendarSize() {
+  toggleWidgetSize('bentoCalendarWidget');
+}
+
 function initCalendarSize() {
-  const widget = document.getElementById('bentoCalendarWidget');
-  if (!widget) return;
-  
-  const savedSize = localStorage.getItem('cooking_gps_calendar_size') || 'span-2';
-  widget.classList.remove('span-1', 'span-2', 'span-3');
-  widget.classList.add(savedSize);
-  
-  let sizeLabel = 'Medium';
-  if (savedSize === 'span-3') sizeLabel = 'Large';
-  if (savedSize === 'span-1') sizeLabel = 'Small';
-  
-  const btn = document.getElementById('calendarResizeBtn');
-  if (btn) {
-    btn.innerHTML = `↔ Size: ${sizeLabel}`;
-  }
+  initAllWidgetSizes();
 }
 
 // Expose bento and ingredients logic globally for inline HTML click handlers
@@ -2132,6 +2185,9 @@ window.updateStreakCount = updateStreakCount;
 window.renderBentoCalendar = renderBentoCalendar;
 window.toggleCalendarSize = toggleCalendarSize;
 window.initCalendarSize = initCalendarSize;
+window.toggleDashboardEditMode = toggleDashboardEditMode;
+window.toggleWidgetSize = toggleWidgetSize;
+window.initAllWidgetSizes = initAllWidgetSizes;
 window.toggleDateCooked = toggleDateCooked;
 window.getGroceryList = getGroceryList;
 window.saveGroceryList = saveGroceryList;
@@ -2763,6 +2819,11 @@ function mySpaceSaveData(data) {
 // ── Bio editing ──────────────────────────────────────────────────────────
 window.mySpaceEditBio = function() {
   if (!currentUser) { openAuthModal(); return; }
+  const bGrid = document.getElementById('profileBentoGrid');
+  if (bGrid && !bGrid.classList.contains('dashboard-editing')) {
+    showTip("Please click 'Customize Layout' to edit your bio.");
+    return;
+  }
   const display = document.getElementById('mySpaceBioDisplay');
   const input   = document.getElementById('mySpaceBioInput');
   if (!input) return;
@@ -2805,26 +2866,297 @@ function mySpaceRenderFolderStrip() {
 
   if (countEl) countEl.textContent = folders.length || '0';
 
-  const addBtn = `<div style="flex-shrink:0;background:var(--bg-card-soft);border-radius:12px;border:2px dashed var(--border-card);padding:14px 18px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;font-weight:800;color:var(--text-muted);" onclick="switchView('grid-view')">+ New Folder</div>`;
+  // Apply responsive bento grid layout styles to the strip container
+  const isMobile = window.innerWidth <= 768;
+  const currentHeight = localStorage.getItem('cookingGPS_folders_height') || 'bento';
+  
+  strip.style.display = 'grid';
+  strip.style.gridTemplateColumns = isMobile ? '1fr' : 'repeat(3, 1fr)';
+  strip.style.gridAutoRows = currentHeight === 'bento' ? '240px' : '160px'; // Match row height based on global choice setting
+  strip.style.gap = isMobile ? '1rem' : '1.25rem';
+  strip.style.overflowX = 'visible';
+  strip.style.padding = '0';
+  strip.style.margin = '10px 0 0 0';
+
+  // Update toggle button text if it exists
+  const heightToggleBtn = document.getElementById('foldersHeightToggleBtn');
+  if (heightToggleBtn) {
+    heightToggleBtn.textContent = `↕ Height: ${currentHeight === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`;
+  }
+
+  const addBtn = `
+    <div class="bento-widget span-1" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px dashed var(--border-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;height:100%;box-sizing:border-box;" onclick="libCreateFolder()">
+      <div style="font-size:1.8rem;">➕</div>
+      <div style="font-size:0.85rem;font-weight:800;color:var(--text-muted);">New Folder</div>
+    </div>
+  `;
 
   if (!folders.length) {
     strip.innerHTML = addBtn;
     return;
   }
 
+  const isEditing = document.getElementById('profileBentoGrid')?.classList.contains('dashboard-editing');
+
   strip.innerHTML = folders.map(f => {
     const count = (f.recipeIds || []).length;
-    return `<div onclick="libOpenFolderId='${f.id}'; switchView('grid-view')"
-      style="flex-shrink:0;background:${f.color};border-radius:12px;padding:14px 18px;cursor:pointer;
-             min-width:130px;display:flex;flex-direction:column;gap:4px;
-             box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:transform 0.15s;"
-      onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
-      <div style="font-size:1.4rem;">📁</div>
-      <div style="font-weight:900;font-size:0.82rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${f.name}</div>
-      <div style="font-size:0.65rem;font-weight:700;color:rgba(20,20,50,0.5);">${count} recipe${count!==1?'s':''}</div>
-    </div>`;
+    
+    // Default size is small
+    const size = f.size || 'small';
+    let spanClass = 'span-1';
+    let sizeLabel = 'Small';
+    if (!isMobile) {
+      if (size === 'medium') {
+        spanClass = 'span-2';
+        sizeLabel = 'Medium';
+      } else if (size === 'large' || size === 'row') {
+        spanClass = 'span-3';
+        sizeLabel = size === 'row' ? 'Row' : 'Large';
+      }
+    }
+
+    const colorVal = f.color || '#4a90d9';
+
+    // Premium glowing folder SVG icon using Lucide style folder shape
+    const folderIconSvg = `
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom:auto; flex-shrink:0;">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+    `;
+
+    let clickHandler = `libOpenFolderId='${f.id}'; switchView('grid-view')`;
+    let editOverlay = '';
+    let editClass = '';
+
+    if (isEditing) {
+      clickHandler = 'event.stopPropagation();';
+      editClass = 'dashboard-folder-editing';
+      editOverlay = `
+        <div class="folder-edit-controls" style="position:absolute;top:12px;right:12px;display:flex;gap:4px;z-index:10;" onclick="event.stopPropagation()">
+          <button onclick="event.stopPropagation(); toggleFolderSize('${f.id}')" title="Change size (${sizeLabel})"
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.15)">↔</button>
+          <button onclick="event.stopPropagation(); toggleFolderColor('${f.id}')" title="Change color"
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">🎨</button>
+          <button onclick="event.stopPropagation(); mySpaceRenameFolder('${f.id}')" title="Rename folder"
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">✏️</button>
+          <button onclick="event.stopPropagation(); mySpaceDeleteFolder('${f.id}')" title="Delete folder"
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">🗑️</button>
+        </div>
+      `;
+    }
+
+    if (size === 'row') {
+      const folderRecipes = (f.recipeIds || []).map(rid => {
+        return (typeof allMyRecipes !== 'undefined' && allMyRecipes) ? allMyRecipes.find(r => r.id === rid) : null;
+      }).filter(Boolean);
+
+      const recipesHtml = folderRecipes.map(r => {
+        let miniThumb = '';
+        if (r.thumbnail_url) {
+          miniThumb = `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+        } else {
+          const hash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+          const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
+          const grad = gradients[hash % gradients.length];
+          miniThumb = `<div style="width:100%;height:100%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;">🎬</div>`;
+        }
+        return `
+          <div onclick="event.stopPropagation(); loadRecipeById('${r.id}')"
+            style="width:110px;flex-shrink:0;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:transform 0.15s;text-align:left;"
+            onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+            <div style="height:80px;border-radius:12px;overflow:hidden;position:relative;border:1.5px solid rgba(0,0,0,0.08);background:#000;">
+              ${miniThumb}
+            </div>
+            <div style="font-size:0.72rem;font-weight:800;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 2px;">
+              ${escapeHTML(r.title || 'Untitled')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const rightPane = `
+        <div style="width:2px;background:rgba(20,20,50,0.08);align-self:stretch;margin:6px 0;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;align-items:center;padding:0 4px;min-width:0;height:100%;">
+          ${recipesHtml || `<div style="font-size:0.75rem;font-weight:700;color:rgba(20,20,50,0.4);display:flex;align-items:center;padding-left:10px;">Folder is empty. Add recipes from your library!</div>`}
+        </div>
+      `;
+
+      return `
+        <div onclick="${clickHandler}" class="bento-widget ${spanClass} ${editClass}"
+          style="height:100%;display:flex;flex-direction:row;gap:20px;position:relative;cursor:pointer;text-align:left;box-sizing:border-box;"
+          onmouseenter="if(!${isEditing}) this.style.transform='translateY(-2px)'" onmouseleave="if(!${isEditing}) this.style.transform=''">
+          ${editOverlay}
+          <div style="width:130px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
+            ${folderIconSvg}
+            <div style="margin-top:auto;">
+              <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${f.name}</div>
+              <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:2px;">${count} recipe${count!==1?'s':''}</div>
+            </div>
+          </div>
+          ${rightPane}
+        </div>
+      `;
+    }
+
+    return `
+      <div onclick="${clickHandler}" class="bento-widget ${spanClass} ${editClass}"
+        style="height:100%;display:flex;flex-direction:column;position:relative;cursor:pointer;text-align:left;box-sizing:border-box;"
+        onmouseenter="if(!${isEditing}) this.style.transform='translateY(-4px)'" onmouseleave="if(!${isEditing}) this.style.transform=''">
+        ${editOverlay}
+        ${folderIconSvg}
+        <div style="margin-top:auto;">
+          <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${f.name}</div>
+          <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:2px;">${count} recipe${count!==1?'s':''}</div>
+        </div>
+      </div>
+    `;
   }).join('') + addBtn;
 }
+
+window.toggleFolderSize = function(folderId) {
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch {}
+  
+  if (!libData.folders) libData.folders = [];
+  const folder = libData.folders.find(f => f.id === folderId);
+  if (!folder) return;
+  
+  // Cycle sizes: small -> medium -> large -> row -> small
+  const sizeMap = {
+    'small': 'medium',
+    'medium': 'large',
+    'large': 'row',
+    'row': 'small'
+  };
+  folder.size = sizeMap[folder.size || 'small'] || 'small';
+  
+  localStorage.setItem('cookingGPS_library_v1', JSON.stringify(libData));
+  
+  // Sync the global libState in app.js
+  if (typeof libState !== 'undefined' && libState && libState.folders) {
+    const fState = libState.folders.find(f => f.id === folderId);
+    if (fState) fState.size = folder.size;
+  }
+  
+  mySpaceRenderFolderStrip();
+  showTip(`Folder size changed to ${folder.size.charAt(0).toUpperCase() + folder.size.slice(1)}`);
+};
+
+window.toggleFoldersGlobalHeight = function() {
+  const current = localStorage.getItem('cookingGPS_folders_height') || 'bento';
+  const next = current === 'bento' ? 'standard' : 'bento';
+  localStorage.setItem('cookingGPS_folders_height', next);
+  mySpaceRenderFolderStrip();
+  showTip(`Folders height layout toggled to ${next === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`);
+};
+
+window.toggleFolderColor = function(folderId) {
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch {}
+  
+  if (!libData.folders) libData.folders = [];
+  const folder = libData.folders.find(f => f.id === folderId);
+  if (!folder) return;
+  
+  // Cycle colors using FOLDER_COLORS
+  const currentColor = folder.color || '#4a90d9';
+  let currentIndex = FOLDER_COLORS.indexOf(currentColor);
+  if (currentIndex === -1) {
+    currentIndex = 0;
+  }
+  const nextIndex = (currentIndex + 1) % FOLDER_COLORS.length;
+  folder.color = FOLDER_COLORS[nextIndex];
+  
+  localStorage.setItem('cookingGPS_library_v1', JSON.stringify(libData));
+  
+  // Sync the global libState in app.js
+  if (typeof libState !== 'undefined' && libState && libState.folders) {
+    const fState = libState.folders.find(f => f.id === folderId);
+    if (fState) fState.color = folder.color;
+  }
+  
+  mySpaceRenderFolderStrip();
+  showTip(`Folder color customized.`);
+};
+
+window.mySpaceRenameFolder = function(folderId) {
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch {}
+  
+  if (!libData.folders) libData.folders = [];
+  const folder = libData.folders.find(f => f.id === folderId);
+  if (!folder) return;
+  
+  const newName = prompt("Enter a new name for the folder:", folder.name);
+  if (newName === null) return;
+  const cleaned = newName.trim();
+  if (!cleaned) {
+    showTip("Folder name cannot be empty.");
+    return;
+  }
+  
+  if (cleaned.toLowerCase() !== folder.name.toLowerCase()) {
+    if (libData.folders.some(f => f.name.toLowerCase() === cleaned.toLowerCase())) {
+      alert("A folder with this name already exists.");
+      return;
+    }
+  }
+  
+  folder.name = cleaned;
+  localStorage.setItem('cookingGPS_library_v1', JSON.stringify(libData));
+  
+  // Sync the global libState in app.js
+  if (typeof libState !== 'undefined' && libState && libState.folders) {
+    const fState = libState.folders.find(f => f.id === folderId);
+    if (fState) fState.name = folder.name;
+  }
+  
+  mySpaceRenderFolderStrip();
+  showTip("Folder renamed.");
+};
+
+window.mySpaceDeleteFolder = function(folderId) {
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch {}
+  
+  if (!libData.folders) libData.folders = [];
+  const folder = libData.folders.find(f => f.id === folderId);
+  if (!folder) return;
+  
+  const count = (folder.recipeIds || []).length;
+  const confirmMsg = count > 0 
+    ? `Are you sure you want to delete folder "${folder.name}"? The ${count} recipe(s) inside will remain in your library as loose recipes.`
+    : `Are you sure you want to delete folder "${folder.name}"?`;
+    
+  if (!confirm(confirmMsg)) return;
+  
+  libData.folders = libData.folders.filter(f => f.id !== folderId);
+  localStorage.setItem('cookingGPS_library_v1', JSON.stringify(libData));
+  
+  // Sync the global libState in app.js
+  if (typeof libState !== 'undefined' && libState && libState.folders) {
+    libState.folders = libState.folders.filter(f => f.id !== folderId);
+  }
+  
+  mySpaceRenderFolderStrip();
+  showTip("Folder deleted.");
+};
 
 
 

@@ -928,13 +928,24 @@
     <section id="view-profile" class="view-section" style="padding:0;">
 
       <!-- ══ HERO BANNER ══ -->
+      <div style="max-width:1100px; margin:1.5rem auto 0; padding:0 1.25rem; display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="font-size:1.4rem; font-weight:900; color:var(--text-heading); margin:0;">Dashboard Workspace</h2>
+        <button onclick="toggleDashboardEditMode()" id="dashboardEditBtn" style="background:rgba(74,144,217,0.1); border:none; border-radius:12px; padding:8px 16px; color:var(--primary); font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow:var(--shadow-sm);" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Customize your space dashboard">
+          ⚙️ Customize Layout
+        </button>
+      </div>
+
       <!-- Bento Grid Dashboard Wrapper -->
       <div class="bento-dashboard-grid" id="profileBentoGrid">
         
         <!-- Widget 1: Profile & Identity Card (Span 2) -->
-        <div class="bento-widget span-2" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5986 100%); color:#fff; border-color:transparent;">
+        <div class="bento-widget span-2" id="bentoIdentityWidget" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5986 100%); color:#fff; border-color:transparent;">
           <!-- Decorative circle background graphics inside profile widget -->
           <div style="position:absolute; top:-20px; right:-20px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.06); pointer-events:none;"></div>
+          
+          <!-- Size customize button -->
+          <button onclick="toggleWidgetSize('bentoIdentityWidget')" id="resizeBtn_bentoIdentityWidget" class="bento-widget-resize-btn" style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.15); border:none; border-radius:8px; padding:4px 8px; color:#fff; font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.3)';" onmouseleave="this.style.background='rgba(255,255,255,0.15)';" title="Change identity widget layout size">↔ Size: Medium</button>
+
           <div class="bento-profile-card">
             <!-- Avatar -->
             <div id="profileAvatarLarge"
@@ -947,7 +958,7 @@
               <!-- Editable bio -->
               <div id="mySpaceBioDisplay" style="font-size:0.82rem;color:rgba(255,255,255,0.85);font-weight:600;cursor:pointer;padding:4px 0;" onclick="mySpaceEditBio()">
                 <span id="mySpaceBioText" style="font-style:italic;">Click to add a bio…</span>
-                <span style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-left:6px;">✏️ edit</span>
+                <span class="bio-edit-pencil" style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-left:6px;">✏️ edit</span>
               </div>
               <textarea id="mySpaceBioInput" rows="2" placeholder="Tell the world about your cooking style…"
                 style="display:none;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:10px;padding:8px 12px;color:#fff;font-family:var(--font);font-size:0.82rem;font-weight:600;resize:none;outline:none;margin-top:4px;"
@@ -973,8 +984,11 @@
         </div>
         
         <!-- Widget 2: Stats Counter Widget (Span 1) -->
-        <div class="bento-widget">
-          <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em; margin-bottom:12px;">📊 Culinary Records</div>
+        <div class="bento-widget" id="bentoStatsWidget">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">📊 Culinary Records</div>
+            <button onclick="toggleWidgetSize('bentoStatsWidget')" id="resizeBtn_bentoStatsWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change stats widget layout size">↔ Size: Small</button>
+          </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; align-content:center;">
             <div style="background:rgba(74,144,217,0.06); border-radius:14px; padding:10px; text-align:center; border:1px solid var(--border-card);">
               <div id="profileRecipeCount" style="font-size:1.5rem; font-weight:900; color:var(--primary); line-height:1.2;">0</div>
@@ -1004,7 +1018,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
-              <button onclick="toggleCalendarSize()" id="calendarResizeBtn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">↔ Size: Medium</button>
+              <button onclick="toggleWidgetSize('bentoCalendarWidget')" id="resizeBtn_bentoCalendarWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">↔ Size: Medium</button>
             </div>
           </div>
           <div class="bento-calendar-grid" id="bentoCalendarGrid">
@@ -1013,12 +1027,15 @@
         </div>
         
         <!-- Widget 4: Grocery checklist (Span 1) -->
-        <div class="bento-widget">
+        <div class="bento-widget" id="bentoGroceryWidget">
           <div class="grocery-widget-header">
             <div class="grocery-widget-title">
               🛒 Grocery List
             </div>
-            <button onclick="clearCompletedGroceryItems()" style="background:none; border:none; color:var(--primary); font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer;" title="Clear checked items">Clear Done</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button onclick="clearCompletedGroceryItems()" style="background:none; border:none; color:var(--primary); font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer;" title="Clear checked items">Clear Done</button>
+              <button onclick="toggleWidgetSize('bentoGroceryWidget')" id="resizeBtn_bentoGroceryWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change grocery widget layout size">↔ Size: Small</button>
+            </div>
           </div>
           <!-- Quick Add Input -->
           <div class="grocery-input-row">
@@ -1033,9 +1050,11 @@
       </div>
 
       <!-- ══ LIBRARY FOLDERS PREVIEW ══ -->
-      <div style="max-width:1100px;margin:0 auto;padding:0 1.25rem 1.5rem;">
+      <div class="bento-dashboard-folders-container">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">📁 My Library</div>
+          <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);display:flex;align-items:center;gap:8px;">
+            <span>📁 My Library</span>
+          </div>
           <button onclick="switchView('grid-view')" style="background:none;border:none;font-size:0.75rem;font-weight:800;color:var(--primary);cursor:pointer;">View All →</button>
         </div>
         <div id="mySpaceFolderStrip"
@@ -1048,7 +1067,7 @@
       </div>
 
       <!-- ══ MY RECIPES ══ -->
-      <div style="max-width:1100px;margin:0 auto;padding:0 1.25rem 3rem;">
+      <div class="bento-dashboard-recipes-container">
         <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:12px;">🎬 My Recipes</div>
         <!-- Filter tabs -->
         <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;">
