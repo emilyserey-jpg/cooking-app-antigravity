@@ -178,21 +178,22 @@
         <button class="platform-tab instagram" onclick="switchPlatform('instagram')">📸 Instagram Reel</button>
       </div>
 
-      <div class="input-row">
+      <div class="input-row" style="display:flex; gap:12px; align-items:center; width:100%;">
         <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
-        <div style="flex:1;">
+        <div style="flex:1.2; min-width: 0;">
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-          <input type="text" id="url-input" class="input-field" placeholder="Paste YouTube, TikTok, or Instagram Reel URL..." value="">
+          <input type="text" id="url-input" class="input-field" placeholder="Paste YouTube, TikTok, or Instagram Reel URL..." value="" style="width:100%; box-sizing:border-box;">
         </div>
-         <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
+
+        <!-- AI Status Log Box (inline) -->
+        <div id="ai-log-box" style="flex: 0.8; min-width: 180px; max-width: 320px; padding: 8px 12px; background:#f0f7ff; border:2px solid #c2e0ff; color:#0369a1; border-radius:10px; font-size:0.72rem; font-weight:800; display:flex; align-items:center; gap:6px; box-sizing:border-box; white-space:normal; line-height:1.2; height: 38px; align-self: flex-end;">
+          <span style="font-size:1rem;">🤖</span>
+          <span id="ai-log-text">AI Status: Idle. Paste a URL & load.</span>
+        </div>
+
+         <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 0 22px; font-size: 0.82rem; border-radius: 10px; align-self: flex-end; height: 38px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           Load Video
         </button>
-      </div>
-
-      <!-- AI Status Log Box -->
-      <div id="ai-log-box" style="padding:10px 12px; background:#f0f7ff; border:2.5px solid #c2e0ff; color:#0369a1; border-radius:10px; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px; box-sizing:border-box;">
-        <span style="font-size:1.1rem;">🤖</span>
-        <span id="ai-log-text">AI Status: Idle. Paste a recipe URL and click "Load Video".</span>
       </div>
     </div>
 
