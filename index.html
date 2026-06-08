@@ -999,39 +999,76 @@
     <section id="view-create" class="view-section active">
 
       <!-- STAGE 1: Upload Drop Zone -->
-      <div id="createStage1" style="max-width:680px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:2rem;">
-          <h1 style="font-size:2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Upload a Recipe Video</h1>
-          <p style="color:var(--text-muted);font-weight:600;">Add your cooking video, mark the steps, and share it with the world.</p>
-          <div style="margin-top: 16px;">
-            <a href="/embed_test.html" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;width:280px;background:#fff;border:2px solid rgba(74,144,217,0.3);color:var(--primary);border-radius:999px;padding:10px 24px;font-family:var(--font);font-weight:800;font-size:0.9rem;text-decoration:none;box-shadow:0 4px 12px rgba(74,144,217,0.08);transition:all 0.2s;box-sizing:border-box;"
-               onmouseenter="this.style.background='#f0f7ff';this.style.borderColor='var(--primary)';" onmouseleave="this.style.background='#fff';this.style.borderColor='rgba(74,144,217,0.3)';">
-              <span>🔗</span><span>Try YouTube Prototype</span>
-            </a>
-          </div>
+      <div id="createStage1" style="max-width:800px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+          <h1 style="font-size:2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Create a Recipe Video</h1>
+          <p style="color:var(--text-muted);font-weight:600;">Choose how you want to load your recipe video to get started.</p>
         </div>
 
-        <!-- Drop Zone -->
-        <div id="uploadDropZone"
-          onclick="document.getElementById('videoFileInput').click()"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)"
-          style="
-            border: 3px dashed rgba(74,144,217,0.3);
-            border-radius: 28px;
-            padding: 4rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            background: #fff;
-            transition: all 0.2s;
-            box-shadow: var(--shadow-sm);
-          ">
-          <div style="font-size:4rem;margin-bottom:1rem;">🎬</div>
-          <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Drop your video here</h3>
-          <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;">or click to browse your files</p>
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:280px;background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-shadow:0 4px 12px rgba(74,144,217,0.3);box-sizing:border-box;">Choose Video</span>
-          <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Supports MP4, MOV, WebM &middot; Max 500MB</p>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:2.5rem;">
+          
+          <!-- Option A: YouTube Prototype Card -->
+          <div onclick="window.location.href='/embed_test.html'"
+            style="
+              flex: 1;
+              min-width: 280px;
+              border: 3px dashed rgba(74,144,217,0.3);
+              border-radius: 28px;
+              padding: 3.5rem 2rem;
+              text-align: center;
+              cursor: pointer;
+              background: #fff;
+              transition: all 0.2s;
+              box-shadow: var(--shadow-sm);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              box-sizing: border-box;
+            "
+            onmouseenter="this.style.borderColor='var(--primary)';"
+            onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
+            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🔗</div>
+            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">YouTube & Socials</h3>
+            <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
+              Load online videos via URL.<br>Supports YouTube, Shorts, TikTok & Reels.
+            </p>
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:100%;max-width:240px;background:#fff;border:2px solid rgba(74,144,217,0.4);color:var(--primary);padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-sizing:border-box;">Try Prototype</span>
+            <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Zero server storage & loop timing</p>
+          </div>
+
+          <!-- Option B: Local Video File Card (Drop Zone) -->
+          <div id="uploadDropZone"
+            onclick="document.getElementById('videoFileInput').click()"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)"
+            style="
+              flex: 1;
+              min-width: 280px;
+              border: 3px dashed rgba(74,144,217,0.3);
+              border-radius: 28px;
+              padding: 3.5rem 2rem;
+              text-align: center;
+              cursor: pointer;
+              background: #fff;
+              transition: all 0.2s;
+              box-shadow: var(--shadow-sm);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              box-sizing: border-box;
+            ">
+            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🎬</div>
+            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Upload Video File</h3>
+            <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
+              Select a video file from your device.<br>Fully analyzes visuals with Gemini AI.
+            </p>
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:100%;max-width:240px;background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-shadow:0 4px 12px rgba(74,144,217,0.3);box-sizing:border-box;">Choose Video</span>
+            <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Supports MP4, MOV, WebM &middot; Max 500MB</p>
+          </div>
+
         </div>
         <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleFileSelect(this.files[0])">
 
