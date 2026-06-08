@@ -1262,7 +1262,48 @@ h1, h2, h3, h4, h5 {
     grid-row: span 1;
   }
   .app-header { padding: 0 1rem; }
-  .view-tabs { display: none; }
+  body {
+    padding-bottom: 60px;
+  }
+  .view-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none;
+    border-top: 1.5px solid var(--border-card);
+    border-radius: 0;
+    box-shadow: 0 -3px 12px rgba(74, 144, 217, 0.08);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .view-tabs::-webkit-scrollbar { display: none; }
+  .view-tab {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    color: var(--text-muted);
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .view-tab i, .view-tab svg {
+    width: 20px;
+    height: 20px;
+  }
+  .view-tab.active {
+    color: var(--primary) !important;
+  }
 }
 
 /* ====================================================
