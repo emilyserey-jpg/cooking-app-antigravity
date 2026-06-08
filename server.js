@@ -666,6 +666,80 @@ app.post('/api/ai/translate', async (req, res) => {
 });
 
 
+// ─── AI: YouTube video transcript analysis ────────────────────────────────
+app.post('/api/ai/youtube-analyze', async (req, res) => {
+  const { videoId } = req.body;
+  if (!videoId) return res.status(400).json({ error: 'No videoId provided.' });
+
+  try {
+    console.log(`[YouTube AI] Fetching transcript for video: ${videoId}`);
+    const { YoutubeTranscript } = require('youtube-transcript');
+    const rawTranscript = await YoutubeTranscript.fetchTranscript(videoId);
+    if (!rawTranscript || rawTranscript.length === 0) {
+      throw new Error('No transcript available for this YouTube video.');
+    }
+
+    // Map segments to Whisper-like format (start, end, text)
+    const segments = rawTranscript.map((seg, idx) => ({
+      id: idx,
+      start: Number(seg.offset) / 1000,
+      end: (Number(seg.offset) + Number(seg.duration)) / 1000,
+      text: seg.text || ''
+    }));
+
+    const fullTranscriptText = rawTranscript.map(s => s.text).join(' ');
+
+    console.log(`[YouTube AI] Transcribed — ${fullTranscriptText.length} chars, ${segments.length} segments`);
+
+    // Now call Gemini to analyze the transcript and generate recipe structure (title, ingredients, loop steps)
+    const prompt = `Watch this cooking tutorial video transcript with timed segments.
+Identify distinct cooking steps and return ONLY this JSON (no markdown):
+{
+  "title": "short recipe name",
+  "ingredients": ["quantity/unit ingredient name", "e.g. 4 cups fresh spinach", "1 block feta cheese"],
+  "loops": [{ 
+    "start": 0, 
+    "end": 15, 
+    "label": "Action phrase",
+    "instruction": "detailed step instruction describing the action that happens during or immediately surrounding this start/end window. Make sure no ingredients or actions mentioned are left out.",
+    "ingredients": ["all ingredients prepped, cut, or added during or near this time range (e.g. pork belly, onion)"]
+  }]
+}
+Rules:
+- 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
+- Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
+- Avoid creating loop stops for trivial, brief micro-actions. Merge these trivial prep actions into the main adjacent step.
+- Do NOT create separate loops specifically for waiting, resting, simmering, or baking durations. Instead, merge these idle/waiting times into the active cooking action that initiated them.
+- Minimum duration for any loop is 3 seconds. Never output 1-second or 2-second steps.
+- Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the transcript.
+- Be chronological: each loop's instruction should describe the actions during and immediately surrounding its start/end window.`;
+
+    const segmentText = segments.map(s => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s] ${s.text.trim()}`).join('\n');
+
+    const content = await getChatCompletion({
+      systemPrompt: prompt,
+      userPrompt: `Identify cooking step loop boundaries from transcript:\n\n${segmentText}`,
+      jsonMode: true
+    });
+
+    const result = cleanAndParseJSON(content);
+    console.log(`[YouTube AI] ✅ Generated ${result.loops?.length} loops — "${result.title}"`);
+
+    res.json({
+      ok: true,
+      title: result.title || '',
+      ingredients: result.ingredients || [],
+      loops: result.loops || [],
+      segments: segments
+    });
+
+  } catch (err) {
+    console.error('[YouTube AI Error]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ─── Status: which AI services are configured ──────────────────────────────
 app.get('/api/ai/status', (req, res) => {
   res.json({

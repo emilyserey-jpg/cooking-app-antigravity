@@ -303,9 +303,7 @@
     // Called automatically by YouTube Iframe API
     function onYouTubeIframeAPIReady() {
       if (activePlatform === 'youtube') {
-        const defaultUrl = document.getElementById('url-input').value;
-        const defaultId = getYouTubeId(defaultUrl) || "dQw4w9WgXcQ"; // Fallback to a guaranteed online video
-        initYoutubePlayer(defaultId);
+        loadCustomVideo();
       }
     }
 
@@ -519,6 +517,60 @@
         }
         initYoutubePlayer(id);
         
+        // Show AI loading state in the steps list
+        const stepsContainer = document.getElementById('steps-list');
+        if (stepsContainer) {
+          stepsContainer.innerHTML = `
+            <div style="padding: 24px; text-align: center; background: rgba(255,255,255,0.8); border: 2px dashed var(--border-card); border-radius: 12px; font-weight: 800; color: var(--primary);">
+              <div style="font-size: 1.5rem; margin-bottom: 8px;">🤖</div>
+              <div>AI is transcribing and analyzing cooking steps for this video...</div>
+              <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">Please wait about 5-10 seconds</div>
+            </div>
+          `;
+        }
+
+        // Call backend API to analyze the YouTube transcript and build loop stops
+        fetch('/api/ai/youtube-analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId: id })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('AI analysis failed.');
+          return res.json();
+        })
+        .then(data => {
+          if (data.ok && data.loops && data.loops.length > 0) {
+            steps = data.loops.map((l, i) => ({
+              label: `${i + 1}. ${l.label || 'Step'}`,
+              start: Math.round(Number(l.start)),
+              end: Math.round(Number(l.end)),
+              desc: l.instruction || ''
+            }));
+            activeStepIndex = 0;
+            renderPrototypeSteps();
+            if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+              ytPlayer.seekTo(steps[0].start, true);
+            }
+          } else {
+            throw new Error('Invalid steps data returned.');
+          }
+        })
+        .catch(err => {
+          console.warn('AI analysis failed or timed out. Falling back to default steps:', err);
+          steps = [
+            { label: "1. Prepare vegetables & slice beef", start: 0, end: 7, desc: "Slice onions, potatoes, and carrots. Cut beef into bite-sized pieces." },
+            { label: "2. Sauté meat and potatoes", start: 7, end: 14, desc: "Heat sesame oil in a pot. Sauté beef first, then add vegetables and stir fry." },
+            { label: "3. Pour dashi and simmer", start: 14, end: 23, desc: "Add dashi broth, soy sauce, mirin, sake, and sugar. Simmer on medium-low." },
+            { label: "4. Let it absorb & plate", start: 23, end: 32, desc: "Cook until the liquid reduces and potatoes are fork-tender. Plate and serve!" }
+          ];
+          activeStepIndex = 0;
+          renderPrototypeSteps();
+          if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+            ytPlayer.seekTo(steps[0].start, true);
+          }
+        });
+
         infoHeader.textContent = "💡 How this prototype works:";
         infoBody.innerHTML = `
           This page embeds a standard YouTube video using Google's official <strong>YouTube Player API</strong>. 
