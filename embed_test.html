@@ -357,8 +357,6 @@
             if (activeStep) {
               if (currentTime >= activeStep.end) {
                 ytPlayer.seekTo(activeStep.start, true);
-              } else if (currentTime < activeStep.start) {
-                ytPlayer.seekTo(activeStep.start, true);
               }
             }
           }
