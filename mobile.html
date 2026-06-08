@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     function checkViewport() {
-      // Do not redirect on resize if the user is in the middle of editing/publishing
+      // Only check viewport once on initial page load to send desktop users to index.html.
+      // Do not redirect on resize if the user is in the middle of editing/publishing.
       const stage2 = document.getElementById('createStage2');
       const stage3 = document.getElementById('createStage3');
       const isEditing = (stage2 && stage2.style.display !== 'none') || 
@@ -17,7 +18,6 @@
       }
     }
     checkViewport();
-    window.addEventListener('resize', checkViewport);
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
   <link rel="stylesheet" href="mobile.css?v=2.8">
@@ -67,11 +67,27 @@
         </button>
       </div>
 
-      <!-- User Info Badge -->
-      <div class="user-profile-badge" id="userProfileBadge" onclick="openAuthModal()" style="cursor:pointer;">
-        <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
-        <span id="userBadgeLabel">Sign In</span>
-        <i data-lucide="chevron-down"></i>
+      <!-- User Info Badge Container -->
+      <div style="position:relative; display:inline-block; flex-shrink:0;">
+        <div class="user-profile-badge" id="userProfileBadge" onclick="toggleUserDropdown(event)" style="cursor:pointer;">
+          <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
+          <span id="userBadgeLabel">Sign In</span>
+          <i data-lucide="chevron-down"></i>
+        </div>
+        
+        <!-- User Dropdown Menu -->
+        <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; width:160px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+          <button onclick="handleDropdownMySpace(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:700; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='var(--bg-card-soft)';this.style.color='var(--primary)';" onmouseleave="this.style.background='none';this.style.color='var(--text-body)';">
+            <span>🏡</span> My Space
+          </button>
+          <button onclick="handleDropdownMyChannel(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:700; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='var(--bg-card-soft)';this.style.color='var(--primary)';" onmouseleave="this.style.background='none';this.style.color='var(--text-body)';">
+            <span>📺</span> My Profile
+          </button>
+          <div style="height:1px; background:var(--border-card); margin:4px 0;"></div>
+          <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
+            <span>🚪</span> Log Out
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -999,35 +1015,78 @@
     <section id="view-create" class="view-section active">
 
       <!-- STAGE 1: Upload Drop Zone -->
-      <div id="createStage1" style="max-width:680px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:2rem;">
-          <h1 style="font-size:2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Upload a Recipe Video</h1>
-          <p style="color:var(--text-muted);font-weight:600;">Add your cooking video, mark the steps, and share it with the world.</p>
+      <div id="createStage1" style="max-width:800px;margin:0 auto;">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+          <h1 style="font-size:2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Create a Recipe Video</h1>
+          <p style="color:var(--text-muted);font-weight:600;">Choose how you want to load your recipe video to get started.</p>
         </div>
 
-        <!-- Drop Zone -->
-        <div id="uploadDropZone"
-          onclick="document.getElementById('videoFileInput').click()"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)"
-          style="
-            border: 3px dashed rgba(74,144,217,0.3);
-            border-radius: 28px;
-            padding: 4rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            background: #fff;
-            transition: all 0.2s;
-            box-shadow: var(--shadow-sm);
-          ">
-          <div style="font-size:4rem;margin-bottom:1rem;">🎬</div>
-          <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Drop your video here</h3>
-          <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;">or click to browse your files</p>
-          <span style="background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-shadow:0 4px 12px rgba(74,144,217,0.3);">Choose Video</span>
-          <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Supports MP4, MOV, WebM &middot; Max 500MB</p>
-        </div>
-        <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleFileSelect(this.files[0])">
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:2.5rem;">
+          
+          <!-- Option A: YouTube Prototype Card -->
+          <div onclick="window.location.href='/embed_test.html'"
+            style="
+              flex: 1;
+              min-width: 280px;
+              border: 3px dashed rgba(74,144,217,0.3);
+              border-radius: 28px;
+              padding: 3.5rem 2rem;
+              text-align: center;
+              cursor: pointer;
+              background: #fff;
+              transition: all 0.2s;
+              box-shadow: var(--shadow-sm);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              box-sizing: border-box;
+            "
+            onmouseenter="this.style.borderColor='var(--primary)';"
+            onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
+            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🔗</div>
+            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Embed a Video</h3>
+            <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
+              Load online videos via URL.<br>Supports YouTube, Shorts, TikTok & Reels.
+            </p>
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:100%;max-width:240px;background:#fff;border:2px solid rgba(74,144,217,0.4);color:var(--primary);padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-sizing:border-box;">Embed Video</span>
+            <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Zero server storage & loop timing</p>
+          </div>
+
+          <!-- Option B: Local Video File Card (Drop Zone) -->
+          <div id="uploadDropZone"
+            onclick="document.getElementById('videoFileInput').click()"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)"
+            style="
+              flex: 1;
+              min-width: 280px;
+              border: 3px dashed rgba(74,144,217,0.3);
+              border-radius: 28px;
+              padding: 3.5rem 2rem;
+              text-align: center;
+              cursor: pointer;
+              background: #fff;
+              transition: all 0.2s;
+              box-shadow: var(--shadow-sm);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              box-sizing: border-box;
+            "
+            onmouseenter="this.style.borderColor='var(--primary)';"
+            onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
+            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🎬</div>
+            <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Upload Video File</h3>
+            <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
+              Select a video file from your device.<br>Fully analyzes visuals with Gemini AI.
+            </p>
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:100%;max-width:240px;background:var(--primary);color:#fff;padding:10px 24px;border-radius:999px;font-weight:800;font-size:0.9rem;box-sizing:border-box;box-shadow:0 4px 12px rgba(74,144,217,0.3);">Choose Video</span>
+            <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--text-muted);font-weight:600;">Supports MP4, MOV, WebM &middot; Max 500MB</p>
+          </div>
+          <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="handleFileSelect(this.files[0])">
 
         <!-- Upload Progress (hidden until upload starts) -->
         <div id="uploadProgressWrap" style="display:none;margin-top:2rem;background:#fff;border-radius:20px;padding:1.5rem;border:2px solid var(--border-card);box-shadow:var(--shadow-sm);">

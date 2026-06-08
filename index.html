@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     function checkViewport() {
-      // Do not redirect on resize if the user is in the middle of editing/publishing
+      // Only check viewport once on initial page load to send actual mobile devices to mobile.html.
+      // Do not redirect on resize if the user is in the middle of editing/publishing.
       const stage2 = document.getElementById('createStage2');
       const stage3 = document.getElementById('createStage3');
       const isEditing = (stage2 && stage2.style.display !== 'none') || 
@@ -17,7 +18,6 @@
       }
     }
     checkViewport();
-    window.addEventListener('resize', checkViewport);
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
   <link rel="stylesheet" href="styles.css?v=3.9">
