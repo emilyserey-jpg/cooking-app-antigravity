@@ -6293,6 +6293,14 @@ window.toggleAiToolsCollapse = function() {
 
 window.selectCreateStep = function(i) {
   currentNavStepIndex = i;
+  const vid = document.getElementById('uploadedVideoPlayer');
+  if (vid && createStepsArr[i]) {
+    if (previewInterval !== null) {
+      previewStepLoop(i);
+    } else {
+      vid.currentTime = createStepsArr[i].time ?? 0;
+    }
+  }
   renderCreateSteps();
 };
 
@@ -6497,7 +6505,8 @@ function renderCreateSteps() {
     return `
       <div id="stepRow_${i}"
         onfocusin="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
-        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle}"
+        onclick="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
+        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -6507,11 +6516,11 @@ function renderCreateSteps() {
             style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.8rem;font-weight:800;color:var(--text-heading);outline:none;border-bottom:1px dashed transparent;"
             onfocus="this.style.borderBottomColor='var(--primary)'" onblur="this.style.borderBottomColor='transparent'">
           ${i < createStepsArr.length - 1 ? `
-            <button onclick="window.mergeCreateStep(${i})" title="Merge with next step" tabindex="-1"
+            <button onclick="event.stopPropagation(); window.mergeCreateStep(${i})" title="Merge with next step" tabindex="-1"
                style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:6px;cursor:pointer;color:#16a34a;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
               onmouseenter="this.style.background='rgba(22,163,74,0.18)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(22,163,74,0.08)';this.style.transform='none';">🔗</button>
           ` : ''}
-          <button onclick="removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
+          <button onclick="event.stopPropagation(); removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
             style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:6px;cursor:pointer;color:#dc2626;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
             onmouseenter="this.style.background='rgba(220,38,38,0.15)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(220,38,38,0.06)';this.style.transform='none';">×</button>
         </div>
@@ -6522,7 +6531,7 @@ function renderCreateSteps() {
         <div style="display:flex;flex-direction:column;gap:4px;background:rgba(124,58,237,0.03);border:1px solid rgba(124,58,237,0.12);padding:6px;border-radius:8px;flex-shrink:0;box-sizing:border-box;width:100%;">
           <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:2px;">
             <span style="font-size:0.65rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:3px;white-space:nowrap;">⏳ Timers (${(step.timers || []).length}):</span>
-            <button onclick="window.addStepTimer(${i})" style="border:none;background:rgba(124,58,237,0.1);color:#7c3aed;font-family:var(--font);font-size:0.62rem;font-weight:800;border-radius:4px;padding:2px 6px;cursor:pointer;">＋ Add</button>
+            <button onclick="event.stopPropagation(); window.addStepTimer(${i})" style="border:none;background:rgba(124,58,237,0.1);color:#7c3aed;font-family:var(--font);font-size:0.62rem;font-weight:800;border-radius:4px;padding:2px 6px;cursor:pointer;">＋ Add</button>
           </div>
           <div id="step-timers-list-${i}">
             ${(step.timers || []).map((t, tIdx) => `
@@ -6540,7 +6549,7 @@ function renderCreateSteps() {
                   onchange="window.updateStepTimerDurationSec(${i}, ${tIdx}, this.value)"
                   style="width:26px;background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:4px;font-size:0.65rem;font-weight:700;text-align:center;padding:1px 0;outline:none;color:var(--text-heading);height:18px;" />
                 <span style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">s</span>
-                <button onclick="window.removeStepTimer(${i}, ${tIdx})" title="Delete Timer" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:0.75rem;padding:0 2px;line-height:1;margin-left:2px;">×</button>
+                <button onclick="event.stopPropagation(); window.removeStepTimer(${i}, ${tIdx})" title="Delete Timer" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:0.75rem;padding:0 2px;line-height:1;margin-left:2px;">×</button>
               </div>
             `).join('')}
           </div>

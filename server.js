@@ -695,7 +695,7 @@ app.post('/api/ai/youtube-analyze', async (req, res) => {
     const prompt = `Watch this cooking tutorial video transcript with timed segments.
 Identify distinct cooking steps and return ONLY this JSON (no markdown):
 {
-  "title": "short recipe name",
+  "title": "short recipe name or video title",
   "ingredients": ["quantity/unit ingredient name", "e.g. 4 cups fresh spinach", "1 block feta cheese"],
   "loops": [{ 
     "start": 0, 
@@ -706,7 +706,10 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
   }]
 }
 Rules:
-- 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
+- MUST COVER ENTIRE VIDEO: The steps (loops) MUST cover the entire duration of the video. The first step must start at or near 0, and the last step must end at the end of the video. Do not leave large gaps in the timeline. Bridge any silence, intros, transition screens, or music by extending the duration of the adjacent steps so that the entire timeline is mapped.
+- MULTIPLE RECIPES / COMPILATIONS: If the video teaches multiple different recipes/meals (e.g., "5 Easy Korean Meals"), do NOT just extract one recipe or the final one. You must output steps for ALL of the recipes in the video in chronological order. Set the main "title" to the name of the video or compilation, combine all ingredients in the main "ingredients" list, and ensure the steps chronologically trace through all the dishes from the start of the video to the end of the video.
+- 4-15 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
+- NO OVERLAPS: Steps must be contiguous and sequential (e.g. step N starts where step N-1 ends, or very close to it).
 - Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
 - Avoid creating loop stops for trivial, brief micro-actions. Merge these trivial prep actions into the main adjacent step.
 - Do NOT create separate loops specifically for waiting, resting, simmering, or baking durations. Instead, merge these idle/waiting times into the active cooking action that initiated them.

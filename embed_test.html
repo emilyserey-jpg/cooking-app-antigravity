@@ -184,9 +184,15 @@
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
           <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
         </div>
-        <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
+         <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
           Load Video
         </button>
+      </div>
+
+      <!-- AI Status Log Box -->
+      <div id="ai-log-box" style="padding:10px 12px; background:#f0f7ff; border:2.5px solid #c2e0ff; color:#0369a1; border-radius:10px; font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px; box-sizing:border-box;">
+        <span style="font-size:1.1rem;">🤖</span>
+        <span id="ai-log-text">AI Status: Idle. Paste a recipe URL and click "Load Video".</span>
       </div>
     </div>
 
@@ -195,6 +201,12 @@
       
       <!-- Left: Video Embed Frame -->
       <div class="player-column">
+        <!-- Click Play Reminder Banner -->
+        <div id="play-reminder" style="padding:12px; background:#fff8e1; border:2.5px solid #ffe082; color:#b78103; border-radius:12px; font-size:0.8rem; font-weight:800; display:flex; align-items:center; gap:8px; box-sizing:border-box;">
+          <span style="font-size:1.15rem;">👉</span>
+          <span><strong>Action Required:</strong> Click the <strong>RED Play Button</strong> in the center of the video to start the interactive loop system. (YouTube requires a manual click before APIs can control playback).</span>
+        </div>
+
         <div class="video-container" id="player-container">
           <div id="yt-player"></div>
         </div>
@@ -425,9 +437,14 @@
       
       if (activePlatform === 'youtube') {
         if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
-          ytPlayer.seekTo(steps[activeStepIndex].start, true);
-          if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-            ytPlayer.playVideo();
+          try {
+            ytPlayer.seekTo(steps[activeStepIndex].start, true);
+            const playingState = (window.YT && YT.PlayerState) ? YT.PlayerState.PLAYING : 1;
+            if (ytPlayer.getPlayerState() !== playingState) {
+              ytPlayer.playVideo();
+            }
+          } catch (e) {
+            console.warn("YouTube API call deferred:", e);
           }
         }
       }
@@ -519,6 +536,11 @@
         
         // Show AI loading state in the steps list
         const stepsContainer = document.getElementById('steps-list');
+        const logText = document.getElementById('ai-log-text');
+        if (logText) {
+          logText.textContent = 'AI Status: ⏳ Extracting subtitles and analyzing cooking steps...';
+          logText.style.color = '#0369a1';
+        }
         if (stepsContainer) {
           stepsContainer.innerHTML = `
             <div style="padding: 24px; text-align: center; background: rgba(255,255,255,0.8); border: 2px dashed var(--border-card); border-radius: 12px; font-weight: 800; color: var(--primary);">
@@ -549,6 +571,10 @@
             }));
             activeStepIndex = 0;
             renderPrototypeSteps();
+            if (logText) {
+              logText.textContent = `AI Status: ✅ Loaded ${data.loops.length} actual steps for "${data.title}" successfully!`;
+              logText.style.color = '#15803d';
+            }
             if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
               ytPlayer.seekTo(steps[0].start, true);
             }
@@ -558,6 +584,10 @@
         })
         .catch(err => {
           console.warn('AI analysis failed or timed out. Falling back to default steps:', err);
+          if (logText) {
+            logText.textContent = `AI Status: ⚠️ Failed: ${err.message || err}. Loaded dummy steps for testing loop controls.`;
+            logText.style.color = '#b91c1c';
+          }
           steps = [
             { label: "1. Prepare vegetables & slice beef", start: 0, end: 7, desc: "Slice onions, potatoes, and carrots. Cut beef into bite-sized pieces." },
             { label: "2. Sauté meat and potatoes", start: 7, end: 14, desc: "Heat sesame oil in a pot. Sauté beef first, then add vegetables and stir fry." },
