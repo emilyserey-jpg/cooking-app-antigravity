@@ -938,51 +938,6 @@
       <!-- Bento Grid Dashboard Wrapper -->
       <div class="bento-dashboard-grid" id="profileBentoGrid">
         
-        <!-- Widget 1: Profile & Identity Card (Span 2) -->
-        <div class="bento-widget span-2" id="bentoIdentityWidget" style="background:linear-gradient(135deg, #1e3a5f 0%, #2d5986 100%); color:#fff; border-color:transparent;">
-          <!-- Decorative circle background graphics inside profile widget -->
-          <div style="position:absolute; top:-20px; right:-20px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.06); pointer-events:none;"></div>
-          
-          <!-- Size customize button -->
-          <button onclick="toggleWidgetSize('bentoIdentityWidget')" id="resizeBtn_bentoIdentityWidget" class="bento-widget-resize-btn" style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.15); border:none; border-radius:8px; padding:4px 8px; color:#fff; font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.3)';" onmouseleave="this.style.background='rgba(255,255,255,0.15)';" title="Change identity widget layout size">↔ Size: Medium</button>
-
-          <div class="bento-profile-card">
-            <!-- Avatar -->
-            <div id="profileAvatarLarge"
-              style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#fff,#c7dff7);display:flex;align-items:center;justify-content:center;color:#2d5986;font-size:2rem;font-weight:900;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,0.25);border:3px solid rgba(255,255,255,0.4);">?</div>
-            
-            <div style="flex:1; min-width:0;">
-              <h2 id="profileName" style="font-size:1.4rem;font-weight:900;margin:0 0 4px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.2);">My Space</h2>
-              <p id="profileEmail" style="font-size:0.8rem;color:rgba(255,255,255,0.7);font-weight:600;margin:0 0 8px;">Sign in to personalize your page</p>
-              
-              <!-- Editable bio -->
-              <div id="mySpaceBioDisplay" style="font-size:0.82rem;color:rgba(255,255,255,0.85);font-weight:600;cursor:pointer;padding:4px 0;" onclick="mySpaceEditBio()">
-                <span id="mySpaceBioText" style="font-style:italic;">Click to add a bio…</span>
-                <span class="bio-edit-pencil" style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-left:6px;">✏️ edit</span>
-              </div>
-              <textarea id="mySpaceBioInput" rows="2" placeholder="Tell the world about your cooking style…"
-                style="display:none;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);border-radius:10px;padding:8px 12px;color:#fff;font-family:var(--font);font-size:0.82rem;font-weight:600;resize:none;outline:none;margin-top:4px;"
-                onblur="mySpaceSaveBio()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();mySpaceSaveBio();}"></textarea>
-            </div>
-          </div>
-          
-          <!-- Bottom Row: Auth state buttons + landing page selector -->
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.15); flex-wrap:wrap; gap:10px;">
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.2);padding:4px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);">
-              <span style="font-size:0.7rem;color:#fff;font-weight:800;white-space:nowrap;">🏡 Load view:</span>
-              <select id="defaultLandingViewSelect" onchange="changeDefaultLandingView(this.value)"
-                style="background:transparent;border:none;color:#fff;font-family:var(--font);font-size:0.7rem;font-weight:800;outline:none;cursor:pointer;padding-right:4px;">
-                <option value="create" style="color:#000;">Create (Default)</option>
-                <option value="profile" style="color:#000;">My Space</option>
-              </select>
-            </div>
-            
-            <button onclick="openAuthModal()" id="mySpaceSignInBtn"
-              style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:6px 14px;color:#fff;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap;transition:all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.3)'" onmouseleave="this.style.background='rgba(255,255,255,0.2)'">Sign In</button>
-            <button onclick="handleDropdownSignOut(event)" id="mySpaceSignOutBtn" style="display:none;background:rgba(239,68,68,0.2);border:1.5px solid rgba(239,68,68,0.4);border-radius:10px;padding:6px 14px;color:#fff;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap;transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.3)'" onmouseleave="this.style.background='rgba(239,68,68,0.2)'">Log Out</button>
-          </div>
-        </div>
-        
         <!-- Widget 2: Stats Counter Widget (Span 1) -->
         <div class="bento-widget" id="bentoStatsWidget">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
