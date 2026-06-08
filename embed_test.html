@@ -561,7 +561,7 @@
         const stepsContainer = document.getElementById('steps-list');
         const logText = document.getElementById('ai-log-text');
         if (logText) {
-          logText.textContent = 'AI Status: ⏳ Extracting subtitles and analyzing cooking steps...';
+          logText.textContent = 'AI Status: ⏳ Analyzing...';
           logText.style.color = '#0369a1';
         }
         if (stepsContainer) {
@@ -595,7 +595,7 @@
             activeStepIndex = 0;
             renderPrototypeSteps();
             if (logText) {
-              logText.textContent = `AI Status: ✅ Loaded ${data.loops.length} actual steps for "${data.title}" successfully!`;
+              logText.textContent = `AI Status: ✅ Loaded ${data.loops.length} steps.`;
               logText.style.color = '#15803d';
             }
             if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
@@ -608,7 +608,7 @@
         .catch(err => {
           console.warn('AI analysis failed or timed out. Falling back to default steps:', err);
           if (logText) {
-            logText.textContent = `AI Status: ⚠️ Failed: ${err.message || err}. Loaded dummy steps for testing loop controls.`;
+            logText.textContent = `AI Status: ⚠️ Failed. Loaded placeholder steps.`;
             logText.style.color = '#b91c1c';
           }
           steps = [
