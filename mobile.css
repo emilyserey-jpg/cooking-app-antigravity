@@ -116,7 +116,7 @@ h1, h2, h3, h4, h5 {
   box-shadow: var(--shadow-sm);
   gap: 0.75rem;
   /* allow the tab strip to scroll without clipping */
-  overflow: hidden;
+  overflow: visible;
 }
 
 .logo-container {
