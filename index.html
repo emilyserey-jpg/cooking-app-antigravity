@@ -20,7 +20,7 @@
     window.addEventListener('resize', checkViewport);
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=2.2">
+  <link rel="stylesheet" href="styles.css?v=3.0">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1021,7 +1021,7 @@
       </div>
 
       <!-- STAGE 2: Editor (shown after upload completes) -->
-      <div id="createStage2" style="display:none; height:calc(100vh - 110px); display:none; flex-direction:column; overflow:hidden;">
+      <div id="createStage2" style="display:none; height:calc(100vh - 80px); flex-direction:column; overflow:hidden;">
 
         <!-- Header row -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-shrink:0;gap:1.5rem;">
@@ -1250,36 +1250,97 @@
             <div id="rightColStops" style="display:none;flex-direction:column;gap:0.5rem;overflow:hidden;box-sizing:border-box;flex:1;width:100%;min-width:0;">
               <!-- ▾ Loop Stops accordion -->
               <div class="glass-card" id="editorStopsCard" style="padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;height:100%;">
-                <!-- Header row: title + AI btn + chevron -->
-                <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;user-select:none;flex-shrink:0;">
-                  <div onclick="togglePanel('stopsBody','stopsChevron')" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;flex:1;cursor:pointer;">
+                <!-- Header row: title + scrollable buttons container + stopsChevron -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 13px;user-select:none;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,0.03);">
+                  <div onclick="togglePanel('stopsBody','stopsChevron')" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;flex-shrink:0;cursor:pointer;">
                     Loop Stops <span id="createStepCount" style="color:var(--text-muted);font-weight:600;">(0)</span>
                   </div>
-                  <button onclick="aiWriteStepDescriptions()" title="AI writes a description for each loop stop"
-                    style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-                    ✍️ AI Descriptions
-                  </button>
-                  <button id="aiVoiceoverBtn" onclick="window.generateAllVoiceovers()" title="AI generates voiceover narration for all steps"
-                    style="background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:2px;">
-                    🎙️ AI Voiceover
-                  </button>
-                  <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem;color:var(--text-muted);font-weight:900;margin-left:2px;transition:transform 0.2s;cursor:pointer;">▾</span>
-                </div>
-                <div id="stopsBody" style="padding:0 12px 10px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
-                  <!-- AI buttons moved from AI Tools -->
-                  <div style="display:flex;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;">
-                    <button id="aiLoopBtn" onclick="doItAll()"
-                      style="flex:1;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
-                      <span>🔁 AI: Place Loop Stops</span>
-                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                  
+                  <!-- Scrollable buttons wrapper -->
+                  <div class="no-scrollbar" style="display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;flex:1;min-width:0;padding:2px 0;">
+                    <style>
+                      .no-scrollbar::-webkit-scrollbar { display: none; }
+                      #createStepsList::-webkit-scrollbar {
+                        height: 7px;
+                      }
+                      #createStepsList::-webkit-scrollbar-track {
+                        background: rgba(0, 0, 0, 0.02);
+                        border-radius: 99px;
+                      }
+                      #createStepsList::-webkit-scrollbar-thumb {
+                        background: rgba(124, 58, 237, 0.3);
+                        border-radius: 99px;
+                      }
+                      #createStepsList::-webkit-scrollbar-thumb:hover {
+                        background: rgba(124, 58, 237, 0.55);
+                      }
+                    </style>
+                    <button onclick="aiWriteStepDescriptions()" title="AI writes a description for each loop stop"
+                      style="margin-left:auto;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                      ✍️ AI Descriptions
                     </button>
-                    <button id="aiWriteStepsBtn" onclick="aiWriteSteps()" 
-                      style="flex:1;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
-                      <span>📋 AI Steps</span>
-                      <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
+                    <button id="aiVoiceoverBtn" onclick="window.generateAllVoiceovers()" title="AI generates voiceover narration for all steps"
+                      style="background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                      🎙️ AI Voiceover
+                    </button>
+                    <button id="toggleStepTranscriptBtn" onclick="window.toggleStepTranscripts()" title="Toggle side-by-side transcript segments"
+                      style="background:#f5f0ff;color:#7c3aed;border:1.5px solid rgba(124,58,237,0.3);border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                      💬 View Transcripts
+                    </button>
+                    <button id="toggleAiToolsBtn" onclick="window.toggleAiToolsCollapse()" title="Toggle AI generation buttons"
+                      style="background:#ede9ff;color:#7c3aed;border:1.5px solid rgba(124,58,237,0.3);border-radius:7px;padding:4px 9px;font-family:var(--font);font-weight:800;font-size:0.68rem;cursor:pointer;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:3px;">
+                      🤖 AI Generator <span id="aiToolsChevron">▾</span>
                     </button>
                   </div>
-                  <div id="createStepsList" style="margin-top:6px;flex:1;"></div>
+                  
+                  <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem;color:var(--text-muted);font-weight:900;flex-shrink:0;transition:transform 0.2s;cursor:pointer;">▾</span>
+                </div>
+                <div id="stopsBody" style="padding:0 12px 4px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                  <!-- AI buttons wrapper -->
+                  <div id="aiToolsCollapse" style="display:none;flex-direction:column;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;border-bottom:1.5px dashed rgba(124,58,237,0.15);padding-bottom:8px;">
+                    <div style="display:flex;gap:6px;">
+                      <button id="aiLoopBtn" onclick="doItAll()"
+                        style="flex:1;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                        <span>🔁 AI: Place Loop Stops</span>
+                        <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                      </button>
+                      <button id="aiWriteStepsBtn" onclick="aiWriteSteps()" 
+                        style="flex:1;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                        <span>📋 AI Steps</span>
+                        <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
+                      </button>
+                    </div>
+                    <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
+                      style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;">
+                      <span>📝 Create Steps from Transcript</span>
+                    </button>
+                  </div>
+                  <div style="position:relative;flex:1;display:flex;flex-direction:row;min-height:0;margin-top:6px;overflow:hidden;gap:12px;">
+                    <!-- Fixed Transcript Panel (left) -->
+                    <div id="fixedTranscriptPanel" style="width:230px;height:100%;flex-shrink:0;display:none;flex-direction:column;gap:5px;min-height:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(8px);border-radius:12px;border:1.5px solid rgba(124,58,237,0.15);padding:10px;box-sizing:border-box;">
+                      <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;line-height:1.2;">Active Step Transcript</label>
+                      <div id="fixedTranscriptText" style="flex:1;width:100%;box-sizing:border-box;background:#f8f6ff;border:1px solid rgba(124,58,237,0.15);border-radius:8px;padding:8px;font-size:0.75rem;font-weight:600;color:var(--text-body);line-height:1.45;overflow-y:auto;word-break:break-word;">No step selected. Transcribe the video or click a step to view transcript.</div>
+                    </div>
+
+                    <!-- Slider Container (right) -->
+                    <div style="flex:1;position:relative;display:flex;min-height:0;overflow:hidden;align-items:stretch;">
+                      <!-- Left scroll button -->
+                      <button onclick="window.scrollStepsList(-300)" id="stepsScrollLeftBtn" tabindex="-1"
+                        style="display:none;position:absolute;left:-4px;z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
+                        onmouseenter="this.style.background='#7c3aed';this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.95)';this.style.color='#7c3aed';">
+                        ‹
+                      </button>
+                      
+                      <div id="createStepsList" style="flex:1;overflow-x:auto;overflow-y:hidden;box-sizing:border-box;"></div>
+                      
+                      <!-- Right scroll button -->
+                      <button onclick="window.scrollStepsList(300)" id="stepsScrollRightBtn" tabindex="-1"
+                        style="display:none;position:absolute;right:-4px;z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
+                        onmouseenter="this.style.background='#7c3aed';this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.95)';this.style.color='#7c3aed';">
+                        ›
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1514,6 +1575,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=3.1"></script>
+  <script type="module" src="app.js?v=3.9"></script>
 </body>
 </html>

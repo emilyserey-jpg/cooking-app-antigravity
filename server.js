@@ -126,26 +126,85 @@ app.post('/api/transcribe', upload.single('video'), async (req, res) => {
   }
 });
 
+// Helper function for Chat Completion with Gemini fallback
+async function getChatCompletion({ systemPrompt, userPrompt, jsonMode = false }) {
+  const isPlaceholder = !OPENAI_API_KEY || OPENAI_API_KEY.includes('PASTE_YOUR');
+  if (openai && !isPlaceholder) {
+    try {
+      const responseFormat = jsonMode ? { type: 'json_object' } : undefined;
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        response_format: responseFormat,
+        temperature: 0.3
+      });
+      return completion.choices[0].message.content.trim();
+    } catch (err) {
+      console.warn('[OpenAI Chat] Failed, falling back to Gemini:', err.message);
+    }
+  }
+
+  // Fallback to Gemini
+  if (!GEMINI_API_KEY) {
+    throw new Error('Neither OpenAI nor Gemini API keys are configured.');
+  }
+
+  const prompt = `${systemPrompt}\n\nUser input/data:\n${userPrompt}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.3,
+        responseMimeType: jsonMode ? "application/json" : "text/plain"
+      }
+    })
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini Chat fallback failed (${response.status}): ${errText}`);
+  }
+  const data = await response.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return text.trim();
+}
+
+function cleanAndParseJSON(str) {
+  let cleaned = str.replace(/```json/gi, '').replace(/```/gi, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.warn('[JSON Parser] Standard parse failed, attempting regex fixes...', e.message);
+    try {
+      let fixed = cleaned
+        .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"')
+        .replace(/,\s*([\]}])/g, '$1')
+        .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
+      return JSON.parse(fixed);
+    } catch (e2) {
+      console.error('[JSON Parser] All parsing attempts failed. Raw string:', cleaned);
+      throw new Error(`Failed to parse AI JSON response: ${e2.message}`);
+    }
+  }
+}
+
+
 // ─── AI: Write ingredients from transcript ─────────────────────────────────
 app.post('/api/ai/ingredients', async (req, res) => {
-  if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });
   const { transcript } = req.body;
   if (!transcript) return res.status(400).json({ error: 'No transcript.' });
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a recipe assistant. Extract a clean, formatted ingredients list from a cooking video transcript. List one ingredient per line with quantity and unit (e.g. "2 cups all-purpose flour"). Only list ingredients clearly mentioned. Be concise.',
-        },
-        { role: 'user', content: `Extract ingredients from this transcript:\n\n${transcript}` },
-      ],
-      max_tokens: 600,
-      temperature: 0.3,
+    const content = await getChatCompletion({
+      systemPrompt: 'You are a recipe assistant. Extract a clean, formatted ingredients list from a cooking video transcript. List one ingredient per line with quantity and unit (e.g. "2 cups all-purpose flour"). Only list ingredients clearly mentioned. Be concise.',
+      userPrompt: `Extract ingredients from this transcript:\n\n${transcript}`
     });
-    res.json({ ingredients: completion.choices[0].message.content.trim() });
+    res.json({ ingredients: content });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -153,24 +212,15 @@ app.post('/api/ai/ingredients', async (req, res) => {
 
 // ─── AI: Write step-by-step instructions from transcript ───────────────────
 app.post('/api/ai/steps', async (req, res) => {
-  if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });
   const { transcript } = req.body;
   if (!transcript) return res.status(400).json({ error: 'No transcript.' });
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a recipe writer. Convert a cooking video transcript into clear, numbered step-by-step instructions. Each step must represent one distinct action. You MUST include all ingredient measurements (such as cups, tablespoons, teaspoons, grams, ounces, counts, etc.) mentioned in the transcript for each step. Write in the second person (e.g. "Add 4 cups of spinach..."). Be clear, descriptive, and concise. Maximum 10 steps.',
-        },
-        { role: 'user', content: `Write step-by-step instructions from this transcript:\n\n${transcript}` },
-      ],
-      max_tokens: 900,
-      temperature: 0.4,
+    const content = await getChatCompletion({
+      systemPrompt: 'You are a recipe writer. Convert a cooking video transcript into clear, numbered step-by-step instructions. Each step must represent one distinct action. You MUST include all ingredient measurements (such as cups, tablespoons, teaspoons, grams, ounces, counts, etc.) mentioned in the transcript for each step. Write in the second person (e.g. "Add 4 cups of spinach..."). Be clear, descriptive, and concise. Maximum 10 steps.',
+      userPrompt: `Write step-by-step instructions from this transcript:\n\n${transcript}`
     });
-    res.json({ steps: completion.choices[0].message.content.trim() });
+    res.json({ steps: content });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -178,7 +228,6 @@ app.post('/api/ai/steps', async (req, res) => {
 
 // ─── AI: Auto-detect loop points (start + end) from transcript ────────────
 app.post('/api/ai/loops', async (req, res) => {
-  if (!openai) return res.status(500).json({ error: 'OpenAI not configured.' });
   const { transcript, segments } = req.body;
   if (!transcript) return res.status(400).json({ error: 'No transcript.' });
 
@@ -187,12 +236,8 @@ app.post('/api/ai/loops', async (req, res) => {
     : transcript;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a cooking video loop editor. Given timestamped transcript segments, identify distinct cooking steps and for each one, determine:
+    const content = await getChatCompletion({
+      systemPrompt: `You are a cooking video loop editor. Given timestamped transcript segments, identify distinct cooking steps and for each one, determine:
 1. "time" — when the step STARTS (seconds, number)
 2. "endTime" — when the loop should STOP and jump back to "time" (seconds, number). This is the last moment of that action before the next step begins.
 3. "label" — short action name, max 4 words
@@ -208,15 +253,11 @@ Rules:
 - Each step must have a minimum duration of at least 3 seconds. Do not create 1-second or 2-second steps.
 - Look for transitions: "now", "next", "then", "add", "place", "stir", "cook", "remove"
 - Labels should be action verbs ("Chop onions", "Add flour", "Stir mixture")`,
-        },
-        { role: 'user', content: `Identify cooking step loop boundaries:\n\n${segmentText}` },
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens: 800,
-      temperature: 0.2,
+      userPrompt: `Identify cooking step loop boundaries:\n\n${segmentText}`,
+      jsonMode: true
     });
-
-    const result = JSON.parse(completion.choices[0].message.content);
+    
+    const result = cleanAndParseJSON(content);
     res.json({ loops: Array.isArray(result.steps) ? result.steps : [] });
   } catch (err) {
     console.error('[AI Loops] Error:', err.message);
@@ -394,9 +435,14 @@ Reply ONLY with a JSON array of strings, one description per step, in order. Exa
     );
     const data = await response.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('No JSON array found in response');
-    const descriptions = JSON.parse(match[0]);
+    let descriptions = [];
+    try {
+      descriptions = cleanAndParseJSON(text);
+    } catch (parseErr) {
+      const match = text.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('No JSON array found in response: ' + text);
+      descriptions = cleanAndParseJSON(match[0]);
+    }
     res.json({ descriptions });
   } catch (err) {
     res.status(500).json({ error: err.message });

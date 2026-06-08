@@ -6246,6 +6246,104 @@ window.previewCurrentNavStep = function() {
   previewStepLoop(currentNavStepIndex);
 };
 
+window.toggleAiToolsCollapse = function() {
+  const el = document.getElementById('aiToolsCollapse');
+  const chev = document.getElementById('aiToolsChevron');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  if (isHidden) {
+    el.style.display = 'flex';
+    if (chev) chev.textContent = '▴';
+  } else {
+    el.style.display = 'none';
+    if (chev) chev.textContent = '▾';
+  }
+};
+
+window.selectCreateStep = function(i) {
+  currentNavStepIndex = i;
+  renderCreateSteps();
+};
+
+window.showStepTranscripts = false;
+window.toggleStepTranscripts = function() {
+  window.showStepTranscripts = !window.showStepTranscripts;
+  const btn = document.getElementById('toggleStepTranscriptBtn');
+  if (btn) {
+    if (window.showStepTranscripts) {
+      btn.style.background = '#7c3aed';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+      btn.textContent = '💬 Hide Transcripts';
+    } else {
+      btn.style.background = '#f5f0ff';
+      btn.style.color = '#7c3aed';
+      btn.style.borderColor = 'rgba(124,58,237,0.3)';
+      btn.textContent = '💬 View Transcripts';
+    }
+  }
+  renderCreateSteps();
+};
+
+window.scrollStepsList = function(amount) {
+  const el = document.getElementById('createStepsList');
+  if (el) {
+    el.scrollBy({ left: amount, behavior: 'smooth' });
+    setTimeout(window.updateStepsScrollButtons, 300);
+  }
+};
+
+window.updateStepsScrollButtons = function() {
+  const el = document.getElementById('createStepsList');
+  const leftBtn = document.getElementById('stepsScrollLeftBtn');
+  const rightBtn = document.getElementById('stepsScrollRightBtn');
+  if (!el) return;
+  
+  if (leftBtn) {
+    leftBtn.style.display = el.scrollLeft > 5 ? 'flex' : 'none';
+  }
+  if (rightBtn) {
+    const remaining = el.scrollWidth - el.clientWidth - el.scrollLeft;
+    rightBtn.style.display = remaining > 15 ? 'flex' : 'none';
+  }
+};
+
+window.enableDragScroll = function(el) {
+  if (!el) return;
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  el.addEventListener('mousedown', (e) => {
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'textarea' || tag === 'input' || tag === 'button' || e.target.closest('button')) {
+      return;
+    }
+    isDown = true;
+    el.style.cursor = 'grabbing';
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+
+  el.addEventListener('mouseleave', () => {
+    isDown = false;
+    el.style.cursor = 'default';
+  });
+
+  el.addEventListener('mouseup', () => {
+    isDown = false;
+    el.style.cursor = 'default';
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    el.scrollLeft = scrollLeft - walk;
+  });
+};
+
 function renderCreateSteps() {
   if (typeof window.ensureContinuousSteps === 'function') {
     window.ensureContinuousSteps();
@@ -6255,9 +6353,19 @@ function renderCreateSteps() {
   if (!list) return;
   if (count) count.textContent = `(${createStepsArr.length})`;
 
+  // Ensure currentNavStepIndex is within bounds
+  const activeIdx = Math.max(0, Math.min(currentNavStepIndex, createStepsArr.length - 1));
+  if (createStepsArr.length > 0 && currentNavStepIndex !== activeIdx) {
+    currentNavStepIndex = activeIdx;
+  }
+
+  const fixedPanel = document.getElementById('fixedTranscriptPanel');
+  const fixedText = document.getElementById('fixedTranscriptText');
+
   if (!createStepsArr.length) {
     list.innerHTML = `<div style="color:var(--text-muted);font-weight:600;font-size:0.8rem;padding:8px 0;">No loop stops yet — run AI or tap 📍 Add Stop while playing</div>`;
     list.style.flexDirection = 'column';
+    if (fixedPanel) fixedPanel.style.display = 'none';
     refreshStepNavigator();
     return;
   }
@@ -6266,13 +6374,57 @@ function renderCreateSteps() {
   list.style.display                 = 'flex';
   list.style.flexDirection           = 'row';
   list.style.gap                     = '12px';
-  list.style.paddingBottom           = '10px';
+  list.style.paddingBottom           = '4px';
   list.style.flexWrap                = 'nowrap';
   list.style.overflowX               = 'auto';
   list.style.overflowY               = 'hidden';
   list.style.webkitOverflowScrolling = 'touch';
   list.style.maxHeight               = 'none';
+  list.style.height                  = '100%';
+  list.style.flexShrink              = '0';
 
+  // 1. Render Fixed Transcript Panel if enabled
+  if (window.showStepTranscripts) {
+    if (fixedPanel) fixedPanel.style.display = 'flex';
+    
+    // Calculate transcript for active step
+    const activeStep = createStepsArr[currentNavStepIndex];
+    if (activeStep) {
+      const activeRawEnd = activeStep.endTime ?? (createStepsArr[currentNavStepIndex + 1]?.time ?? videoDuration);
+      
+      if (!cachedSegments || !cachedSegments.length) {
+        if (fixedText) fixedText.textContent = "No transcript available. Transcribe first!";
+      } else {
+        const html = cachedSegments.map(s => {
+          const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
+          const end = Number(s.end ?? s.endTime ?? s.end_time) || (start + 5);
+          const isCurrent = (start <= activeRawEnd + 0.5) && (end >= activeStep.time - 0.5);
+          
+          if (isCurrent) {
+            return `<span class="active-transcript-segment" style="font-weight: 800; color: var(--text-heading); display: inline;">${s.text.trim()}</span>`;
+          } else {
+            return `<span style="color: var(--text-body); opacity: 0.65;">${s.text.trim()}</span>`;
+          }
+        }).join(' ');
+        
+        if (fixedText) {
+          fixedText.innerHTML = html;
+          
+          // Smooth scroll active segment into view
+          setTimeout(() => {
+            const activeEl = fixedText.querySelector('.active-transcript-segment');
+            if (activeEl) {
+              activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 50);
+        }
+      }
+    }
+  } else {
+    if (fixedPanel) fixedPanel.style.display = 'none';
+  }
+
+  // 2. Render Cards list
   list.innerHTML = createStepsArr.map((step, i) => {
     const color  = STEP_COLORS[i % STEP_COLORS.length];
     const rawEnd = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
@@ -6281,13 +6433,19 @@ function renderCreateSteps() {
     const desc = (step.description || '').replace(/"/g, '&quot;');
     const stepIngsText = Array.isArray(step.ingredients) ? step.ingredients.join('\n') : '';
 
+    const isActive = (i === currentNavStepIndex);
+    const activeStyle = isActive && window.showStepTranscripts 
+      ? `border: 3.5px solid ${color}; box-shadow: 0 0 16px rgba(124,58,237,0.3); background: #fff; transform: scale(1.01);` 
+      : `border: 2px solid ${color}; box-shadow: 0 4px 12px rgba(0,0,0,0.03); background: rgba(255,255,255,0.7);`;
+
     return `
       <div id="stepRow_${i}"
-        style="width:280px;flex-shrink:0;background:rgba(255,255,255,0.7);backdrop-filter:blur(8px);border-radius:14px;border:2px solid ${color};padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.03);box-sizing:border-box;transition:transform 0.2s ease,box-shadow 0.2s ease;height:100%;min-height:320px;"
+        onfocusin="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
+        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle}"
         class="loop-stop-card"
-        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)'"
-        onmouseleave="this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)'">
-        <div style="display:flex;align-items:center;gap:6px;">
+        onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
+        onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <div style="width:22px;height:22px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;color:#446;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.1);">${i+1}</div>
           <input value="${step.label.replace(/"/g,'&quot;')}" onchange="updateStepLabel(${i},this.value)"
             style="flex:1;min-width:0;background:transparent;border:none;font-family:var(--font);font-size:0.8rem;font-weight:800;color:var(--text-heading);outline:none;border-bottom:1px dashed transparent;"
@@ -6301,35 +6459,25 @@ function renderCreateSteps() {
             style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:6px;cursor:pointer;color:#dc2626;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
             onmouseenter="this.style.background='rgba(220,38,38,0.15)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(220,38,38,0.06)';this.style.transform='none';">×</button>
         </div>
-        <div style="font-size:0.68rem;font-weight:800;color:var(--primary);background:rgba(74,144,217,0.08);padding:4px 8px;border-radius:6px;width:fit-content;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;">
+        <div style="font-size:0.68rem;font-weight:800;color:var(--primary);background:rgba(74,144,217,0.08);padding:4px 8px;border-radius:6px;width:fit-content;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <span>⏱️</span> <span>${step.displayTime} → ${em}:${es}</span>
         </div>
-        <textarea placeholder="Add notes for this step…" rows="4"
-          onchange="updateStepDescription(${i},this.value)"
-          style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.45;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);">${desc}</textarea>
         
-        <div style="display:flex;flex-direction:column;gap:3px;">
-          <label style="font-size:0.62rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;margin-top:2px;">Step Ingredients (one per line)</label>
-          <textarea placeholder="e.g. 1 onion&#10;2 cloves garlic" rows="2"
-            onchange="window.updateStepIngredientsText(${i},this.value)"
-            style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);outline:none;line-height:1.35;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);resize:vertical;">${stepIngsText}</textarea>
+        <textarea placeholder="Add notes for this step…" style="flex:1;min-height:60px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);"
+          onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
+        
+        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+          <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;margin-top:2px;line-height:1.2;">Step Ingredients (one per line)</label>
+          <textarea placeholder="e.g. 1 onion&#10;2 cloves garlic" style="height:52px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:4px 8px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);outline:none;line-height:1.3;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);resize:none;"
+            onchange="window.updateStepIngredientsText(${i},this.value)">${stepIngsText}</textarea>
         </div>
 
-        <div style="display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:4px;">
-          <button onclick="previewStepLoop(${i})" tabindex="-1"
-            style="background:${color};border:none;border-radius:7px;padding:6px 8px;font-family:var(--font);font-size:0.7rem;font-weight:900;cursor:pointer;color:#446;flex:1;display:flex;align-items:center;justify-content:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.05);transition:transform 0.1s;"
-            onmouseenter="this.style.transform='scale(1.02)'" onmouseleave="this.style.transform='none'">▶ Loop</button>
-          <button onclick="navToStep(${i})" tabindex="-1"
-            style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px 8px;font-family:var(--font);font-size:0.7rem;font-weight:900;cursor:pointer;color:var(--text-heading);flex:1;display:flex;align-items:center;justify-content:center;gap:3px;transition:transform 0.1s;"
-            onmouseenter="this.style.transform='scale(1.02)'" onmouseleave="this.style.transform='none'">⏩ Go</button>
-          <button onclick="window.redoStepDescription(${i})" title="Regenerate description for this step's time range" tabindex="-1"
-            style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;aspect-ratio:1;flex-shrink:0;transition:background 0.15s,transform 0.1s;"
-            onmouseenter="this.style.background='rgba(0,0,0,0.05)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='none';this.style.transform='none';">🔄</button>
-          ${step.audio_url || step.audioUrl ? `
-            <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}')" title="Play Voiceover"
-              style="background:transparent;border:1px solid var(--border-card);border-radius:7px;padding:6px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;aspect-ratio:1;flex-shrink:0;transition:background 0.15s,transform 0.1s;"
-              onmouseenter="this.style.background='rgba(0,0,0,0.05)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='none';this.style.transform='none';">🔊</button>
-          ` : ''}
+        <div class="card-options-dropdown" style="margin-top:auto;padding-top:4px;flex-shrink:0;position:relative;">
+          <button onclick="window.toggleCardDropdown(event, ${i})" class="card-options-dropdown-btn" tabindex="-1"
+            style="width:100%;background:#f5f0ff;border:1.5px solid rgba(124,58,237,0.25);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:0.72rem;font-weight:800;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.15s;"
+            onmouseenter="this.style.background='#ede9ff';" onmouseleave="this.style.background='#f5f0ff';">
+            ⚙️ Edit Options ▾
+          </button>
         </div>
       </div>`;
   }).join('');
@@ -6337,7 +6485,85 @@ function renderCreateSteps() {
   if (typeof window.updateAIChecklists === 'function') {
     window.updateAIChecklists();
   }
+
+  // Set up drag scroll & horizontal scroll buttons
+  window.enableDragScroll(list);
+  list.removeEventListener('scroll', window.updateStepsScrollButtons);
+  list.addEventListener('scroll', window.updateStepsScrollButtons);
+  setTimeout(window.updateStepsScrollButtons, 50);
 }
+
+// Lazy initialization of document-level dropdown menu for step options to prevent container clipping
+window.toggleCardDropdown = function(event, i) {
+  event.stopPropagation();
+  const btn = event.currentTarget;
+  let menu = document.getElementById('cardDropdownMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'cardDropdownMenu';
+    menu.style.position = 'absolute';
+    menu.style.background = '#fff';
+    menu.style.border = '1.5px solid rgba(124,58,237,0.25)';
+    menu.style.borderRadius = '8px';
+    menu.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    menu.style.zIndex = '9999';
+    menu.style.display = 'none';
+    menu.style.overflow = 'hidden';
+    menu.style.flexDirection = 'column';
+    document.body.appendChild(menu);
+  }
+  
+  if (menu.style.display === 'flex' && menu.dataset.stepIndex === String(i)) {
+    menu.style.display = 'none';
+    return;
+  }
+  
+  menu.dataset.stepIndex = i;
+  
+  const step = createStepsArr[i];
+  const color = STEP_COLORS[i % STEP_COLORS.length];
+  
+  menu.innerHTML = `
+    <button onclick="previewStepLoop(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+      <span>▶</span> Loop Stop
+    </button>
+    <button onclick="navToStep(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+      <span>⏩</span> Go to Stop
+    </button>
+    <button onclick="window.redoStepDescription(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+      <span>🔄</span> Regenerate Description (AI)
+    </button>
+    ${step.audio_url || step.audioUrl ? `
+      <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}'); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+        <span>🔊</span> Play Voiceover Audio
+      </button>
+    ` : ''}
+  `;
+  
+  const rect = btn.getBoundingClientRect();
+  menu.style.display = 'flex';
+  
+  const menuHeight = menu.offsetHeight || 130;
+  if (rect.top - menuHeight > 10) {
+    menu.style.top = `${rect.top - menuHeight - 4 + window.scrollY}px`;
+  } else {
+    menu.style.top = `${rect.bottom + 4 + window.scrollY}px`;
+  }
+  menu.style.left = `${rect.left + window.scrollX}px`;
+  menu.style.width = `${rect.width}px`;
+};
+
+window.closeCardDropdown = function() {
+  const menu = document.getElementById('cardDropdownMenu');
+  if (menu) menu.style.display = 'none';
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#cardDropdownMenu') && !e.target.closest('.card-options-dropdown-btn')) {
+    window.closeCardDropdown();
+  }
+});
+window.addEventListener('scroll', window.closeCardDropdown, true);
 
 window.mergeCreateStep = function(i) {
   if (i < 0 || i >= createStepsArr.length - 1) return;
@@ -6407,8 +6633,10 @@ window.redoStepDescription = async function(i) {
     if (data.error) throw new Error(data.error);
 
     const newDesc = data.descriptions?.[0];
-    if (newDesc) {
-      step.description = newDesc;
+    const nextStart = createStepsArr[i + 1]?.time ?? videoDuration;
+    const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+    if (wordForWordDesc || newDesc) {
+      step.description = wordForWordDesc || newDesc;
       showTip(`✅ Regenerated description for step ${i + 1}!`);
     } else {
       step.description = originalText;
@@ -7055,6 +7283,16 @@ function setAIStatus(msg, show = true) {
   if (tx) tx.textContent   = msg;
 }
 
+window.getTranscriptForTimeRange = function(startTime, endTime) {
+  if (!cachedSegments || !cachedSegments.length) return "";
+  const filtered = cachedSegments.filter(s => {
+    const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
+    const end = Number(s.end ?? s.endTime ?? s.end_time) || (start + 5);
+    return (start <= endTime + 0.5) && (end >= startTime - 0.5);
+  });
+  return filtered.map(s => s.text.trim()).join(' ');
+};
+
 // ── Step 1: Transcribe ─────────────────────────────────────────────────────
 window.transcribeVideo = async function() {
   if (typeof checkForceFreshAI === 'function') {
@@ -7096,11 +7334,14 @@ window.transcribeVideo = async function() {
             const mm  = Math.floor(t / 60);
             const ss  = Math.floor(t % 60).toString().padStart(2, '0');
             
+            const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
+            const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+
             return {
               time: t,
               endTime: end,
               label: l.label || `Step ${i+1}`,
-              description: l.instruction || gem.steps?.[i] || '',
+              description: wordForWordDesc || l.instruction || gem.steps?.[i] || '',
               ingredients: l.ingredients || [],
               displayTime: `${mm}:${ss}`
             };
@@ -7289,17 +7530,19 @@ window.generateLoops = async function() {
     }
 
     // Replace timeline steps with AI-detected ones (with start AND end times)
-    createStepsArr = loops.map(l => {
+    createStepsArr = loops.map((l, idx) => {
       const t   = Number(l.time) || 0;
       const end = l.endTime != null ? Number(l.endTime) : null;
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60).toString().padStart(2, '0');
+      const nextStart = loops[idx+1]?.time ?? videoDuration;
+      const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
       return {
         time:        t,
         endTime:     end,
         label:       l.label || 'Step',
         displayTime: `${m}:${s}`,
-        description: '',
+        description: wordForWordDesc || '',
         ingredients: []
       };
     }).sort((a, b) => a.time - b.time);
@@ -7454,16 +7697,29 @@ window.aiWriteStepDescriptions = async function() {
       endTime: s.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration),
     }));
     const videoUrl = document.getElementById('uploadedVideoPlayer')?.src || window._uploadedVideoUrl || '';
-    const res = await fetch('/api/ai/describe-steps', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ steps, videoUrl, segments: cachedSegments }),
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    let descriptions = [];
+    try {
+      const res = await fetch('/api/ai/describe-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steps, videoUrl, segments: cachedSegments }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        console.warn('describe-steps returned error, using local transcript fallback:', data.error);
+      } else {
+        descriptions = data.descriptions || [];
+      }
+    } catch (describeErr) {
+      console.warn('describe-steps API call failed, using local transcript fallback:', describeErr);
+    }
+
     // Apply descriptions
-    (data.descriptions || []).forEach((desc, i) => {
-      if (createStepsArr[i]) createStepsArr[i].description = desc;
+    createStepsArr.forEach((step, i) => {
+      const desc = descriptions[i] || '';
+      const nextStart = createStepsArr[i+1]?.time ?? videoDuration;
+      const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+      step.description = wordForWordDesc || desc || step.description || '';
     });
     renderCreateSteps();
     showTip('✅ Descriptions written! Edit any card to customize.');
@@ -7515,11 +7771,14 @@ window.aiDoEverything = async function() {
         const mm  = Math.floor(t / 60);
         const ss  = Math.floor(t % 60).toString().padStart(2, '0');
         
+        const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
+        const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+
         return {
           time: t,
           endTime: end,
           label: l.label || `Step ${i+1}`,
-          description: l.instruction || gem.steps?.[i] || '',
+          description: wordForWordDesc || l.instruction || gem.steps?.[i] || '',
           ingredients: l.ingredients || [],
           displayTime: `${mm}:${ss}`
         };
@@ -7669,6 +7928,124 @@ window.doItAll = async function() {
       overlayBtn.disabled = false;
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
+    }
+  }
+};
+
+window.createStepsFromTranscript = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
+  const btn = document.getElementById('aiStepsFromTranscriptBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ 1/3: Transcript...';
+  }
+
+  try {
+    let textVal = document.getElementById('transcriptText')?.value?.trim() || cachedTranscript;
+    if (!textVal) {
+      setAIStatus('🎤 Step 1/3: Generating video transcript...', true);
+      showTip('🎤 Transcribing audio...');
+      await window.transcribeVideo();
+      
+      textVal = document.getElementById('transcriptText')?.value?.trim() || cachedTranscript;
+      if (!textVal) {
+        throw new Error('Could not generate transcript. Please transcribe first.');
+      }
+      showTip('🎙️ Transcript successfully created!');
+    } else {
+      showTip('📖 Using current transcript to build steps...');
+    }
+
+    // 2. Detect loop stops from transcript
+    if (btn) btn.textContent = '⏳ 2/3: Loops...';
+    setAIStatus('🔁 Step 2/3: Detecting loop timestamps...', true);
+    const loopsRes = await fetch('/api/ai/loops', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: textVal, segments: cachedSegments }),
+    });
+    const loopsData = await loopsRes.json();
+    if (loopsData.error) throw new Error(loopsData.error);
+
+    const loops = loopsData.loops || [];
+    if (!loops.length) {
+      throw new Error('No loop steps detected in the transcript text.');
+    }
+
+    // Temporarily map detected loops
+    let tempSteps = loops.map((l, i) => {
+      const t = Number(l.time) || 0;
+      const end = l.endTime != null ? Number(l.endTime) : null;
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60).toString().padStart(2, '0');
+      return {
+        time: t,
+        endTime: end,
+        label: l.label || `Step ${i+1}`,
+        displayTime: `${m}:${s}`,
+        description: '⏳ Writing instruction...',
+        ingredients: []
+      };
+    }).sort((a, b) => a.time - b.time);
+
+    // Render temporary steps so user sees progress
+    createStepsArr = tempSteps;
+    renderCreateSteps();
+    renderTimeline();
+
+    // 3. Write descriptions & ingredients for these loop stops from segments
+    if (btn) btn.textContent = '⏳ 3/3: Steps...';
+    setAIStatus('✍️ Step 3/3: Writing descriptions & ingredients...', true);
+    const stepsPayload = tempSteps.map(s => ({
+      label: s.label,
+      startTime: s.time,
+      endTime: s.endTime ?? (s.time + 5)
+    }));
+
+    let descriptions = [];
+    try {
+      const describeRes = await fetch('/api/ai/describe-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steps: stepsPayload, segments: cachedSegments }),
+      });
+      const describeData = await describeRes.json();
+      if (describeData.error) {
+        console.warn('describe-steps returned error, using local transcript fallback:', describeData.error);
+      } else {
+        descriptions = describeData.descriptions || [];
+      }
+    } catch (describeErr) {
+      console.warn('describe-steps API call failed, using local transcript fallback:', describeErr);
+    }
+    
+    // Apply descriptions and ingredients
+    createStepsArr = tempSteps.map((step, idx) => {
+      const descText = descriptions[idx] || '';
+      const parsed = window.parseDescriptionAndIngredients(descText);
+      const nextStart = tempSteps[idx+1]?.time ?? videoDuration;
+      const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+      return {
+        ...step,
+        description: wordForWordDesc || parsed.description || '',
+        ingredients: parsed.ingredients || []
+      };
+    });
+
+    renderCreateSteps();
+    renderTimeline();
+    
+    setAIStatus(`🎉 Successfully created ${createStepsArr.length} steps from transcript!`, true);
+    showTip(`✅ Steps successfully created based off transcript!`);
+  } catch (err) {
+    setAIStatus('❌ ' + (err.message || 'Error.'), true);
+    showTip('❌ Failed: ' + (err.message || 'Error.'));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📝 Create Steps from Transcript';
     }
   }
 };
