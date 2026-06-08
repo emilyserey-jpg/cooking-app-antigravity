@@ -182,7 +182,7 @@
         <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
         <div style="flex:1;">
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=6uSMDuHJTmo" value="https://www.youtube.com/watch?v=6uSMDuHJTmo">
         </div>
          <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
           Load Video
@@ -279,7 +279,7 @@
 
     // Default URLs for demonstration
     const platformDefaults = {
-      youtube: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      youtube: "https://www.youtube.com/watch?v=6uSMDuHJTmo",
       tiktok: "https://www.tiktok.com/@dannygrubs/video/7187123985012351234",
       instagram: "https://www.instagram.com/reel/C8_W9oUpye0/"
     };
@@ -301,7 +301,7 @@
       if (platform === 'youtube') {
         icon.textContent = "🔴";
         label.textContent = "Paste YouTube Video or Short URL";
-        input.placeholder = "e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        input.placeholder = "e.g. https://www.youtube.com/watch?v=6uSMDuHJTmo";
       } else if (platform === 'tiktok') {
         icon.textContent = "🎵";
         label.textContent = "Paste TikTok Video URL";
