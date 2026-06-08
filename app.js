@@ -2032,9 +2032,35 @@ function addRecipeIngredientsToGrocery() {
 }
 
 function mySpaceInit() {
-  renderBentoCalendar();
-  renderBentoGrocery();
-  updateStreakCount();
+  // Bio
+  if (typeof mySpaceLoadData === 'function') {
+    const data = mySpaceLoadData();
+    const bioText = document.getElementById('mySpaceBioText');
+    if (bioText && data.bio) {
+      bioText.textContent = data.bio;
+      bioText.style.fontStyle = 'normal';
+    }
+  }
+
+  // Sign-in / Sign-out button visibility
+  const signInBtn = document.getElementById('mySpaceSignInBtn');
+  const signOutBtn = document.getElementById('mySpaceSignOutBtn');
+  if (signInBtn) signInBtn.style.display = currentUser ? 'none' : '';
+  if (signOutBtn) signOutBtn.style.display = currentUser ? '' : 'none';
+
+  // Legacy channel button if it exists
+  const channelBtn = document.getElementById('mySpaceChannelBtn');
+  if (channelBtn) channelBtn.style.display = currentUser ? '' : 'none';
+
+  // Folder strip
+  if (typeof mySpaceRenderFolderStrip === 'function') {
+    mySpaceRenderFolderStrip();
+  }
+
+  // Bento Widgets
+  if (typeof renderBentoCalendar === 'function') renderBentoCalendar();
+  if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
+  if (typeof updateStreakCount === 'function') updateStreakCount();
 }
 
 // Expose bento and ingredients logic globally for inline HTML click handlers
@@ -2736,25 +2762,7 @@ function mySpaceRenderFolderStrip() {
   }).join('') + addBtn;
 }
 
-// ── Banner init ───────────────────────────────────────────────────────────
-function mySpaceInit() {
-  // Bio
-  const data = mySpaceLoadData();
-  const bioText = document.getElementById('mySpaceBioText');
-  if (bioText && data.bio) {
-    bioText.textContent = data.bio;
-    bioText.style.fontStyle = 'normal';
-  }
 
-  // Sign-in / My Channel button visibility
-  const signInBtn   = document.getElementById('mySpaceSignInBtn');
-  const channelBtn  = document.getElementById('mySpaceChannelBtn');
-  if (signInBtn)  signInBtn.style.display  = currentUser ? 'none' : '';
-  if (channelBtn) channelBtn.style.display = currentUser ? '' : 'none';
-
-  // Folder strip
-  mySpaceRenderFolderStrip();
-}
 
 window.filterProfileRecipes = function(filter) {
   // Update active tab styling
