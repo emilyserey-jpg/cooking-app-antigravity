@@ -199,6 +199,19 @@
           <div id="yt-player"></div>
         </div>
         
+        <!-- Step Navigation Control Panel -->
+        <div class="glass-card" style="padding:12px; display:flex; gap:10px; justify-content:space-between; align-items:center;">
+          <button onclick="prevStep()" class="btn" style="flex:1; padding:8px; font-weight:800; font-size:0.8rem; display:flex; align-items:center; justify-content:center; gap:4px; border:2px solid var(--border-card); background:#fff; cursor:pointer;">
+            ◀ Prev Step
+          </button>
+          <button onclick="togglePlay()" id="play-pause-btn" class="btn btn-primary" style="flex:1.2; padding:8px; font-weight:900; font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:4px; border-radius:10px; cursor:pointer;">
+            ⏸️ Pause Loop
+          </button>
+          <button onclick="nextStep()" class="btn" style="flex:1; padding:8px; font-weight:800; font-size:0.8rem; display:flex; align-items:center; justify-content:center; gap:4px; border:2px solid var(--border-card); background:#fff; cursor:pointer;">
+            Next Step ▶
+          </button>
+        </div>
+
         <!-- Live Playback Status overlay card -->
         <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -327,11 +340,18 @@
 
     function onPlayerStateChange(event) {
       const stateLbl = document.getElementById('player-state-lbl');
+      const btn = document.getElementById('play-pause-btn');
       switch (event.data) {
         case YT.PlayerState.UNSTARTED: stateLbl.textContent = "Unstarted"; break;
         case YT.PlayerState.ENDED: stateLbl.textContent = "Ended"; break;
-        case YT.PlayerState.PLAYING: stateLbl.textContent = "Playing 🟢"; break;
-        case YT.PlayerState.PAUSED: stateLbl.textContent = "Paused ⏸️"; break;
+        case YT.PlayerState.PLAYING: 
+          stateLbl.textContent = "Playing 🟢"; 
+          if (btn) btn.innerHTML = '⏸️ Pause Loop';
+          break;
+        case YT.PlayerState.PAUSED: 
+          stateLbl.textContent = "Paused ⏸️"; 
+          if (btn) btn.innerHTML = '▶️ Play Video';
+          break;
         case YT.PlayerState.BUFFERING: stateLbl.textContent = "Buffering... ⏳"; break;
         case YT.PlayerState.CUED: stateLbl.textContent = "Video Cued"; break;
       }
@@ -415,11 +435,47 @@
       }
     }
 
+    window.prevStep = function() {
+      if (activeStepIndex > 0) {
+        selectStep(activeStepIndex - 1);
+      }
+    };
+
+    window.nextStep = function() {
+      if (activeStepIndex < steps.length - 1) {
+        selectStep(activeStepIndex + 1);
+      }
+    };
+
+    window.togglePlay = function() {
+      if (activePlatform !== 'youtube' || !ytPlayer) return;
+      const btn = document.getElementById('play-pause-btn');
+      try {
+        const state = ytPlayer.getPlayerState();
+        if (state === YT.PlayerState.PLAYING) {
+          ytPlayer.pauseVideo();
+          if (btn) btn.innerHTML = '▶️ Play Video';
+        } else {
+          ytPlayer.playVideo();
+          if (btn) btn.innerHTML = '⏸️ Pause Loop';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
     function updateStepTime(index, field, val) {
       const num = Number(val);
       if (isNaN(num) || num < 0) return;
       steps[index][field] = num;
       renderPrototypeSteps();
+      
+      // If we edited the start time of the active step, instantly seek to it!
+      if (index === activeStepIndex && field === 'start') {
+        if (activePlatform === 'youtube' && ytPlayer && typeof ytPlayer.seekTo === 'function') {
+          ytPlayer.seekTo(num, true);
+        }
+      }
     }
 
     function addNewStep() {
