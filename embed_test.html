@@ -182,7 +182,7 @@
         <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
         <div style="flex:1;">
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/shorts/zRz7QvVlEJs">
+          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
         </div>
         <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
           Load Video
@@ -251,7 +251,7 @@
 
     // Default URLs for demonstration
     const platformDefaults = {
-      youtube: "https://www.youtube.com/shorts/zRz7QvVlEJs",
+      youtube: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       tiktok: "https://www.tiktok.com/@dannygrubs/video/7187123985012351234",
       instagram: "https://www.instagram.com/reel/C8_W9oUpye0/"
     };
@@ -289,9 +289,10 @@
 
     // Called automatically by YouTube Iframe API
     function onYouTubeIframeAPIReady() {
-      // Initialize only if we are on YouTube
       if (activePlatform === 'youtube') {
-        initYoutubePlayer("zRz7QvVlEJs");
+        const defaultUrl = document.getElementById('url-input').value;
+        const defaultId = getYouTubeId(defaultUrl) || "dQw4w9WgXcQ"; // Fallback to a guaranteed online video
+        initYoutubePlayer(defaultId);
       }
     }
 
@@ -457,7 +458,11 @@
       if (loopInterval) clearInterval(loopInterval);
 
       if (activePlatform === 'youtube') {
-        const id = getYouTubeId(url) || "zRz7QvVlEJs";
+        const id = getYouTubeId(url);
+        if (!id) {
+          alert("❌ Invalid YouTube URL! Could not extract an 11-digit video ID. Please check the URL.");
+          return;
+        }
         initYoutubePlayer(id);
         
         infoHeader.textContent = "💡 How this prototype works:";
@@ -515,7 +520,7 @@
 
     // Helpers
     function getYouTubeId(url) {
-      var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=||shorts\/)([^#\&\?]*).*/;
+      var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
       var match = url.match(regExp);
       return (match && match[2].length == 11) ? match[2] : null;
     }
