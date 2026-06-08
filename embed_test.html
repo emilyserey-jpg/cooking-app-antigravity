@@ -182,7 +182,7 @@
         <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
         <div style="flex:1.2; min-width: 0;">
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-          <input type="text" id="url-input" class="input-field" placeholder="Paste YouTube, TikTok, or Instagram Reel URL..." value="" style="width:100%; box-sizing:border-box;">
+          <input type="text" id="url-input" class="input-field" placeholder="Paste YouTube, TikTok, or Instagram Reel URL..." value="" style="width:100%; box-sizing:border-box;" onkeydown="if(event.key === 'Enter') { loadCustomVideo(); }">
         </div>
 
         <!-- AI Status Log Box (inline) -->
