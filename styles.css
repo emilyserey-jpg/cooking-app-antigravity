@@ -16,7 +16,9 @@
   --primary:       #4a90d9;
   --primary-light: #6aaee8;
   --primary-dark:  #2f72b8;
+  --primary-hover: #2f72b8;
   --primary-soft:  rgba(74, 144, 217, 0.12);
+  --primary-glow:  rgba(74, 144, 217, 0.35);
 
   --green:         #5cb85c;
   --green-soft:    rgba(92, 184, 92, 0.12);

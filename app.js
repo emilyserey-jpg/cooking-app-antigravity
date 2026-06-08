@@ -839,6 +839,9 @@ function updateStepDetailsUI() {
   
   // Update mobile done button checkbox state
   updatePlayerMarkDoneButton();
+
+  // Update step timers
+  updatePlayerTimerUI();
   
   // Update chips class active
   document.querySelectorAll('.step-chip').forEach((c, idx) => {
@@ -1252,6 +1255,10 @@ function updateDetailFields() {
   if (titleInput) titleInput.value = step.title;
   if (instrInput) instrInput.value = step.instruction;
   if (subsInput) subsInput.value = step.subLoops ? step.subLoops.join(', ') : '';
+
+  if (typeof renderSidebarTimersList === 'function') {
+    renderSidebarTimersList();
+  }
 }
 
 function saveStepDetailsFromInputs() {
@@ -1261,6 +1268,21 @@ function saveStepDetailsFromInputs() {
   
   step.title = newTitle;
   step.instruction = newInstr;
+  
+  // Auto-detect timers from the typed text!
+  const parsedTimers = window.parseMultipleTimersFromText(newInstr);
+  if (parsedTimers && parsedTimers.length > 0) {
+    step.timers = parsedTimers;
+    step.timer = parsedTimers[0].duration;
+  }
+  
+  // Update sidebar list and player display
+  if (typeof renderSidebarTimersList === 'function') {
+    renderSidebarTimersList();
+  }
+  if (typeof updatePlayerTimerUI === 'function') {
+    updatePlayerTimerUI();
+  }
   
   // Live update displays
   document.getElementById('mobileStepTitle').innerText = newTitle;
@@ -2481,6 +2503,8 @@ window.saveDraft = async function() {
         description: s.description || '',
         ingredients: s.ingredients || [],
         audio_url:   s.audio_url || s.audioUrl || '',
+        timer:       s.timer,
+        timers:      s.timers || (s.timer ? [{ duration: Number(s.timer), label: 'Timer 1' }] : [])
       })),
       video_url: videoUrl,
       thumbnail_url: thumbnailUrl,
@@ -2871,6 +2895,7 @@ window.loadRecipeToEditor = function(recipe) {
       description: details.description,
       ingredients: details.ingredients,
       audio_url: l.audio_url || l.audioUrl || '',
+      timer: l.timer != null ? Number(l.timer) : null
     };
   }).sort((a, b) => a.time - b.time);
 
@@ -2942,6 +2967,8 @@ window.loadPlayerRecipe = async function(recipeId) {
         title: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
         instruction: l.description || '',
         audio_url: l.audio_url || l.audioUrl || '',
+        timer: l.timer,
+        timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
       }));
     } else {
       recipeData.loops = [0, recipeData.duration];
@@ -3270,6 +3297,10 @@ function parseLoops(rawLoops) {
       end:   (entry.end != null || entry.endTime != null) ? Number(entry.end ?? entry.endTime) : null,
       label: entry.label ?? null,
       description: entry.description ?? '',
+      ingredients: entry.ingredients ?? [],
+      audio_url: entry.audio_url ?? entry.audioUrl ?? '',
+      timer: entry.timer ?? null,
+      timers: entry.timers ?? null
     };
   });
 }
@@ -5433,7 +5464,7 @@ async function autoAnalyzeWithAI() {
         const end = l.endTime != null ? Number(l.endTime) : null;
         const m   = Math.floor(t / 60);
         const s   = Math.floor(t % 60).toString().padStart(2, '0');
-        return { time: t, endTime: end, label: l.label || 'Step', displayTime: `${m}:${s}`, description: '', ingredients: [] };
+        return { time: t, endTime: end, label: l.label || 'Step', displayTime: `${m}:${s}`, description: '', ingredients: [], timer: null };
       }).sort((a, b) => a.time - b.time);
 
       renderCreateSteps();
@@ -6382,6 +6413,18 @@ function renderCreateSteps() {
   list.style.maxHeight               = 'none';
   list.style.height                  = '100%';
   list.style.flexShrink              = '0';
+  list.style.touchAction             = 'pan-x pan-y';
+
+  // Stop propagation of touch events to prevent swiping the parent carousel when scrolling loop stops horizontally
+  if (!list.dataset.touchListenerAdded) {
+    list.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+    list.addEventListener('touchmove', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+    list.dataset.touchListenerAdded = 'true';
+  }
 
   // 1. Render Fixed Transcript Panel if enabled
   if (window.showStepTranscripts) {
@@ -6426,6 +6469,19 @@ function renderCreateSteps() {
 
   // 2. Render Cards list
   list.innerHTML = createStepsArr.map((step, i) => {
+    // Normalize step.timers: if not yet initialized, parse from description or legacy timer
+    if (step.timers === undefined) {
+      const parsed = window.parseMultipleTimersFromText(step.description);
+      if (parsed && parsed.length > 0) {
+        step.timers = parsed;
+        step.timer = parsed[0].duration;
+      } else if (step.timer) {
+        step.timers = [{ duration: Number(step.timer), label: 'Timer 1' }];
+      } else {
+        step.timers = [];
+      }
+    }
+
     const color  = STEP_COLORS[i % STEP_COLORS.length];
     const rawEnd = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
     const em = Math.floor(rawEnd / 60);
@@ -6441,7 +6497,7 @@ function renderCreateSteps() {
     return `
       <div id="stepRow_${i}"
         onfocusin="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
-        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle}"
+        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle}"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -6452,7 +6508,7 @@ function renderCreateSteps() {
             onfocus="this.style.borderBottomColor='var(--primary)'" onblur="this.style.borderBottomColor='transparent'">
           ${i < createStepsArr.length - 1 ? `
             <button onclick="window.mergeCreateStep(${i})" title="Merge with next step" tabindex="-1"
-              style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:6px;cursor:pointer;color:#16a34a;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
+               style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:6px;cursor:pointer;color:#16a34a;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
               onmouseenter="this.style.background='rgba(22,163,74,0.18)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(22,163,74,0.08)';this.style.transform='none';">🔗</button>
           ` : ''}
           <button onclick="removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
@@ -6461,6 +6517,33 @@ function renderCreateSteps() {
         </div>
         <div style="font-size:0.68rem;font-weight:800;color:var(--primary);background:rgba(74,144,217,0.08);padding:4px 8px;border-radius:6px;width:fit-content;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <span>⏱️</span> <span>${step.displayTime} → ${em}:${es}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:4px;background:rgba(124,58,237,0.03);border:1px solid rgba(124,58,237,0.12);padding:6px;border-radius:8px;flex-shrink:0;box-sizing:border-box;width:100%;">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:2px;">
+            <span style="font-size:0.65rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:3px;white-space:nowrap;">⏳ Timers (${(step.timers || []).length}):</span>
+            <button onclick="window.addStepTimer(${i})" style="border:none;background:rgba(124,58,237,0.1);color:#7c3aed;font-family:var(--font);font-size:0.62rem;font-weight:800;border-radius:4px;padding:2px 6px;cursor:pointer;">＋ Add</button>
+          </div>
+          <div id="step-timers-list-${i}">
+            ${(step.timers || []).map((t, tIdx) => `
+              <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;width:100%;">
+                <input type="text" placeholder="Label" value="${t.label || ''}" 
+                  onchange="window.updateStepTimerLabel(${i}, ${tIdx}, this.value)"
+                  style="flex:1;min-width:0;background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:4px;font-size:0.65rem;font-weight:700;padding:2px 4px;outline:none;color:var(--text-heading);height:18px;" />
+                <input type="number" min="0" placeholder="Min" 
+                  value="${t.duration ? Math.floor(t.duration / 60) : ''}" 
+                  onchange="window.updateStepTimerDurationMin(${i}, ${tIdx}, this.value)"
+                  style="width:32px;background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:4px;font-size:0.65rem;font-weight:700;text-align:center;padding:1px 0;outline:none;color:var(--text-heading);height:18px;" />
+                <span style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">m</span>
+                <input type="number" min="0" max="59" placeholder="Sec" 
+                  value="${t.duration ? t.duration % 60 : ''}" 
+                  onchange="window.updateStepTimerDurationSec(${i}, ${tIdx}, this.value)"
+                  style="width:26px;background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:4px;font-size:0.65rem;font-weight:700;text-align:center;padding:1px 0;outline:none;color:var(--text-heading);height:18px;" />
+                <span style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">s</span>
+                <button onclick="window.removeStepTimer(${i}, ${tIdx})" title="Delete Timer" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:0.75rem;padding:0 2px;line-height:1;margin-left:2px;">×</button>
+              </div>
+            `).join('')}
+          </div>
         </div>
         
         <textarea placeholder="Add notes for this step…" style="flex:1;min-height:60px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);"
@@ -6635,8 +6718,9 @@ window.redoStepDescription = async function(i) {
     const newDesc = data.descriptions?.[0];
     const nextStart = createStepsArr[i + 1]?.time ?? videoDuration;
     const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-    if (wordForWordDesc || newDesc) {
-      step.description = wordForWordDesc || newDesc;
+    if (newDesc || wordForWordDesc) {
+      step.description = newDesc || wordForWordDesc;
+      delete step.timers; // force auto-detection of new timers!
       showTip(`✅ Regenerated description for step ${i + 1}!`);
     } else {
       step.description = originalText;
@@ -6755,11 +6839,108 @@ window.stepDragEnd = function(e) {
 };
 
 window.updateStepLabel       = (i, v) => { if (createStepsArr[i]) createStepsArr[i].label = v; renderTimeline(); };
-window.updateStepDescription = (i, v) => { if (createStepsArr[i]) createStepsArr[i].description = v; };
+window.updateStepDescription = (i, v) => {
+  if (createStepsArr[i]) {
+    createStepsArr[i].description = v;
+    if (!createStepsArr[i].timers || createStepsArr[i].timers.length === 0) {
+      delete createStepsArr[i].timers;
+      renderCreateSteps();
+    }
+  }
+};
 window.updateStepIngredientsText = (i, val) => {
   if (createStepsArr[i]) {
     createStepsArr[i].ingredients = val.split('\n').map(x => x.trim()).filter(Boolean);
   }
+};
+
+window.updateStepTimerMinutes = (i, v) => {
+  const step = createStepsArr[i];
+  if (!step) return;
+  const currentSeconds = step.timer ? step.timer % 60 : 0;
+  const minutes = Math.max(0, parseInt(v) || 0);
+  if (minutes === 0 && currentSeconds === 0) {
+    step.timer = null;
+  } else {
+    step.timer = minutes * 60 + currentSeconds;
+  }
+  
+  // Keep step.timers synced
+  step.timers = step.timers || [];
+  if (step.timers.length === 0) {
+    step.timers.push({ duration: step.timer || 0, label: 'Timer 1' });
+  } else {
+    step.timers[0].duration = step.timer || 0;
+  }
+  
+  renderTimeline();
+};
+
+window.updateStepTimerSeconds = (i, v) => {
+  const step = createStepsArr[i];
+  if (!step) return;
+  const minutes = step.timer ? Math.floor(step.timer / 60) : 0;
+  const seconds = Math.max(0, Math.min(59, parseInt(v) || 0));
+  if (minutes === 0 && seconds === 0) {
+    step.timer = null;
+  } else {
+    step.timer = minutes * 60 + seconds;
+  }
+  
+  // Keep step.timers synced
+  step.timers = step.timers || [];
+  if (step.timers.length === 0) {
+    step.timers.push({ duration: step.timer || 0, label: 'Timer 1' });
+  } else {
+    step.timers[0].duration = step.timer || 0;
+  }
+  
+  renderTimeline();
+};
+
+window.addStepTimer = (i) => {
+  const step = createStepsArr[i];
+  if (!step) return;
+  step.timers = step.timers || [];
+  step.timers.push({ duration: 60, label: `Timer ${step.timers.length + 1}` });
+  step.timer = step.timers[0].duration;
+  renderCreateSteps();
+  renderTimeline();
+};
+
+window.removeStepTimer = (i, tIdx) => {
+  const step = createStepsArr[i];
+  if (!step || !step.timers) return;
+  step.timers.splice(tIdx, 1);
+  step.timer = step.timers.length > 0 ? step.timers[0].duration : null;
+  renderCreateSteps();
+  renderTimeline();
+};
+
+window.updateStepTimerLabel = (i, tIdx, val) => {
+  const step = createStepsArr[i];
+  if (!step || !step.timers || !step.timers[tIdx]) return;
+  step.timers[tIdx].label = val.trim();
+};
+
+window.updateStepTimerDurationMin = (i, tIdx, val) => {
+  const step = createStepsArr[i];
+  if (!step || !step.timers || !step.timers[tIdx]) return;
+  const currentSec = step.timers[tIdx].duration % 60;
+  const min = Math.max(0, parseInt(val) || 0);
+  step.timers[tIdx].duration = min * 60 + currentSec;
+  step.timer = step.timers[0].duration;
+  renderTimeline();
+};
+
+window.updateStepTimerDurationSec = (i, tIdx, val) => {
+  const step = createStepsArr[i];
+  if (!step || !step.timers || !step.timers[tIdx]) return;
+  const min = Math.floor(step.timers[tIdx].duration / 60);
+  const sec = Math.max(0, Math.min(59, parseInt(val) || 0));
+  step.timers[tIdx].duration = min * 60 + sec;
+  step.timer = step.timers[0].duration;
+  renderTimeline();
 };
 window.parseDescriptionAndIngredients = function(text, existingIngs) {
   let description = (text || '').trim();
@@ -7085,6 +7266,8 @@ window.saveNewRecipe = async function(targetFolderId) {
       description: s.description || '',
       ingredients: s.ingredients || [],
       audio_url:   s.audio_url || s.audioUrl || '',
+      timer:       s.timer,
+      timers:      s.timers || (s.timer ? [{ duration: Number(s.timer), label: 'Timer 1' }] : [])
     }));
 
     const thumbnailUrl = await ensureThumbnailUrl();
@@ -7293,6 +7476,125 @@ window.getTranscriptForTimeRange = function(startTime, endTime) {
   return filtered.map(s => s.text.trim()).join(' ');
 };
 
+window.parseTimerFromText = function(text) {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  
+  // Match patterns like "20 minutes", "10 min", "1 hour", "1.5 hours", "45 seconds", "20-30 minutes"
+  const regex = /(\d+(?:\.\d+)?)\s*(hour|hr|minute|min|second|sec)s?\b/g;
+  let match;
+  let totalSeconds = 0;
+  
+  while ((match = regex.exec(lower)) !== null) {
+    const value = parseFloat(match[1]);
+    const unit = match[2];
+    
+    if (unit.startsWith('hour') || unit.startsWith('hr')) {
+      totalSeconds += value * 3600;
+    } else if (unit.startsWith('minute') || unit.startsWith('min')) {
+      totalSeconds += value * 60;
+    } else if (unit.startsWith('second') || unit.startsWith('sec')) {
+      totalSeconds += value;
+    }
+  }
+  
+  if (totalSeconds > 0) return totalSeconds;
+
+  // Word fallbacks
+  if (lower.includes('half an hour') || lower.includes('half-hour')) {
+    return 1800;
+  }
+  if (lower.includes('a minute') || lower.includes('one minute')) {
+    return 60;
+  }
+  if (lower.includes('an hour') || lower.includes('one hour')) {
+    return 3600;
+  }
+  
+  return null;
+};
+
+window.parseMultipleTimersFromText = function(text) {
+  if (!text) return [];
+  const timers = [];
+  const lower = text.toLowerCase();
+  
+  // Clean sentences/clauses
+  const clauses = text.split(/[.;,\n]/);
+  for (let clause of clauses) {
+    clause = clause.trim();
+    if (!clause) continue;
+    
+    // Pattern to match digits followed by hour/minute/second
+    const regex = /(\b[\w\s-]{1,30})?\b(\d+(?:\.\d+)?)\s*(hour|hr|minute|min|second|sec)s?\b/i;
+    const match = clause.match(regex);
+    if (match) {
+      const prefix = (match[1] || '').trim();
+      const value = parseFloat(match[2]);
+      const unit = match[3].toLowerCase();
+      
+      let duration = 0;
+      if (unit.startsWith('hour') || unit.startsWith('hr')) {
+        duration = value * 3600;
+      } else if (unit.startsWith('minute') || unit.startsWith('min')) {
+        duration = value * 60;
+      } else if (unit.startsWith('second') || unit.startsWith('sec')) {
+        duration = value;
+      }
+      
+      if (duration > 0) {
+        let label = '';
+        const keywords = ['bake', 'simmer', 'boil', 'rest', 'cook', 'heat', 'roast', 'fry', 'sear', 'chill', 'freeze', 'cool', 'steam', 'whisk', 'knead', 'rise', 'proof', 'steep', 'microwave', 'sauté', 'saute', 'cover'];
+        
+        // Find keyword in prefix first
+        let foundKeyword = keywords.find(k => prefix.toLowerCase().includes(k));
+        if (foundKeyword) {
+          const idx = prefix.toLowerCase().indexOf(foundKeyword);
+          label = prefix.substring(idx).replace(/\s+for\s*$/i, '').trim();
+          if (label.length > 25) label = label.substring(0, 25) + '...';
+          label = label.charAt(0).toUpperCase() + label.slice(1);
+        } else {
+          // Look in active clause
+          foundKeyword = keywords.find(k => clause.toLowerCase().includes(k));
+          if (!foundKeyword) {
+            // Look in the entire instruction text
+            foundKeyword = keywords.find(k => lower.includes(k));
+          }
+          
+          if (foundKeyword) {
+            label = foundKeyword.charAt(0).toUpperCase() + foundKeyword.slice(1);
+          } else if (prefix && !['about', 'around', 'for', 'approx', 'approximately', 'another'].includes(prefix.toLowerCase())) {
+            label = prefix.replace(/\s+for\s*$/i, '').trim();
+            if (label.length > 20) label = label.substring(0, 20) + '...';
+            label = label.charAt(0).toUpperCase() + label.slice(1);
+          }
+        }
+        
+        if (!label || label.toLowerCase() === 'timer' || label === 'For') {
+          label = `Timer ${timers.length + 1}`;
+        }
+        
+        if (!timers.some(t => t.duration === duration && t.label === label)) {
+          timers.push({ duration, label });
+        }
+      }
+    }
+  }
+  
+  // Word fallbacks if nothing matched
+  if (timers.length === 0) {
+    if (lower.includes('half an hour') || lower.includes('half-hour')) {
+      timers.push({ duration: 1800, label: 'Rest/Bake' });
+    } else if (lower.includes('a minute') || lower.includes('one minute')) {
+      timers.push({ duration: 60, label: 'Timer 1' });
+    } else if (lower.includes('an hour') || lower.includes('one hour')) {
+      timers.push({ duration: 3600, label: 'Timer 1' });
+    }
+  }
+  
+  return timers;
+};
+
 // ── Step 1: Transcribe ─────────────────────────────────────────────────────
 window.transcribeVideo = async function() {
   if (typeof checkForceFreshAI === 'function') {
@@ -7336,14 +7638,17 @@ window.transcribeVideo = async function() {
             
             const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
             const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+            const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
+            const detectedTimer = window.parseTimerFromText(rawDesc);
 
             return {
               time: t,
               endTime: end,
               label: l.label || `Step ${i+1}`,
-              description: wordForWordDesc || l.instruction || gem.steps?.[i] || '',
+              description: rawDesc,
               ingredients: l.ingredients || [],
-              displayTime: `${mm}:${ss}`
+              displayTime: `${mm}:${ss}`,
+              timer: detectedTimer
             };
           }).sort((a, b) => a.time - b.time);
           renderCreateSteps();
@@ -7536,14 +7841,15 @@ window.generateLoops = async function() {
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60).toString().padStart(2, '0');
       const nextStart = loops[idx+1]?.time ?? videoDuration;
-      const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+      const rawDesc = l.instruction || l.description || wordForWordDesc || '';
       return {
         time:        t,
         endTime:     end,
         label:       l.label || 'Step',
         displayTime: `${m}:${s}`,
-        description: wordForWordDesc || '',
-        ingredients: []
+        description: rawDesc,
+        ingredients: [],
+        timers: undefined // force auto-detection of timers!
       };
     }).sort((a, b) => a.time - b.time);
 
@@ -7720,6 +8026,7 @@ window.aiWriteStepDescriptions = async function() {
       const nextStart = createStepsArr[i+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
       step.description = wordForWordDesc || desc || step.description || '';
+      delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
     showTip('✅ Descriptions written! Edit any card to customize.');
@@ -7773,14 +8080,15 @@ window.aiDoEverything = async function() {
         
         const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
         const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-
+        const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
         return {
           time: t,
           endTime: end,
           label: l.label || `Step ${i+1}`,
-          description: wordForWordDesc || l.instruction || gem.steps?.[i] || '',
+          description: rawDesc,
           ingredients: l.ingredients || [],
-          displayTime: `${mm}:${ss}`
+          displayTime: `${mm}:${ss}`,
+          timers: undefined // force auto-detection of timers!
         };
       }).sort((a, b) => a.time - b.time);
       renderCreateSteps(); renderTimeline();
@@ -7859,13 +8167,18 @@ window.doItAll = async function() {
         const mm  = Math.floor(t / 60);
         const ss  = Math.floor(t % 60).toString().padStart(2, '0');
         
+        const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
+        const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+        const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
+        const detectedTimer = window.parseTimerFromText(rawDesc);
         return {
           time: t,
           endTime: end,
           label: l.label || `Step ${i+1}`,
-          description: l.instruction || gem.steps?.[i] || '',
+          description: rawDesc,
           ingredients: l.ingredients || [],
-          displayTime: `${mm}:${ss}`
+          displayTime: `${mm}:${ss}`,
+          timers: undefined // force auto-detection of timers!
         };
       }).sort((a, b) => a.time - b.time);
       renderCreateSteps();
@@ -7986,14 +8299,10 @@ window.createStepsFromTranscript = async function() {
         label: l.label || `Step ${i+1}`,
         displayTime: `${m}:${s}`,
         description: '⏳ Writing instruction...',
-        ingredients: []
+        ingredients: [],
+        timer: null
       };
     }).sort((a, b) => a.time - b.time);
-
-    // Render temporary steps so user sees progress
-    createStepsArr = tempSteps;
-    renderCreateSteps();
-    renderTimeline();
 
     // 3. Write descriptions & ingredients for these loop stops from segments
     if (btn) btn.textContent = '⏳ 3/3: Steps...';
@@ -8021,19 +8330,23 @@ window.createStepsFromTranscript = async function() {
       console.warn('describe-steps API call failed, using local transcript fallback:', describeErr);
     }
     
-    // Apply descriptions and ingredients
-    createStepsArr = tempSteps.map((step, idx) => {
+    // Apply descriptions and ingredients to final array
+    const finalSteps = tempSteps.map((step, idx) => {
       const descText = descriptions[idx] || '';
       const parsed = window.parseDescriptionAndIngredients(descText);
       const nextStart = tempSteps[idx+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+      const rawDesc = wordForWordDesc || parsed.description || '';
       return {
         ...step,
-        description: wordForWordDesc || parsed.description || '',
-        ingredients: parsed.ingredients || []
+        description: rawDesc,
+        ingredients: parsed.ingredients || [],
+        timers: undefined // force auto-detection of timers!
       };
     });
 
+    // Only update state and render once everything is 100% complete and final
+    createStepsArr = finalSteps;
     renderCreateSteps();
     renderTimeline();
     

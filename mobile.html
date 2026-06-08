@@ -246,6 +246,18 @@
                 <p id="mobileStepInstructions" class="step-instructions">
                   Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts. Cook for 5-7 minutes without moving, until beautifully browned.
                 </p>
+                <!-- Interactive Step Timer -->
+                <div id="playerTimerContainer" style="display:none; align-items:center; gap:8px; margin-top:8px; background:rgba(74,144,217,0.08); border:1.5px solid rgba(74,144,217,0.2); border-radius:10px; padding:8px 12px; width:fit-content; box-sizing:border-box;">
+                  <span style="font-size:1.1rem; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.1));">⏳</span>
+                  <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.04em; line-height:1;">Active Timer</span>
+                    <span id="playerTimerDisplay" style="font-size:1.3rem; font-weight:900; color:var(--text-heading); font-family: monospace; line-height:1.2; font-variant-numeric:tabular-nums; margin-top:2px;">10:00</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; margin-left:12px;">
+                    <button id="playerTimerPlayPauseBtn" onclick="window.togglePlayerTimer()" style="background:var(--primary); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(74,144,217,0.2); transition:all 0.15s;" onmouseenter="this.style.background='var(--primary-hover)';" onmouseleave="this.style.background='var(--primary)';">Start</button>
+                    <button id="playerTimerResetBtn" onclick="window.resetPlayerTimer()" style="background:#fff; color:var(--text-body); border:1px solid rgba(0,0,0,0.15); border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='#fff';">Reset</button>
+                  </div>
+                </div>
               </div>
               
               <!-- Right Column: Checkoff circle icon + Reset Button -->
@@ -671,6 +683,16 @@
                 <label for="inputStepSubloops">Sub-loops (Timestamps)</label>
                 <input type="text" id="inputStepSubloops" placeholder="e.g. 10, 25, 40">
                 <p style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">Comma-separated times (in seconds) within this segment.</p>
+              </div>
+
+              <div class="form-group">
+                <label>Step Timer (Optional)</label>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <input type="number" id="inputStepTimerMin" placeholder="Min" min="0" max="999" oninput="saveStepDetailsFromInputs()" style="width:60px; background:#fff; border:1px solid rgba(0,0,0,0.15); border-radius:6px; padding:6px; font-family:var(--font); font-size:0.75rem; text-align:center;">
+                  <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted);">min</span>
+                  <input type="number" id="inputStepTimerSec" placeholder="Sec" min="0" max="59" oninput="saveStepDetailsFromInputs()" style="width:50px; background:#fff; border:1px solid rgba(0,0,0,0.15); border-radius:6px; padding:6px; font-family:var(--font); font-size:0.75rem; text-align:center;">
+                  <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted);">sec</span>
+                </div>
               </div>
             </div>
 
@@ -1503,6 +1525,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=3.9"></script>
+  <script type="module" src="app.js?v=4.3"></script>
 </body>
 </html>

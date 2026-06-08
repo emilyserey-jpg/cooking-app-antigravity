@@ -250,6 +250,7 @@ Rules:
 - The final step's endTime should be near the end of that action, not the end of the whole video
 - Minimum 2 steps, maximum 12 steps
 - Each step should represent a meaningful, distinct cooking action that is useful to loop/repeat. Avoid creating separate steps for trivial micro-actions like opening packaging, unpacking, or turning on burners. Merge them into the adjacent cooking/prep actions.
+- Do NOT create separate steps specifically for waiting, resting, simmering, or baking durations (e.g. do not create a step for "Let simmer for 10 minutes"). Instead, merge these timing durations into the active cooking action that initiated them (e.g. "Simmer the sauce").
 - Each step must have a minimum duration of at least 3 seconds. Do not create 1-second or 2-second steps.
 - Look for transitions: "now", "next", "then", "add", "place", "stir", "cook", "remove"
 - Labels should be action verbs ("Chop onions", "Add flour", "Stir mixture")`,
@@ -335,6 +336,7 @@ Rules:
 - 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
 - Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
 - Avoid creating loop stops for trivial, brief micro-actions (such as unpacking ingredients, opening lids, or turning on burners). Merge these trivial prep actions into the main adjacent step (e.g. merge "unpacking pork" into "seasoning pork" or "cooking pork").
+- Do NOT create separate loops specifically for waiting, resting, simmering, or baking durations (e.g. do not create a loop stop for "Wait 10 minutes" or "Bake for 30 minutes"). Instead, merge these idle/waiting times into the active cooking action that initiated them (e.g. "Simmer the sauce").
 - Do NOT leave out any ingredients or actions that are mentioned in the transcript or shown in the video slightly outside the step's timestamps (e.g. if pork is prepped at 0:06 but the step is 0:03-0:06, include it in that step). Nothing must be left out!
 - Minimum duration for any loop is 3 seconds. Never output 1-second or 2-second steps.
 - Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video.
