@@ -182,7 +182,7 @@
         <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
         <div style="flex:1;">
           <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=6uSMDuHJTmo" value="https://www.youtube.com/watch?v=6uSMDuHJTmo">
+          <input type="text" id="url-input" class="input-field" placeholder="Paste YouTube, TikTok, or Instagram Reel URL..." value="">
         </div>
          <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
           Load Video
@@ -279,9 +279,9 @@
 
     // Default URLs for demonstration
     const platformDefaults = {
-      youtube: "https://www.youtube.com/watch?v=6uSMDuHJTmo",
-      tiktok: "https://www.tiktok.com/@dannygrubs/video/7187123985012351234",
-      instagram: "https://www.instagram.com/reel/C8_W9oUpye0/"
+      youtube: "",
+      tiktok: "",
+      instagram: ""
     };
 
     function switchPlatform(platform) {
@@ -301,15 +301,15 @@
       if (platform === 'youtube') {
         icon.textContent = "🔴";
         label.textContent = "Paste YouTube Video or Short URL";
-        input.placeholder = "e.g. https://www.youtube.com/watch?v=6uSMDuHJTmo";
+        input.placeholder = "Paste YouTube URL here...";
       } else if (platform === 'tiktok') {
         icon.textContent = "🎵";
         label.textContent = "Paste TikTok Video URL";
-        input.placeholder = "e.g. https://www.tiktok.com/@username/video/12345678";
+        input.placeholder = "Paste TikTok URL here...";
       } else if (platform === 'instagram') {
         icon.textContent = "📸";
         label.textContent = "Paste Instagram Reel URL";
-        input.placeholder = "e.g. https://www.instagram.com/reel/12345678";
+        input.placeholder = "Paste Instagram Reel URL here...";
       }
 
       loadCustomVideo();
@@ -528,6 +528,25 @@
       const infoBody = document.getElementById('info-body');
 
       if (loopInterval) clearInterval(loopInterval);
+
+      if (!url) {
+        container.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:#1e2230; color:#8e9bb0; padding:2rem; text-align:center;">
+            <span style="font-size:3rem; margin-bottom:12px;">🍳</span>
+            <h3 style="font-size:1.15rem; color:#fff; font-weight:800; margin:0 0 6px;">Ready for your recipe video</h3>
+            <p style="font-size:0.78rem; color:#6b7c96; max-width:280px; margin:0; line-height:1.4;">Paste a YouTube, TikTok, or Instagram Reel link above and click <strong>Load Video</strong>.</p>
+          </div>
+        `;
+        document.getElementById('steps-list').innerHTML = `
+          <div style="padding: 24px; text-align: center; background: rgba(255,255,255,0.6); border: 2px dashed var(--border-card); border-radius: 12px; font-weight: 800; color: var(--text-muted);">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">📋</div>
+            <div>Waiting for video URL...</div>
+          </div>
+        `;
+        if (stateLbl) stateLbl.textContent = "Waiting for input";
+        if (timeLbl) timeLbl.textContent = "Inactive";
+        return;
+      }
 
       if (activePlatform === 'youtube') {
         const id = getYouTubeId(url);
