@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cooking GPS — YouTube Embed Loop Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=3.7">
+  <title>Cooking GPS — Social Media Embed & Loop Prototype</title>
+  <link rel="stylesheet" href="styles.css?v=3.9">
   <style>
     body {
       background-color: var(--bg-page);
@@ -37,8 +37,39 @@
       padding: 1.25rem;
       box-shadow: var(--shadow-sm);
       display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .platform-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-card);
+      padding-bottom: 8px;
+    }
+    .platform-tab {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .platform-tab.active {
+      color: #fff;
+    }
+    .platform-tab.youtube.active { background: #dc2626; }
+    .platform-tab.tiktok.active { background: #000; }
+    .platform-tab.instagram.active { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+
+    .input-row {
+      display: flex;
       gap: 12px;
       align-items: center;
+      width: 100%;
     }
     .input-field {
       flex: 1;
@@ -130,7 +161,7 @@
       <div class="logo-text">Cooking<span>GPS</span></div>
     </a>
     <div style="font-weight: 800; color: var(--text-muted); font-size: 0.9rem;">
-      YouTube Embed & Auto-Loop Prototype
+      Social Media Embed & Looping Prototype
     </div>
     <button onclick="window.location.href='/index.html'" class="btn" style="font-size:0.75rem; padding:6px 14px;">
       ← Back to App
@@ -139,24 +170,32 @@
 
   <div class="container">
     
-    <!-- Input URL Card -->
+    <!-- Input URL Card with Platform Tabs -->
     <div class="input-card">
-      <div style="font-size: 1.3rem;">🔗</div>
-      <div style="flex:1;">
-        <div style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
-        <input type="text" id="yt-url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/shorts/zRz7QvVlEJs">
+      <div class="platform-tabs">
+        <button class="platform-tab youtube active" onclick="switchPlatform('youtube')">🔴 YouTube / Shorts</button>
+        <button class="platform-tab tiktok" onclick="switchPlatform('tiktok')">🎵 TikTok</button>
+        <button class="platform-tab instagram" onclick="switchPlatform('instagram')">📸 Instagram Reel</button>
       </div>
-      <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px; margin-top: 12px;">
-        Load Video
-      </button>
+
+      <div class="input-row">
+        <div style="font-size: 1.3rem;" id="platform-icon">🔴</div>
+        <div style="flex:1;">
+          <div id="input-label" style="font-size:0.62rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Paste YouTube Video or Short URL</div>
+          <input type="text" id="url-input" class="input-field" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value="https://www.youtube.com/shorts/zRz7QvVlEJs">
+        </div>
+        <button onclick="loadCustomVideo()" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.82rem; border-radius: 10px;">
+          Load Video
+        </button>
+      </div>
     </div>
 
     <!-- Main Prototype Workspace -->
     <div class="workbench">
       
-      <!-- Left: YouTube Player -->
+      <!-- Left: Video Embed Frame -->
       <div class="player-column">
-        <div class="video-container">
+        <div class="video-container" id="player-container">
           <div id="yt-player"></div>
         </div>
         
@@ -167,14 +206,14 @@
             <div id="player-state-lbl" style="font-size:0.9rem; font-weight:800; color:var(--text-heading);">Loading...</div>
           </div>
           <div>
-            <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; text-align:right;">Current Time</div>
-            <div id="player-time-lbl" style="font-size:1.1rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; text-align:right;">0:00.0</div>
+            <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; text-align:right;">Control Mode</div>
+            <div id="player-time-lbl" style="font-size:1rem; font-weight:900; color:var(--primary); text-align:right;">Auto-Looping Active</div>
           </div>
         </div>
 
-        <div class="glass-card" style="padding:14px; background:#f4f9ff; border:2px dashed rgba(74,144,217,0.25);">
-          <h4 style="font-size:0.85rem; color:#1a3a5c; margin-bottom:6px;">💡 How this prototype works:</h4>
-          <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0;">
+        <div class="glass-card" id="info-tip-card" style="padding:14px; background:#f4f9ff; border:2px dashed rgba(74,144,217,0.25);">
+          <h4 style="font-size:0.85rem; color:#1a3a5c; margin-bottom:6px;" id="info-header">💡 How this prototype works:</h4>
+          <p style="font-size:0.75rem; color:var(--text-body); line-height:1.45; margin:0;" id="info-body">
             This page embeds a standard YouTube video using Google's official <strong>YouTube Player API</strong>. 
             Because we have programmatic control, the Javascript runs a high-precision background timer. 
             When the video goes outside the boundaries of the active step, the script instantly triggers a <code>player.seekTo()</code> command back to the start timestamp, achieving a 100% database-free, ad-funded loop experience.
@@ -198,7 +237,7 @@
   </div>
 
   <script>
-    // Initial prototype loop steps
+    let activePlatform = 'youtube'; // 'youtube', 'tiktok', 'instagram'
     let steps = [
       { label: "1. Prepare vegetables & slice beef", start: 0, end: 7, desc: "Slice onions, potatoes, and carrots. Cut beef into bite-sized pieces." },
       { label: "2. Sauté meat and potatoes", start: 7, end: 14, desc: "Heat sesame oil in a pot. Sauté beef first, then add vegetables and stir fry." },
@@ -210,16 +249,60 @@
     let ytPlayer = null;
     let loopInterval = null;
 
+    // Default URLs for demonstration
+    const platformDefaults = {
+      youtube: "https://www.youtube.com/shorts/zRz7QvVlEJs",
+      tiktok: "https://www.tiktok.com/@dannygrubs/video/7187123985012351234",
+      instagram: "https://www.instagram.com/reel/C8_W9oUpye0/"
+    };
+
+    function switchPlatform(platform) {
+      activePlatform = platform;
+      
+      // Update Active Tab UI
+      document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.platform-tab.${platform}`).classList.add('active');
+
+      // Update Inputs and Icon labels
+      const input = document.getElementById('url-input');
+      const icon = document.getElementById('platform-icon');
+      const label = document.getElementById('input-label');
+      
+      input.value = platformDefaults[platform];
+
+      if (platform === 'youtube') {
+        icon.textContent = "🔴";
+        label.textContent = "Paste YouTube Video or Short URL";
+        input.placeholder = "e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+      } else if (platform === 'tiktok') {
+        icon.textContent = "🎵";
+        label.textContent = "Paste TikTok Video URL";
+        input.placeholder = "e.g. https://www.tiktok.com/@username/video/12345678";
+      } else if (platform === 'instagram') {
+        icon.textContent = "📸";
+        label.textContent = "Paste Instagram Reel URL";
+        input.placeholder = "e.g. https://www.instagram.com/reel/12345678";
+      }
+
+      loadCustomVideo();
+    }
+
     // Called automatically by YouTube Iframe API
     function onYouTubeIframeAPIReady() {
-      // Extract default video ID
-      const defaultUrl = document.getElementById('yt-url-input').value;
-      const defaultId = getYouTubeId(defaultUrl) || "zRz7QvVlEJs";
+      // Initialize only if we are on YouTube
+      if (activePlatform === 'youtube') {
+        initYoutubePlayer("zRz7QvVlEJs");
+      }
+    }
 
+    function initYoutubePlayer(videoId) {
+      if (loopInterval) clearInterval(loopInterval);
+      document.getElementById('player-container').innerHTML = '<div id="yt-player"></div>';
+      
       ytPlayer = new YT.Player('yt-player', {
         height: '100%',
         width: '100%',
-        videoId: defaultId,
+        videoId: videoId,
         playerVars: {
           'playsinline': 1,
           'controls': 1,
@@ -236,6 +319,7 @@
 
     function onPlayerReady(event) {
       document.getElementById('player-state-lbl').textContent = "Ready to Play";
+      document.getElementById('player-time-lbl').textContent = "Auto-Looping Active";
       renderPrototypeSteps();
       startPlaybackWatcher();
     }
@@ -243,52 +327,36 @@
     function onPlayerStateChange(event) {
       const stateLbl = document.getElementById('player-state-lbl');
       switch (event.data) {
-        case YT.PlayerState.UNSTARTED:
-          stateLbl.textContent = "Unstarted";
-          break;
-        case YT.PlayerState.ENDED:
-          stateLbl.textContent = "Ended";
-          break;
-        case YT.PlayerState.PLAYING:
-          stateLbl.textContent = "Playing 🟢";
-          break;
-        case YT.PlayerState.PAUSED:
-          stateLbl.textContent = "Paused ⏸️";
-          break;
-        case YT.PlayerState.BUFFERING:
-          stateLbl.textContent = "Buffering... ⏳";
-          break;
-        case YT.PlayerState.CUED:
-          stateLbl.textContent = "Video Cued";
-          break;
+        case YT.PlayerState.UNSTARTED: stateLbl.textContent = "Unstarted"; break;
+        case YT.PlayerState.ENDED: stateLbl.textContent = "Ended"; break;
+        case YT.PlayerState.PLAYING: stateLbl.textContent = "Playing 🟢"; break;
+        case YT.PlayerState.PAUSED: stateLbl.textContent = "Paused ⏸️"; break;
+        case YT.PlayerState.BUFFERING: stateLbl.textContent = "Buffering... ⏳"; break;
+        case YT.PlayerState.CUED: stateLbl.textContent = "Video Cued"; break;
       }
     }
 
-    // High-precision poll watcher (runs 10 times per second for smooth looping)
     function startPlaybackWatcher() {
       if (loopInterval) clearInterval(loopInterval);
       
       loopInterval = setInterval(() => {
+        if (activePlatform !== 'youtube') return;
         if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
         
         try {
           const currentTime = ytPlayer.getCurrentTime();
           const state = ytPlayer.getPlayerState();
           
-          // Update time label in UI
           const minutes = Math.floor(currentTime / 60);
           const seconds = (currentTime % 60).toFixed(1).padStart(4, '0');
-          document.getElementById('player-time-lbl').textContent = `${minutes}:${seconds}`;
+          document.getElementById('player-time-lbl').textContent = `⏱️ ${minutes}:${seconds}`;
 
-          // Only enforce bounds if video is playing
           if (state === YT.PlayerState.PLAYING) {
             const activeStep = steps[activeStepIndex];
             if (activeStep) {
-              // Loop Check: If playhead goes beyond the step's end boundary, loop back to the start!
               if (currentTime >= activeStep.end) {
                 ytPlayer.seekTo(activeStep.start, true);
               } else if (currentTime < activeStep.start) {
-                // If user clicks or seeks before the start boundary, snap them forward to start
                 ytPlayer.seekTo(activeStep.start, true);
               }
             }
@@ -303,18 +371,29 @@
       const container = document.getElementById('steps-list');
       container.innerHTML = steps.map((s, i) => {
         const isActive = i === activeStepIndex;
+        // Hide start/end times if not on YouTube (since they cannot be controlled programmatically)
+        const timeBadgeHtml = activePlatform === 'youtube' 
+          ? `<div class="time-badge">⏱️ ${s.start}s → ${s.end}s</div>`
+          : `<div class="time-badge" style="background:#f3f4f6; color:#4b5563;">Step ${i+1}</div>`;
+          
+        const inputsHtml = activePlatform === 'youtube'
+          ? `
+            <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">Start:</span>
+            <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.start}" onchange="updateStepTime(${i}, 'start', this.value)" onclick="event.stopPropagation()">
+            <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">End:</span>
+            <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.end}" onchange="updateStepTime(${i}, 'end', this.value)" onclick="event.stopPropagation()">
+          `
+          : `<span style="font-size:0.68rem; color:var(--text-muted); font-weight:700;">Static Instruction Link</span>`;
+
         return `
           <div class="step-card ${isActive ? 'active' : ''}" onclick="selectStep(${i})">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
               <h4 style="font-size:0.82rem; font-weight:800; color:var(--text-heading); margin:0;">${s.label}</h4>
-              <div class="time-badge">⏱️ ${s.start}s → ${s.end}s</div>
+              ${timeBadgeHtml}
             </div>
             <p style="font-size:0.75rem; color:var(--text-body); margin:4px 0 0; line-height:1.4;">${s.desc}</p>
             <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
-              <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">Start:</span>
-              <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.start}" onchange="updateStepTime(${i}, 'start', this.value)" onclick="event.stopPropagation()">
-              <span style="font-size:0.62rem; color:var(--text-muted); font-weight:700;">End:</span>
-              <input type="number" style="width:46px; font-size:0.68rem; font-family:var(--font); font-weight:700; border:1px solid var(--border-card); border-radius:4px; text-align:center;" value="${s.end}" onchange="updateStepTime(${i}, 'end', this.value)" onclick="event.stopPropagation()">
+              ${inputsHtml}
               <button onclick="deleteStep(event, ${i})" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:0.8rem; margin-left:auto;">×</button>
             </div>
           </div>
@@ -327,13 +406,12 @@
       activeStepIndex = index;
       renderPrototypeSteps();
       
-      // Instantly seek to the beginning of the selected loop step
-      if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
-        ytPlayer.seekTo(steps[activeStepIndex].start, true);
-        
-        // Auto play if paused
-        if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-          ytPlayer.playVideo();
+      if (activePlatform === 'youtube') {
+        if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+          ytPlayer.seekTo(steps[activeStepIndex].start, true);
+          if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+            ytPlayer.playVideo();
+          }
         }
       }
     }
@@ -369,20 +447,69 @@
 
     // Load custom pasted video
     function loadCustomVideo() {
-      const url = document.getElementById('yt-url-input').value.trim();
-      const id = getYouTubeId(url);
-      if (!id) {
-        alert("Could not parse a valid YouTube Video or Shorts ID. Please check the URL!");
-        return;
-      }
+      const url = document.getElementById('url-input').value.trim();
+      const container = document.getElementById('player-container');
+      const stateLbl = document.getElementById('player-state-lbl');
+      const timeLbl = document.getElementById('player-time-lbl');
+      const infoHeader = document.getElementById('info-header');
+      const infoBody = document.getElementById('info-body');
 
-      if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-        ytPlayer.loadVideoById({
-          videoId: id,
-          startSeconds: steps[0] ? steps[0].start : 0
-        });
-        activeStepIndex = 0;
+      if (loopInterval) clearInterval(loopInterval);
+
+      if (activePlatform === 'youtube') {
+        const id = getYouTubeId(url) || "zRz7QvVlEJs";
+        initYoutubePlayer(id);
+        
+        infoHeader.textContent = "💡 How this prototype works:";
+        infoBody.innerHTML = `
+          This page embeds a standard YouTube video using Google's official <strong>YouTube Player API</strong>. 
+          Because we have programmatic control, the Javascript runs a high-precision background timer. 
+          When the video goes outside the boundaries of the active step, the script instantly triggers a <code>player.seekTo()</code> command back to the start timestamp, achieving a 100% database-free, ad-funded loop experience.
+        `;
+      } 
+      
+      else if (activePlatform === 'tiktok') {
+        // Parse TikTok ID (fallback to generic if not found)
+        let id = "7187123985012351234";
+        const idMatch = url.match(/video\/(\d+)/);
+        if (idMatch) id = idMatch[1];
+
+        // TikTok Player Embed URL
+        container.innerHTML = `<iframe src="https://www.tiktok.com/player/v1/${id}?autoplay=0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+        
+        stateLbl.textContent = "Embedded Frame Loaded";
+        timeLbl.textContent = "Manual Companion Mode";
         renderPrototypeSteps();
+
+        infoHeader.textContent = "⚠️ TikTok Platform Limitation:";
+        infoBody.innerHTML = `
+          <strong>TikTok does not provide a public playback control API to external websites.</strong> 
+          This means we cannot programmatically play, pause, check the current time, or loop the video. 
+          <br><br>
+          <strong>The Business Solution:</strong> In your final application, TikTok videos will serve in <strong>Companion Mode</strong>. The video is rendered beautifully on the left, and the user scrolls through the structured recipe cards on the right. While they don't auto-loop, creators get official views on their TikTok channels, driving traffic to their posts!
+        `;
+      } 
+      
+      else if (activePlatform === 'instagram') {
+        // Parse Instagram shortcode
+        let shortcode = "C8_W9oUpye0";
+        const reelMatch = url.match(/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+        if (reelMatch) shortcode = reelMatch[1];
+
+        // Instagram Embed URL
+        container.innerHTML = `<iframe src="https://www.instagram.com/reel/${shortcode}/embed/" allowtransparency="true" allowfullscreen="true" scrolling="no"></iframe>`;
+        
+        stateLbl.textContent = "Embedded Frame Loaded";
+        timeLbl.textContent = "Manual Companion Mode";
+        renderPrototypeSteps();
+
+        infoHeader.textContent = "⚠️ Instagram Platform Limitation:";
+        infoBody.innerHTML = `
+          <strong>Meta (Instagram) completely blocks third-party websites from controlling Reels playback.</strong> 
+          Like TikTok, there is no way to auto-seek or trigger loops programmatically on Instagram frames.
+          <br><br>
+          <strong>The Business Solution:</strong> Just like TikTok, you display the Reel on the left and the interactive recipe GPS timeline on the right. Since Instagram is primarily a visual hook, this acts as the "Companion Guide." Creators love this because they gain real impressions and profile redirects directly from your app!
+        `;
       }
     }
 
@@ -391,6 +518,16 @@
       var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=||shorts\/)([^#\&\?]*).*/;
       var match = url.match(regExp);
       return (match && match[2].length == 11) ? match[2] : null;
+    }
+
+    // Initial load
+    window.onload = function() {
+      // Small timeout to let YouTube script load
+      setTimeout(() => {
+        if (window.YT && window.YT.Player) {
+          onYouTubeIframeAPIReady();
+        }
+      }, 500);
     }
   </script>
 </body>
