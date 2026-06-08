@@ -4972,7 +4972,7 @@ function libRenderContent() {
         <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
           📁 Folders (${folders.length})
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;" id="libFolderGrid">`;
+        <div class="bento-dashboard-grid" style="margin: 0; padding: 0; max-width: 100%;" id="libFolderGrid">`;
       folders.forEach(f => { if (f) html += libFolderCardHTML(f); });
       html += `</div></div>`;
     }
@@ -5022,26 +5022,26 @@ function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
   const isDrag = libState.sort === 'custom';
   return `
-    <div class="lib-folder-card" id="libF_${f.id}"
-      style="background:${f.color};border-radius:16px;padding:16px 14px 14px;cursor:pointer;
-             position:relative;transition:transform 0.15s,box-shadow 0.15s;
-             box-shadow:0 2px 10px rgba(0,0,0,0.08);min-height:110px;display:flex;flex-direction:column;justify-content:space-between;"
+    <div class="lib-folder-card bento-widget" id="libF_${f.id}"
+      style="background:${f.color}; border-radius:24px; padding:1.5rem; cursor:pointer;
+             position:relative; transition:transform 0.15s, box-shadow 0.15s;
+             box-shadow:var(--shadow-sm); height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;"
       onclick="libOpenFolder('${f.id}')"
       ${isDrag ? `draggable="true" ondragstart="libOnDragStart(event,'folder','${f.id}')"` : ''}
       ondragover="libOnDragOver(event,'${f.id}')"
       ondrop="libOnDrop(event,'folder','${f.id}')"
       ondragleave="libOnDragLeave(event)">
       <!-- Actions menu -->
-      <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
           style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
           style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑️</button>
       </div>
-      <div style="font-size:2rem;line-height:1;margin-bottom:6px;">📁</div>
+      <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;">📁</div>
       <div>
-        <div style="font-weight:900;font-size:0.88rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
-        <div style="font-size:0.7rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} recipe${count !== 1 ? 's' : ''}</div>
+        <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
+        <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} recipe${count !== 1 ? 's' : ''}</div>
       </div>
       ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;">⠿ drag</div>' : ''}
     </div>`;
