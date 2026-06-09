@@ -1679,6 +1679,8 @@ a:focus-visible {
     overflow: hidden !important;
     padding: 8px 8px 0 8px !important;
     box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   body.mobile-editing-active .view-section.active,
