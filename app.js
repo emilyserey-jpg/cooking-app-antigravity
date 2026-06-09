@@ -8581,6 +8581,7 @@ window.transcribeVideo = async function() {
       setAIStatus('❌ Transcription failed: ' + gemErr.message);
       if (btn) { btn.disabled = false; btn.textContent = '🎤 Transcribe audio only'; }
       showTip('Transcription failed: ' + gemErr.message);
+      throw gemErr;
     }
   }
 
@@ -9170,13 +9171,13 @@ window.createStepsFromTranscript = async function() {
   }
 
   try {
-    let textVal = document.getElementById('transcriptText')?.value?.trim() || cachedTranscript;
+    let textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
     if (!textVal) {
       setAIStatus('🎤 Step 1/3: Generating video transcript...', true);
       showTip('🎤 Transcribing audio...');
       await window.transcribeVideo();
       
-      textVal = document.getElementById('transcriptText')?.value?.trim() || cachedTranscript;
+      textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
       if (!textVal) {
         throw new Error('Could not generate transcript. Please transcribe first.');
       }
