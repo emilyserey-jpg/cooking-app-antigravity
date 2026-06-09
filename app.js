@@ -8565,8 +8565,8 @@ window.showChatboxActionMenu = function(triggerEl) {
   // Option list
   const options = [
     {
-      label: '🔁 Place/Regenerate Loop Stops',
-      desc: 'Starts full video analysis (slow: 30-50s)',
+      label: '🔁 Create Steps from Analyzing Video',
+      desc: 'Starts full video analysis using Gemini (slow: 30-50s)',
       action: 'loops'
     },
     {
