@@ -9707,7 +9707,7 @@ window.createStepsFromTranscript = async function() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '📝 Create Steps from Transcript';
+      btn.textContent = '🪄 AI: Audio-to-Step Generator';
     }
   }
 };
