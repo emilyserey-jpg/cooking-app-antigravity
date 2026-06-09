@@ -1548,27 +1548,27 @@ a:focus-visible {
 
 
   #createStage2 {
-    flex: 1 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
+    height: auto !important;
+    min-height: none !important;
+    overflow: visible !important;
     display: flex; /* no !important to allow resetCreateView to hide it */
     flex-direction: column !important;
     position: relative !important;
-    padding-bottom: 60px !important; /* space for toolbar */
+    padding-bottom: 80px !important; /* space for toolbar */
     box-sizing: border-box !important;
   }
   
   #workbenchGrid {
     display: flex !important;
     flex-direction: column !important;
-    height: 100% !important;
-    overflow: hidden !important;
+    height: auto !important;
+    overflow: visible !important;
     gap: 0.5rem !important;
   }
   
   #workbenchLeft {
-    overflow: hidden !important;
-    flex: 1 !important;
+    overflow: visible !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
@@ -1665,19 +1665,19 @@ a:focus-visible {
     display: none !important;
   }
 
-  /* Lock body scroll and set viewport height when editing to prevent page scroll and toolbar overlaps */
+  /* Allow body scroll and set viewport height to auto when editing */
   body.mobile-editing-active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) {
-    overflow: hidden !important;
-    height: 100dvh !important;
+    overflow-y: auto !important;
+    height: auto !important;
   }
 
   body.mobile-editing-active .app-container,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .app-container {
-    height: calc(100dvh - 68px) !important;
-    max-height: calc(100dvh - 68px) !important;
-    overflow: hidden !important;
-    padding: 8px 8px 0 8px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 8px 8px 80px 8px !important; /* bottom padding to clear the fixed toolbar */
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1685,10 +1685,9 @@ a:focus-visible {
 
   body.mobile-editing-active .view-section.active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-section.active {
-    flex: 1 !important;
-    min-height: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    height: auto !important;
+    min-height: none !important;
+    display: block !important;
   }
 
 /* ====================================================
@@ -1697,12 +1696,12 @@ a:focus-visible {
 .editor-carousel {
   display: flex;
   overflow-x: auto;
-  overflow-y: hidden !important;
+  overflow-y: visible !important;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  height: auto !important;
+  min-height: none !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -1716,7 +1715,8 @@ a:focus-visible {
   scroll-snap-stop: always;
   box-sizing: border-box;
   padding: 8px 12px 20px 12px;
-  overflow-y: auto !important;
+  overflow-y: visible !important;
+  height: auto !important;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
