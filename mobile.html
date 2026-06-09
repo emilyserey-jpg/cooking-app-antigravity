@@ -1201,35 +1201,44 @@
           </div>
         </div>
 
-        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:4px 8px; display:flex; gap:6px; flex-shrink:0; margin-top:4px; align-items:center;">
-          <!-- Seek Buttons Grouped Together -->
-          <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
-            <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
-              style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
-            <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
-              style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
+        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:7px 11px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; margin-top:4px;">
+          <!-- Row 1: step navigator + add stop + loop/stop -->
+          <div style="display:flex; align-items:center; gap:7px; width:100%;">
+            <!-- Seek Buttons Grouped Together -->
+            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+              <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
+                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
+              <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
+                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
+            </div>
+            <div style="flex:1; text-align:center; min-width:0;">
+              <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
+              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">Add stops or run AI</div>
+            </div>
+            <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+              style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+              title="Add Loop Stop at Current Time">
+              <span>📍 Add Stop</span>
+            </button>
+            <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
+              style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">▶ Loop</button>
+            <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
+              style="display:none; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:6px 12px; color:var(--primary); cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">⏹ Stop</button>
           </div>
-          <div style="flex:1; text-align:center; min-width:0;">
-            <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
-            <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">Add stops or run AI</div>
+
+          <!-- Row 2: Keyboard shortcuts + Input stops manually -->
+          <div style="display:flex; align-items:center; gap:6px; width:100%; margin-top:2px;">
+            <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
+              style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:6px 10px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body);" title="Toggle Keyboard Mode">
+              <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+              <span>Keyboard Shortcuts</span>
+            </button>
+            <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
+              style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:6px 10px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body);" title="Type Stop Manually">
+              <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+              <span>Input Stops Manually</span>
+            </button>
           </div>
-          <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-            style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
-            title="Add Loop Stop at Current Time">
-            <span>📍 Add Stop</span>
-          </button>
-          <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
-            style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">▶ Loop</button>
-          <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
-            style="display:none; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:6px 12px; color:var(--primary); cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">⏹ Stop</button>
-          <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-            style="background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:6px; width:34px; height:34px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;" title="Toggle Keyboard Mode">
-            <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
-          </button>
-          <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
-            style="background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:6px; width:34px; height:34px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;" title="Type Stop Manually">
-            <span style="font-size:0.95rem; line-height:1;">✏️</span>
-          </button>
         </div>
 
         <!-- Hidden compat elements -->
@@ -1309,78 +1318,23 @@
             </div>
           </div>
 
-          <!-- Slide 2: Steps -->
-          <div class="carousel-slide" id="slideAI">
-            <!-- AI Tools -->
-            <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed; background:linear-gradient(135deg,#faf8ff,#f0f4ff); padding:0; flex-shrink:0; overflow:hidden;">
-              <div onclick="togglePanel('aiBody','aiChevron')" style="display:flex; align-items:center; gap:6px; padding:10px 12px; cursor:pointer; user-select:none;">
-                <span style="font-size:1rem;">🤖</span>
-                <div style="font-weight:900; color:#7c3aed; font-size:0.85rem; flex:1;">Steps</div>
-                <span id="aiStatusBadge" style="font-size:0.6rem; background:#ede9ff; color:#7c3aed; padding:2px 7px; border-radius:999px; font-weight:800;">checking...</span>
-                <span id="aiChevron" style="font-size:0.75rem; color:#7c3aed; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
+          <!-- Slide 2: Voiceover -->
+          <div class="carousel-slide" id="slideVoiceover">
+            <!-- Voiceover Accordion Card -->
+            <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899; background:linear-gradient(135deg,#fff1f2,#faf5ff); padding:0; flex-shrink:0; overflow:hidden;">
+              <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex; align-items:center; gap:6px; padding:10px 12px; cursor:pointer; user-select:none;">
+                <span style="font-size:1rem;">🎙️</span>
+                <div style="font-weight:900; color:#ec4899; font-size:0.85rem; flex:1;">AI Voiceover</div>
+                <span id="voiceoverStatusBadge" style="font-size:0.6rem; background:#fdf2f8; color:#ec4899; padding:2px 7px; border-radius:999px; font-weight:800;">ready</span>
+                <span id="voiceoverChevron" style="font-size:0.75rem; color:#ec4899; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
               </div>
-              <div id="aiBody" style="padding:0 12px 12px; max-height:220px; overflow-y:auto;">
-                <!-- Force fresh AI option -->
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px; margin-bottom:8px; padding:2px 4px; background:#f5f0ff; border-radius:6px; border:1px solid rgba(124,58,237,0.15);">
-                  <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.68rem; color:#7c3aed; font-weight:700; cursor:pointer; user-select:none; width:100%;">
-                    <input type="checkbox" id="aiForceFresh" style="accent-color:#7c3aed; cursor:pointer;">
-                    🔄 Force fresh AI (ignore cache)
-                  </label>
-                </div>
-                <div id="aiStatus" style="display:none; text-align:center; padding:7px; font-size:0.75rem; font-weight:700; color:#7c3aed; background:#f5f0ff; border-radius:8px; margin-bottom:6px;">
-                  <span id="aiStatusText">Analyzing...</span>
-                </div>
-
-                <!-- 1. AI: Do Everything -->
-                <button id="aiDoEverythingBtn" onclick="aiDoEverything()"
-                  style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>⚡ AI: Do Everything</span>
-                  <span class="check-do-everything" style="display:none;color:#22c55e;font-size:0.9rem;">✓</span>
+              <div id="voiceoverBody" style="padding:0 12px 12px; display:flex; flex-direction:column; gap:10px;">
+                <button id="aiVoiceoverGenerateBtnMobile" onclick="window.generateAllVoiceovers()" 
+                  style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
+                  <span>🎙️ AI: Generate Voiceovers for All Steps</span>
                 </button>
-
-                <!-- 5. Transcribe audio only -->
-                <button id="transcribeBtn" onclick="transcribeVideo()"
-                  style="width:100%;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px;font-family:var(--font);font-weight:700;font-size:0.68rem;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>🎤 Transcribe audio only</span>
-                  <span class="check-transcribe" style="display:none;color:#22c55e;font-size:0.8rem;">✓</span>
-                </button>
-
-                <div id="aiActions" style="display:block;"></div>
-
-                <div id="transcriptPreview" style="display:none; margin-top:6px; border:1px solid rgba(124,58,237,0.15); border-radius:8px; overflow:hidden;">
-                  <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 9px; background:#f5f0ff;">
-                    <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex; align-items:center; gap:4px; cursor:pointer; flex:1;">
-                      <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; color:#7c3aed;">Transcript ✏️</span>
-                      <span id="transcriptChevron" style="font-size:0.7rem; color:#7c3aed; transition:transform 0.2s;">▾</span>
-                    </div>
-                    <button id="aiEditTranscriptBtn" onclick="window.editTranscriptWithAI(); event.stopPropagation();" title="Use AI guidelines to rewrite the transcript"
-                      style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                      🪄 AI Edit
-                    </button>
-                  </div>
-                  <div id="transcriptBody" style="padding:6px;">
-                    <div id="transcriptText" contenteditable="true" oninput="window.cachedTranscript = this.textContent;"
-                      style="font-size:0.72rem; color:var(--text-body); background:#f8f6ff; border-radius:6px; padding:6px; max-height:60px; overflow-y:auto; font-weight:500; outline:none; border:1px solid transparent; line-height:1.4;"
-                      onfocus="this.style.borderColor='rgba(124,58,237,0.35)';" onblur="this.style.borderColor='transparent';"></div>
-                  </div>
-                </div>
-
-
-
-                <div id="stepsTextResult" style="display:none; margin-top:6px; border:1px solid rgba(124,58,237,0.15); border-radius:8px; overflow:hidden;">
-                  <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 9px; background:#f5f0ff;">
-                    <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex; align-items:center; gap:4px; cursor:pointer; flex:1;">
-                      <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; color:#7c3aed;">Step Instructions ✏️</span>
-                      <span id="stepsTextChevron" style="font-size:0.7rem; color:#7c3aed; transition:transform 0.2s;">▾</span>
-                    </div>
-                    <button id="aiEditStepsBtn" onclick="window.editStepsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine step instructions"
-                      style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                      🪄 AI Edit
-                    </button>
-                  </div>
-                  <div id="stepsTextBody" style="padding:6px;">
-                    <textarea id="stepsText" rows="4" style="width:100%; background:#fff; border:1px solid rgba(124,58,237,0.15); border-radius:6px; padding:6px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
-                  </div>
+                <div id="voiceoverStepsListMobile" style="margin-top:6px; display:flex; flex-direction:column; gap:8px;">
+                  <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
                 </div>
               </div>
             </div>
@@ -1457,9 +1411,9 @@
             <span class="icon">🥦</span>
             <span class="label">Ingredients</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarAI" class="toolbar-btn">
-            <span class="icon">🤖</span>
-            <span class="label">Steps</span>
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarVoiceover" class="toolbar-btn">
+            <span class="icon">🎙️</span>
+            <span class="label">Voiceover</span>
           </button>
           <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarDetails" class="toolbar-btn">
             <span class="icon">📝</span>
@@ -1645,6 +1599,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=5.7"></script>
+  <script type="module" src="app.js?v=5.8"></script>
 </body>
 </html>

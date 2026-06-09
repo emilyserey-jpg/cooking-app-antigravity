@@ -1224,9 +1224,8 @@
 
             <!-- ── Nav controls bar ── -->
             <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-
-              <!-- Row 1: step navigator + loop/stop + keyboard toggle -->
-              <div style="display:flex;align-items:center;gap:7px;">
+              <!-- Row 1: step navigator + add stop + loop/stop -->
+              <div style="display:flex;align-items:center;gap:7px;width:100%;">
                 <!-- Seek Buttons Grouped Together -->
                 <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
                   <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
@@ -1247,13 +1246,19 @@
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
                 <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
                   style="display:none;background:#f0f4ff;border:2px solid var(--primary);border-radius:8px;padding:6px 12px;color:var(--primary);cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">⏹ Stop</button>
+              </div>
+
+              <!-- Row 2: Keyboard shortcuts + Input stops manually -->
+              <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:2px;">
                 <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-                  style="background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Toggle Keyboard Mode">
+                  style="flex:1;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);" title="Toggle Keyboard Mode">
                   <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+                  <span>Keyboard Shortcuts</span>
                 </button>
                 <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
-                  style="background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px;width:34px;height:34px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;" title="Type Stop Manually">
-                  <span style="font-size:0.95rem; line-height:1;">✏️</span>
+                  style="flex:1;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);" title="Type Stop Manually">
+                  <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+                  <span>Input Stops Manually</span>
                 </button>
               </div>
             </div>
@@ -1275,10 +1280,10 @@
             
             <!-- Desktop Editor Tab Bar -->
             <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
-              <button id="tabBtnAI" onclick="switchEditorTab('ai')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;">
-                🤖 AI Tools
+              <button id="tabBtnVoiceover" onclick="switchEditorTab('voiceover')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+                🎙️ AI Voiceover
               </button>
-              <button id="tabBtnStops" onclick="switchEditorTab('stops')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+              <button id="tabBtnStops" onclick="switchEditorTab('stops')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;">
                 📍 Loop Stops
               </button>
               <button id="tabBtnIngredients" onclick="switchEditorTab('ingredients')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
@@ -1300,79 +1305,25 @@
               </div>
             </div>
 
-            <!-- Col 2: AI Tools -->
-            <div id="rightColAI" style="display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
-              <!-- ▾ AI Tools accordion -->
-              <div class="glass-card" id="aiSection" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf8ff,#f0f4ff);padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
+            <!-- Col 2: AI Voiceover -->
+            <div id="rightColVoiceover" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- ▾ Voiceover accordion -->
+              <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899;background:linear-gradient(135deg,#fff1f2,#faf5ff);padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
                 <!-- Header (click to toggle) -->
-                <div onclick="togglePanel('aiBody','aiChevron')" style="display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;">
-                  <span style="font-size:1rem;">🤖</span>
-                  <div style="font-weight:900;color:#7c3aed;font-size:0.85rem;flex:1;">AI Tools</div>
-                  <span id="aiStatusBadge" style="font-size:0.6rem;background:#ede9ff;color:#7c3aed;padding:2px 7px;border-radius:999px;font-weight:800;">checking...</span>
-                  <span id="aiChevron" style="font-size:0.75rem;color:#7c3aed;font-weight:900;margin-left:4px;transition:transform 0.2s;">▾</span>
+                <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;">
+                  <span style="font-size:1rem;">🎙️</span>
+                  <div style="font-weight:900;color:#ec4899;font-size:0.85rem;flex:1;">AI Voiceover</div>
+                  <span id="voiceoverStatusBadge" style="font-size:0.6rem;background:#fdf2f8;color:#ec4899;padding:2px 7px;border-radius:999px;font-weight:800;">ready</span>
+                  <span id="voiceoverChevron" style="font-size:0.75rem;color:#ec4899;font-weight:900;margin-left:4px;transition:transform 0.2s;">▾</span>
                 </div>
                 <!-- Collapsible body -->
-                <div id="aiBody" style="padding:0 12px 12px;">
-                  <!-- Force fresh AI option -->
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;margin-bottom:8px;padding:2px 4px;background:#f5f0ff;border-radius:6px;border:1px solid rgba(124,58,237,0.15);">
-                    <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.68rem;color:#7c3aed;font-weight:700;cursor:pointer;user-select:none;width:100%;">
-                      <input type="checkbox" id="aiForceFresh" style="accent-color:#7c3aed;cursor:pointer;">
-                      🔄 Force fresh AI (ignore cache)
-                    </label>
-                  </div>
-                  <div id="aiStatus" style="display:none;text-align:center;padding:7px;font-size:0.75rem;font-weight:700;color:#7c3aed;background:#f5f0ff;border-radius:8px;margin-bottom:6px;">
-                    <span id="aiStatusText">Analyzing...</span>
-                  </div>
-                  <!-- 1. AI: Do Everything -->
-                  <button id="aiDoEverythingBtn" onclick="aiDoEverything()" 
-                    style="width:100%;background:#1e1b4b;color:#c4b5fd;border:none;border-radius:8px;padding:9px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
-                    <span>⚡ AI: Do Everything</span>
-                    <span class="check-do-everything" style="display:none;color:#22c55e;font-size:0.9rem;">✓</span>
+                <div id="voiceoverBody" style="padding:0 12px 12px;display:flex;flex-direction:column;gap:10px;">
+                  <button id="aiVoiceoverGenerateBtn" onclick="window.generateAllVoiceovers()" 
+                    style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
+                    <span>🎙️ AI: Generate Voiceovers for All Steps</span>
                   </button>
-
-
-                  <!-- 5. Transcribe audio only -->
-                  <button id="transcribeBtn" onclick="transcribeVideo()" 
-                    style="width:100%;background:transparent;border:1px solid rgba(124,58,237,0.2);border-radius:7px;padding:6px;font-family:var(--font);font-weight:700;font-size:0.68rem;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:6px;">
-                    <span>🎤 Transcribe audio only</span>
-                    <span class="check-transcribe" style="display:none;color:#22c55e;font-size:0.8rem;">✓</span>
-                  </button>
-                  <div id="aiActions" style="display:block;"></div>
-
-                  <!-- ▾ Transcript (nested) -->
-                  <div id="transcriptPreview" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:#f5f0ff;">
-                      <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1;">
-                        <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Transcript ✏️</span>
-                        <span id="transcriptChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
-                      </div>
-                      <button id="aiEditTranscriptBtn" onclick="window.editTranscriptWithAI(); event.stopPropagation();" title="Use AI guidelines to rewrite the transcript"
-                        style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                        🪄 AI Edit
-                      </button>
-                    </div>
-                    <div id="transcriptBody" style="padding:6px;">
-                      <div id="transcriptText" contenteditable="true" oninput="window.cachedTranscript = this.textContent;"
-                        style="font-size:0.72rem;color:var(--text-body);background:#f8f6ff;border-radius:6px;padding:6px;max-height:60px;overflow-y:auto;font-weight:500;outline:none;border:1px solid transparent;line-height:1.4;"
-                        onfocus="this.style.borderColor='rgba(124,58,237,0.35)';" onblur="this.style.borderColor='transparent';"></div>
-                    </div>
-                  </div>
-
-                  <!-- ▾ Step Instructions (nested) -->
-                  <div id="stepsTextResult" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:#f5f0ff;">
-                      <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1;">
-                        <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Step Instructions ✏️</span>
-                        <span id="stepsTextChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
-                      </div>
-                      <button id="aiEditStepsBtn" onclick="window.editStepsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine step instructions"
-                        style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                        🪄 AI Edit
-                      </button>
-                    </div>
-                    <div id="stepsTextBody" style="padding:6px;">
-                      <textarea id="stepsText" rows="4" style="width:100%;background:#fff;border:1px solid rgba(124,58,237,0.15);border-radius:6px;padding:6px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
-                    </div>
+                  <div id="voiceoverStepsList" style="margin-top:6px;display:flex;flex-direction:column;gap:8px;">
+                    <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
                   </div>
                 </div>
               </div>
@@ -1725,6 +1676,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=5.7"></script>
+  <script type="module" src="app.js?v=5.8"></script>
 </body>
 </html>

@@ -7293,6 +7293,49 @@ function renderCreateSteps() {
     if (span) span.textContent = hasDescriptions ? 'Re-generate Steps' : 'Generate Steps';
   }
 
+  // Populate the Voiceover tab lists if they exist
+  const voList = document.getElementById('voiceoverStepsList');
+  const voListMobile = document.getElementById('voiceoverStepsListMobile');
+  if (voList || voListMobile) {
+    const html = createStepsArr.map((step, i) => {
+      const stepText = step.description?.trim() || step.label?.trim() || `Step ${i + 1}`;
+      const hasAudio = !!step.audioUrl;
+      return `
+        <div class="glass-card" style="padding:10px; border:1px solid rgba(236,72,153,0.12); background:rgba(255,255,255,0.6); display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div style="font-weight:800; font-size:0.75rem; color:var(--text-heading); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+              Step ${i + 1}: ${step.label}
+            </div>
+            <button id="regenVoiceoverBtn-${i}" onclick="window.generateSingleVoiceover(${i})" 
+              style="background:#fff; color:#ec4899; border:1.5px solid rgba(236,72,153,0.25); border-radius:6px; padding:3px 8px; font-family:var(--font); font-weight:800; font-size:0.65rem; cursor:pointer; transition:all 0.15s; white-space:nowrap;"
+              onmouseenter="this.style.background='#fff1f2';" onmouseleave="this.style.background='#fff';">
+              ${hasAudio ? '🎙️ Re-generate' : '🎙️ Generate'}
+            </button>
+          </div>
+          <div style="font-size:0.7rem; color:var(--text-muted); font-style:italic; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+            "${stepText}"
+          </div>
+          ${hasAudio ? `
+            <audio src="${step.audioUrl}" controls style="width:100%; height:28px; margin-top:2px; border-radius:6px; outline:none; background:#f1f5f9;"></audio>
+          ` : `
+            <div style="font-size:0.62rem; color:#f43f5e; font-weight:700; display:flex; align-items:center; gap:3px; margin-top:2px;">
+              <span>⚠️</span> No voiceover generated yet.
+            </div>
+          `}
+        </div>
+      `;
+    }).join('');
+
+    if (voList) voList.innerHTML = html;
+    if (voListMobile) {
+      // Create mobile version with distinct button ID suffixes to avoid document.getElementById collisions
+      const mobileHtml = html
+        .replace(/id="regenVoiceoverBtn-/g, 'id="regenVoiceoverBtnMobile-')
+        .replace(/regenVoiceoverBtn-/g, 'regenVoiceoverBtnMobile-');
+      voListMobile.innerHTML = mobileHtml;
+    }
+  }
+
   if (!list) return;
   if (count) count.textContent = `(${createStepsArr.length})`;
 
@@ -9767,14 +9810,14 @@ window.saveNewRecipe = async function() {
 window.setupResponsiveDrawers = function() {
   const isMobile = window.innerWidth <= 768;
   const slideDetails = document.getElementById('slideDetails');
-  const slideAI = document.getElementById('slideAI');
+  const slideVoiceover = document.getElementById('slideVoiceover');
   const slideStops = document.getElementById('slideStops');
   const slideSave = document.getElementById('slideSave');
   
   const titleCard = document.getElementById('editorTitleCard');
   const coverCard = document.getElementById('editorCoverCard');
   const visibilityCard = document.getElementById('editorVisibilityCard');
-  const aiSection = document.getElementById('aiSection');
+  const voiceoverSection = document.getElementById('voiceoverSection');
   const stopsSection = document.getElementById('editorStopsCard');
   const saveBtn = document.getElementById('saveRecipeBtn');
   const saveDraftBtn = document.getElementById('saveDraftBtn');
@@ -9808,8 +9851,8 @@ window.setupResponsiveDrawers = function() {
       }
       if (visibilityCard && visibilityCard.parentElement !== slideDetails) slideDetails.appendChild(visibilityCard);
     }
-    if (slideAI && aiSection && aiSection.parentElement !== slideAI) {
-      slideAI.appendChild(aiSection);
+    if (slideVoiceover && voiceoverSection && voiceoverSection.parentElement !== slideVoiceover) {
+      slideVoiceover.appendChild(voiceoverSection);
     }
     if (slideStops && stopsSection && stopsSection.parentElement !== slideStops) {
       slideStops.appendChild(stopsSection);
@@ -9830,7 +9873,7 @@ window.setupResponsiveDrawers = function() {
   } else {
     // Restore to desktop horizontal columns in exact order
     const headerContainer = document.getElementById('headerTitleContainer');
-    const colAI = document.getElementById('rightColAI');
+    const colVoiceover = document.getElementById('rightColVoiceover');
     const colStops = document.getElementById('rightColStops');
     const colIngredients = document.getElementById('rightColIngredients');
     const colSave = document.getElementById('rightColSave');
@@ -9862,8 +9905,8 @@ window.setupResponsiveDrawers = function() {
         input.style.borderRadius = '0';
       }
     }
-    if (colAI && aiSection && aiSection.parentElement !== colAI) {
-      colAI.appendChild(aiSection);
+    if (colVoiceover && voiceoverSection && voiceoverSection.parentElement !== colVoiceover) {
+      colVoiceover.appendChild(voiceoverSection);
     }
     if (colStops && stopsSection && stopsSection.parentElement !== colStops) {
       colStops.appendChild(stopsSection);
@@ -9899,7 +9942,7 @@ window.setupResponsiveDrawers = function() {
     }
     
     if (typeof window.switchEditorTab === 'function') {
-      window.switchEditorTab(window.activeEditorTab || 'ai');
+      window.switchEditorTab(window.activeEditorTab || 'stops');
     }
   }
 };
@@ -9944,7 +9987,7 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Stops', 'Ingredients', 'AI', 'Details', 'Save'];
+  const tabs = ['Stops', 'Ingredients', 'Voiceover', 'Details', 'Save'];
   tabs.forEach((tab, i) => {
     const btn = document.getElementById(`btnToolbar${tab}`);
     if (btn) {
@@ -9960,12 +10003,12 @@ function updateToolbarButtonStates(activeIndex) {
       stopsBody.style.display = '';
       if (stopsChevron) stopsChevron.style.transform = '';
     }
-  } else if (activeIndex === 2) { // Steps/AI Tools tab (now index 2)
-    const aiBody = document.getElementById('aiBody');
-    const aiChevron = document.getElementById('aiChevron');
-    if (aiBody) {
-      aiBody.style.display = '';
-      if (aiChevron) aiChevron.style.transform = '';
+  } else if (activeIndex === 2) { // Voiceover tab (index 2)
+    const voiceoverBody = document.getElementById('voiceoverBody');
+    const voiceoverChevron = document.getElementById('voiceoverChevron');
+    if (voiceoverBody) {
+      voiceoverBody.style.display = '';
+      if (voiceoverChevron) voiceoverChevron.style.transform = '';
     }
   }
 }
@@ -10283,15 +10326,15 @@ window.generateAllVoiceovers = async function() {
     return;
   }
 
-  const btn = document.getElementById('aiVoiceoverBtn');
-  const mBtn = document.getElementById('aiVoiceoverBtnMobile');
+  const btn = document.getElementById('aiVoiceoverGenerateBtn');
+  const mBtn = document.getElementById('aiVoiceoverGenerateBtnMobile');
   
-  const originalText = btn ? btn.innerHTML : '🎙️ AI Voiceover';
-  const originalMText = mBtn ? mBtn.innerHTML : '🎙️ AI Voiceover';
+  const originalText = btn ? btn.innerHTML : '🎙️ AI: Generate Voiceovers for All Steps';
+  const originalMText = mBtn ? mBtn.innerHTML : '🎙️ AI: Generate Voiceovers for All Steps';
 
   const updateButtons = (text, disabled) => {
-    if (btn) { btn.disabled = disabled; btn.innerHTML = text; }
-    if (mBtn) { mBtn.disabled = disabled; mBtn.innerHTML = text; }
+    if (btn) { btn.disabled = disabled; btn.innerHTML = `<span>${text}</span>`; }
+    if (mBtn) { mBtn.disabled = disabled; mBtn.innerHTML = `<span>${text}</span>`; }
   };
 
   updateButtons('⏳ Preparing...', true);
@@ -10331,6 +10374,55 @@ window.generateAllVoiceovers = async function() {
   } finally {
     updateButtons(originalText, false);
     if (mBtn) mBtn.innerHTML = originalMText;
+  }
+};
+
+window.generateSingleVoiceover = async function(i) {
+  const step = createStepsArr[i];
+  if (!step) return;
+
+  const btn = document.getElementById(`regenVoiceoverBtn-${i}`);
+  const btnMobile = document.getElementById(`regenVoiceoverBtnMobile-${i}`);
+  const originalText = btn ? btn.innerHTML : '🎙️ Re-generate';
+  const originalMText = btnMobile ? btnMobile.innerHTML : '🎙️ Re-generate';
+
+  const updateButtons = (text, disabled) => {
+    if (btn) { btn.disabled = disabled; btn.innerHTML = text; }
+    if (btnMobile) { btnMobile.disabled = disabled; btnMobile.innerHTML = text; }
+  };
+
+  updateButtons('⏳...', true);
+  showTip(`🎙️ Generating voiceover for step ${i + 1}...`);
+
+  try {
+    const recipeId = editingRecipeId || 'new_recipe_' + Date.now();
+    const text = step.description?.trim() || step.label?.trim() || `Step ${i + 1}`;
+
+    const res = await fetch('/api/ai/generate-voiceover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        stepIndex: i,
+        recipeId
+      })
+    });
+    const data = res.ok ? await res.json() : null;
+    if (!res.ok || !data || data.error) throw new Error(data?.error || `Failed to generate voiceover`);
+
+    if (data.audioUrl) {
+      step.audio_url = data.audioUrl;
+      step.audioUrl = data.audioUrl;
+    }
+
+    renderCreateSteps();
+    showTip(`✅ Generated voiceover for step ${i + 1}!`);
+  } catch (err) {
+    console.error(err);
+    showTip('❌ Single voiceover failed: ' + err.message);
+  } finally {
+    updateButtons(originalText, false);
+    if (btnMobile) btnMobile.innerHTML = originalMText;
   }
 };
 
@@ -10447,11 +10539,11 @@ window.updateAIChecklists = function() {
   });
 };
 
-window.activeEditorTab = 'ai';
+window.activeEditorTab = 'stops';
 window.switchEditorTab = function(tabName) {
   window.activeEditorTab = tabName;
   const tabs = {
-    ai: { colId: 'rightColAI', btnId: 'tabBtnAI' },
+    voiceover: { colId: 'rightColVoiceover', btnId: 'tabBtnVoiceover' },
     stops: { colId: 'rightColStops', btnId: 'tabBtnStops' },
     ingredients: { colId: 'rightColIngredients', btnId: 'tabBtnIngredients' },
     save: { colId: 'rightColSave', btnId: 'tabBtnSave' }
