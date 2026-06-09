@@ -2100,6 +2100,39 @@ a:focus-visible {
 
 /* Mobile responsive layout overrides */
 @media (max-width: 768px) {
+  /* Move view-tabs to the bottom of the screen as a floating navigation bar */
+  .view-tabs {
+    position: fixed !important;
+    bottom: 16px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    z-index: 999 !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 2px solid rgba(74, 144, 217, 0.16) !important;
+    box-shadow: 0 8px 30px rgba(74, 144, 217, 0.15) !important;
+    border-radius: var(--radius-pill) !important;
+    padding: 6px 8px !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .view-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .app-container {
+    padding-bottom: 96px !important; /* space for floating bottom nav */
+  }
+
   .bento-dashboard-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
