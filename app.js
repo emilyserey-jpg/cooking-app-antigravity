@@ -7279,6 +7279,20 @@ function renderCreateSteps() {
   }
   const list  = document.getElementById('createStepsList');
   const count = document.getElementById('createStepCount');
+
+  // Dynamically toggle Generate Steps/Re-generate Steps labels
+  const hasDescriptions = createStepsArr.some(s => s.description && s.description.trim().length > 0);
+  const genBtn = document.getElementById('aiGenerateStepsBtn');
+  if (genBtn) {
+    const span = genBtn.querySelector('span');
+    if (span) span.textContent = hasDescriptions ? 'Re-generate Steps' : 'Generate Steps';
+  }
+  const genBtnMobile = document.getElementById('aiGenerateStepsBtnMobile');
+  if (genBtnMobile) {
+    const span = genBtnMobile.querySelector('span');
+    if (span) span.textContent = hasDescriptions ? 'Re-generate Steps' : 'Generate Steps';
+  }
+
   if (!list) return;
   if (count) count.textContent = `(${createStepsArr.length})`;
 
@@ -9333,23 +9347,20 @@ window.aiWriteSteps = async function() {
 // ── AI: Write descriptions for each placed loop stop ──────────────────────
 window.aiWriteStepDescriptions = async function() {
   if (!createStepsArr.length) {
-    showTip('Add loop stops first, then tap ✍️ AI Descriptions.');
+    showTip('Add loop stops first, then tap Generate Steps.');
     return;
   }
   showTip('✍️ AI is writing descriptions for each loop stop…');
 
-  const btnIds = ['aiRegenDescriptionsBtn', 'aiRegenDescriptionsBtnMobile', 'topAiDescBtn', 'topAiDescBtnMobile'];
+  const hasDescriptions = createStepsArr.some(s => s.description && s.description.trim().length > 0);
+  const btnIds = ['aiGenerateStepsBtn', 'aiGenerateStepsBtnMobile'];
   const originalHtmls = {};
   btnIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       originalHtmls[id] = el.innerHTML;
       el.disabled = true;
-      if (id.includes('Regen')) {
-        el.innerHTML = '<span>⏳ AI is writing descriptions...</span>';
-      } else {
-        el.innerHTML = '⏳ AI...';
-      }
+      el.innerHTML = hasDescriptions ? '<span>⏳ Re-generating Steps...</span>' : '<span>⏳ Generating Steps...</span>';
     }
   });
 
@@ -9387,9 +9398,9 @@ window.aiWriteStepDescriptions = async function() {
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
-    showTip('✅ Descriptions written! Edit any card to customize.');
+    showTip('✅ Steps generated! Edit any card to customize.');
   } catch (err) {
-    showTip('❌ ' + (err.message || 'Could not generate descriptions.'));
+    showTip('❌ ' + (err.message || 'Could not generate steps.'));
   } finally {
     btnIds.forEach(id => {
       const el = document.getElementById(id);
@@ -9398,6 +9409,7 @@ window.aiWriteStepDescriptions = async function() {
         el.innerHTML = originalHtmls[id];
       }
     });
+    renderCreateSteps();
   }
 };
 
