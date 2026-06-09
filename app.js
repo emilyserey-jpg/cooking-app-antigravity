@@ -8352,6 +8352,25 @@ let uploadedFile     = null;   // original File object (for Whisper)
 let cachedTranscript = null;   // cached so we never transcribe twice
 let cachedSegments   = null;   // timestamped segments from Whisper
 
+// Expose cachedTranscript to window for checklist and edit syncing
+Object.defineProperty(window, 'cachedTranscript', {
+  get() { return cachedTranscript; },
+  set(val) {
+    cachedTranscript = val;
+    const textEl = document.getElementById('transcriptText');
+    if (textEl) {
+      if (textEl.tagName === 'TEXTAREA' || textEl.tagName === 'INPUT') {
+        if (textEl.value !== val) textEl.value = val || '';
+      } else {
+        if (textEl.textContent !== val) textEl.textContent = val || '';
+      }
+    }
+    if (typeof window.updateAIChecklists === 'function') {
+      window.updateAIChecklists();
+    }
+  }
+});
+
 // Store the file when user picks it (called in handleFileSelect)
 // We patch handleFileSelect to also save uploadedFile
 const _origHandleFileSelect = window.handleFileSelect;
@@ -8662,6 +8681,54 @@ window.transcribeVideo = async function() {
   } catch (err) {
     console.warn('[AI] Whisper transcription failed, trying Gemini fallback...', err.message);
     await transcribeWithGeminiFallback(err.message);
+  }
+};
+
+// ── AI: Edit/refine transcript with custom guidelines ──────────────────────
+window.editTranscriptWithAI = async function() {
+  const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
+  if (!tweak) {
+    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    return;
+  }
+  
+  const currentText = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
+  if (!currentText) {
+    showTip('Please transcribe the video first! 🎤');
+    return;
+  }
+
+  const btn = document.getElementById('aiEditTranscriptBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Editing...';
+  }
+  setAIStatus('🪄 Editing transcript via Gemini...', true);
+  showTip('Refining transcript with your instructions... 🪄');
+
+  try {
+    const res = await fetch('/api/ai/edit-transcript', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: currentText, prompt: tweak }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Update transcript
+    window.cachedTranscript = data.transcript;
+    
+    showTip('🪄 Transcript updated successfully!');
+    setAIStatus('✅ Transcript refined by AI!');
+  } catch (err) {
+    console.error('[AI] Transcript edit failed:', err);
+    setAIStatus('❌ Edit failed: ' + err.message);
+    showTip('Edit failed: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🪄 Edit Transcript';
+    }
   }
 };
 

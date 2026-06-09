@@ -226,6 +226,23 @@ app.post('/api/ai/steps', async (req, res) => {
   }
 });
 
+// ─── AI: Edit/refine transcript with custom guidelines ──────────────────────
+app.post('/api/ai/edit-transcript', async (req, res) => {
+  const { transcript, prompt } = req.body;
+  if (!transcript) return res.status(400).json({ error: 'No transcript provided.' });
+  if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'No edit prompt/guidelines provided.' });
+
+  try {
+    const content = await getChatCompletion({
+      systemPrompt: 'You are an expert transcript editor. Your job is to edit and refine the provided cooking video transcript based on the user\'s custom instructions. Preserve the formatting and general contents of the transcript, but apply the user\'s edits accurately (e.g. spelling corrections, filtering out specific parts, translation, or style adjustments). Do not add any conversational filler or introductory text; return ONLY the final edited transcript text.',
+      userPrompt: `Here is the transcript:\n\n${transcript}\n\nApply these edits/guidelines:\n"${prompt.trim()}"`
+    });
+    res.json({ transcript: content.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── AI: Auto-detect loop points (start + end) from transcript ────────────
 app.post('/api/ai/loops', async (req, res) => {
   const { transcript, segments, prompt } = req.body;

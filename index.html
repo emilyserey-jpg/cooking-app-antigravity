@@ -1336,12 +1336,20 @@
 
                   <!-- ▾ Transcript (nested) -->
                   <div id="transcriptPreview" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                    <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
-                      <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Transcript</span>
-                      <span id="transcriptChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:#f5f0ff;">
+                      <div onclick="togglePanel('transcriptBody','transcriptChevron')" style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1;">
+                        <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Transcript ✏️</span>
+                        <span id="transcriptChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                      </div>
+                      <button id="aiEditTranscriptBtn" onclick="window.editTranscriptWithAI(); event.stopPropagation();" title="Use AI guidelines to rewrite the transcript"
+                        style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
+                        🪄 AI Edit
+                      </button>
                     </div>
                     <div id="transcriptBody" style="padding:6px;">
-                      <div id="transcriptText" style="font-size:0.72rem;color:var(--text-body);background:#f8f6ff;border-radius:6px;padding:6px;max-height:60px;overflow-y:auto;font-weight:500;"></div>
+                      <div id="transcriptText" contenteditable="true" oninput="window.cachedTranscript = this.textContent;"
+                        style="font-size:0.72rem;color:var(--text-body);background:#f8f6ff;border-radius:6px;padding:6px;max-height:60px;overflow-y:auto;font-weight:500;outline:none;border:1px solid transparent;line-height:1.4;"
+                        onfocus="this.style.borderColor='rgba(124,58,237,0.35)';" onblur="this.style.borderColor='transparent';"></div>
                     </div>
                   </div>
 
