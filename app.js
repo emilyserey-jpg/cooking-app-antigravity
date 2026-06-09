@@ -8350,11 +8350,48 @@ let uploadedFile     = null;   // original File object (for Whisper)
 let cachedTranscript = null;   // cached so we never transcribe twice
 let cachedSegments   = null;   // timestamped segments from Whisper
 
+// ── Helper: Align manual edits to the transcript textbox back to time segments ──
+window.alignTranscriptEditsToSegments = function(newTranscript) {
+  if (!cachedSegments || !cachedSegments.length) return;
+  
+  const newWords = newTranscript.trim().split(/\s+/).filter(Boolean);
+  if (!newWords.length) {
+    cachedSegments.forEach(s => { s.text = ""; });
+    return;
+  }
+
+  const origWordCounts = cachedSegments.map(s => (s.text || "").trim().split(/\s+/).filter(Boolean).length);
+  const totalOrigWords = origWordCounts.reduce((a, b) => a + b, 0);
+
+  if (totalOrigWords === 0) {
+    const wordsPerSeg = Math.ceil(newWords.length / cachedSegments.length);
+    cachedSegments.forEach((s, idx) => {
+      s.text = newWords.slice(idx * wordsPerSeg, (idx + 1) * wordsPerSeg).join(' ');
+    });
+    return;
+  }
+
+  let wordIdx = 0;
+  cachedSegments.forEach((s, idx) => {
+    if (idx === cachedSegments.length - 1) {
+      s.text = newWords.slice(wordIdx).join(' ');
+    } else {
+      const share = origWordCounts[idx] / totalOrigWords;
+      const count = Math.max(0, Math.round(share * newWords.length));
+      s.text = newWords.slice(wordIdx, wordIdx + count).join(' ');
+      wordIdx += count;
+    }
+  });
+};
+
 // Expose cachedTranscript to window for checklist and edit syncing
 Object.defineProperty(window, 'cachedTranscript', {
   get() { return cachedTranscript; },
   set(val) {
     cachedTranscript = val;
+    if (typeof window.alignTranscriptEditsToSegments === 'function') {
+      window.alignTranscriptEditsToSegments(val || '');
+    }
     const textEl = document.getElementById('transcriptText');
     if (textEl) {
       if (textEl.tagName === 'TEXTAREA' || textEl.tagName === 'INPUT') {
