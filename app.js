@@ -8613,12 +8613,41 @@ function setAIStatus(msg, show = true) {
 
 window.getTranscriptForTimeRange = function(startTime, endTime) {
   if (!cachedSegments || !cachedSegments.length) return "";
-  const filtered = cachedSegments.filter(s => {
+  
+  let matchingWords = [];
+  
+  // Sort segments by start time to keep word sequence correct
+  const sortedSegments = [...cachedSegments].sort((a, b) => {
+    const startA = Number(a.start ?? a.startTime ?? a.start_time) || 0;
+    const startB = Number(b.start ?? b.startTime ?? b.start_time) || 0;
+    return startA - startB;
+  });
+
+  sortedSegments.forEach(s => {
     const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
     const end = Number(s.end ?? s.endTime ?? s.end_time) || (start + 5);
-    return (start <= endTime + 0.5) && (end >= startTime - 0.5);
+    const duration = end - start;
+    if (duration <= 0) return;
+    
+    // Check if there is any overlap at all between segment and step timeframe
+    const overlapStart = Math.max(start, startTime);
+    const overlapEnd = Math.min(end, endTime);
+    if (overlapStart >= overlapEnd) return;
+    
+    const words = s.text.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return;
+    
+    words.forEach((word, idx) => {
+      // Estimate when this specific word was spoken within the segment
+      const wordTime = start + (idx / words.length) * duration;
+      // Assign the word to this step if it falls within the step boundaries
+      if (wordTime >= startTime && wordTime <= endTime + 0.01) {
+        matchingWords.push(word);
+      }
+    });
   });
-  return filtered.map(s => s.text.trim()).join(' ');
+  
+  return matchingWords.join(' ');
 };
 
 window.parseTimerFromText = function(text) {
