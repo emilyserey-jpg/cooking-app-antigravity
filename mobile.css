@@ -1660,16 +1660,19 @@ a:focus-visible {
   }
 
   /* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
+  body.mobile-editing-active .view-tabs,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-tabs {
     display: none !important;
   }
 
   /* Lock body scroll and set viewport height when editing to prevent page scroll and toolbar overlaps */
+  body.mobile-editing-active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) {
     overflow: hidden !important;
     height: 100dvh !important;
   }
 
+  body.mobile-editing-active .app-container,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .app-container {
     height: calc(100dvh - 68px) !important;
     max-height: calc(100dvh - 68px) !important;
@@ -1678,6 +1681,7 @@ a:focus-visible {
     box-sizing: border-box !important;
   }
 
+  body.mobile-editing-active .view-section.active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-section.active {
     height: 100% !important;
     display: flex !important;

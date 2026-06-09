@@ -1547,6 +1547,9 @@ function speakFeedback(phrase) {
 // INTERFACE VIEW SWITCHER / HELPER SHEETS
 // ----------------------------------------------------
 function switchView(viewId) {
+  if (viewId !== 'create') {
+    document.body.classList.remove('mobile-editing-active');
+  }
   const phoneMic = document.getElementById('phoneMicBtn');
   if (phoneMic) {
     phoneMic.style.display = (viewId === 'mobile-player') ? 'flex' : 'none';
@@ -3413,6 +3416,7 @@ window.saveDraft = async function() {
     const msg = document.getElementById('savedRecipeMsg');
     if (msg) msg.textContent = `"${title}" saved as a draft — finish it later on My Page 📝`;
     document.getElementById('createStage2').style.display = 'none';
+    document.body.classList.remove('mobile-editing-active');
     document.getElementById('createStage3').style.display = 'block';
     showTip(`Draft "${title}" saved!`);
   } catch (err) {
@@ -3751,6 +3755,7 @@ window.loadRecipeToEditor = function(recipe) {
   // Set stage 1 hidden, stage 2 shown
   document.getElementById('createStage1').style.display = 'none';
   document.getElementById('createStage2').style.display = 'flex';
+  document.body.classList.add('mobile-editing-active');
   document.getElementById('createStage3').style.display = 'none';
 
   // Title
@@ -6378,6 +6383,7 @@ async function autoAnalyzeWithAI() {
 function showEditorStage(videoUrl) {
   document.getElementById('createStage1').style.display = 'none';
   document.getElementById('createStage2').style.display = 'flex';
+  document.body.classList.add('mobile-editing-active');
 
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (!videoEl) return;
@@ -8245,6 +8251,7 @@ window.saveNewRecipe = async function(targetFolderId) {
       } catch {}
     }
     document.getElementById('createStage2').style.display = 'none';
+    document.body.classList.remove('mobile-editing-active');
     showStage3WithFolderPicker(savedRecipe, createIsPublic);
     showTip('"' + title + '" saved!');
 
@@ -8305,6 +8312,7 @@ window.resetCreateView = function() {
 
   document.getElementById('createStage1').style.display    = 'block';
   document.getElementById('createStage2').style.display    = 'none';
+  document.body.classList.remove('mobile-editing-active');
   document.getElementById('createStage3').style.display    = 'none';
   document.getElementById('uploadProgressWrap').style.display = 'none';
   document.getElementById('uploadProgressBar').style.width = '0%';
