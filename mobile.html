@@ -1263,6 +1263,10 @@
                     <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
                   </button>
                 </div>
+                <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
+                  style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
+                  <span>📝 Create Steps from Transcript</span>
+                </button>
                 <!-- Manual Buttons Row -->
                 <div style="display:flex;gap:6px;margin-bottom:8px;flex-shrink:0;">
                   <button onclick="addStepAtCurrentTime()"
@@ -1619,6 +1623,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=4.4"></script>
+  <script type="module" src="app.js?v=4.5"></script>
 </body>
 </html>
