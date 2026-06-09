@@ -9337,6 +9337,22 @@ window.aiWriteStepDescriptions = async function() {
     return;
   }
   showTip('✍️ AI is writing descriptions for each loop stop…');
+
+  const btnIds = ['aiRegenDescriptionsBtn', 'aiRegenDescriptionsBtnMobile', 'topAiDescBtn', 'topAiDescBtnMobile'];
+  const originalHtmls = {};
+  btnIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      originalHtmls[id] = el.innerHTML;
+      el.disabled = true;
+      if (id.includes('Regen')) {
+        el.innerHTML = '<span>⏳ AI is writing descriptions...</span>';
+      } else {
+        el.innerHTML = '⏳ AI...';
+      }
+    }
+  });
+
   try {
     const steps = createStepsArr.map((s, i) => ({
       index: i,
@@ -9374,6 +9390,14 @@ window.aiWriteStepDescriptions = async function() {
     showTip('✅ Descriptions written! Edit any card to customize.');
   } catch (err) {
     showTip('❌ ' + (err.message || 'Could not generate descriptions.'));
+  } finally {
+    btnIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && originalHtmls[id] !== undefined) {
+        el.disabled = false;
+        el.innerHTML = originalHtmls[id];
+      }
+    });
   }
 };
 
