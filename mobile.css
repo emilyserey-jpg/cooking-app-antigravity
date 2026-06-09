@@ -1716,7 +1716,7 @@ a:focus-visible {
   scroll-snap-stop: always;
   box-sizing: border-box;
   padding: 8px 12px 20px 12px;
-  overflow-y: hidden !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
