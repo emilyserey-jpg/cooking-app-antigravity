@@ -8435,6 +8435,139 @@ window.setChatboxLoading = function(isLoading, isSuccess) {
   });
 };
 
+// ── Helper: Show action choice popup for guidelines chatbox ────────────────
+window.showChatboxActionMenu = function(triggerEl) {
+  const parent = triggerEl.closest('div');
+  if (!parent) return;
+
+  // If menu already exists, toggle off
+  let existingMenu = parent.querySelector('.chatbox-action-menu');
+  if (existingMenu) {
+    existingMenu.remove();
+    return;
+  }
+
+  // Create menu wrapper
+  const menu = document.createElement('div');
+  menu.className = 'chatbox-action-menu';
+  
+  // Custom styles for dropdown (incorporating HSL theme and premium details)
+  menu.style.position = 'absolute';
+  menu.style.top = '100%';
+  menu.style.right = '0';
+  menu.style.left = '0';
+  menu.style.marginTop = '6px';
+  menu.style.background = 'rgba(255, 255, 255, 0.96)';
+  menu.style.backdropFilter = 'blur(16px)';
+  menu.style.webkitBackdropFilter = 'blur(16px)';
+  menu.style.border = '1px solid rgba(124, 58, 237, 0.25)';
+  menu.style.borderRadius = '12px';
+  menu.style.boxShadow = '0 12px 30px -4px rgba(124, 58, 237, 0.15), 0 8px 16px -6px rgba(0, 0, 0, 0.1)';
+  menu.style.zIndex = '9999';
+  menu.style.display = 'flex';
+  menu.style.flexDirection = 'column';
+  menu.style.overflow = 'hidden';
+  menu.style.padding = '5px';
+  menu.style.gap = '3px';
+
+  // Option list
+  const options = [
+    {
+      label: '🔁 Place/Regenerate Loop Stops',
+      desc: 'Starts full video analysis (slow: 30-50s)',
+      action: 'loops'
+    },
+    {
+      label: '📋 Edit Step Instructions with AI',
+      desc: 'Refine steps text using your guidelines (fast: 1-3s)',
+      action: 'steps'
+    },
+    {
+      label: '🍳 Edit Ingredients List with AI',
+      desc: 'Refine ingredients using your guidelines (fast: 1-3s)',
+      action: 'ingredients'
+    },
+    {
+      label: '🎤 Edit Video Transcript with AI',
+      desc: 'Refine raw transcript text using your guidelines (fast: 1-3s)',
+      action: 'transcript'
+    }
+  ];
+
+  options.forEach(opt => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.style.background = 'transparent';
+    item.style.border = 'none';
+    item.style.borderRadius = '8px';
+    item.style.padding = '8px 12px';
+    item.style.textAlign = 'left';
+    item.style.cursor = 'pointer';
+    item.style.display = 'flex';
+    item.style.flexDirection = 'column';
+    item.style.transition = 'all 0.15s ease';
+    
+    const title = document.createElement('span');
+    title.textContent = opt.label;
+    title.style.fontWeight = '800';
+    title.style.fontSize = '0.74rem';
+    title.style.color = '#7c3aed';
+    title.style.fontFamily = 'var(--font)';
+    
+    const desc = document.createElement('span');
+    desc.textContent = opt.desc;
+    desc.style.fontSize = '0.6rem';
+    desc.style.color = '#6b7280';
+    desc.style.fontFamily = 'var(--font)';
+    desc.style.marginTop = '2px';
+
+    item.appendChild(title);
+    item.appendChild(desc);
+
+    item.addEventListener('mouseenter', () => {
+      item.style.background = 'rgba(124, 58, 237, 0.08)';
+      title.style.color = '#4f46e5';
+    });
+    item.addEventListener('mouseleave', () => {
+      item.style.background = 'transparent';
+      title.style.color = '#7c3aed';
+    });
+
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.remove();
+      document.removeEventListener('click', closeMenuHandler);
+      
+      // Execute the requested handler
+      if (opt.action === 'loops') {
+        doItAll();
+      } else if (opt.action === 'steps') {
+        window.editStepsWithAI();
+      } else if (opt.action === 'ingredients') {
+        window.editIngredientsWithAI();
+      } else if (opt.action === 'transcript') {
+        window.editTranscriptWithAI();
+      }
+    });
+
+    menu.appendChild(item);
+  });
+
+  parent.appendChild(menu);
+
+  // Close menu when clicking outside
+  function closeMenuHandler(e) {
+    if (!parent.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', closeMenuHandler);
+    }
+  }
+
+  setTimeout(() => {
+    document.addEventListener('click', closeMenuHandler);
+  }, 10);
+};
+
 // ── Helper: set AI status message ──────────────────────────────────────────
 function setAIStatus(msg, show = true) {
   const el = document.getElementById('aiStatus');
