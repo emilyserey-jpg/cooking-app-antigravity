@@ -1547,12 +1547,12 @@ a:focus-visible {
 
 
 
-  #createStage2 {
+  body.mobile-editing-active #createStage2,
+  body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) #createStage2 {
     height: auto !important;
-    min-height: none !important;
+    min-height: 0 !important;
     overflow: visible !important;
-    display: flex; /* no !important to allow resetCreateView to hide it */
-    flex-direction: column !important;
+    display: block !important; /* block layout to stack elements vertically and allow normal page scroll */
     position: relative !important;
     padding-bottom: 80px !important; /* space for toolbar */
     box-sizing: border-box !important;
@@ -1670,6 +1670,8 @@ a:focus-visible {
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) {
     overflow-y: auto !important;
     height: auto !important;
+    display: block !important; /* force block layout to ensure natural page scroll flow */
+    -webkit-overflow-scrolling: touch !important;
   }
 
   body.mobile-editing-active .app-container,
@@ -1679,14 +1681,13 @@ a:focus-visible {
     overflow: visible !important;
     padding: 8px 8px 80px 8px !important; /* bottom padding to clear the fixed toolbar */
     box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important; /* change to block to avoid flexbox height calculation bugs */
   }
 
   body.mobile-editing-active .view-section.active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-section.active {
     height: auto !important;
-    min-height: none !important;
+    min-height: 0 !important;
     display: block !important;
   }
 
