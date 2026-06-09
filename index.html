@@ -1238,6 +1238,11 @@
                   <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
                   <div id="stepNavCount" style="font-size:0.6rem;color:var(--text-muted);font-weight:700;">Add stops or run AI</div>
                 </div>
+                <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+                  style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                  title="Add Loop Stop at Current Time">
+                  <span>📍 Add Stop</span>
+                </button>
                 <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.75rem;font-weight:900;font-family:var(--font);flex-shrink:0;">▶ Loop</button>
                 <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
@@ -1731,6 +1736,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=5.5"></script>
+  <script type="module" src="app.js?v=5.6"></script>
 </body>
 </html>
