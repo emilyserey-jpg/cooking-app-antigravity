@@ -228,12 +228,17 @@ app.post('/api/ai/steps', async (req, res) => {
 
 // ─── AI: Auto-detect loop points (start + end) from transcript ────────────
 app.post('/api/ai/loops', async (req, res) => {
-  const { transcript, segments } = req.body;
+  const { transcript, segments, prompt } = req.body;
   if (!transcript) return res.status(400).json({ error: 'No transcript.' });
 
   const segmentText = (segments && segments.length > 0)
     ? segments.map(s => `[${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s] ${s.text.trim()}`).join('\n')
     : transcript;
+
+  let userPromptText = `Identify cooking step loop boundaries:\n\n${segmentText}`;
+  if (prompt && prompt.trim()) {
+    userPromptText += `\n\nApply these customization tweaks requested by the user:\n"${prompt.trim()}"`;
+  }
 
   try {
     const content = await getChatCompletion({
@@ -254,7 +259,7 @@ Rules:
 - Each step must have a minimum duration of at least 3 seconds. Do not create 1-second or 2-second steps.
 - Look for transitions: "now", "next", "then", "add", "place", "stir", "cook", "remove"
 - Labels should be action verbs ("Chop onions", "Add flour", "Stir mixture")`,
-      userPrompt: `Identify cooking step loop boundaries:\n\n${segmentText}`,
+      userPrompt: userPromptText,
       jsonMode: true
     });
     
@@ -268,6 +273,7 @@ Rules:
 
 // ─── AI: Gemini video analysis (Google File API → Gemini 2.0 Flash) ──────────
 app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res) => {
+  const { prompt: tweakPrompt } = req.body;
   if (!GEMINI_API_KEY)
     return res.status(503).json({ error: 'GEMINI_API_KEY not set in Railway variables.' });
   if (!req.file)
@@ -318,7 +324,7 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
     if (fileState !== 'ACTIVE') throw new Error(`File stuck in state: ${fileState}`);
 
     // ── Step 3: Generate content ────────────────────────────────────────
-    const prompt = `Watch this cooking tutorial video from start to finish.
+    let prompt = `Watch this cooking tutorial video from start to finish.
 Identify distinct cooking steps and return ONLY this JSON (no markdown):
 {
   "title": "short recipe name",
@@ -342,6 +348,10 @@ Rules:
 - Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video.
 - Be chronological: each loop's instruction should describe the actions during and immediately surrounding its start/end window.
 - Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
+
+    if (tweakPrompt && tweakPrompt.trim()) {
+      prompt += `\n\nApply these customization tweaks requested by the user:\n"${tweakPrompt.trim()}"`;
+    }
 
     const gemRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,

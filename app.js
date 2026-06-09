@@ -8723,11 +8723,13 @@ window.generateLoops = async function() {
   if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
   setAIStatus('🔁 Detecting step timestamps...');
 
+  const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
+
   try {
     const res  = await fetch('/api/ai/loops', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: cachedTranscript, segments: cachedSegments }),
+      body: JSON.stringify({ transcript: cachedTranscript, segments: cachedSegments, prompt: tweak }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -8774,6 +8776,7 @@ function checkForceFreshAI() {
   if (checkbox && checkbox.checked) {
     _geminiCache = null;
     _geminiCacheFile = null;
+    _geminiCacheTweak = null;
     cachedTranscript = null;
     cachedSegments = null;
     checkbox.checked = false; // reset after triggering
@@ -8784,12 +8787,15 @@ function checkForceFreshAI() {
 // ── On-demand Gemini — called once per file, result cached for all AI buttons ─
 let _geminiCache     = null; // cached result for current file
 let _geminiCacheFile = null; // which file was analyzed (detect new uploads)
+let _geminiCacheTweak = null; // tweak prompt used for this cached result
 
 async function tryGeminiFor(task) {
   if (!uploadedFile) return null;
 
-  // Return cached result if same file (free reuse)
-  if (_geminiCache && _geminiCacheFile === uploadedFile) {
+  const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
+
+  // Return cached result if same file and same tweak (free reuse)
+  if (_geminiCache && _geminiCacheFile === uploadedFile && _geminiCacheTweak === tweak) {
     const hasLoops = Array.isArray(_geminiCache.loops) && _geminiCache.loops.length > 0;
     const hasTranscripts = Array.isArray(_geminiCache.text_overlays) && _geminiCache.text_overlays.length > 0;
 
@@ -8805,6 +8811,9 @@ async function tryGeminiFor(task) {
   setAIStatus('🤖 Uploading to Gemini…', true);
   const formData = new FormData();
   formData.append('video', uploadedFile, uploadedFile.name);
+  if (tweak) {
+    formData.append('prompt', tweak);
+  }
 
   const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
   const data = await res.json();
@@ -8815,8 +8824,9 @@ async function tryGeminiFor(task) {
   }
 
   // Cache — subsequent taps reuse for free
-  _geminiCache     = data;
-  _geminiCacheFile = uploadedFile;
+  _geminiCache      = data;
+  _geminiCacheFile  = uploadedFile;
+  _geminiCacheTweak = tweak;
   return data;
 }
 
@@ -9178,10 +9188,11 @@ window.createStepsFromTranscript = async function() {
     // 2. Detect loop stops from transcript
     if (btn) btn.textContent = '⏳ 2/3: Loops...';
     setAIStatus('🔁 Step 2/3: Detecting loop timestamps...', true);
+    const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
     const loopsRes = await fetch('/api/ai/loops', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: textVal, segments: cachedSegments }),
+      body: JSON.stringify({ transcript: textVal, segments: cachedSegments, prompt: tweak }),
     });
     const loopsData = await loopsRes.json();
     if (loopsData.error) throw new Error(loopsData.error);
