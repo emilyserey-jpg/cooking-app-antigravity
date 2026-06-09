@@ -1678,6 +1678,12 @@ a:focus-visible {
     box-sizing: border-box !important;
   }
 
+  body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-section.active {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
 /* ====================================================
    MOBILE EDITOR CAROUSEL & TOOLBAR (GLOBAL & DESKTOP DEFAULT HIDE)
    ==================================================== */
