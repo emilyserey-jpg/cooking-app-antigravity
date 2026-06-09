@@ -153,25 +153,40 @@ async function getChatCompletion({ systemPrompt, userPrompt, jsonMode = false })
   }
 
   const prompt = `${systemPrompt}\n\nUser input/data:\n${userPrompt}`;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        responseMimeType: jsonMode ? "application/json" : "text/plain"
-      }
-    })
-  });
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini Chat fallback failed (${response.status}): ${errText}`);
+  
+  async function tryModel(modelName) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: jsonMode ? "application/json" : "text/plain"
+        }
+      })
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gemini (${modelName}) failed (${response.status}): ${errText}`);
+    }
+    const data = await response.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  return text.trim();
+
+  try {
+    const res = await tryModel('gemini-2.5-flash');
+    return res.trim();
+  } catch (err) {
+    console.warn('[Gemini 2.5 Flash] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+    try {
+      const res = await tryModel('gemini-2.5-flash-lite');
+      return res.trim();
+    } catch (fallbackErr) {
+      throw new Error(`Gemini Chat failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+    }
+  }
 }
 
 function cleanAndParseJSON(str) {
@@ -404,23 +419,38 @@ Rules:
       prompt += `\n\nApply these customization tweaks requested by the user:\n"${tweakPrompt.trim()}"`;
     }
 
-    const gemRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
-          generationConfig: { temperature: 0.2 },
-        }),
+    async function tryGenerate(modelName) {
+      const gemRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
+            generationConfig: { temperature: 0.2 },
+          }),
+        }
+      );
+      if (!gemRes.ok) {
+        const errText = await gemRes.text();
+        throw new Error(`Gemini (${modelName}) failed (${gemRes.status}): ${errText.slice(0, 400)}`);
       }
-    );
-    if (!gemRes.ok) {
-      const errText = await gemRes.text();
-      throw new Error(`Gemini failed (${gemRes.status}): ${errText.slice(0, 400)}`);
+      const gemData = await gemRes.json();
+      return gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
-    const gemData = await gemRes.json();
-    let raw = gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    let raw = '';
+    try {
+      raw = await tryGenerate('gemini-2.5-flash');
+    } catch (err) {
+      console.warn('[Gemini 2.5 Flash video analysis] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+      try {
+        raw = await tryGenerate('gemini-2.5-flash-lite');
+      } catch (fallbackErr) {
+        throw new Error(`Video analysis failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+      }
+    }
+
     raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
     if (!raw) throw new Error('Gemini returned empty response.');
     const result = JSON.parse(raw);
@@ -487,17 +517,36 @@ Format each step description exactly as: "[Instruction details]. Ingredients: [l
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
 ["Heat the pan on medium-high. Ingredients: 2 tablespoons cooking oil.", "Season the shrimp in a bowl. Ingredients: 1 pound shrimp, 1 teaspoon salt, 1/2 teaspoon black pepper, 1/2 teaspoon garlic powder."]`;
 
-  try {
+  async function tryDescribe(modelName) {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
       }
     );
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gemini (${modelName}) failed (${response.status}): ${errText}`);
+    }
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  try {
+    let text = '';
+    try {
+      text = await tryDescribe('gemini-2.5-flash');
+    } catch (err) {
+      console.warn('[Gemini 2.5 Flash describe-steps] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+      try {
+        text = await tryDescribe('gemini-2.5-flash-lite');
+      } catch (fallbackErr) {
+        throw new Error(`Step description failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+      }
+    }
+
     let descriptions = [];
     try {
       descriptions = cleanAndParseJSON(text);
