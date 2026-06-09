@@ -8381,6 +8381,60 @@ window.handleFileSelect = async function(file) {
   return _origHandleFileSelect(file);
 };
 
+// ── Helper: Set visual loading or success state for guidelines chatbox ──────
+window.setChatboxLoading = function(isLoading, isSuccess) {
+  const prompts = document.querySelectorAll('#aiTweakPrompt');
+  const buttons = document.querySelectorAll('.ai-tweak-send-btn');
+
+  prompts.forEach(p => {
+    if (isLoading) {
+      p.classList.add('chatbox-textarea-loading');
+      p.disabled = true;
+    } else {
+      p.classList.remove('chatbox-textarea-loading');
+      p.disabled = false;
+    }
+  });
+
+  const planeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"></line>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+  </svg>`;
+
+  const spinnerSvg = `<svg class="spinner-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="2" x2="12" y2="6"></line>
+    <line x1="12" y1="18" x2="12" y2="22"></line>
+    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+    <line x1="2" y1="12" x2="6" y2="12"></line>
+    <line x1="18" y1="12" x2="22" y2="12"></line>
+    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+  </svg>`;
+
+  const successCheck = `<span style="color: #ffffff; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; line-height: 1;">✓</span>`;
+
+  buttons.forEach(btn => {
+    if (isLoading) {
+      btn.innerHTML = spinnerSvg;
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.style.pointerEvents = 'auto';
+      if (isSuccess) {
+        btn.innerHTML = successCheck;
+        const origBg = btn.style.background;
+        btn.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
+        setTimeout(() => {
+          btn.innerHTML = planeSvg;
+          btn.style.background = origBg;
+        }, 2000);
+      } else {
+        btn.innerHTML = planeSvg;
+      }
+    }
+  });
+};
+
 // ── Helper: set AI status message ──────────────────────────────────────────
 function setAIStatus(msg, show = true) {
   const el = document.getElementById('aiStatus');
@@ -8705,6 +8759,7 @@ window.editTranscriptWithAI = async function() {
   }
   setAIStatus('🪄 Editing transcript via Gemini...', true);
   showTip('Refining transcript with your instructions... 🪄');
+  window.setChatboxLoading(true);
 
   try {
     const res = await fetch('/api/ai/edit-transcript', {
@@ -8720,14 +8775,16 @@ window.editTranscriptWithAI = async function() {
     
     showTip('🪄 Transcript updated successfully!');
     setAIStatus('✅ Transcript refined by AI!');
+    window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Transcript edit failed:', err);
     setAIStatus('❌ Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
+    window.setChatboxLoading(false, false);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🪄 Edit Transcript';
+      btn.textContent = '🪄 AI Edit';
     }
   }
 };
@@ -8754,6 +8811,7 @@ window.editStepsWithAI = async function() {
   }
   setAIStatus('🪄 Editing steps via Gemini...', true);
   showTip('Refining step instructions with your guidelines... 🪄');
+  window.setChatboxLoading(true);
 
   try {
     const res = await fetch('/api/ai/edit-steps', {
@@ -8770,10 +8828,12 @@ window.editStepsWithAI = async function() {
     
     showTip('🪄 Steps updated successfully!');
     setAIStatus('✅ Steps refined by AI!');
+    window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Steps edit failed:', err);
     setAIStatus('❌ Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
+    window.setChatboxLoading(false, false);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -8804,6 +8864,7 @@ window.editIngredientsWithAI = async function() {
   }
   setAIStatus('🪄 Editing ingredients via Gemini...', true);
   showTip('Refining ingredients list with your guidelines... 🪄');
+  window.setChatboxLoading(true);
 
   try {
     const res = await fetch('/api/ai/edit-ingredients', {
@@ -8820,10 +8881,12 @@ window.editIngredientsWithAI = async function() {
     showTip('🪄 Ingredients updated successfully!');
     setAIStatus('✅ Ingredients refined by AI!');
     if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+    window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Ingredients edit failed:', err);
     setAIStatus('❌ Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
+    window.setChatboxLoading(false, false);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -9219,9 +9282,11 @@ window.doItAll = async function() {
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
     }
+    window.setChatboxLoading(false, false);
     return;
   }
 
+  window.setChatboxLoading(true);
   showTip('🤖 Gemini is analyzing your video for loop points. Please wait... 🎬');
 
   let gem = null;
@@ -9277,6 +9342,7 @@ window.doItAll = async function() {
         overlayBtn.style.opacity = '1';
         overlayBtn.innerHTML = '⚡ AI Stops';
       }
+      window.setChatboxLoading(false, true);
       return;
     }
 
@@ -9297,6 +9363,7 @@ window.doItAll = async function() {
         overlayBtn.style.opacity = '1';
         overlayBtn.innerHTML = '⚡ AI Stops';
       }
+      window.setChatboxLoading(false, false);
       return;
     }
 
@@ -9314,6 +9381,7 @@ window.doItAll = async function() {
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
     }
+    window.setChatboxLoading(false, true);
 
   } catch (err) {
     setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
@@ -9324,6 +9392,7 @@ window.doItAll = async function() {
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
     }
+    window.setChatboxLoading(false, false);
   }
 };
 

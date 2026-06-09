@@ -2190,5 +2190,25 @@ a:focus-visible {
   box-sizing: border-box;
 }
 
+/* Chatbox loading & success states */
+@keyframes chatboxPulse {
+  0% { box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); border-color: #7c3aed; }
+  50% { box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.35); border-color: #a855f7; }
+  100% { box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); border-color: #7c3aed; }
+}
 
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
+.chatbox-textarea-loading {
+  animation: chatboxPulse 1.5s infinite ease-in-out !important;
+  background: #fdfcff !important;
+  opacity: 0.8 !important;
+  pointer-events: none !important;
+}
+
+.spinner-icon {
+  animation: spinnerRotate 1s infinite linear !important;
+}
