@@ -7188,13 +7188,10 @@ window.selectCreateStep = function(i) {
   currentNavStepIndex = i;
   const vid = document.getElementById('uploadedVideoPlayer');
   if (vid && createStepsArr[i]) {
-    if (previewInterval !== null) {
-      previewStepLoop(i);
-    } else {
-      vid.currentTime = createStepsArr[i].time ?? 0;
-    }
+    window.previewStepLoop(i);
+  } else {
+    renderCreateSteps();
   }
-  renderCreateSteps();
 };
 
 window.showStepTranscripts = false;
@@ -7397,8 +7394,8 @@ function renderCreateSteps() {
 
     return `
       <div id="stepRow_${i}"
-        onfocusin="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
-        onclick="if(window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
+        onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
+        onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
         style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
@@ -7648,6 +7645,7 @@ window.previewStepLoop = function(i) {
   // Keep navigator in sync with the step being looped
   currentNavStepIndex = i;
   refreshStepNavigator();
+  renderCreateSteps();
 
   // endTime: use explicit value, then next step's start, then video end
   const endTime = (step.endTime != null)
