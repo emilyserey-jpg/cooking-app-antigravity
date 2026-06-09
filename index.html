@@ -20,7 +20,7 @@
     checkViewport();
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=4.0">
+  <link rel="stylesheet" href="styles.css?v=7.0">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1225,11 +1225,13 @@
             <!-- ── Nav controls bar ── -->
             <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:7px 11px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
               <!-- Row 1: step navigator + add stop + loop/stop -->
-              <div style="display:flex;align-items:center;gap:7px;width:100%;">
+              <div class="scroll-row-x" style="display:flex;align-items:center;gap:7px;width:100%;">
                 <!-- Seek Buttons Grouped Together -->
                 <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
                   <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
                     style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;" title="Previous step (← key)">←</button>
+                  <button onclick="toggleVideoPlay()" id="toolbarPlayBtn" tabindex="-1"
+                    style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
                   <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
                     style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;" title="Next step (→ key)">→</button>
                 </div>
@@ -1280,11 +1282,11 @@
             
             <!-- Desktop Editor Tab Bar -->
             <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
-              <button id="tabBtnVoiceover" onclick="switchEditorTab('voiceover')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
-                🎙️ AI Voiceover
-              </button>
               <button id="tabBtnStops" onclick="switchEditorTab('stops')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;">
                 📍 Loop Stops
+              </button>
+              <button id="tabBtnVoiceover" onclick="switchEditorTab('voiceover')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+                🎙️ AI Voiceover
               </button>
               <button id="tabBtnIngredients" onclick="switchEditorTab('ingredients')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
                 📝 Ingredients
@@ -1294,16 +1296,7 @@
               </button>
             </div>
 
-            <!-- Col 1: Title -->
-            <div id="rightColTitle" style="width:0;flex-shrink:0;display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;box-sizing:border-box;">
-              <!-- Recipe Title (statically first in right panel on desktop) -->
-              <div class="glass-card" id="editorTitleCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
-                <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Recipe Title</label>
-                <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
-                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;"
-                  onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
-              </div>
-            </div>
+
 
             <!-- Col 2: AI Voiceover -->
             <div id="rightColVoiceover" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
@@ -1322,7 +1315,7 @@
                     style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
                     <span>🎙️ AI: Generate Voiceovers for All Steps</span>
                   </button>
-                  <div id="voiceoverStepsList" style="margin-top:6px;display:flex;flex-direction:column;gap:8px;">
+                  <div id="voiceoverStepsList" style="margin-top:6px;display:flex;flex-direction:row;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;-ms-overflow-style:none;">
                     <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
                   </div>
                 </div>
@@ -1373,21 +1366,9 @@
                 <div id="stopsBody" style="padding:0 12px 4px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
                   <!-- AI buttons wrapper -->
                   <div id="aiToolsCollapse" style="display:none;flex-direction:column;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;border-bottom:1.5px dashed rgba(124,58,237,0.15);padding-bottom:8px;">
-                    <!-- AI Custom Tweak Prompt -->
-                    <div style="margin-bottom:2px; position:relative; display:flex; align-items:center;">
-                      <textarea id="aiTweakPrompt" placeholder="How/where to place loop stops? (e.g. 'Only 5 steps', 'Focus on baking')" 
-                        style="width:100%; height:38px; border:1.5px solid rgba(124,58,237,0.25); border-radius:8px; padding:6px 40px 6px 10px; font-family:var(--font); font-size:0.72rem; font-weight:600; resize:none; box-sizing:border-box; outline:none; transition:all 0.2s; background:rgba(255,255,255,0.6);"
-                        onfocus="this.style.borderColor='#7c3aed'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(124,58,237,0.1)';" 
-                        onblur="this.style.borderColor='rgba(124,58,237,0.25)'; this.style.background='rgba(255,255,255,0.6)'; this.style.boxShadow='none';"
-                        onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); window.showChatboxActionMenu(this); }"></textarea>
-                      <button onclick="window.showChatboxActionMenu(this)" title="Send Guidelines & Generate Stops" class="ai-tweak-send-btn"
-                        style="position:absolute; right:6px; background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; border-radius:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; box-shadow:0 2px 4px rgba(124,58,237,0.25); transition:transform 0.15s;"
-                        onmouseenter="this.style.transform='scale(1.05)';" onmouseleave="this.style.transform='scale(1)';">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="22" y1="2" x2="11" y2="13"></line>
-                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                      </button>
+                    <!-- AI Custom Tweak Prompt (Hidden) -->
+                    <div style="display:none !important;">
+                      <textarea id="aiTweakPrompt" placeholder="How/where to place loop stops? (e.g. 'Only 5 steps', 'Focus on baking')"></textarea>
                     </div>
                     <button id="aiLoopBtn" onclick="doItAll()"
                       style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
@@ -1454,22 +1435,30 @@
                 <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
                   style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
               </div>
-
-              <!-- Visibility -->
-              <div class="glass-card" id="editorVisibilityCard" style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;flex-shrink:0;box-sizing:border-box;">
-                <div>
-                  <div style="font-weight:800;color:var(--text-heading);font-size:0.82rem;">Visibility</div>
-                  <div id="privacyLabel" style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">🔒 Private</div>
-                </div>
-                <div onclick="toggleCreatePrivacy()" id="privacyToggle"
-                  style="width:48px;height:26px;border-radius:999px;background:#e0eaf4;cursor:pointer;position:relative;transition:background 0.25s;border:2px solid rgba(74,144,217,0.15);">
-                  <div id="privacyThumb" style="position:absolute;top:1px;left:1px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.15);transition:left 0.25s;"></div>
-                </div>
-              </div>
             </div>
 
             <!-- Col 5: Cover & Save Buttons -->
             <div id="rightColSave" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              <!-- Recipe Title -->
+              <div class="glass-card" id="editorTitleCard" style="padding:10px 13px; flex-shrink:0; box-sizing:border-box;">
+                <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Recipe Title</label>
+                <input id="newRecipeTitleInput" type="text" placeholder="e.g. Crispy Korean Fried Chicken"
+                  style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none;"
+                  onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
+              </div>
+
+              <!-- Visibility -->
+              <div class="glass-card" id="editorVisibilityCard" style="display:flex; align-items:center; justify-content:space-between; padding:9px 13px; flex-shrink:0; box-sizing:border-box;">
+                <div>
+                  <div style="font-weight:800; color:var(--text-heading); font-size:0.82rem;">Visibility</div>
+                  <div id="privacyLabel" style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">🔒 Private</div>
+                </div>
+                <div onclick="toggleCreatePrivacy()" id="privacyToggle"
+                  style="width:48px; height:26px; border-radius:999px; background:#e0eaf4; cursor:pointer; position:relative; transition:background 0.25s; border:2px solid rgba(74,144,217,0.15);">
+                  <div id="privacyThumb" style="position:absolute; top:1px; left:1px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:left 0.25s;"></div>
+                </div>
+              </div>
+
               <!-- Preview Cover -->
               <div class="glass-card" id="editorCoverCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
                 <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:4px;">Preview Cover (Thumbnail)</label>
@@ -1696,6 +1685,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=6.0"></script>
+  <script type="module" src="app.js?v=7.0"></script>
 </body>
 </html>

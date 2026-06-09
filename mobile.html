@@ -20,7 +20,7 @@
     checkViewport();
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile.css?v=4.1">
+  <link rel="stylesheet" href="mobile.css?v=7.0">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1203,11 +1203,13 @@
 
         <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:7px 11px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; margin-top:4px;">
           <!-- Row 1: step navigator + add stop + loop/stop -->
-          <div style="display:flex; align-items:center; gap:7px; width:100%;">
+          <div class="scroll-row-x" style="display:flex; align-items:center; gap:7px; width:100%; overflow-x:auto; white-space:nowrap; scrollbar-width:none; -ms-overflow-style:none;">
             <!-- Seek Buttons Grouped Together -->
             <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
               <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
                 style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
+              <button onclick="toggleVideoPlay()" id="toolbarPlayBtnMobile" tabindex="-1"
+                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
               <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
                 style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
             </div>
@@ -1257,8 +1259,8 @@
                 <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem; color:var(--text-muted); font-weight:900; margin-left:2px; transition:transform 0.2s; cursor:pointer;">▾</span>
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
-                <!-- AI Custom Tweak Prompt -->
-                <div style="margin-top:6px; margin-bottom:4px; flex-shrink:0; position:relative; display:flex; align-items:center;">
+                <!-- AI Custom Tweak Prompt (Hidden) -->
+                <div style="display:none !important;">
                   <textarea id="aiTweakPrompt" placeholder="How/where to place loop stops? (e.g. 'Only 5 steps', 'Focus on baking')" 
                     style="width:100%; height:38px; border:1.5px solid rgba(124,58,237,0.25); border-radius:8px; padding:6px 40px 6px 10px; font-family:var(--font); font-size:0.72rem; font-weight:600; resize:none; box-sizing:border-box; outline:none; transition:all 0.2s; background:rgba(255,255,255,0.6);"
                     onfocus="this.style.borderColor='#7c3aed'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(124,58,237,0.1)';" 
@@ -1292,7 +1294,29 @@
             </div>
           </div>
 
-          <!-- Slide 2: Ingredients -->
+          <!-- Slide 2: Voiceover -->
+          <div class="carousel-slide" id="slideVoiceover">
+            <!-- Voiceover Accordion Card -->
+            <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899; background:linear-gradient(135deg,#fff1f2,#faf5ff); padding:0; flex-shrink:0; overflow:hidden;">
+              <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex; align-items:center; gap:6px; padding:10px 12px; cursor:pointer; user-select:none;">
+                <span style="font-size:1rem;">🎙️</span>
+                <div style="font-weight:900; color:#ec4899; font-size:0.85rem; flex:1;">AI Voiceover</div>
+                <span id="voiceoverStatusBadge" style="font-size:0.6rem; background:#fdf2f8; color:#ec4899; padding:2px 7px; border-radius:999px; font-weight:800;">ready</span>
+                <span id="voiceoverChevron" style="font-size:0.75rem; color:#ec4899; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
+              </div>
+              <div id="voiceoverBody" style="padding:0 12px 12px; display:flex; flex-direction:column; gap:10px;">
+                <button id="aiVoiceoverGenerateBtnMobile" onclick="window.generateAllVoiceovers()" 
+                  style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
+                  <span>🎙️ AI: Generate Voiceovers for All Steps</span>
+                </button>
+                <div id="voiceoverStepsListMobile" style="margin-top:6px; display:flex; flex-direction:row; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none;">
+                  <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3: Ingredients -->
           <div class="carousel-slide" id="slideIngredients">
             <div class="glass-card" style="padding:12px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
               <!-- AI Ingredients button moved from AI Tools -->
@@ -1314,30 +1338,8 @@
             </div>
           </div>
 
-          <!-- Slide 2: Voiceover -->
-          <div class="carousel-slide" id="slideVoiceover">
-            <!-- Voiceover Accordion Card -->
-            <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899; background:linear-gradient(135deg,#fff1f2,#faf5ff); padding:0; flex-shrink:0; overflow:hidden;">
-              <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex; align-items:center; gap:6px; padding:10px 12px; cursor:pointer; user-select:none;">
-                <span style="font-size:1rem;">🎙️</span>
-                <div style="font-weight:900; color:#ec4899; font-size:0.85rem; flex:1;">AI Voiceover</div>
-                <span id="voiceoverStatusBadge" style="font-size:0.6rem; background:#fdf2f8; color:#ec4899; padding:2px 7px; border-radius:999px; font-weight:800;">ready</span>
-                <span id="voiceoverChevron" style="font-size:0.75rem; color:#ec4899; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
-              </div>
-              <div id="voiceoverBody" style="padding:0 12px 12px; display:flex; flex-direction:column; gap:10px;">
-                <button id="aiVoiceoverGenerateBtnMobile" onclick="window.generateAllVoiceovers()" 
-                  style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
-                  <span>🎙️ AI: Generate Voiceovers for All Steps</span>
-                </button>
-                <div id="voiceoverStepsListMobile" style="margin-top:6px; display:flex; flex-direction:column; gap:8px;">
-                  <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Slide 3: Details -->
-          <div class="carousel-slide" id="slideDetails">
+          <!-- Slide 4: Save (Combined Details & Save) -->
+          <div class="carousel-slide" id="slideSave">
             <!-- Recipe Title -->
             <div class="glass-card" id="editorTitleCard" style="padding:10px 13px; flex-shrink:0;">
               <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Recipe Title</label>
@@ -1357,10 +1359,7 @@
                 <div id="privacyThumb" style="position:absolute; top:1px; left:1px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:left 0.25s;"></div>
               </div>
             </div>
-          </div>
 
-          <!-- Slide 4: Save -->
-          <div class="carousel-slide" id="slideSave">
             <!-- Preview Cover -->
             <div class="glass-card" id="editorCoverCard" style="padding:10px 13px; flex-shrink:0;">
               <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Preview Cover (Thumbnail)</label>
@@ -1403,19 +1402,15 @@
             <span class="icon">📍</span>
             <span class="label">Stops</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarIngredients" class="toolbar-btn">
-            <span class="icon">🥦</span>
-            <span class="label">Ingredients</span>
-          </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarVoiceover" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarVoiceover" class="toolbar-btn">
             <span class="icon">🎙️</span>
             <span class="label">Voiceover</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarDetails" class="toolbar-btn">
-            <span class="icon">📝</span>
-            <span class="label">Details</span>
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarIngredients" class="toolbar-btn">
+            <span class="icon">🥦</span>
+            <span class="label">Ingredients</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(4)" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>
@@ -1595,6 +1590,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=6.0"></script>
+  <script type="module" src="app.js?v=7.0"></script>
 </body>
 </html>

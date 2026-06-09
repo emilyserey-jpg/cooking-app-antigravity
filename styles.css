@@ -2034,3 +2034,17 @@ a:focus-visible {
 .spinner-icon {
   animation: spinnerRotate 1s infinite linear !important;
 }
+
+.scroll-row-x {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.scroll-row-x::-webkit-scrollbar {
+  display: none !important;
+}

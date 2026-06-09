@@ -6537,8 +6537,16 @@ window.onVideoLoaded = function() {
     });
 
     // Sync play/pause button icon
-    videoEl.addEventListener('play',  () => { const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '⏸'; });
-    videoEl.addEventListener('pause', () => { const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '▶'; });
+    videoEl.addEventListener('play',  () => { 
+      const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '⏸'; 
+      const tb = document.getElementById('toolbarPlayBtn'); if (tb) tb.textContent = '⏸';
+      const tbm = document.getElementById('toolbarPlayBtnMobile'); if (tbm) tbm.textContent = '⏸';
+    });
+    videoEl.addEventListener('pause', () => { 
+      const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '▶'; 
+      const tb = document.getElementById('toolbarPlayBtn'); if (tb) tb.textContent = '▶';
+      const tbm = document.getElementById('toolbarPlayBtnMobile'); if (tbm) tbm.textContent = '▶';
+    });
   }
   // Re-render timeline if steps already exist (e.g. after AI analysis)
   if (createStepsArr.length) {
@@ -6589,6 +6597,8 @@ window.setStepEnd = function(i) {
 window.toggleVideoPlay = function() {
   const vid = document.getElementById('uploadedVideoPlayer');
   const btn = document.getElementById('videoPlayBtn');
+  const tbPlayBtn = document.getElementById('toolbarPlayBtn');
+  const tbPlayBtnMobile = document.getElementById('toolbarPlayBtnMobile');
   if (!vid) return;
   if (vid.paused) {
     const playPromise = vid.play();
@@ -6603,9 +6613,13 @@ window.toggleVideoPlay = function() {
       });
     }
     if (btn) btn.textContent = '⏸';
+    if (tbPlayBtn) tbPlayBtn.textContent = '⏸';
+    if (tbPlayBtnMobile) tbPlayBtnMobile.textContent = '⏸';
   } else {
     vid.pause();
     if (btn) btn.textContent = '▶';
+    if (tbPlayBtn) tbPlayBtn.textContent = '▶';
+    if (tbPlayBtnMobile) tbPlayBtnMobile.textContent = '▶';
   }
 };
 
@@ -7301,7 +7315,7 @@ function renderCreateSteps() {
       const stepText = step.description?.trim() || step.label?.trim() || `Step ${i + 1}`;
       const hasAudio = !!step.audioUrl;
       return `
-        <div class="glass-card" style="padding:10px; border:1px solid rgba(236,72,153,0.12); background:rgba(255,255,255,0.6); display:flex; flex-direction:column; gap:6px;">
+        <div class="glass-card" style="padding:10px; border:1px solid rgba(236,72,153,0.12); background:rgba(255,255,255,0.6); display:flex; flex-direction:column; gap:6px; width:260px; flex-shrink:0;">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
             <div style="font-weight:800; font-size:0.75rem; color:var(--text-heading); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
               Step ${i + 1}: ${step.label}
@@ -9809,7 +9823,6 @@ window.saveNewRecipe = async function() {
 // Relocate cards dynamically between desktop grid and mobile carousel slides
 window.setupResponsiveDrawers = function() {
   const isMobile = window.innerWidth <= 768;
-  const slideDetails = document.getElementById('slideDetails');
   const slideVoiceover = document.getElementById('slideVoiceover');
   const slideStops = document.getElementById('slideStops');
   const slideSave = document.getElementById('slideSave');
@@ -9821,14 +9834,13 @@ window.setupResponsiveDrawers = function() {
   const stopsSection = document.getElementById('editorStopsCard');
   const saveBtn = document.getElementById('saveRecipeBtn');
   const saveDraftBtn = document.getElementById('saveDraftBtn');
-  const rightPanel = document.getElementById('workbenchRight');
   const videoWrapper = document.getElementById('workbenchVideoWrapper');
   const videoOverlayControls = document.getElementById('videoOverlayControls');
   
   if (isMobile) {
-    if (slideDetails) {
-      if (titleCard && titleCard.parentElement !== slideDetails) {
-        slideDetails.appendChild(titleCard);
+    if (slideSave) {
+      if (titleCard) {
+        slideSave.appendChild(titleCard);
         // Reset styles for mobile drawer
         titleCard.style.padding = '10px 13px';
         titleCard.style.display = 'block';
@@ -9849,18 +9861,16 @@ window.setupResponsiveDrawers = function() {
           input.style.borderRadius = '10px';
         }
       }
-      if (visibilityCard && visibilityCard.parentElement !== slideDetails) slideDetails.appendChild(visibilityCard);
+      if (visibilityCard) slideSave.appendChild(visibilityCard);
+      if (coverCard) slideSave.appendChild(coverCard);
+      if (saveBtn) slideSave.appendChild(saveBtn);
+      if (saveDraftBtn) slideSave.appendChild(saveDraftBtn);
     }
     if (slideVoiceover && voiceoverSection && voiceoverSection.parentElement !== slideVoiceover) {
       slideVoiceover.appendChild(voiceoverSection);
     }
     if (slideStops && stopsSection && stopsSection.parentElement !== slideStops) {
       slideStops.appendChild(stopsSection);
-    }
-    if (slideSave) {
-      if (coverCard && coverCard.parentElement !== slideSave) slideSave.appendChild(coverCard);
-      if (saveBtn && saveBtn.parentElement !== slideSave) slideSave.appendChild(saveBtn);
-      if (saveDraftBtn && saveDraftBtn.parentElement !== slideSave) slideSave.appendChild(saveDraftBtn);
     }
     
     // Relocate #videoOverlayControls to be sibling of #workbenchVideoWrapper on mobile to fix iOS Safari touch swallowing
@@ -9915,11 +9925,11 @@ window.setupResponsiveDrawers = function() {
       if (ingredientsCard && ingredientsCard.parentElement !== colIngredients) {
         colIngredients.appendChild(ingredientsCard);
       }
-      if (visibilityCard && visibilityCard.parentElement !== colIngredients) {
-        colIngredients.appendChild(visibilityCard);
-      }
     }
     if (colSave) {
+      if (visibilityCard && visibilityCard.parentElement !== colSave) {
+        colSave.appendChild(visibilityCard);
+      }
       if (coverCard && coverCard.parentElement !== colSave) {
         colSave.appendChild(coverCard);
       }
@@ -9987,7 +9997,7 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Stops', 'Ingredients', 'Voiceover', 'Details', 'Save'];
+  const tabs = ['Stops', 'Voiceover', 'Ingredients', 'Save'];
   tabs.forEach((tab, i) => {
     const btn = document.getElementById(`btnToolbar${tab}`);
     if (btn) {
@@ -10003,7 +10013,7 @@ function updateToolbarButtonStates(activeIndex) {
       stopsBody.style.display = '';
       if (stopsChevron) stopsChevron.style.transform = '';
     }
-  } else if (activeIndex === 2) { // Voiceover tab (index 2)
+  } else if (activeIndex === 1) { // Voiceover tab (index 1)
     const voiceoverBody = document.getElementById('voiceoverBody');
     const voiceoverChevron = document.getElementById('voiceoverChevron');
     if (voiceoverBody) {

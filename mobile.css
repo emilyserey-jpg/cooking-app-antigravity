@@ -1616,13 +1616,25 @@ a:focus-visible {
   }
   
   #stepNavControlsRow {
+    overflow-x: visible !important;
+    white-space: normal !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .scroll-row-x {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
     overflow-x: auto !important;
     white-space: nowrap !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     touch-action: pan-x !important;
-    flex-direction: row !important;
-    align-items: center !important;
+  }
+  
+  .scroll-row-x::-webkit-scrollbar {
+    display: none !important;
   }
 
   /* Show mobile-specific layouts */
