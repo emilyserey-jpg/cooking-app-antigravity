@@ -45,6 +45,7 @@
       gap: 8px;
       border-bottom: 1px solid var(--border-card);
       padding-bottom: 8px;
+      flex-wrap: wrap;
     }
     .platform-tab {
       background: none;
@@ -149,6 +150,57 @@
       width: fit-content;
       font-variant-numeric: tabular-nums;
     }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+        gap: 1rem;
+      }
+      .header-subtitle {
+        display: none !important;
+      }
+      .input-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .input-row > div {
+        width: 100% !important;
+      }
+      #ai-log-box {
+        max-width: none !important;
+        width: 100% !important;
+        align-self: stretch !important;
+        height: auto !important;
+        min-height: 38px;
+      }
+      .input-row button {
+        width: 100% !important;
+        align-self: stretch !important;
+        height: 42px !important;
+      }
+      .workbench {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .player-column, .controls-column {
+        flex: none !important;
+        width: 100% !important;
+      }
+      #save-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px !important;
+      }
+      #save-row > div {
+        width: 100% !important;
+      }
+      #save-row button {
+        width: 100% !important;
+        align-self: stretch !important;
+        height: 42px !important;
+      }
+    }
   </style>
   <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -160,7 +212,7 @@
       <div class="logo-icon">🎬</div>
       <div class="logo-text">Cooking<span>GPS</span></div>
     </a>
-    <div style="font-weight: 800; color: var(--text-muted); font-size: 0.9rem;">
+    <div class="header-subtitle" style="font-weight: 800; color: var(--text-muted); font-size: 0.9rem;">
       Social Media Embed & Looping Prototype
     </div>
     <button onclick="window.location.href='/index.html'" class="btn" style="font-size:0.75rem; padding:6px 14px;">
