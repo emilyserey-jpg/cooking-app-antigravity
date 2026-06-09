@@ -8732,6 +8732,106 @@ window.editTranscriptWithAI = async function() {
   }
 };
 
+// ── AI: Edit/refine steps with custom guidelines ──────────────────────
+window.editStepsWithAI = async function() {
+  const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
+  if (!tweak) {
+    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    return;
+  }
+  
+  const stepsBox = document.getElementById('stepsText');
+  const currentText = stepsBox?.value?.trim();
+  if (!currentText) {
+    showTip('Generate or write step instructions first! 📋');
+    return;
+  }
+
+  const btn = document.getElementById('aiEditStepsBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Editing...';
+  }
+  setAIStatus('🪄 Editing steps via Gemini...', true);
+  showTip('Refining step instructions with your guidelines... 🪄');
+
+  try {
+    const res = await fetch('/api/ai/edit-steps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ steps: currentText, prompt: tweak }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Update steps textbox
+    if (stepsBox) stepsBox.value = data.steps;
+    window._aiStepsText = data.steps;
+    
+    showTip('🪄 Steps updated successfully!');
+    setAIStatus('✅ Steps refined by AI!');
+  } catch (err) {
+    console.error('[AI] Steps edit failed:', err);
+    setAIStatus('❌ Edit failed: ' + err.message);
+    showTip('Edit failed: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🪄 AI Edit';
+    }
+  }
+};
+
+// ── AI: Edit/refine ingredients with custom guidelines ──────────────────────
+window.editIngredientsWithAI = async function() {
+  const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
+  if (!tweak) {
+    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    return;
+  }
+  
+  const ingBox = document.getElementById('ingredientsText');
+  const currentText = ingBox?.value?.trim();
+  if (!currentText) {
+    showTip('Generate or write ingredients first! 🍳');
+    return;
+  }
+
+  const btn = document.getElementById('aiEditIngredientsBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Editing...';
+  }
+  setAIStatus('🪄 Editing ingredients via Gemini...', true);
+  showTip('Refining ingredients list with your guidelines... 🪄');
+
+  try {
+    const res = await fetch('/api/ai/edit-ingredients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ingredients: currentText, prompt: tweak }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Update ingredients textbox
+    if (ingBox) ingBox.value = data.ingredients;
+    
+    showTip('🪄 Ingredients updated successfully!');
+    setAIStatus('✅ Ingredients refined by AI!');
+    if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+  } catch (err) {
+    console.error('[AI] Ingredients edit failed:', err);
+    setAIStatus('❌ Edit failed: ' + err.message);
+    showTip('Edit failed: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🪄 AI Edit';
+    }
+  }
+};
+
 // ── Generate ingredients ───────────────────────────────────────────────────
 window.generateIngredients = async function() {
   if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }

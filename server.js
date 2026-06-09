@@ -243,6 +243,40 @@ app.post('/api/ai/edit-transcript', async (req, res) => {
   }
 });
 
+// ─── AI: Edit/refine steps with custom guidelines ──────────────────────
+app.post('/api/ai/edit-steps', async (req, res) => {
+  const { steps, prompt } = req.body;
+  if (!steps) return res.status(400).json({ error: 'No step instructions provided.' });
+  if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'No edit prompt/guidelines provided.' });
+
+  try {
+    const content = await getChatCompletion({
+      systemPrompt: 'You are an expert recipe editor. Your job is to edit and refine the provided numbered step-by-step cooking instructions based on the user\'s custom instructions. Preserve the general structure (e.g. keeping it as a numbered list) but apply the user\'s edits accurately (such as expanding details, translating, changing style, reformatting, or adding/removing details). Do not add any conversational filler or introductory text; return ONLY the final edited step instructions.',
+      userPrompt: `Here are the steps:\n\n${steps}\n\nApply these edits/guidelines:\n"${prompt.trim()}"`
+    });
+    res.json({ steps: content.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── AI: Edit/refine ingredients with custom guidelines ──────────────────────
+app.post('/api/ai/edit-ingredients', async (req, res) => {
+  const { ingredients, prompt } = req.body;
+  if (!ingredients) return res.status(400).json({ error: 'No ingredients list provided.' });
+  if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'No edit prompt/guidelines provided.' });
+
+  try {
+    const content = await getChatCompletion({
+      systemPrompt: 'You are an expert recipe editor. Your job is to edit and refine the provided ingredients list based on the user\'s custom instructions. Preserve the format of listing one ingredient per line, but apply the user\'s edits accurately (such as converting units, correcting quantities/spelling, scaling, or adding/removing items). Do not add any conversational filler or introductory text; return ONLY the final edited ingredients list.',
+      userPrompt: `Here are the ingredients:\n\n${ingredients}\n\nApply these edits/guidelines:\n"${prompt.trim()}"`
+    });
+    res.json({ ingredients: content.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── AI: Auto-detect loop points (start + end) from transcript ────────────
 app.post('/api/ai/loops', async (req, res) => {
   const { transcript, segments, prompt } = req.body;

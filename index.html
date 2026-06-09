@@ -1355,9 +1355,15 @@
 
                   <!-- ▾ Step Instructions (nested) -->
                   <div id="stepsTextResult" style="display:none;margin-top:6px;border:1px solid rgba(124,58,237,0.15);border-radius:8px;overflow:hidden;">
-                    <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;cursor:pointer;background:#f5f0ff;">
-                      <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Step Instructions ✏️</span>
-                      <span id="stepsTextChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:#f5f0ff;">
+                      <div onclick="togglePanel('stepsTextBody','stepsTextChevron')" style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1;">
+                        <span style="font-size:0.65rem;font-weight:800;text-transform:uppercase;color:#7c3aed;">Step Instructions ✏️</span>
+                        <span id="stepsTextChevron" style="font-size:0.7rem;color:#7c3aed;transition:transform 0.2s;">▾</span>
+                      </div>
+                      <button id="aiEditStepsBtn" onclick="window.editStepsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine step instructions"
+                        style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
+                        🪄 AI Edit
+                      </button>
                     </div>
                     <div id="stepsTextBody" style="padding:6px;">
                       <textarea id="stepsText" rows="4" style="width:100%;background:#fff;border:1px solid rgba(124,58,237,0.15);border-radius:6px;padding:6px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
@@ -1494,6 +1500,10 @@
                 
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                   <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:0;">Ingredients List</label>
+                  <button id="aiEditIngredientsBtn" onclick="window.editIngredientsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine the ingredients list"
+                    style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
+                    🪄 AI Edit
+                  </button>
                 </div>
                 <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
                   style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
