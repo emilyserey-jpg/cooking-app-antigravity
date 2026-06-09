@@ -20,7 +20,7 @@
     checkViewport();
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile.css?v=4.0">
+  <link rel="stylesheet" href="mobile.css?v=4.1">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1181,12 +1181,6 @@
             style="background:rgba(255,255,255,0.25); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0;">▶ Loop</button>
           <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
             style="display:none; background:#f0f4ff; border:none; border-radius:8px; padding:6px 11px; color:var(--primary); cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(240,244,255,0.4);">⏹ Stop</button>
-          <button onclick="window.openManualTimestampModal()" id="overlayTypeStopBtn"
-            style="background:rgba(255,255,255,0.25); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0;">⌨️ Type Stop</button>
-          <button onclick="doItAll()" id="overlayAiBtn"
-            style="background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(124,58,237,0.3);">⚡ AI Stops</button>
-          <button onclick="addStepAtCurrentTime()"
-            style="background:var(--primary); border:none; border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(74,144,217,0.4);">📍 Add Stop</button>
         </div>
 
         <!-- Chapter Scrubber -->
@@ -1257,7 +1251,6 @@
                 <span id="stopsChevron" onclick="togglePanel('stopsBody','stopsChevron')" style="font-size:0.75rem; color:var(--text-muted); font-weight:900; margin-left:2px; transition:transform 0.2s; cursor:pointer;">▾</span>
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
-                <!-- AI buttons moved from AI Tools -->
                 <div style="display:flex;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;">
                   <button id="aiLoopBtn" onclick="doItAll()"
                     style="flex:1;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
@@ -1268,6 +1261,17 @@
                     style="flex:1;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
                     <span>📋 AI Steps</span>
                     <span class="check-write-steps" style="display:none;color:#22c55e;font-size:0.78rem;">✓</span>
+                  </button>
+                </div>
+                <!-- Manual Buttons Row -->
+                <div style="display:flex;gap:6px;margin-bottom:8px;flex-shrink:0;">
+                  <button onclick="addStepAtCurrentTime()"
+                    style="flex:1;background:var(--primary);border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;color:#fff;box-shadow:0 2px 6px rgba(74,144,217,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                    <span>📍 Add Stop</span>
+                  </button>
+                  <button onclick="window.openManualTimestampModal()"
+                    style="flex:1;background:#fff;border:2px solid rgba(74,144,217,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.72rem;cursor:pointer;color:var(--primary);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;">
+                    <span>⌨️ Type Stop</span>
                   </button>
                 </div>
                 <div id="createStepsList" style="margin-top:6px;"></div>
