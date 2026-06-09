@@ -7058,7 +7058,7 @@ function refreshStepNavigator() {
   const count = document.getElementById('stepNavCount');
   if (!createStepsArr.length) {
     if (label) label.textContent = 'No loop stops yet';
-    if (count) count.textContent = 'Tap ▶ AI: Place Loop Stops or add manually';
+    if (count) count.textContent = 'Tap 🪄 AI: Create Steps from Analyzing Video or add manually';
     return;
   }
   const i    = Math.max(0, Math.min(currentNavStepIndex, createStepsArr.length - 1));
@@ -9532,7 +9532,7 @@ window.doItAll = async function() {
       if (btn) {
         btn.disabled = false;
         btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-        btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
+        btn.innerHTML = '<span>✅</span><span>Steps Created!</span>';
       }
       if (overlayBtn) {
         overlayBtn.disabled = false;
@@ -9571,7 +9571,7 @@ window.doItAll = async function() {
     if (btn) {
       btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-      btn.innerHTML = '<span>✅</span><span>Loop Stops Placed!</span>';
+      btn.innerHTML = '<span>✅</span><span>Steps Created!</span>';
     }
     if (overlayBtn) {
       overlayBtn.disabled = false;
