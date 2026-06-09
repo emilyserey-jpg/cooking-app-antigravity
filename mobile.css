@@ -1548,8 +1548,8 @@ a:focus-visible {
 
 
   #createStage2 {
-    height: 100% !important;
-    max-height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
     overflow: hidden !important;
     display: flex; /* no !important to allow resetCreateView to hide it */
     flex-direction: column !important;
@@ -1685,7 +1685,8 @@ a:focus-visible {
 
   body.mobile-editing-active .view-section.active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-section.active {
-    height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
   }
