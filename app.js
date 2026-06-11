@@ -7719,8 +7719,21 @@ window.redoStepDescription = async function(i, tweakPrompt = '') {
     const newDesc = data.descriptions?.[0];
     const nextStart = createStepsArr[i + 1]?.time ?? videoDuration;
     const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-    if (newDesc || wordForWordDesc) {
-      step.description = newDesc || wordForWordDesc;
+    
+    let finalDesc = '';
+    let parsedIngs = [];
+    if (newDesc) {
+      const parsed = window.parseDescriptionAndIngredients(newDesc, step.ingredients);
+      finalDesc = parsed.description;
+      parsedIngs = parsed.ingredients;
+    }
+    
+    const rawDesc = finalDesc || wordForWordDesc;
+    if (rawDesc || wordForWordDesc) {
+      step.description = rawDesc;
+      if (parsedIngs.length > 0) {
+        step.ingredients = parsedIngs;
+      }
       delete step.timers; // force auto-detection of new timers!
       showTip(`✅ Regenerated description for step ${i + 1}!`);
     } else {
@@ -7991,11 +8004,11 @@ window.parseDescriptionAndIngredients = function(text, existingIngs) {
   let description = (text || '').trim();
   let ingredients = Array.isArray(existingIngs) ? [...existingIngs] : [];
 
-  const match = description.match(/Ingredients:\s*(.*)/i);
+  const match = description.match(/Ingredients:\s*([\s\S]*)/i);
   if (match) {
     const ingPart = match[1].trim();
-    description = description.replace(/[\s.,;]*Ingredients:\s*.*/i, '').trim();
-    if (ingredients.length === 0) {
+    description = description.replace(/[\s.,;]*Ingredients:\s*[\s\S]*/i, '').trim();
+    if (ingredients.length === 0 && ingPart.toLowerCase() !== 'none') {
       ingredients = ingPart.split(/[,;\n]+/).map(i => i.trim()).filter(Boolean);
     }
   }
@@ -9555,9 +9568,19 @@ window.aiWriteStepDescriptions = async function() {
     // Apply descriptions
     const transcripts = window.getTranscriptForSteps(createStepsArr);
     createStepsArr.forEach((step, i) => {
-      const desc = descriptions[i] || '';
+      const descText = descriptions[i] || '';
+      let finalDesc = '';
+      let parsedIngs = [];
+      if (descText) {
+        const parsed = window.parseDescriptionAndIngredients(descText, step.ingredients);
+        finalDesc = parsed.description;
+        parsedIngs = parsed.ingredients;
+      }
       const wordForWordDesc = transcripts[i] || '';
-      step.description = wordForWordDesc || desc || step.description || '';
+      step.description = wordForWordDesc || finalDesc || step.description || '';
+      if (parsedIngs.length > 0) {
+        step.ingredients = parsedIngs;
+      }
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
