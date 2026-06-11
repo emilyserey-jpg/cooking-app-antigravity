@@ -935,6 +935,16 @@
         </button>
       </div>
 
+      <!-- Manage Widgets Panel (Visible in Customize Layout mode) -->
+      <div id="addWidgetsPanel" style="display:none; max-width:1100px; margin:1rem auto 0; padding:12px 20px; background:rgba(74,144,217,0.05); border:1.5px dashed rgba(74,144,217,0.25); border-radius:18px; align-items:center; gap:12px; box-sizing:border-box;">
+        <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:4px;">
+          ⚙️ Manage Widgets:
+        </span>
+        <div id="addWidgetsButtonsContainer" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <!-- Dynamically populated buttons -->
+        </div>
+      </div>
+
       <!-- Bento Grid Dashboard Wrapper -->
       <div class="bento-dashboard-grid" id="profileBentoGrid">
         
@@ -942,7 +952,10 @@
         <div class="bento-widget" id="bentoStatsWidget">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">📊 Culinary Records</div>
-            <button onclick="toggleWidgetSize('bentoStatsWidget')" id="resizeBtn_bentoStatsWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change stats widget layout size">↔ Size: Small</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button onclick="toggleWidgetSize('bentoStatsWidget')" id="resizeBtn_bentoStatsWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change stats widget layout size">↔ Size: Small</button>
+              <button onclick="hideBentoWidget('bentoStatsWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
+            </div>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; align-content:center;">
             <div style="background:rgba(74,144,217,0.06); border-radius:14px; padding:10px; text-align:center; border:1px solid var(--border-card);">
@@ -974,6 +987,7 @@
             <div style="display:flex; align-items:center; gap:8px;">
               <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
               <button onclick="toggleWidgetSize('bentoCalendarWidget')" id="resizeBtn_bentoCalendarWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">↔ Size: Medium</button>
+              <button onclick="hideBentoWidget('bentoCalendarWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
           <div class="bento-calendar-grid" id="bentoCalendarGrid">
@@ -990,6 +1004,7 @@
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="clearCompletedGroceryItems()" style="background:none; border:none; color:var(--primary); font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer;" title="Clear checked items">Clear Done</button>
               <button onclick="toggleWidgetSize('bentoGroceryWidget')" id="resizeBtn_bentoGroceryWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change grocery widget layout size">↔ Size: Small</button>
+              <button onclick="hideBentoWidget('bentoGroceryWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
           <!-- Quick Add Input -->
@@ -1001,7 +1016,74 @@
             <!-- List items dynamically injected -->
           </div>
         </div>
-        
+
+        <!-- Widget 5: Quick Cook Timer (Span 1) -->
+        <div class="bento-widget" id="bentoTimerWidget" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">⏱️ Quick Timer</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button onclick="toggleWidgetSize('bentoTimerWidget')" id="resizeBtn_bentoTimerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change timer widget layout size">↔ Size: Small</button>
+              <button onclick="hideBentoWidget('bentoTimerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
+            </div>
+          </div>
+          <div class="timer-container">
+            <div class="timer-display" id="bentoTimerDisplay">05:00</div>
+            <div class="timer-presets">
+              <button onclick="setBentoTimerPreset(60)" class="timer-preset-btn">1m</button>
+              <button onclick="setBentoTimerPreset(180)" class="timer-preset-btn">3m</button>
+              <button onclick="setBentoTimerPreset(300)" class="timer-preset-btn">5m</button>
+              <button onclick="setBentoTimerPreset(600)" class="timer-preset-btn">10m</button>
+            </div>
+            <div class="timer-controls">
+              <button onclick="toggleBentoTimer()" id="bentoTimerStartBtn" class="timer-control-btn start">Start</button>
+              <button onclick="resetBentoTimer()" class="timer-control-btn reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 6: Water Intake Tracker (Span 1) -->
+        <div class="bento-widget" id="bentoWaterWidget" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">💧 Daily Water Tracker</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button onclick="toggleWidgetSize('bentoWaterWidget')" id="resizeBtn_bentoWaterWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change water widget layout size">↔ Size: Small</button>
+              <button onclick="hideBentoWidget('bentoWaterWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
+            </div>
+          </div>
+          <div class="water-container">
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-heading);" id="bentoWaterCountText">0 / 8 Cups</div>
+            <div class="water-droplets" id="bentoWaterDroplets">
+              <!-- Render droplets -->
+            </div>
+            <button onclick="resetBentoWater()" class="water-reset-btn">Reset Progress</button>
+          </div>
+        </div>
+
+        <!-- Widget 7: Meal Planner Tracker (Span 1) -->
+        <div class="bento-widget" id="bentoMealPlannerWidget" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">🍳 Today's Menu</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button onclick="toggleWidgetSize('bentoMealPlannerWidget')" id="resizeBtn_bentoMealPlannerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change meal planner widget layout size">↔ Size: Small</button>
+              <button onclick="hideBentoWidget('bentoMealPlannerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
+            </div>
+          </div>
+          <div class="meal-container">
+            <div class="meal-row">
+              <div class="meal-badge">B</div>
+              <input type="text" id="mealInputBreakfast" placeholder="Add breakfast plan..." onchange="saveBentoMealPlan('breakfast', this.value)" class="meal-input">
+            </div>
+            <div class="meal-row">
+              <div class="meal-badge">L</div>
+              <input type="text" id="mealInputLunch" placeholder="Add lunch plan..." onchange="saveBentoMealPlan('lunch', this.value)" class="meal-input">
+            </div>
+            <div class="meal-row">
+              <div class="meal-badge">D</div>
+              <input type="text" id="mealInputDinner" placeholder="Add dinner plan..." onchange="saveBentoMealPlan('dinner', this.value)" class="meal-input">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ══ LIBRARY FOLDERS PREVIEW ══ -->
@@ -1610,6 +1692,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=8.2"></script>
+  <script type="module" src="app.js?v=8.3"></script>
 </body>
 </html>

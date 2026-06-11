@@ -2048,3 +2048,202 @@ a:focus-visible {
 .scroll-row-x::-webkit-scrollbar {
   display: none !important;
 }
+
+/* Bento Widgets customization & new trackers */
+.bento-widget-delete-btn {
+  display: none;
+  background: rgba(239, 68, 68, 0.08);
+  border: none;
+  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.bento-widget-delete-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.dashboard-editing .bento-widget-delete-btn {
+  display: inline-flex;
+}
+
+/* Timer Widget styles */
+.timer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 8px;
+}
+.timer-display {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--primary);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  margin: 4px 0;
+}
+.timer-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.timer-preset-btn {
+  background: rgba(74, 144, 217, 0.08);
+  border: 1px solid rgba(74, 144, 217, 0.15);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.timer-preset-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+.timer-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.timer-control-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.timer-control-btn.start {
+  background: var(--primary);
+  color: #fff;
+}
+.timer-control-btn.start:hover {
+  background: #357abd;
+}
+.timer-control-btn.pause {
+  background: #f59e0b;
+  color: #fff;
+}
+.timer-control-btn.pause:hover {
+  background: #d97706;
+}
+.timer-control-btn.reset {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-body);
+}
+.timer-control-btn.reset:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Water Tracker styles */
+.water-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 12px;
+}
+.water-droplets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 6px 0;
+}
+.water-droplet {
+  width: 32px;
+  height: 40px;
+  background: rgba(74, 144, 217, 0.08);
+  border: 2px solid rgba(74, 144, 217, 0.2);
+  border-radius: 50% 50% 50% 50% / 12% 12% 88% 88%;
+  transform: rotate(-45deg);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.water-droplet:hover {
+  transform: rotate(-45deg) scale(1.15);
+  border-color: var(--primary);
+}
+.water-droplet.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+}
+.water-reset-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+/* Meal Planner styles */
+.meal-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  justify-content: center;
+}
+.meal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 6px 10px;
+  transition: border-color 0.15s;
+}
+.meal-row:focus-within {
+  border-color: var(--primary);
+  background: #fff;
+}
+.meal-badge {
+  font-size: 0.65rem;
+  font-weight: 900;
+  background: rgba(74, 144, 217, 0.1);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 2px 6px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.meal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-body);
+  padding: 0;
+}
+.meal-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+

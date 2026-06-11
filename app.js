@@ -2066,9 +2066,24 @@ function mySpaceInit() {
   if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
   if (typeof updateStreakCount === 'function') updateStreakCount();
   
+  // Initialize customizable widgets visibility & states
+  if (typeof refreshWidgetsVisibility === 'function') refreshWidgetsVisibility();
+  if (typeof initBentoMealPlan === 'function') initBentoMealPlan();
+  if (typeof renderBentoWater === 'function') renderBentoWater();
+  if (typeof resetBentoTimer === 'function') resetBentoTimer();
+
   // Initialize Dashboard Widgets Sizes
   if (typeof initAllWidgetSizes === 'function') initAllWidgetSizes();
 }
+
+const ALL_BENTO_WIDGETS = [
+  { id: 'bentoStatsWidget', name: '📊 Culinary Records', defaultHidden: false, defaultSize: 'span-1' },
+  { id: 'bentoCalendarWidget', name: '📅 Cooked Meal History', defaultHidden: false, defaultSize: 'span-2' },
+  { id: 'bentoGroceryWidget', name: '🛒 Grocery List', defaultHidden: false, defaultSize: 'span-1' },
+  { id: 'bentoTimerWidget', name: '⏱️ Quick Timer', defaultHidden: true, defaultSize: 'span-1' },
+  { id: 'bentoWaterWidget', name: '💧 Daily Water Tracker', defaultHidden: true, defaultSize: 'span-1' },
+  { id: 'bentoMealPlannerWidget', name: '🍳 Today\'s Menu', defaultHidden: true, defaultSize: 'span-1' }
+];
 
 function toggleDashboardEditMode() {
   const bGrid = document.getElementById('profileBentoGrid');
@@ -2095,9 +2110,12 @@ function toggleDashboardEditMode() {
       btn.style.background = 'var(--green)';
       btn.style.color = '#fff';
     }
-    showTip("Edit Mode active. Click Size/Color buttons on widgets & folders.");
+    showTip("Edit Mode active. Customize sizes and add/delete widgets.");
   }
   
+  // Refresh widget visibility and the manage widgets panel state
+  window.refreshWidgetsVisibility();
+
   // Re-render folder strip to show/hide customizers
   if (typeof mySpaceRenderFolderStrip === 'function') {
     mySpaceRenderFolderStrip();
@@ -2153,7 +2171,10 @@ function initAllWidgetSizes() {
     { id: 'bentoIdentityWidget', default: 'span-2' },
     { id: 'bentoStatsWidget', default: 'span-1' },
     { id: 'bentoCalendarWidget', default: 'span-2' },
-    { id: 'bentoGroceryWidget', default: 'span-1' }
+    { id: 'bentoGroceryWidget', default: 'span-1' },
+    { id: 'bentoTimerWidget', default: 'span-1' },
+    { id: 'bentoWaterWidget', default: 'span-1' },
+    { id: 'bentoMealPlannerWidget', default: 'span-1' }
   ];
   
   widgets.forEach(w => {
@@ -2181,6 +2202,229 @@ function toggleCalendarSize() {
 function initCalendarSize() {
   initAllWidgetSizes();
 }
+
+/* ── Widget Customization Management ── */
+window.hideBentoWidget = function(widgetId) {
+  localStorage.setItem(`cooking_gps_widget_hidden_${widgetId}`, 'true');
+  window.refreshWidgetsVisibility();
+  showTip("Widget hidden. Click 'Customize Layout' to bring it back!");
+};
+
+window.showBentoWidget = function(widgetId) {
+  localStorage.removeItem(`cooking_gps_widget_hidden_${widgetId}`);
+  window.refreshWidgetsVisibility();
+  
+  // Also initialize state for newly added widgets
+  if (widgetId === 'bentoWaterWidget') renderBentoWater();
+  if (widgetId === 'bentoMealPlannerWidget') initBentoMealPlan();
+  
+  showTip("Widget restored to dashboard!");
+};
+
+window.refreshWidgetsVisibility = function() {
+  const isEditing = document.getElementById('profileBentoGrid')?.classList.contains('dashboard-editing');
+  
+  // Update visibility on all widgets
+  ALL_BENTO_WIDGETS.forEach(w => {
+    const el = document.getElementById(w.id);
+    if (!el) return;
+    
+    const isHidden = localStorage.getItem(`cooking_gps_widget_hidden_${w.id}`) === 'true' || 
+                     (localStorage.getItem(`cooking_gps_widget_hidden_${w.id}`) === null && w.defaultHidden);
+    
+    el.style.display = isHidden ? 'none' : '';
+  });
+
+  // Update Add Widgets Panel
+  const panel = document.getElementById('addWidgetsPanel');
+  const container = document.getElementById('addWidgetsButtonsContainer');
+  if (panel && container) {
+    if (isEditing) {
+      panel.style.display = 'flex';
+      
+      const hiddenWidgets = ALL_BENTO_WIDGETS.filter(w => {
+        return localStorage.getItem(`cooking_gps_widget_hidden_${w.id}`) === 'true' || 
+               (localStorage.getItem(`cooking_gps_widget_hidden_${w.id}`) === null && w.defaultHidden);
+      });
+      
+      if (hiddenWidgets.length === 0) {
+        container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">All widgets are active!</span>`;
+      } else {
+        container.innerHTML = hiddenWidgets.map(w => `
+          <button onclick="window.showBentoWidget('${w.id}')" style="background:#fff; border:1.5px solid rgba(74,144,217,0.25); border-radius:10px; padding:6px 12px; font-family:var(--font); font-size:0.72rem; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='#fff'; this.style.color='var(--primary)';">
+            ➕ Add ${w.name.split(' ').slice(1).join(' ') || w.name}
+          </button>
+        `).join('');
+      }
+    } else {
+      panel.style.display = 'none';
+    }
+  }
+};
+
+/* ── Water Tracker Logic ── */
+let bentoWaterCount = parseInt(localStorage.getItem('cooking_gps_water_count') || '0');
+
+function renderBentoWater() {
+  const container = document.getElementById('bentoWaterDroplets');
+  const countText = document.getElementById('bentoWaterCountText');
+  if (!container || !countText) return;
+
+  countText.textContent = `${bentoWaterCount} / 8 Cups`;
+
+  let html = '';
+  for (let i = 0; i < 8; i++) {
+    const activeClass = i < bentoWaterCount ? 'active' : '';
+    html += `<div class="water-droplet ${activeClass}" onclick="window.toggleBentoWaterCup(${i})" title="Log cup ${i+1}"></div>`;
+  }
+  container.innerHTML = html;
+}
+
+window.toggleBentoWaterCup = function(index) {
+  if (index < bentoWaterCount) {
+    if (index === bentoWaterCount - 1) {
+      bentoWaterCount--;
+    } else {
+      bentoWaterCount = index + 1;
+    }
+  } else {
+    bentoWaterCount = index + 1;
+  }
+  localStorage.setItem('cooking_gps_water_count', bentoWaterCount.toString());
+  renderBentoWater();
+};
+
+window.resetBentoWater = function() {
+  bentoWaterCount = 0;
+  localStorage.setItem('cooking_gps_water_count', '0');
+  renderBentoWater();
+};
+
+/* ── Quick Countdown Timer Logic ── */
+let bentoTimerInterval = null;
+let bentoTimerSecondsLeft = 300;
+let bentoTimerRunning = false;
+
+function formatBentoTime(secs) {
+  const m = Math.floor(secs / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+window.setBentoTimerPreset = function(secs) {
+  if (bentoTimerRunning) {
+    window.toggleBentoTimer();
+  }
+  bentoTimerSecondsLeft = secs;
+  const display = document.getElementById('bentoTimerDisplay');
+  if (display) display.textContent = formatBentoTime(secs);
+};
+
+window.toggleBentoTimer = function() {
+  const startBtn = document.getElementById('bentoTimerStartBtn');
+  const display = document.getElementById('bentoTimerDisplay');
+  if (!startBtn || !display) return;
+
+  if (bentoTimerRunning) {
+    clearInterval(bentoTimerInterval);
+    bentoTimerRunning = false;
+    startBtn.textContent = 'Start';
+    startBtn.className = 'timer-control-btn start';
+  } else {
+    bentoTimerRunning = true;
+    startBtn.textContent = 'Pause';
+    startBtn.className = 'timer-control-btn pause';
+
+    bentoTimerInterval = setInterval(() => {
+      if (bentoTimerSecondsLeft <= 0) {
+        clearInterval(bentoTimerInterval);
+        bentoTimerRunning = false;
+        startBtn.textContent = 'Start';
+        startBtn.className = 'timer-control-btn start';
+        playBentoTimerAlert();
+        return;
+      }
+      bentoTimerSecondsLeft--;
+      display.textContent = formatBentoTime(bentoTimerSecondsLeft);
+    }, 1000);
+  }
+};
+
+window.resetBentoTimer = function() {
+  if (bentoTimerInterval) {
+    clearInterval(bentoTimerInterval);
+  }
+  bentoTimerRunning = false;
+  bentoTimerSecondsLeft = 300;
+  const startBtn = document.getElementById('bentoTimerStartBtn');
+  const display = document.getElementById('bentoTimerDisplay');
+  if (startBtn) {
+    startBtn.textContent = 'Start';
+    startBtn.className = 'timer-control-btn start';
+  }
+  if (display) display.textContent = '05:00';
+};
+
+function playBentoTimerAlert() {
+  const display = document.getElementById('bentoTimerDisplay');
+  if (display) {
+    let flashes = 0;
+    const flashInterval = setInterval(() => {
+      display.style.color = display.style.color === 'red' ? 'var(--primary)' : 'red';
+      flashes++;
+      if (flashes >= 10) {
+        clearInterval(flashInterval);
+        display.style.color = '';
+      }
+    }, 300);
+  }
+
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) return;
+
+    let beepCount = 0;
+    const interval = setInterval(() => {
+      if (beepCount >= 3) {
+        clearInterval(interval);
+        return;
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+      beepCount++;
+    }, 500);
+  } catch (err) {
+    console.warn("Audio Context alert blocked by browser autoplay policy:", err);
+  }
+}
+
+/* ── Meal Planner Logic ── */
+window.saveBentoMealPlan = function(meal, val) {
+  localStorage.setItem(`cooking_gps_meal_plan_${meal}`, val);
+  showTip(`Saved ${meal.charAt(0).toUpperCase() + meal.slice(1)} plan! 🍳`);
+};
+
+function initBentoMealPlan() {
+  const meals = ['breakfast', 'lunch', 'dinner'];
+  meals.forEach(m => {
+    const val = localStorage.getItem(`cooking_gps_meal_plan_${m}`) || '';
+    const input = document.getElementById(`mealInput${m.charAt(0).toUpperCase() + m.slice(1)}`);
+    if (input) input.value = val;
+  });
+}
+
+window.initBentoMealPlan = initBentoMealPlan;
+window.renderBentoWater = renderBentoWater;
 
 // Expose bento and ingredients logic globally for inline HTML click handlers
 window.addDateToCookedHistory = addDateToCookedHistory;
