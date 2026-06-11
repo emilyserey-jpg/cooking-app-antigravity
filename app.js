@@ -9246,7 +9246,8 @@ window.generateLoops = async function() {
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60).toString().padStart(2, '0');
       const nextStart = loops[idx+1]?.time ?? videoDuration;
-      const rawDesc = l.instruction || l.description || wordForWordDesc || '';
+      const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
+      const rawDesc = wordForWordDesc || l.instruction || l.description || '';
       return {
         time:        t,
         endTime:     end,
@@ -9451,7 +9452,7 @@ window.aiWriteStepDescriptions = async function() {
       const desc = descriptions[i] || '';
       const nextStart = createStepsArr[i+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-      step.description = desc || wordForWordDesc || step.description || '';
+      step.description = wordForWordDesc || desc || step.description || '';
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
@@ -9555,112 +9556,71 @@ window.doItAll = async function() {
   const btn = document.getElementById('aiLoopBtn');
   const overlayBtn = document.getElementById('overlayAiBtn');
   
-  if (btn) btn.disabled = true;
-  if (overlayBtn) {
-    overlayBtn.disabled = true;
-    overlayBtn.style.opacity = '0.7';
-    overlayBtn.innerHTML = '🤖 Analyzing...';
-  }
+  const setButtonsState = (disabled, text) => {
+    if (btn) {
+      btn.disabled = disabled;
+      if (text) {
+        btn.innerHTML = `<span>⏳</span><span>${text}</span>`;
+      }
+    }
+    if (overlayBtn) {
+      overlayBtn.disabled = disabled;
+      if (disabled) {
+        overlayBtn.style.opacity = '0.7';
+        if (text) overlayBtn.innerHTML = `🤖 ${text}`;
+      } else {
+        overlayBtn.style.opacity = '1';
+        overlayBtn.innerHTML = '⚡ AI Stops';
+      }
+    }
+  };
 
   // Check if video is loaded first
   if (!uploadedFile) {
     setAIStatus('⚠️ Upload a video first.', true);
     showTip('Upload your video first, then tap the button.');
-    if (btn) btn.disabled = false;
-    if (overlayBtn) {
-      overlayBtn.disabled = false;
-      overlayBtn.style.opacity = '1';
-      overlayBtn.innerHTML = '⚡ AI Stops';
-    }
+    setButtonsState(false);
     window.setChatboxLoading(false, false);
     return;
   }
 
   window.setChatboxLoading(true);
-  showTip('🤖 Gemini is analyzing your video for loop points. Please wait... 🎬');
-
-  let gem = null;
+  
   try {
-    setAIStatus('🤖 Gemini is analyzing your video...', true);
-    gem = await tryGeminiFor('loops');
-  } catch (gemError) {
-    console.warn('Gemini loop analysis failed, trying Whisper fallback:', gemError);
-  }
-
-  try {
-    if (gem?.loops?.length) {
-      // ✅ Gemini worked — apply loops + optionally title
-      if (gem.title) {
-        const t = document.getElementById('newRecipeTitleInput');
-        if (t && !t.value) t.value = gem.title;
-      }
-      if (Array.isArray(gem.text_overlays)) {
-        cachedSegments = gem.text_overlays;
-        cachedTranscript = gem.text_overlays.map(o => o.text).join(' ');
-      }
-      createStepsArr = gem.loops.map((l, i) => {
-        const t   = Number(l.start ?? l.time) || 0;
-        const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
-        const mm  = Math.floor(t / 60);
-        const ss  = Math.floor(t % 60).toString().padStart(2, '0');
-        
-        const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
-        const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-        const rawDesc = l.instruction || wordForWordDesc || gem.steps?.[i] || '';
-        const detectedTimer = window.parseTimerFromText(rawDesc);
-        return {
-          time: t,
-          endTime: end,
-          label: l.label || `Step ${i+1}`,
-          description: rawDesc,
-          ingredients: l.ingredients || [],
-          displayTime: `${mm}:${ss}`,
-          timers: undefined // force auto-detection of timers!
-        };
-      }).sort((a, b) => a.time - b.time);
-      renderCreateSteps();
-      renderTimeline();
-      setAIStatus(`✅ Gemini placed ${gem.loops.length} loop stops!`, true);
-      showTip(`🤖 ${gem.loops.length} loop stops placed — check the timeline!`);
-      if (btn) {
-        btn.disabled = false;
-        btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-        btn.innerHTML = '<span>✅</span><span>Steps Created!</span>';
-      }
-      if (overlayBtn) {
-        overlayBtn.disabled = false;
-        overlayBtn.style.opacity = '1';
-        overlayBtn.innerHTML = '⚡ AI Stops';
-      }
-      window.setChatboxLoading(false, true);
-      return;
-    }
-
-    // ── Gemini unavailable — use Whisper + GPT fallback ─────────────────
-    setAIStatus('🎤 Using Whisper fallback...', true);
-
-    // Use cached transcript if already transcribed
-    if (!cachedTranscript) {
+    // 1. Transcribe audio/video
+    let textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
+    if (!textVal) {
+      setButtonsState(true, '1/3: Transcribing...');
+      setAIStatus('🎤 Step 1/3: Generating video transcript...', true);
+      showTip('🎤 Transcribing audio...');
       await window.transcribeVideo();
-    }
-
-    if (!cachedTranscript) {
-      setAIStatus('❌ Could not transcribe — video may be over 25MB. Add your Gemini key to Railway to support any size.', true);
-      showTip('❌ AI Analysis failed: Could not transcribe video.');
-      if (btn) btn.disabled = false;
-      if (overlayBtn) {
-        overlayBtn.disabled = false;
-        overlayBtn.style.opacity = '1';
-        overlayBtn.innerHTML = '⚡ AI Stops';
+      
+      textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
+      if (!textVal) {
+        throw new Error('Could not generate transcript. Please ensure the video has audio or try again.');
       }
-      window.setChatboxLoading(false, false);
-      return;
+      showTip('🎙️ Transcript successfully created!');
+    } else {
+      showTip('📖 Using current transcript to build steps...');
     }
 
-    setAIStatus('🔁 Detecting loop stops from transcript...', true);
+    // 2. Detect loop stops from transcript
+    setButtonsState(true, '2/3: Detecting loops...');
+    setAIStatus('🔁 Step 2/3: Detecting precise loop stops...', true);
+    showTip('🔁 Identifying step timestamps from speech...');
     await window.generateLoops();
-    setAIStatus('✅ Loop stops placed!', true);
-    showTip('🤖 Loop stops placed from transcript — check the timeline!');
+    
+    if (!createStepsArr.length) {
+      throw new Error('No loop steps were detected from the audio transcript.');
+    }
+
+    // 3. Write descriptions & ingredients for these loop stops
+    setButtonsState(true, '3/3: Writing steps...');
+    setAIStatus('✍️ Step 3/3: Generating detailed instructions & ingredients...', true);
+    showTip('✍️ Writing detailed instructions...');
+    await window.aiWriteStepDescriptions();
+
+    // Reset buttons and finalize
     if (btn) {
       btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
@@ -9671,12 +9631,20 @@ window.doItAll = async function() {
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
     }
+    setAIStatus('✅ AI successfully created precisely-timed steps!', true);
+    showTip('⚡ AI completed all tasks precisely aligned with audio!');
     window.setChatboxLoading(false, true);
 
   } catch (err) {
+    console.error('doItAll error:', err);
     setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
     showTip('❌ AI Analysis failed: ' + (err.message || 'Connection error.'));
-    if (btn) btn.disabled = false;
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.style.background = '';
+      btn.innerHTML = '<span>🔁 AI: Create Steps from Analyzing Video</span>';
+    }
     if (overlayBtn) {
       overlayBtn.disabled = false;
       overlayBtn.style.opacity = '1';
@@ -9778,7 +9746,7 @@ window.createStepsFromTranscript = async function() {
       const parsed = window.parseDescriptionAndIngredients(descText);
       const nextStart = tempSteps[idx+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-      const rawDesc = parsed.description || wordForWordDesc || '';
+      const rawDesc = wordForWordDesc || parsed.description || '';
       return {
         ...step,
         description: rawDesc,

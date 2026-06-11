@@ -91,37 +91,160 @@ app.get('/api/cf-video-status/:uid', async (req, res) => {
   }
 });
 
-// ─── AI: Transcribe video with OpenAI Whisper ──────────────────────────────
-// Transcribes ONCE — client should cache and reuse for all 3 AI actions.
-app.post('/api/transcribe', upload.single('video'), async (req, res) => {
-  if (!openai) return res.status(500).json({ error: 'OpenAI not configured. Add OPENAI_API_KEY.' });
-  if (!req.file)  return res.status(400).json({ error: 'No video file provided.' });
+// Helper for Gemini File API upload and state waiting
+async function uploadToGeminiFileAPI(buffer, mimeType, originalName) {
+  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured.');
+  
+  console.log(`[Gemini File API] Uploading ${originalName || 'file'}...`);
+  const uploadRes = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': mimeType,
+        'X-Goog-Upload-Content-Type': mimeType,
+        'X-Goog-Upload-Protocol': 'raw',
+      },
+      body: buffer,
+    }
+  );
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text();
+    throw new Error(`File API upload failed (${uploadRes.status}): ${errText.slice(0, 400)}`);
+  }
+  const uploadData = await uploadRes.json();
+  const fileUri    = uploadData.file?.uri;
+  const fileName   = uploadData.file?.name;
+  if (!fileUri) throw new Error('File API returned no URI.');
+  console.log(`[Gemini File API] Uploaded: ${fileUri}`);
 
-  console.log(`[Whisper] Transcribing ${req.file.originalname} (${(req.file.size/1024/1024).toFixed(1)}MB)`);
-
-  try {
-    const { toFile } = require('openai');
-    const file = await toFile(
-      req.file.buffer,
-      req.file.originalname || 'video.mp4',
-      { type: getValidMimeType(req.file) }
+  // Wait for ACTIVE state
+  let fileState = uploadData.file?.state || 'PROCESSING';
+  let attempts  = 0;
+  while (fileState === 'PROCESSING' && attempts < 30) {
+    await new Promise(r => setTimeout(r, 3000));
+    const s = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`
     );
+    const sData = await s.json();
+    fileState = sData.state || 'FAILED';
+    attempts++;
+    console.log(`[Gemini File API] State: ${fileState} (${attempts})`);
+  }
+  if (fileState !== 'ACTIVE') throw new Error(`File stuck in state: ${fileState}`);
+  return { fileUri, fileName };
+}
 
-    const transcription = await openai.audio.transcriptions.create({
-      file,
-      model: 'whisper-1',
-      response_format: 'verbose_json',
-      timestamp_granularities: ['segment'],
-    });
+// Helper to transcribe with Gemini
+async function transcribeWithGemini(buffer, mimeType, originalName) {
+  const { fileUri, fileName } = await uploadToGeminiFileAPI(buffer, mimeType, originalName);
+  
+  const prompt = `Listen to the audio of this video and generate a precise word-for-word timestamped transcript of all spoken words or narration.
+Return ONLY this JSON schema (no markdown formatting, no code block backticks):
+{
+  "transcript": "full word-for-word transcript text...",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 5.2,
+      "text": "spoken words in this timeframe"
+    }
+  ]
+}
+Rules:
+- Keep segments short (typically 2 to 7 seconds each).
+- Ensure timestamps are accurate to the decimal (in seconds).
+- Do not summarize. Transcription must be word-for-word.`;
 
-    console.log(`[Whisper] Done — ${transcription.text.length} chars, ${transcription.segments?.length} segments`);
+  async function tryGenerate(modelName) {
+    const gemRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
+          generationConfig: { temperature: 0.1 },
+        }),
+      }
+    );
+    if (!gemRes.ok) {
+      const errText = await gemRes.text();
+      throw new Error(`Gemini (${modelName}) failed (${gemRes.status}): ${errText.slice(0, 400)}`);
+    }
+    const gemData = await gemRes.json();
+    return gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
 
+  let raw = '';
+  try {
+    raw = await tryGenerate('gemini-2.5-flash');
+  } catch (err) {
+    console.warn('[Gemini 2.5 Flash transcription] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+    try {
+      raw = await tryGenerate('gemini-2.5-flash-lite');
+    } catch (fallbackErr) {
+      throw new Error(`Gemini transcription failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+    }
+  }
+
+  // Cleanup file (fire and forget)
+  fetch(`https://generativelanguage.googleapis.com/v1beta/${fileName}?key=${GEMINI_API_KEY}`, {
+    method: 'DELETE',
+    headers: { 'x-goog-api-key': GEMINI_API_KEY }
+  }).catch(err => console.warn('[Gemini File Cleanup] Failed:', err.message));
+
+  raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+  if (!raw) throw new Error('Gemini returned empty response for transcription.');
+  return JSON.parse(raw);
+}
+
+// ─── AI: Transcribe video (OpenAI Whisper with Gemini fallback) ─────────────
+app.post('/api/transcribe', geminiUpload.single('video'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No video file provided.' });
+
+  const isOpenAiConfigured = OPENAI_API_KEY && !OPENAI_API_KEY.includes('PASTE_YOUR');
+
+  if (isOpenAiConfigured && openai) {
+    console.log(`[Whisper] Transcribing ${req.file.originalname} (${(req.file.size/1024/1024).toFixed(1)}MB)`);
+    try {
+      const { toFile } = require('openai');
+      const file = await toFile(
+        req.file.buffer,
+        req.file.originalname || 'video.mp4',
+        { type: getValidMimeType(req.file) }
+      );
+
+      const transcription = await openai.audio.transcriptions.create({
+        file,
+        model: 'whisper-1',
+        response_format: 'verbose_json',
+        timestamp_granularities: ['segment'],
+      });
+
+      console.log(`[Whisper] Done — ${transcription.text.length} chars, ${transcription.segments?.length} segments`);
+
+      return res.json({
+        transcript: transcription.text,
+        segments:   transcription.segments || [],
+      });
+    } catch (err) {
+      console.warn('Whisper failed, falling back to Gemini transcription:', err.message);
+    }
+  }
+
+  // Gemini Transcribe Fallback
+  console.log(`[Gemini Transcribe] Transcribing ${req.file.originalname} (${(req.file.size/1024/1024).toFixed(1)}MB)`);
+  try {
+    const mimeType = getValidMimeType(req.file);
+    const result = await transcribeWithGemini(req.file.buffer, mimeType, req.file.originalname);
+    console.log(`[Gemini Transcribe] Done — ${result.transcript.length} chars, ${result.segments?.length} segments`);
     res.json({
-      transcript: transcription.text,
-      segments:   transcription.segments || [],
+      transcript: result.transcript,
+      segments: result.segments || [],
     });
   } catch (err) {
-    console.error('[Whisper] Error:', err.message);
+    console.error('[Gemini Transcribe] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
