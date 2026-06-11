@@ -6565,6 +6565,17 @@ window.addStepAtCurrentTime = function() {
   const s = Math.floor(time % 60).toString().padStart(2, '0');
   // Default endTime = start + 15s (or video end if near end)
   const defaultEnd = Math.min(time + 15, videoDuration || time + 15);
+
+  // Split empty list into two sections: 0:00 to time (Step 1) and time to end (Step 2)
+  if (createStepsArr.length === 0 && time > 0.05) {
+    createStepsArr.push({
+      time: 0,
+      endTime: time,
+      label: `Step 1`,
+      displayTime: `0:00`
+    });
+  }
+
   createStepsArr.push({
     time,
     endTime: defaultEnd,
@@ -10152,6 +10163,17 @@ window.addManualStep = function() {
     const s = Math.floor(secs % 60).toString().padStart(2, '0');
     const defaultEnd = duration ? Math.min(secs + 15, duration) : secs + 15;
     
+    // Split empty list into two sections: 0:00 to secs (Step 1) and secs to end (Step 2)
+    if (createStepsArr.length === 0 && secs > 0.05) {
+      createStepsArr.push({
+        time: 0,
+        endTime: secs,
+        label: `Step 1`,
+        displayTime: `0:00`
+      });
+      addedCount++;
+    }
+
     // Assign label. If multiple timestamps are added with a custom label, append step index.
     const stepLabel = label 
       ? (parsedSteps.length > 1 ? `${label} ${index + 1}` : label) 
