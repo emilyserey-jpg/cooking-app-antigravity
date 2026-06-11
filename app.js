@@ -6679,6 +6679,11 @@ window.ensureContinuousSteps = function() {
   }
   
   createStepsArr.forEach((step, idx) => {
+    // Renumber default labels ("Step X") chronologically
+    if (!step.label || /^Step\s+\d+$/i.test(step.label.trim())) {
+      step.label = `Step ${idx + 1}`;
+    }
+
     const next = createStepsArr[idx + 1];
     if (next) {
       step.endTime = next.time;
@@ -10121,8 +10126,11 @@ window.addManualStep = function() {
     parsedSteps.push(secs);
   }
 
+  // Sort parsedSteps chronologically first so index appended to custom label matches chronological order
+  parsedSteps.sort((a, b) => a - b);
+
   let addedCount = 0;
-  parsedSteps.forEach((secs) => {
+  parsedSteps.forEach((secs, index) => {
     // Avoid exact duplicate timestamp stops
     const exists = createStepsArr.some(s => Math.abs(s.time - secs) < 0.01);
     if (exists) return;
@@ -10131,10 +10139,15 @@ window.addManualStep = function() {
     const s = Math.floor(secs % 60).toString().padStart(2, '0');
     const defaultEnd = duration ? Math.min(secs + 15, duration) : secs + 15;
     
+    // Assign label. If multiple timestamps are added with a custom label, append step index.
+    const stepLabel = label 
+      ? (parsedSteps.length > 1 ? `${label} ${index + 1}` : label) 
+      : `Step ${createStepsArr.length + 1}`;
+
     createStepsArr.push({
       time: secs,
       endTime: defaultEnd,
-      label: label || `Step ${createStepsArr.length + 1}`,
+      label: stepLabel,
       displayTime: `${m}:${s}`
     });
     addedCount++;
