@@ -1201,9 +1201,9 @@
           </div>
         </div>
 
-        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:7px 11px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; margin-top:4px;">
-          <!-- Row 1: step navigator + add stop + loop/stop -->
-          <div class="scroll-row-x" style="display:flex; align-items:center; gap:7px; width:100%; overflow-x:auto; white-space:nowrap; scrollbar-width:none; -ms-overflow-style:none;">
+        <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:9px 12px; display:flex; flex-direction:column; gap:8px; flex-shrink:0; margin-top:4px;">
+          <!-- Row 1: step navigator & info -->
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px;">
             <!-- Seek Buttons Grouped Together -->
             <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
               <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
@@ -1213,23 +1213,31 @@
               <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
                 style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
             </div>
-            <div style="flex:1; text-align:center; min-width:0;">
+            <div style="flex:1; text-align:right; min-width:0; padding-left:8px;">
               <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
-              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700;">Add stops or run AI</div>
+              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
             </div>
-            <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-              style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
-              title="Add Loop Stop at Current Time">
-              <span>📍 Add Stop</span>
-            </button>
-            <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
-              style="background:var(--primary); border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">▶ Loop</button>
-            <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
-              style="display:none; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:6px 12px; color:var(--primary); cursor:pointer; font-size:0.75rem; font-weight:900; font-family:var(--font); flex-shrink:0;">⏹ Stop</button>
           </div>
 
-          <!-- Row 2: Keyboard shortcuts + Input stops manually -->
-          <div style="display:flex; align-items:center; gap:6px; width:100%; margin-top:2px;">
+          <!-- Row 2: Add Stop & Loop / Stop -->
+          <div style="display:flex; align-items:center; gap:6px; width:100%;">
+            <div style="flex:1;">
+              <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+                style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                title="Add Loop Stop at Current Time">
+                <span>📍 Add Stop</span>
+              </button>
+            </div>
+            <div style="flex:1;">
+              <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
+                style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">▶ Loop</button>
+              <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
+                style="display:none; width:100%; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--primary); cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">⏹ Stop</button>
+            </div>
+          </div>
+
+          <!-- Row 3: Keyboard shortcuts + Input stops manually -->
+          <div style="display:flex; align-items:center; gap:6px; width:100%;">
             <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
               style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:6px 10px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body);" title="Toggle Keyboard Mode">
               <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
