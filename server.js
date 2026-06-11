@@ -623,7 +623,7 @@ app.post('/api/ai/describe-steps', async (req, res) => {
 
       sortedSteps.forEach((s, idx) => {
         const stepStart = s.startTime || 0;
-        const stepEnd = s.endTime || (stepStart + 5);
+        const stepEnd = sortedSteps[idx + 1]?.startTime || 999999;
 
         const overlapStart = Math.max(segStart, stepStart);
         const overlapEnd = Math.min(segEnd, stepEnd);
@@ -650,7 +650,7 @@ app.post('/api/ai/describe-steps', async (req, res) => {
 
   const stepList = sortedSteps.map((s, i) => {
     const stepStart = s.startTime || 0;
-    const stepEnd = s.endTime || (stepStart + 5);
+    const stepEnd = sortedSteps[i + 1]?.startTime || (stepStart + 5);
     const matchingText = stepTexts[i].join(' ');
 
     return `Step ${i + 1}: "${s.label}" (${formatTime(stepStart)} → ${formatTime(stepEnd)})

@@ -8722,61 +8722,26 @@ window.getTranscriptForTimeRange = function(startTime, endTime) {
 };
 
 window.getTranscriptForSteps = function(steps) {
-  // Initialize an array of transcripts for each step
-  const stepTranscripts = steps.map(() => []);
-
   if (!cachedSegments || !cachedSegments.length) {
     return steps.map(() => "");
   }
 
-  // Sort segments by start time to keep word sequence correct
-  const sortedSegments = [...cachedSegments].sort((a, b) => {
-    const startA = Number(a.start ?? a.startTime ?? a.start_time) || 0;
-    const startB = Number(b.start ?? b.startTime ?? b.start_time) || 0;
-    return startA - startB;
+  // Sort steps by start time to ensure correct contiguous ranges
+  const sortedSteps = [...steps].sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
+
+  // Generate transcripts for each sorted step
+  const transcriptsMap = new Map();
+  sortedSteps.forEach((step, idx) => {
+    const stepStart = Number(step.time) || 0;
+    const stepEnd = Number(sortedSteps[idx + 1]?.time) || videoDuration;
+
+    // Use the word-by-word precision helper for this contiguous partition range
+    const transcript = window.getTranscriptForTimeRange(stepStart, stepEnd);
+    transcriptsMap.set(step, transcript);
   });
 
-  sortedSegments.forEach(s => {
-    const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
-    const end = Number(s.end ?? s.endTime ?? s.end_time) || (start + 5);
-    const duration = end - start;
-    if (duration <= 0) return;
-
-    let bestStepIdx = -1;
-    let maxOverlap = 0;
-    let minDistance = Infinity;
-    let closestStepIdx = 0;
-
-    steps.forEach((step, idx) => {
-      const stepStart = step.time;
-      const stepEnd = step.endTime ?? (steps[idx + 1]?.time ?? videoDuration);
-
-      // Calculate overlap
-      const overlapStart = Math.max(start, stepStart);
-      const overlapEnd = Math.min(end, stepEnd);
-      const overlap = overlapEnd - overlapStart;
-
-      if (overlap > maxOverlap) {
-        maxOverlap = overlap;
-        bestStepIdx = idx;
-      }
-
-      // Track closest step in case of no overlap
-      const stepMid = (stepStart + stepEnd) / 2;
-      const segMid = (start + end) / 2;
-      const dist = Math.abs(segMid - stepMid);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestStepIdx = idx;
-      }
-    });
-
-    // Assign to best overlapping step, or closest step if no overlap
-    const targetIdx = bestStepIdx !== -1 ? bestStepIdx : closestStepIdx;
-    stepTranscripts[targetIdx].push(s.text.trim());
-  });
-
-  return stepTranscripts.map(texts => texts.join(' '));
+  // Return transcripts in the original order of steps
+  return steps.map(step => transcriptsMap.get(step) || "");
 };
 
 window.parseTimerFromText = function(text) {
