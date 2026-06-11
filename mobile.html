@@ -1430,13 +1430,9 @@
               <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading);">⌨️ Enter Timestamp</h3>
               <button onclick="window.closeManualTimestampModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">&times;</button>
             </div>
-            <div style="margin-bottom:12px;">
+            <div style="margin-bottom:16px;">
               <label style="display:block; font-size:0.65rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Time (e.g. 1:30, 2:15 or 95, 120)</label>
               <input id="manualTimestampInput" type="text" placeholder="1:30, 2:15, 3:00" style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none;" onkeydown="if(event.key==='Enter')window.addManualStep()">
-            </div>
-            <div style="margin-bottom:16px;">
-              <label style="display:block; font-size:0.65rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Step Name (optional)</label>
-              <input id="manualStepLabelInput" type="text" placeholder="e.g., Simmer broth" style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none;" onkeydown="if(event.key==='Enter')window.addManualStep()">
             </div>
             <div style="display:flex; gap:8px; justify-content:flex-end;">
               <button onclick="window.closeManualTimestampModal()" class="btn" style="padding:8px 14px; font-size:0.78rem; background:var(--bg-card-soft); border:2px solid var(--border-card);">Cancel</button>
@@ -1597,6 +1593,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=7.4"></script>
+  <script type="module" src="app.js?v=7.5"></script>
 </body>
 </html>

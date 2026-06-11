@@ -1605,13 +1605,9 @@
         <h3 style="margin:0;font-size:1.1rem;font-weight:900;color:var(--text-heading);">⌨️ Enter Timestamp</h3>
         <button onclick="window.closeManualTimestampModal()" style="width:32px;height:32px;border-radius:50%;background:#f0f4f8;border:none;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex-shrink:0;">&times;</button>
       </div>
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:16px;">
         <label style="display:block;font-size:0.68rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.04em;">Time (e.g. 1:30, 2:15 or 95, 120)</label>
         <input id="manualTimestampInput" type="text" placeholder="1:30, 2:15, 3:00" style="width:100%;background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;padding:10px 12px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')window.addManualStep()">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:0.68rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.04em;">Step Name (optional)</label>
-        <input id="manualStepLabelInput" type="text" placeholder="e.g., Simmer broth" style="width:100%;background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;padding:10px 12px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter')window.addManualStep()">
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button onclick="window.closeManualTimestampModal()" class="btn" style="padding:10px 16px;font-size:0.82rem;background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;cursor:pointer;font-family:var(--font);font-weight:800;color:var(--text-heading);">Cancel</button>
@@ -1688,6 +1684,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=7.4"></script>
+  <script type="module" src="app.js?v=7.5"></script>
 </body>
 </html>

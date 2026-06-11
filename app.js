@@ -10048,13 +10048,9 @@ window.openManualTimestampModal = function() {
   if (modal) {
     modal.style.display = 'flex';
     const tsInput = document.getElementById('manualTimestampInput');
-    const labelInput = document.getElementById('manualStepLabelInput');
     if (tsInput) {
       tsInput.value = '';
       tsInput.focus();
-    }
-    if (labelInput) {
-      labelInput.value = '';
     }
   }
 };
@@ -10094,11 +10090,10 @@ window.parseTimestampToSeconds = function(str) {
 // Add a manual loop stop from parsed timestamp
 window.addManualStep = function() {
   const tsInput = document.getElementById('manualTimestampInput');
-  const labelInput = document.getElementById('manualStepLabelInput');
   if (!tsInput) return;
   
   const timeStr = tsInput.value;
-  const label = labelInput ? labelInput.value.trim() : '';
+  const label = '';
   
   // Split by comma to support multiple timestamps
   const timeStrings = timeStr.split(',').map(s => s.trim()).filter(Boolean);
