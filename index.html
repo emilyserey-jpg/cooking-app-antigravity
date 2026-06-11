@@ -1232,6 +1232,11 @@
                 </div>
                 <!-- Seek Buttons Grouped Together -->
                 <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                  <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
+                    style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 10px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font);font-weight:800;font-size:0.7rem;color:var(--text-body);box-sizing:border-box;transition:all 0.15s;" title="Toggle Skip Mode">
+                    <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--text-body);"></i>
+                    <span>Keyboard Shortcuts</span>
+                  </button>
                   <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
                     style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:8px;padding:5px 11px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;" title="Previous step (← key)">←</button>
                   <button onclick="toggleVideoPlay()" id="toolbarPlayBtn" tabindex="-1"
@@ -1256,15 +1261,6 @@
                   <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
                     style="display:none;width:100%;background:#f0f4ff;border:2px solid var(--primary);border-radius:8px;padding:8px 12px;color:var(--primary);cursor:pointer;font-size:0.78rem;font-weight:900;font-family:var(--font);text-align:center;">⏹ Stop</button>
                 </div>
-              </div>
-
-              <!-- Row 3: Keyboard shortcuts -->
-              <div style="display:flex;align-items:center;width:100%;">
-                <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-                  style="width:100%;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);box-sizing:border-box;" title="Toggle Keyboard Mode">
-                  <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
-                  <span>Keyboard Shortcuts</span>
-                </button>
               </div>
             </div>
 
@@ -1686,6 +1682,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=7.6"></script>
+  <script type="module" src="app.js?v=7.7"></script>
 </body>
 </html>
