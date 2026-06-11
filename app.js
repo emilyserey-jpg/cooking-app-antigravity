@@ -251,6 +251,7 @@ function initializeApp() {
     ingTextEl.addEventListener('input', window.updateAIChecklists);
   }
   window.updateAIChecklists();
+  window.setKeyboardMode(keyboardMode);
 }
 
 // App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
@@ -6847,6 +6848,10 @@ window.setKeyboardMode = function(mode) {
   const navPrev = document.getElementById('navPrevBtn');
   const navNext = document.getElementById('navNextBtn');
 
+  const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
+  const seekSelect = document.getElementById('seekStepSelect');
+  const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
+
   if (mode === 'steps') {
     if (btnSteps) { btnSteps.style.background = 'var(--primary)'; btnSteps.style.color = '#fff'; }
     if (btnScrub) { btnScrub.style.background = 'transparent';    btnScrub.style.color = 'var(--text-muted)'; }
@@ -6860,12 +6865,16 @@ window.setKeyboardMode = function(mode) {
       kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       kbToggleBtn.style.color = 'var(--text-body)';
       kbToggleBtn.style.borderColor = 'var(--border-card)';
+      kbToggleIcon.setAttribute('data-lucide', 'chevrons-right');
     }
 
     if (cKbToggleIcon && cKbToggleBtn) {
       cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       cKbToggleBtn.style.color = 'var(--text-body)';
       cKbToggleBtn.style.borderColor = 'var(--border-card)';
+      cKbToggleIcon.setAttribute('data-lucide', 'chevrons-right');
+      const span = cKbToggleBtn.querySelector('span');
+      if (span) span.textContent = 'Skip: Steps';
     }
 
     if (navPrev) {
@@ -6884,21 +6893,22 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'var(--primary)'; pBtnScrub.style.color = '#fff'; }
     if (pBtnSteps) { pBtnSteps.style.background = 'transparent';    pBtnSteps.style.color = 'var(--text-muted)'; }
     
-    const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
-    const seekSelect = document.getElementById('seekStepSelect');
-    const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
     if (pHint)  pHint.textContent = `Pressing Left / Right arrow keys will seek forward or backward by ${seekAmount} second${seekAmount === 1 ? '' : 's'}.`;
 
     if (kbToggleIcon && kbToggleBtn) {
       kbToggleBtn.style.background = 'var(--primary-soft)';
       kbToggleBtn.style.color = 'var(--primary-dark)';
       kbToggleBtn.style.borderColor = 'var(--primary)';
+      kbToggleIcon.setAttribute('data-lucide', 'timer');
     }
 
     if (cKbToggleIcon && cKbToggleBtn) {
       cKbToggleBtn.style.background = 'var(--primary-soft)';
       cKbToggleBtn.style.color = 'var(--primary-dark)';
       cKbToggleBtn.style.borderColor = 'var(--primary)';
+      cKbToggleIcon.setAttribute('data-lucide', 'timer');
+      const span = cKbToggleBtn.querySelector('span');
+      if (span) span.textContent = `Skip: ${seekAmount}s`;
     }
 
     if (navPrev) {
