@@ -164,7 +164,10 @@ Rules:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
-          generationConfig: { temperature: 0.1 },
+          generationConfig: { 
+            temperature: 0.1,
+            responseMimeType: 'application/json'
+          },
         }),
       }
     );
@@ -176,16 +179,27 @@ Rules:
     return gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
 
+  const modelsToTry = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash'
+  ];
   let raw = '';
-  try {
-    raw = await tryGenerate('gemini-2.5-flash');
-  } catch (err) {
-    console.warn('[Gemini 2.5 Flash transcription] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+  let lastError = null;
+  for (const model of modelsToTry) {
     try {
-      raw = await tryGenerate('gemini-2.5-flash-lite');
-    } catch (fallbackErr) {
-      throw new Error(`Gemini transcription failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+      raw = await tryGenerate(model);
+      lastError = null;
+      break; // Success!
+    } catch (err) {
+      console.warn(`[Gemini transcription] Model ${model} failed, trying next:`, err.message);
+      lastError = err;
     }
+  }
+  if (lastError) {
+    throw new Error(`Gemini transcription failed after trying all models. Last error: ${lastError.message}`);
   }
 
   // Cleanup file (fire and forget)
@@ -196,7 +210,7 @@ Rules:
 
   raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
   if (!raw) throw new Error('Gemini returned empty response for transcription.');
-  return JSON.parse(raw);
+  return cleanAndParseJSON(raw);
 }
 
 // ─── AI: Transcribe video (OpenAI Whisper with Gemini fallback) ─────────────
@@ -298,18 +312,24 @@ async function getChatCompletion({ systemPrompt, userPrompt, jsonMode = false })
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
 
-  try {
-    const res = await tryModel('gemini-2.5-flash');
-    return res.trim();
-  } catch (err) {
-    console.warn('[Gemini 2.5 Flash] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+  const modelsToTry = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash'
+  ];
+  let lastError = null;
+  for (const model of modelsToTry) {
     try {
-      const res = await tryModel('gemini-2.5-flash-lite');
+      const res = await tryModel(model);
       return res.trim();
-    } catch (fallbackErr) {
-      throw new Error(`Gemini Chat failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+    } catch (err) {
+      console.warn(`[Gemini Chat] Model ${model} failed, trying next:`, err.message);
+      lastError = err;
     }
   }
+  throw new Error(`Gemini Chat failed after trying all models. Last error: ${lastError.message}`);
 }
 
 function cleanAndParseJSON(str) {
@@ -321,6 +341,11 @@ function cleanAndParseJSON(str) {
     try {
       let fixed = cleaned
         .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, '"$1"')
+        // Fix missing closing braces on objects before commas
+        .replace(/([^}])\s*,\s*\{/g, '$1\n    },\n    {')
+        // Fix missing closing brace on last object in array
+        .replace(/([^}])\s*\]\s*\}/g, '$1\n    }\n  ]}')
+        .replace(/([^}])\s*\]/g, '$1\n    }\n  ]')
         .replace(/,\s*([\]}])/g, '$1')
         .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
       return JSON.parse(fixed);
@@ -550,7 +575,10 @@ Rules:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }, { fileData: { mimeType, fileUri } }] }],
-            generationConfig: { temperature: 0.2 },
+            generationConfig: { 
+              temperature: 0.2,
+              responseMimeType: 'application/json'
+            },
           }),
         }
       );
@@ -562,21 +590,32 @@ Rules:
       return gemData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
+    const modelsToTry = [
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash'
+    ];
     let raw = '';
-    try {
-      raw = await tryGenerate('gemini-2.5-flash');
-    } catch (err) {
-      console.warn('[Gemini 2.5 Flash video analysis] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+    let lastError = null;
+    for (const model of modelsToTry) {
       try {
-        raw = await tryGenerate('gemini-2.5-flash-lite');
-      } catch (fallbackErr) {
-        throw new Error(`Video analysis failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+        raw = await tryGenerate(model);
+        lastError = null;
+        break; // Success!
+      } catch (err) {
+        console.warn(`[Gemini video analysis] Model ${model} failed, trying next:`, err.message);
+        lastError = err;
       }
+    }
+    if (lastError) {
+      throw new Error(`Video analysis failed after trying all models. Last error: ${lastError.message}`);
     }
 
     raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
     if (!raw) throw new Error('Gemini returned empty response.');
-    const result = JSON.parse(raw);
+    const result = cleanAndParseJSON(raw);
     console.log(`[Gemini] ✅ ${result.loops?.length} loops — "${result.title}"`);
 
     // Cleanup (fire and forget)
@@ -688,7 +727,13 @@ Reply ONLY with a JSON array of strings, one description per step, in order. Exa
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        body: JSON.stringify({ 
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json'
+          }
+        }),
       }
     );
     if (!response.ok) {
@@ -700,16 +745,27 @@ Reply ONLY with a JSON array of strings, one description per step, in order. Exa
   }
 
   try {
+    const modelsToTry = [
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash'
+    ];
     let text = '';
-    try {
-      text = await tryDescribe('gemini-2.5-flash');
-    } catch (err) {
-      console.warn('[Gemini 2.5 Flash describe-steps] Failed, trying stable 2.5 Flash Lite fallback:', err.message);
+    let lastError = null;
+    for (const model of modelsToTry) {
       try {
-        text = await tryDescribe('gemini-2.5-flash-lite');
-      } catch (fallbackErr) {
-        throw new Error(`Step description failed: ${err.message}. Fallback also failed: ${fallbackErr.message}`);
+        text = await tryDescribe(model);
+        lastError = null;
+        break; // Success!
+      } catch (err) {
+        console.warn(`[Gemini describe-steps] Model ${model} failed, trying next:`, err.message);
+        lastError = err;
       }
+    }
+    if (lastError) {
+      throw new Error(`Step description failed after trying all models. Last error: ${lastError.message}`);
     }
 
     let descriptions = [];
