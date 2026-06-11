@@ -7531,8 +7531,15 @@ function renderCreateSteps() {
           </div>
         </div>
         
-        <textarea placeholder="Add notes for this step…" style="flex:1;min-height:60px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);"
-          onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
+        <div style="position:relative;width:100%;flex:1;min-height:60px;display:flex;flex-direction:column;min-width:0;">
+          <textarea placeholder="Add notes for this step…" style="flex:1;min-height:60px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);"
+            onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
+          <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
+            style="position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(124,58,237,0.25);font-size:0.75rem;transition:all 0.15s;z-index:10;padding:0;"
+            onmouseenter="this.style.transform='scale(1.1)';" onmouseleave="this.style.transform='none';">
+            ✨
+          </button>
+        </div>
         
         <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
           <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;margin-top:2px;line-height:1.2;">Step Ingredients (one per line)</label>
@@ -7675,7 +7682,7 @@ window.mergeCreateStep = function(i) {
   showTip(`Merged step ${i+1} with step ${i+2}!`);
 };
 
-window.redoStepDescription = async function(i) {
+window.redoStepDescription = async function(i, tweakPrompt = '') {
   const step = createStepsArr[i];
   if (!step) return;
 
@@ -7689,13 +7696,14 @@ window.redoStepDescription = async function(i) {
       label: step.label,
       startTime: step.time,
       endTime: step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration),
+      currentDescription: originalText
     }];
 
     const videoUrl = document.getElementById('uploadedVideoPlayer')?.src || window._uploadedVideoUrl || '';
     const res = await fetch('/api/ai/describe-steps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ steps, videoUrl, segments: cachedSegments }),
+      body: JSON.stringify({ steps, videoUrl, segments: cachedSegments, tweakPrompt }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -7717,6 +7725,16 @@ window.redoStepDescription = async function(i) {
   } finally {
     renderCreateSteps();
   }
+};
+
+window.askAiTweakDescription = function(i) {
+  const step = createStepsArr[i];
+  if (!step) return;
+  const promptText = window.prompt(
+    `How would you like AI to edit this step description?\n(e.g., "Add turn the heat off", "Make it shorter", "Include salt quantity")\n\nLeave blank/cancel to auto-regenerate based on audio transcript.`
+  );
+  if (promptText === null) return;
+  window.redoStepDescription(i, promptText.trim());
 };
 
 

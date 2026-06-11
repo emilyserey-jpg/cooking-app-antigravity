@@ -600,7 +600,7 @@ app.post('/api/ai/gemini-loops', (req, res) => res.status(410).json({ error: 'De
 
 // ─── AI: Write a description for each loop stop ───────────────────────────
 app.post('/api/ai/describe-steps', async (req, res) => {
-  const { steps, segments } = req.body;
+  const { steps, segments, tweakPrompt } = req.body;
   if (!steps || !steps.length) return res.status(400).json({ error: 'No steps provided.' });
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -657,7 +657,19 @@ app.post('/api/ai/describe-steps', async (req, res) => {
 Spoken/subtitled text during this timeframe: "${matchingText || 'No direct transcription'}"`;
   }).join('\n\n');
 
-  const prompt = `You are writing concise cooking instructions for a recipe video editor.
+  let prompt;
+  if (tweakPrompt) {
+    prompt = `You are an AI assistant editing a single step description for a recipe video.
+The current step description is: "${sortedSteps[0].currentDescription || ''}"
+The user wants you to edit/tweak this description with the following instructions: "${tweakPrompt}"
+
+Here is the spoken/subtitled transcript during this step's timeframe for reference: "${stepTexts[0].join(' ') || 'No direct transcription'}"
+
+Format the updated step description exactly as: "[Instruction details]. Ingredients: [list of ingredients and their exact quantities used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
+Reply ONLY with a JSON array containing the single updated description string. Example:
+["Heat the pan on medium-high. Ingredients: 2 tablespoons cooking oil."]`;
+  } else {
+    prompt = `You are writing concise cooking instructions for a recipe video editor.
 The video has been divided into ${steps.length} loop stop sections:
 
 ${stepList}
@@ -668,6 +680,7 @@ IMPORTANT: You MUST include the exact ingredient measurements (e.g. 4 cups, 2 te
 Format each step description exactly as: "[Instruction details]. Ingredients: [list of ingredients and their exact quantities used, or 'None' if no ingredients are added in this step]". Keep it concise and practical.
 Reply ONLY with a JSON array of strings, one description per step, in order. Example:
 ["Heat the pan on medium-high. Ingredients: 2 tablespoons cooking oil.", "Season the shrimp in a bowl. Ingredients: 1 pound shrimp, 1 teaspoon salt, 1/2 teaspoon black pepper, 1/2 teaspoon garlic powder."]`;
+  }
 
   async function tryDescribe(modelName) {
     const response = await fetch(
