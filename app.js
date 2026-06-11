@@ -8883,7 +8883,7 @@ window.transcribeVideo = async function() {
             
             const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
             const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-            const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
+            const rawDesc = l.instruction || wordForWordDesc || gem.steps?.[i] || '';
             const detectedTimer = window.parseTimerFromText(rawDesc);
 
             return {
@@ -9451,7 +9451,7 @@ window.aiWriteStepDescriptions = async function() {
       const desc = descriptions[i] || '';
       const nextStart = createStepsArr[i+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-      step.description = wordForWordDesc || desc || step.description || '';
+      step.description = desc || wordForWordDesc || step.description || '';
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
@@ -9515,7 +9515,7 @@ window.aiDoEverything = async function() {
         
         const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
         const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-        const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
+        const rawDesc = l.instruction || wordForWordDesc || gem.steps?.[i] || '';
         return {
           time: t,
           endTime: end,
@@ -9606,7 +9606,7 @@ window.doItAll = async function() {
         
         const nextStart = gem.loops[i+1]?.start ?? gem.loops[i+1]?.time ?? videoDuration;
         const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-        const rawDesc = wordForWordDesc || l.instruction || gem.steps?.[i] || '';
+        const rawDesc = l.instruction || wordForWordDesc || gem.steps?.[i] || '';
         const detectedTimer = window.parseTimerFromText(rawDesc);
         return {
           time: t,
@@ -9778,7 +9778,7 @@ window.createStepsFromTranscript = async function() {
       const parsed = window.parseDescriptionAndIngredients(descText);
       const nextStart = tempSteps[idx+1]?.time ?? videoDuration;
       const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
-      const rawDesc = wordForWordDesc || parsed.description || '';
+      const rawDesc = parsed.description || wordForWordDesc || '';
       return {
         ...step,
         description: rawDesc,
