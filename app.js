@@ -8721,6 +8721,64 @@ window.getTranscriptForTimeRange = function(startTime, endTime) {
   return matchingWords.join(' ');
 };
 
+window.getTranscriptForSteps = function(steps) {
+  // Initialize an array of transcripts for each step
+  const stepTranscripts = steps.map(() => []);
+
+  if (!cachedSegments || !cachedSegments.length) {
+    return steps.map(() => "");
+  }
+
+  // Sort segments by start time to keep word sequence correct
+  const sortedSegments = [...cachedSegments].sort((a, b) => {
+    const startA = Number(a.start ?? a.startTime ?? a.start_time) || 0;
+    const startB = Number(b.start ?? b.startTime ?? b.start_time) || 0;
+    return startA - startB;
+  });
+
+  sortedSegments.forEach(s => {
+    const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
+    const end = Number(s.end ?? s.endTime ?? s.end_time) || (start + 5);
+    const duration = end - start;
+    if (duration <= 0) return;
+
+    let bestStepIdx = -1;
+    let maxOverlap = 0;
+    let minDistance = Infinity;
+    let closestStepIdx = 0;
+
+    steps.forEach((step, idx) => {
+      const stepStart = step.time;
+      const stepEnd = step.endTime ?? (steps[idx + 1]?.time ?? videoDuration);
+
+      // Calculate overlap
+      const overlapStart = Math.max(start, stepStart);
+      const overlapEnd = Math.min(end, stepEnd);
+      const overlap = overlapEnd - overlapStart;
+
+      if (overlap > maxOverlap) {
+        maxOverlap = overlap;
+        bestStepIdx = idx;
+      }
+
+      // Track closest step in case of no overlap
+      const stepMid = (stepStart + stepEnd) / 2;
+      const segMid = (start + end) / 2;
+      const dist = Math.abs(segMid - stepMid);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestStepIdx = idx;
+      }
+    });
+
+    // Assign to best overlapping step, or closest step if no overlap
+    const targetIdx = bestStepIdx !== -1 ? bestStepIdx : closestStepIdx;
+    stepTranscripts[targetIdx].push(s.text.trim());
+  });
+
+  return stepTranscripts.map(texts => texts.join(' '));
+};
+
 window.parseTimerFromText = function(text) {
   if (!text) return null;
   const lower = text.toLowerCase();
@@ -9240,14 +9298,22 @@ window.generateLoops = async function() {
     }
 
     // Replace timeline steps with AI-detected ones (with start AND end times)
-    createStepsArr = loops.map((l, idx) => {
-      const t   = Number(l.time) || 0;
-      const end = l.endTime != null ? Number(l.endTime) : null;
+    const sortedLoops = loops.map((l, idx) => ({
+      time: Number(l.time) || 0,
+      endTime: l.endTime != null ? Number(l.endTime) : null,
+      label: l.label || `Step ${idx+1}`,
+      instruction: l.instruction,
+      description: l.description
+    })).sort((a, b) => a.time - b.time);
+
+    const transcripts = window.getTranscriptForSteps(sortedLoops);
+
+    createStepsArr = sortedLoops.map((l, idx) => {
+      const t   = l.time;
+      const end = l.endTime;
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60).toString().padStart(2, '0');
-      const nextStart = loops[idx+1]?.time ?? videoDuration;
-      const wordForWordDesc = window.getTranscriptForTimeRange(t, end ?? nextStart);
-      const rawDesc = wordForWordDesc || l.instruction || l.description || '';
+      const rawDesc = transcripts[idx] || l.instruction || l.description || '';
       return {
         time:        t,
         endTime:     end,
@@ -9257,7 +9323,7 @@ window.generateLoops = async function() {
         ingredients: [],
         timers: undefined // force auto-detection of timers!
       };
-    }).sort((a, b) => a.time - b.time);
+    });
 
     renderCreateSteps();
     renderTimeline();
@@ -9448,10 +9514,10 @@ window.aiWriteStepDescriptions = async function() {
     }
 
     // Apply descriptions
+    const transcripts = window.getTranscriptForSteps(createStepsArr);
     createStepsArr.forEach((step, i) => {
       const desc = descriptions[i] || '';
-      const nextStart = createStepsArr[i+1]?.time ?? videoDuration;
-      const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+      const wordForWordDesc = transcripts[i] || '';
       step.description = wordForWordDesc || desc || step.description || '';
       delete step.timers; // force auto-detection on render!
     });
@@ -9741,11 +9807,11 @@ window.createStepsFromTranscript = async function() {
     }
     
     // Apply descriptions and ingredients to final array
+    const transcripts = window.getTranscriptForSteps(tempSteps);
     const finalSteps = tempSteps.map((step, idx) => {
       const descText = descriptions[idx] || '';
       const parsed = window.parseDescriptionAndIngredients(descText);
-      const nextStart = tempSteps[idx+1]?.time ?? videoDuration;
-      const wordForWordDesc = window.getTranscriptForTimeRange(step.time, step.endTime ?? nextStart);
+      const wordForWordDesc = transcripts[idx] || '';
       const rawDesc = wordForWordDesc || parsed.description || '';
       return {
         ...step,

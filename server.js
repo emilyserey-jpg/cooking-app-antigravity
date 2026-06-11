@@ -606,23 +606,52 @@ app.post('/api/ai/describe-steps', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured.' });
 
-  const stepList = steps.map((s, i) => {
+  // Sort steps to be safe
+  const sortedSteps = [...steps].sort((a, b) => (Number(a.startTime) || 0) - (Number(b.startTime) || 0));
+
+  // Partition segments by step using maximum overlap
+  const stepTexts = sortedSteps.map(() => []);
+  if (Array.isArray(segments)) {
+    segments.forEach(seg => {
+      const segStart = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
+      const segEnd = Number(seg.end ?? seg.endTime ?? seg.end_time) || (segStart + 5);
+      
+      let bestIdx = -1;
+      let maxOverlap = 0;
+      let minDistance = Infinity;
+      let closestIdx = 0;
+
+      sortedSteps.forEach((s, idx) => {
+        const stepStart = s.startTime || 0;
+        const stepEnd = s.endTime || (stepStart + 5);
+
+        const overlapStart = Math.max(segStart, stepStart);
+        const overlapEnd = Math.min(segEnd, stepEnd);
+        const overlap = overlapEnd - overlapStart;
+
+        if (overlap > maxOverlap) {
+          maxOverlap = overlap;
+          bestIdx = idx;
+        }
+
+        const stepMid = (stepStart + stepEnd) / 2;
+        const segMid = (segStart + segEnd) / 2;
+        const dist = Math.abs(segMid - stepMid);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestIdx = idx;
+        }
+      });
+
+      const targetIdx = bestIdx !== -1 ? bestIdx : closestIdx;
+      stepTexts[targetIdx].push(seg.text);
+    });
+  }
+
+  const stepList = sortedSteps.map((s, i) => {
     const stepStart = s.startTime || 0;
     const stepEnd = s.endTime || (stepStart + 5);
-
-    // Correlate with matching subtitles segments (using a broader overlap check to avoid leaving out nearby actions)
-    let matchingText = '';
-    if (Array.isArray(segments)) {
-      matchingText = segments
-        .filter(seg => {
-          const segStart = Number(seg.start ?? seg.startTime ?? seg.start_time) || 0;
-          const segEnd = Number(seg.end ?? seg.endTime ?? seg.end_time) || (segStart + 5);
-          // Check if segment overlaps with the step time window (with a broader 2.5s padding/tolerance to capture trailing speech)
-          return (segStart <= stepEnd + 2.5) && (segEnd >= stepStart - 2.5);
-        })
-        .map(seg => seg.text)
-        .join(' ');
-    }
+    const matchingText = stepTexts[i].join(' ');
 
     return `Step ${i + 1}: "${s.label}" (${formatTime(stepStart)} → ${formatTime(stepEnd)})
 Spoken/subtitled text during this timeframe: "${matchingText || 'No direct transcription'}"`;
