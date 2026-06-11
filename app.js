@@ -7613,14 +7613,11 @@ window.toggleCardDropdown = function(event, i) {
     <button onclick="previewStepLoop(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
       <span>▶</span> Loop Stop
     </button>
-    <button onclick="navToStep(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+    <button onclick="navToStep(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
       <span>⏩</span> Go to Stop
     </button>
-    <button onclick="window.redoStepDescription(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
-      <span>🔄</span> Regenerate Description (AI)
-    </button>
     ${step.audio_url || step.audioUrl ? `
-      <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}'); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
+      <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}'); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-top:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
         <span>🔊</span> Play Voiceover Audio
       </button>
     ` : ''}
