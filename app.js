@@ -1851,7 +1851,7 @@ function renderBentoGrocery() {
   if (list.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'grocery-empty-state';
-    empty.textContent = '🛒 Your grocery list is empty.';
+    empty.textContent = '🛒 Your shopping list is empty.';
     container.appendChild(empty);
     return;
   }
@@ -2028,10 +2028,10 @@ function addRecipeIngredientsToGrocery() {
   
   if (addedCount > 0) {
     saveGroceryList(list);
-    showTip(`Added ${addedCount} ingredients to Grocery List! 🛒`);
+    showTip(`Added ${addedCount} ingredients to Shopping List! 🛒`);
     renderBentoGrocery();
   } else {
-    showTip('Ingredients already in Grocery List! 🛒');
+    showTip('Ingredients already in Shopping List! 🛒');
   }
 }
 
@@ -2079,7 +2079,7 @@ function mySpaceInit() {
 const ALL_BENTO_WIDGETS = [
   { id: 'bentoStatsWidget', name: '📊 Culinary Records', defaultHidden: false, defaultSize: 'span-1' },
   { id: 'bentoCalendarWidget', name: '📅 Cooked Meal History', defaultHidden: false, defaultSize: 'span-2' },
-  { id: 'bentoGroceryWidget', name: '🛒 Grocery List', defaultHidden: false, defaultSize: 'span-1' },
+  { id: 'bentoGroceryWidget', name: '🛒 Shopping List', defaultHidden: false, defaultSize: 'span-1' },
   { id: 'bentoTimerWidget', name: '⏱️ Quick Timer', defaultHidden: true, defaultSize: 'span-1' },
   { id: 'bentoWaterWidget', name: '💧 Daily Water Tracker', defaultHidden: true, defaultSize: 'span-1' },
   { id: 'bentoMealPlannerWidget', name: '🍳 Today\'s Menu', defaultHidden: true, defaultSize: 'span-1' }
@@ -3007,10 +3007,10 @@ function addIngredientsListToGrocery(title, ingredientsStr) {
   
   if (addedCount > 0) {
     saveGroceryList(list);
-    showTip(`Added ${addedCount} ingredients from "${title}" to Grocery List! 🛒`);
+    showTip(`Added ${addedCount} ingredients from "${title}" to Shopping List! 🛒`);
     if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
   } else {
-    showTip('All ingredients are already in your Grocery List! 🛒');
+    showTip('All ingredients are already in your Shopping List! 🛒');
   }
 }
 
@@ -3531,7 +3531,7 @@ function renderRecipeCard(r, isOwner) {
               style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;"
               onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
               onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';"
-              title="Add ingredients to Grocery List">
+              title="Add ingredients to Shopping List">
               🛒 Add List
             </button>
           ` : ''}
