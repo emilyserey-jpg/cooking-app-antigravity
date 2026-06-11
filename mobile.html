@@ -1204,6 +1204,10 @@
         <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:9px 12px; display:flex; flex-direction:column; gap:8px; flex-shrink:0; margin-top:4px;">
           <!-- Row 1: step navigator & info -->
           <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px;">
+            <div style="flex:1; text-align:left; min-width:0; padding-right:8px;">
+              <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
+              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
+            </div>
             <!-- Seek Buttons Grouped Together -->
             <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
               <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
@@ -1212,10 +1216,6 @@
                 style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
               <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
                 style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
-            </div>
-            <div style="flex:1; text-align:right; min-width:0; padding-left:8px;">
-              <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
-              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
             </div>
           </div>
 
