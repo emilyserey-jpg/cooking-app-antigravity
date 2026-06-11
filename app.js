@@ -10094,42 +10094,68 @@ window.addManualStep = function() {
   
   const timeStr = tsInput.value;
   const label = labelInput ? labelInput.value.trim() : '';
-  const secs = window.parseTimestampToSeconds(timeStr);
   
-  if (secs === null || secs < 0) {
-    showTip('Please enter a valid timestamp (e.g. 1:30 or 95)');
-    return;
-  }
-  
-  const videoEl = document.getElementById('uploadedVideoPlayer');
-  const duration = videoEl ? (videoEl.duration || videoDuration || 0) : 0;
-  if (duration && secs > duration) {
-    const durM = Math.floor(duration / 60);
-    const durS = Math.floor(duration % 60).toString().padStart(2, '0');
-    showTip(`Timestamp exceeds video duration (${durM}:${durS})`);
+  // Split by comma to support multiple timestamps
+  const timeStrings = timeStr.split(',').map(s => s.trim()).filter(Boolean);
+  if (!timeStrings.length) {
+    showTip('Please enter a valid timestamp.');
     return;
   }
 
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60).toString().padStart(2, '0');
-  const defaultEnd = duration ? Math.min(secs + 15, duration) : secs + 15;
-  
-  createStepsArr.push({
-    time: secs,
-    endTime: defaultEnd,
-    label: label || `Step ${createStepsArr.length + 1}`,
-    displayTime: `${m}:${s}`
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const duration = videoEl ? (videoEl.duration || videoDuration || 0) : 0;
+  const parsedSteps = [];
+
+  for (const str of timeStrings) {
+    const secs = window.parseTimestampToSeconds(str);
+    if (secs === null || secs < 0) {
+      showTip(`Invalid timestamp format: "${str}". Use e.g. 1:30 or 95`);
+      return;
+    }
+    if (duration && secs > duration) {
+      const durM = Math.floor(duration / 60);
+      const durS = Math.floor(duration % 60).toString().padStart(2, '0');
+      showTip(`Timestamp ${str} exceeds video duration (${durM}:${durS})`);
+      return;
+    }
+    parsedSteps.push(secs);
+  }
+
+  let addedCount = 0;
+  parsedSteps.forEach((secs) => {
+    // Avoid exact duplicate timestamp stops
+    const exists = createStepsArr.some(s => Math.abs(s.time - secs) < 0.01);
+    if (exists) return;
+
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60).toString().padStart(2, '0');
+    const defaultEnd = duration ? Math.min(secs + 15, duration) : secs + 15;
+    
+    createStepsArr.push({
+      time: secs,
+      endTime: defaultEnd,
+      label: label || `Step ${createStepsArr.length + 1}`,
+      displayTime: `${m}:${s}`
+    });
+    addedCount++;
   });
+
+  if (addedCount === 0) {
+    showTip('Steps already exist at these timestamps.');
+    return;
+  }
+
   createStepsArr.sort((a, b) => a.time - b.time);
   
-  if (videoEl) {
-    videoEl.currentTime = secs;
+  // Seek video to the first newly added stop
+  if (videoEl && parsedSteps.length > 0) {
+    videoEl.currentTime = parsedSteps[0];
   }
   
   renderCreateSteps();
   renderTimeline();
   window.closeManualTimestampModal();
-  showTip(`Manual step added at ${m}:${s}`);
+  showTip(`Added ${addedCount} loop stop${addedCount > 1 ? 's' : ''}!`);
 };
 
 // Dynamic Subtitle overlays
