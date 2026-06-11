@@ -1438,6 +1438,25 @@
             </div>
           </div>
         </div>
+
+        <!-- AI Tweak Description Modal -->
+        <div id="aiTweakDescriptionModal" class="timestamp-modal-overlay" onclick="if(event.target===this) window.closeAiTweakDescriptionModal()" style="display: none;">
+          <div class="timestamp-modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:6px;">✨ AI Description Edit</h3>
+              <button onclick="window.closeAiTweakDescriptionModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">&times;</button>
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-heading); margin-bottom:4px; line-height:1.3;">How would you like AI to edit this step description?</label>
+              <p style="margin:0 0 8px 0; font-size:0.7rem; color:var(--text-muted); line-height:1.3;">(e.g., "Add turn the heat off", "Make it shorter")</p>
+              <textarea id="aiTweakDescriptionInput" placeholder="Leave blank to auto-regenerate based on audio transcript..." style="width:100%; height:80px; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:8px 10px; font-family:var(--font); font-size:0.88rem; font-weight:700; color:var(--text-heading); outline:none; resize:none; box-sizing:border-box;"></textarea>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button onclick="window.closeAiTweakDescriptionModal()" class="btn" style="padding:8px 14px; font-size:0.78rem; background:var(--bg-card-soft); border:2px solid var(--border-card);">Cancel</button>
+              <button onclick="window.submitAiTweakDescription()" class="btn btn-primary" style="padding:8px 16px; font-size:0.78rem;">OK</button>
+            </div>
+          </div>
+        </div>
       </div>
 
 
@@ -1591,6 +1610,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=7.9"></script>
+  <script type="module" src="app.js?v=8.0"></script>
 </body>
 </html>

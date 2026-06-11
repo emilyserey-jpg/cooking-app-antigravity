@@ -1615,6 +1615,27 @@
   </div>
 
   <!-- ============================================
+       AI TWEAK DESCRIPTION MODAL
+       ============================================ -->
+  <div id="aiTweakDescriptionModal" onclick="if(event.target===this) window.closeAiTweakDescriptionModal()" style="display:none;position:fixed;inset:0;background:rgba(26,58,92,0.35);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;padding:1.75rem;box-shadow:0 24px 60px rgba(74,144,217,0.2);border:2px solid rgba(74,144,217,0.12);width:100%;max-width:420px;box-sizing:border-box;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;font-size:1.1rem;font-weight:900;color:var(--text-heading);display:flex;align-items:center;gap:6px;">✨ AI Description Edit</h3>
+        <button onclick="window.closeAiTweakDescriptionModal()" style="width:32px;height:32px;border-radius:50%;background:#f0f4f8;border:none;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex-shrink:0;">&times;</button>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--text-heading);margin-bottom:6px;line-height:1.4;">How would you like AI to edit this step description?</label>
+        <p style="margin:0 0 10px 0;font-size:0.75rem;color:var(--text-muted);line-height:1.4;">(e.g., "Add turn the heat off", "Make it shorter", "Include salt quantity")</p>
+        <textarea id="aiTweakDescriptionInput" placeholder="Leave blank to auto-regenerate based on audio transcript..." style="width:100%;height:90px;background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;padding:10px 12px;font-family:var(--font);font-size:0.88rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;resize:none;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="window.closeAiTweakDescriptionModal()" class="btn" style="padding:10px 16px;font-size:0.82rem;background:var(--bg-card-soft,#f0f4f8);border:2px solid var(--border-card);border-radius:12px;cursor:pointer;font-family:var(--font);font-weight:800;color:var(--text-heading);">Cancel</button>
+        <button onclick="window.submitAiTweakDescription()" class="btn btn-primary" style="padding:10px 20px;font-size:0.82rem;border-radius:12px;cursor:pointer;font-family:var(--font);font-weight:900;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
        AUTH MODAL — Sign In / Sign Up
        ============================================ -->
   <div id="authModalBackdrop" onclick="closeAuthModal()" style="display:none;position:fixed;inset:0;background:rgba(26,58,92,0.35);backdrop-filter:blur(6px);z-index:500;"></div>
@@ -1682,6 +1703,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=7.9"></script>
+  <script type="module" src="app.js?v=8.0"></script>
 </body>
 </html>

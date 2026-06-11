@@ -7741,11 +7741,44 @@ window.redoStepDescription = async function(i, tweakPrompt = '') {
 window.askAiTweakDescription = function(i) {
   const step = createStepsArr[i];
   if (!step) return;
-  const promptText = window.prompt(
-    `How would you like AI to edit this step description?\n(e.g., "Add turn the heat off", "Make it shorter", "Include salt quantity")\n\nLeave blank/cancel to auto-regenerate based on audio transcript.`
-  );
-  if (promptText === null) return;
-  window.redoStepDescription(i, promptText.trim());
+  
+  window.activeAiTweakStepIndex = i;
+  
+  const modal = document.getElementById('aiTweakDescriptionModal');
+  const input = document.getElementById('aiTweakDescriptionInput');
+  if (modal && input) {
+    input.value = '';
+    // Show the modal
+    modal.style.display = 'flex';
+    input.focus();
+    
+    // Bind enter key (without shift) to submit
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        window.submitAiTweakDescription();
+      }
+    };
+  }
+};
+
+window.closeAiTweakDescriptionModal = function() {
+  const modal = document.getElementById('aiTweakDescriptionModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+};
+
+window.submitAiTweakDescription = function() {
+  const i = window.activeAiTweakStepIndex;
+  const input = document.getElementById('aiTweakDescriptionInput');
+  if (i === undefined || i === null || !input) {
+    window.closeAiTweakDescriptionModal();
+    return;
+  }
+  const promptText = input.value.trim();
+  window.closeAiTweakDescriptionModal();
+  window.redoStepDescription(i, promptText);
 };
 
 
