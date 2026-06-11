@@ -1258,17 +1258,12 @@
                 </div>
               </div>
 
-              <!-- Row 3: Keyboard shortcuts + Input stops manually -->
-              <div style="display:flex;align-items:center;gap:6px;width:100%;">
+              <!-- Row 3: Keyboard shortcuts -->
+              <div style="display:flex;align-items:center;width:100%;">
                 <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-                  style="flex:1;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);" title="Toggle Keyboard Mode">
+                  style="width:100%;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);box-sizing:border-box;" title="Toggle Keyboard Mode">
                   <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px; color: var(--text-body);"></i>
                   <span>Keyboard Shortcuts</span>
-                </button>
-                <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
-                  style="flex:1;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:6px 10px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);" title="Type Stop Manually">
-                  <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
-                  <span>Input Stops Manually</span>
                 </button>
               </div>
             </div>
@@ -1386,10 +1381,17 @@
                       style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
                       <span>🪄 AI: Audio-to-Step Generator</span>
                     </button>
-                    <button id="aiGenerateStepsBtn" onclick="window.aiWriteStepDescriptions()" class="btn"
-                      style="width:100%;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(124,58,237,0.2);white-space:nowrap;">
-                      <span>Generate Steps</span>
-                    </button>
+                    <div style="display:flex;gap:6px;width:100%;">
+                      <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
+                        style="flex:1;background:rgba(255,255,255,0.95);border:2px solid var(--border-card);border-radius:8px;padding:8px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--font);font-weight:800;font-size:0.72rem;color:var(--text-body);box-shadow:0 2px 6px rgba(0,0,0,0.03);box-sizing:border-box;" title="Type Stop Manually">
+                        <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+                        <span>Input Stops Manually</span>
+                      </button>
+                      <button id="aiGenerateStepsBtn" onclick="window.aiWriteStepDescriptions()" class="btn"
+                        style="flex:1;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:8px;padding:8px;height:34px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(124,58,237,0.2);white-space:nowrap;box-sizing:border-box;">
+                        <span>Generate Steps</span>
+                      </button>
+                    </div>
                   </div>
                   <div style="position:relative;flex:1;display:flex;flex-direction:row;min-height:0;margin-top:6px;overflow:hidden;gap:12px;">
                     <!-- Fixed Transcript Panel (left) -->
@@ -1684,6 +1686,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=7.5"></script>
+  <script type="module" src="app.js?v=7.6"></script>
 </body>
 </html>
