@@ -6,7 +6,13 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = 'https://rsnzjvcpuwtuwzxbnnic.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_as8qTSEgNWFX9cqTqxODfQ_cKiLBoYe';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 // =====================================================
 // Auth Helpers

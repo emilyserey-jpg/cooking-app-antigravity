@@ -2224,3 +2224,97 @@ a:focus-visible {
 .spinner-icon {
   animation: spinnerRotate 1s infinite linear !important;
 }
+
+/* ====================================================
+   YOUTUBE-STYLE CREATOR PROFILE RESPONSIVE OVERRIDES
+   ==================================================== */
+@media (max-width: 768px) {
+  .channel-container {
+    margin: 0.75rem auto 2rem;
+    border-radius: var(--radius-md);
+    border-width: 1px;
+  }
+  .channel-banner {
+    height: 110px;
+  }
+  .channel-banner-logo {
+    font-size: 1.4rem;
+    bottom: 10px;
+    right: 15px;
+  }
+  .channel-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem 1.25rem 1rem;
+    gap: 1rem;
+  }
+  .channel-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2.2rem;
+  }
+  .channel-details {
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .channel-title {
+    font-size: 1.4rem;
+  }
+  .channel-meta {
+    justify-content: center;
+    font-size: 0.82rem;
+  }
+  .channel-bio-snippet {
+    font-size: 0.82rem;
+  }
+  .channel-actions {
+    justify-content: center;
+    width: 100%;
+  }
+  .btn-subscribe, .btn-channel-secondary {
+    padding: 8px 18px;
+    font-size: 0.82rem;
+  }
+  .channel-tabs {
+    padding-inline-start: 1rem;
+    gap: 1.25rem;
+  }
+  .channel-tab-btn {
+    padding: 10px 2px;
+    font-size: 0.88rem;
+  }
+  .channel-tab-content {
+    padding: 1.25rem 1rem;
+    min-height: 250px;
+  }
+  .yt-video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem 1rem;
+  }
+  .yt-trailer-section {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .yt-trailer-thumbnail-container {
+    min-width: 100%;
+  }
+  .yt-trailer-title {
+    font-size: 1.15rem;
+  }
+  .yt-trailer-desc {
+    font-size: 0.82rem;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .yt-about-section {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .yt-about-bio-col, .yt-about-stats-col {
+    min-width: 100%;
+  }
+}
+

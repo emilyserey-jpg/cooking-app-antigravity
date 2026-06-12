@@ -789,127 +789,157 @@
     <!-- ================================================
          PUBLIC CREATOR PROFILE — Instagram-style
          ================================================ -->
-    <section id="view-public-profile" class="view-section" style="padding:0;display:none;background:#fafafa;min-height:100vh;">
+    <!-- ================================================
+         PUBLIC CREATOR PROFILE — YouTube-style
+         ================================================ -->
+    <section id="view-public-profile" class="view-section" style="padding:0 1.25rem;display:none;min-height:100vh;">
 
-      <!-- Profile header -->
-      <div style="max-width:935px;margin:0 auto;padding:2rem 1.5rem 0;">
-
-        <!-- Back button -->
+      <!-- Navigation back button -->
+      <div style="max-width:1100px;margin:1.5rem auto 0;display:flex;align-items:center;justify-content:flex-start;">
         <button id="pubBackBtn" onclick="pubProfileBack()"
-          style="display:none;background:none;border:none;color:var(--text-muted);font-family:var(--font);font-weight:700;font-size:0.85rem;cursor:pointer;padding:0 0 1.25rem;align-items:center;gap:5px;">
+          style="display:none;background:rgba(255,255,255,0.7);backdrop-filter:blur(5px);border:1.5px solid var(--border-card);color:var(--primary-dark);font-family:var(--font);font-weight:800;font-size:0.8rem;border-radius:10px;padding:6px 14px;cursor:pointer;align-items:center;gap:5px;box-shadow:var(--shadow-xs);transition:all 0.2s;"
+          onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
+          onmouseleave="this.style.background='rgba(255,255,255,0.7)'; this.style.color='var(--primary-dark)';">
           &#8592; Back
         </button>
+      </div>
 
-        <!-- Avatar + info row -->
-        <div style="display:flex;align-items:flex-start;gap:2.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
-          <div style="flex-shrink:0;">
-            <div id="pubAvatar"
-              style="width:150px;height:150px;border-radius:50%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;color:#fff;font-size:3.5rem;font-weight:900;border:3px solid #fff;box-shadow:0 0 0 2px #dbdbdb;">?</div>
+      <div class="channel-container">
+        
+        <!-- Banner cover image -->
+        <div class="channel-banner">
+          <div class="channel-banner-overlay"></div>
+          <div style="position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.06); top:-50px; left:10%;"></div>
+          <div style="position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.03); bottom:-100px; right:15%;"></div>
+          <div class="channel-banner-logo">CookingGPS</div>
+        </div>
+
+        <!-- Identity row -->
+        <div class="channel-header">
+          <div class="channel-avatar-wrapper">
+            <div id="pubAvatar" class="channel-avatar">?</div>
           </div>
-          <div style="flex:1;min-width:220px;">
-            <!-- Username + action buttons -->
-            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
-              <h1 id="pubName" style="font-size:1.4rem;font-weight:300;color:#262626;margin:0;">Loading&#8230;</h1>
-              <button id="pubActionBtn"
-                style="background:#efefef;border:1px solid #dbdbdb;border-radius:8px;padding:6px 16px;font-family:var(--font);font-weight:700;font-size:0.85rem;color:#262626;cursor:pointer;white-space:nowrap;">
-                Edit Profile
+          <div class="channel-details">
+            <h1 id="pubName" class="channel-title">Loading…</h1>
+            <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
+            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator 🍳</div>
+            <div class="channel-actions">
+              <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe">
+                Subscribe
               </button>
-              <button onclick="showTip('Share link copied!')"
-                style="background:#efefef;border:1px solid #dbdbdb;border-radius:8px;padding:7px 12px;font-family:var(--font);font-weight:700;font-size:0.82rem;color:#262626;cursor:pointer;">
-                <i data-lucide="share-2" style="width:14px;height:14px;vertical-align:middle;"></i>
+              <button id="pubShareBtn" onclick="showTip('Share link copied!')" class="btn-channel-secondary">
+                <i data-lucide="share-2" style="width:14px;height:14px;"></i> Share
               </button>
-            </div>
-            <!-- Stats -->
-            <div style="display:flex;gap:2.5rem;margin-bottom:1.25rem;">
-              <div>
-                <span id="pubPostCount" style="font-size:1rem;font-weight:700;color:#262626;">0</span>
-                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">posts</span>
-              </div>
-              <div><span style="font-size:1rem;font-weight:700;color:#262626;">&#8212;</span>
-                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">followers</span>
-              </div>
-              <div><span style="font-size:1rem;font-weight:700;color:#262626;">&#8212;</span>
-                <span style="font-size:0.88rem;color:#262626;font-weight:400;margin-left:4px;">following</span>
-              </div>
-            </div>
-            <!-- Bio -->
-            <div>
-              <div id="pubBioName" style="font-size:0.9rem;font-weight:700;color:#262626;margin-bottom:2px;"></div>
-              <div id="pubBioText" style="font-size:0.88rem;color:#262626;line-height:1.5;">Cooking creator &#127859;</div>
-              <div id="pubHandle" style="font-size:0.85rem;color:#003569;margin-top:2px;"></div>
             </div>
           </div>
         </div>
 
-        <!-- Story highlights row -->
-        <div id="pubHighlightsRow" style="display:none;gap:1.25rem;overflow-x:auto;padding-bottom:1rem;scrollbar-width:none;"></div>
-      </div>
-
-      <!-- Tab bar -->
-      <div style="border-top:1px solid #dbdbdb;margin-top:0.5rem;">
-        <div style="max-width:935px;margin:0 auto;display:flex;justify-content:center;">
-          <button id="pubTabVideos" onclick="pubSwitchTab('videos')"
-            style="display:flex;align-items:center;gap:6px;padding:12px 24px;border:none;border-top:2px solid #262626;background:none;font-family:var(--font);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#262626;cursor:pointer;">
-            <i data-lucide="grid-2x2" style="width:13px;height:13px;"></i> Posts
+        <!-- Tabs -->
+        <div class="channel-tabs">
+          <button id="pubTabHomeBtn" onclick="pubSwitchTab('home')" class="channel-tab-btn active">
+            <i data-lucide="home" style="width:14px;height:14px;"></i> Home
           </button>
-          <button id="pubTabSeries" onclick="pubSwitchTab('series')"
-            style="display:flex;align-items:center;gap:6px;padding:12px 24px;border:none;border-top:2px solid transparent;background:none;font-family:var(--font);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#8e8e8e;cursor:pointer;">
-            <i data-lucide="clapperboard" style="width:13px;height:13px;"></i> Reels
+          <button id="pubTabRecipesBtn" onclick="pubSwitchTab('recipes')" class="channel-tab-btn">
+            <i data-lucide="play-square" style="width:14px;height:14px;"></i> Recipes
+          </button>
+          <button id="pubTabAboutBtn" onclick="pubSwitchTab('about')" class="channel-tab-btn">
+            <i data-lucide="info" style="width:14px;height:14px;"></i> About
           </button>
         </div>
-      </div>
 
-      <!-- Posts grid -->
-      <div id="pubTabVideosContent" style="max-width:935px;margin:0 auto;">
-        <div id="pubVideoRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;"></div>
-        <div id="pubNoPostsMsg" style="display:none;text-align:center;padding:5rem 1rem;color:#8e8e8e;">
-          <div style="font-size:3rem;margin-bottom:0.75rem;">&#128247;</div>
-          <div style="font-size:1.1rem;font-weight:700;color:#262626;margin-bottom:6px;">No Posts Yet</div>
-          <div>When you share videos, they'll appear here.</div>
+        <!-- Content Area -->
+        <div class="channel-tab-content">
+          
+          <!-- Tab 1: Home Tab -->
+          <div id="pubTabHomeContent">
+            <!-- Featured trailer (Trailer Video) -->
+            <div id="pubHomeFeatured"></div>
+            
+            <!-- Recent Uploads grid -->
+            <div id="pubHomeRecentSection" style="margin-top:1.5rem;">
+              <h3 style="font-size:1.1rem;font-weight:800;color:var(--text-heading);margin-bottom:1.2rem;display:flex;align-items:center;gap:6px;">
+                <span>📂</span> Recent Recipes
+              </h3>
+              <div id="pubHomeRecentGrid" class="yt-video-grid"></div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Recipes Tab -->
+          <div id="pubTabRecipesContent" style="display:none;">
+            <div id="pubRecipesGrid" class="yt-video-grid"></div>
+            <div id="pubNoRecipesMsg" style="display:none;text-align:center;padding:5rem 1rem;color:var(--text-muted);">
+              <div style="font-size:3rem;margin-bottom:0.75rem;">🍽️</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--text-heading);margin-bottom:6px;">No recipes shared yet</div>
+              <div>When this creator shares recipes, they'll appear here.</div>
+            </div>
+          </div>
+
+          <!-- Tab 3: About Tab -->
+          <div id="pubTabAboutContent" style="display:none;">
+            <div class="yt-about-section">
+              <div class="yt-about-bio-col">
+                <h3 class="yt-about-title">Description</h3>
+                <div id="pubAboutBio" class="yt-about-text">Cooking creator 🍳</div>
+              </div>
+              <div class="yt-about-stats-col">
+                <h3 class="yt-about-title">Stats</h3>
+                <div id="pubAboutStatsJoined" class="yt-about-stat-item">
+                  <span class="yt-about-stat-icon">📅</span>
+                  <span>Joined --</span>
+                </div>
+                <div id="pubAboutStatsRecipes" class="yt-about-stat-item">
+                  <span class="yt-about-stat-icon">🍲</span>
+                  <span>-- public recipes</span>
+                </div>
+                <div id="pubAboutStatsSubs" class="yt-about-stat-item">
+                  <span class="yt-about-stat-icon">👥</span>
+                  <span>-- subscribers</span>
+                </div>
+                <div id="pubAboutStatsViews" class="yt-about-stat-item">
+                  <span class="yt-about-stat-icon">📈</span>
+                  <span>-- total views</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
+
       </div>
 
-      <!-- Reels/Series tab -->
-      <div id="pubTabSeriesContent" style="max-width:935px;margin:0 auto;display:none;">
-        <div id="pubSeriesGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;"></div>
-        <div id="pubSeriesEmpty" style="text-align:center;padding:5rem 1rem;color:#8e8e8e;">
-          <div style="font-size:3rem;margin-bottom:0.75rem;">&#127916;</div>
-          <div style="font-size:1.1rem;font-weight:700;color:#262626;margin-bottom:6px;">No Reels Yet</div>
-          <div>Videos will appear here.</div>
-        </div>
-      </div>
-
-      <!-- Lightbox -->
+      <!-- Lightbox (kept for compatibility) -->
       <div id="pubLightbox" onclick="closePubLightbox()"
-        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:1rem;">
         <div onclick="event.stopPropagation()"
-          style="background:#fff;border-radius:4px;display:flex;max-width:900px;width:95%;max-height:90vh;overflow:hidden;">
+          style="background:#fff;border-radius:18px;display:flex;max-width:900px;width:95%;max-height:90vh;overflow:hidden;box-shadow:var(--shadow-lg);border:2px solid var(--border);">
           <div id="pubLightboxThumb"
-            style="flex:1;min-width:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:400px;">
-            <span style="font-size:4rem;">&#127916;</span>
+            style="flex:1.2;min-width:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:350px;">
+            <span style="font-size:4rem;">🍳</span>
           </div>
-          <div style="width:320px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid #dbdbdb;">
-            <div style="display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid #dbdbdb;">
+          <div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;border-left:1.5px solid var(--border-card);background:var(--bg-card);">
+            <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1.5px solid var(--border-card);">
               <div id="pubLightboxAvatar"
-                style="width:32px;height:32px;border-radius:50%;background:linear-gradient(45deg,#f09433,#dc2743);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:0.85rem;flex-shrink:0;"></div>
-              <div id="pubLightboxUsername" style="font-size:0.9rem;font-weight:700;color:#262626;flex:1;"></div>
+                style="width:36px;height:36px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary-dark);font-weight:900;font-size:0.95rem;border:1.5px solid var(--border);flex-shrink:0;"></div>
+              <div id="pubLightboxUsername" style="font-size:0.92rem;font-weight:800;color:var(--text-heading);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
               <button onclick="closePubLightbox()"
-                style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#8e8e8e;line-height:1;padding:0;">&#215;</button>
+                style="background:rgba(0,0,0,0.05);border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;color:var(--text-muted);font-weight:bold;">&times;</button>
             </div>
-            <div style="padding:14px;flex:1;overflow-y:auto;">
-              <div id="pubLightboxTitle" style="font-size:0.9rem;font-weight:700;color:#262626;margin-bottom:6px;"></div>
-              <div id="pubLightboxDesc" style="font-size:0.85rem;color:#262626;line-height:1.6;"></div>
-              <div id="pubLightboxMeta" style="font-size:0.75rem;color:#8e8e8e;margin-top:10px;font-weight:600;"></div>
+            <div style="padding:16px;flex:1;overflow-y:auto;">
+              <div id="pubLightboxTitle" style="font-size:1.05rem;font-weight:900;color:var(--text-heading);margin-bottom:8px;line-height:1.3;"></div>
+              <div id="pubLightboxDesc" style="font-size:0.85rem;color:var(--text-body);line-height:1.6;white-space:pre-line;"></div>
+              <div id="pubLightboxMeta" style="font-size:0.75rem;color:var(--text-muted);margin-top:12px;font-weight:700;"></div>
             </div>
-            <div style="padding:14px;border-top:1px solid #dbdbdb;display:flex;flex-direction:column;gap:8px;">
+            <div style="padding:16px;border-top:1.5px solid var(--border-card);display:flex;flex-direction:column;gap:8px;background:rgba(74,144,217,0.02);">
               <button onclick="pubLightboxWatch()"
-                style="width:100%;background:#0095f6;border:none;border-radius:8px;padding:10px;color:#fff;font-family:var(--font);font-weight:700;font-size:0.9rem;cursor:pointer;">
-                &#9654; Watch Now
+                style="width:100%;background:var(--primary);border:none;border-radius:12px;padding:12px;color:#fff;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;box-shadow:var(--shadow-xs);transition:all 0.2s;"
+                onmouseenter="this.style.background='var(--primary-dark)'"
+                onmouseleave="this.style.background='var(--primary)'">
+                ▶ Watch Guide
               </button>
               <button id="pubLightboxGroceryBtn" onclick="pubLightboxAddToGrocery()"
-                style="width:100%;background:rgba(74,144,217,0.1);border:none;border-radius:8px;padding:10px;color:var(--primary);font-family:var(--font);font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+                style="width:100%;background:var(--primary-soft);border:none;border-radius:12px;padding:12px;color:var(--primary-dark);font-family:var(--font);font-weight:800;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;border:1.5px solid var(--border-card);"
                 onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
-                onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';"
+                onmouseleave="this.style.background='var(--primary-soft)'; this.style.color='var(--primary-dark)';"
                 >
                 🛒 Add to Shopping List
               </button>
@@ -1783,6 +1813,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=8.5"></script>
+  <script type="module" src="app.js?v=8.7"></script>
 </body>
 </html>
