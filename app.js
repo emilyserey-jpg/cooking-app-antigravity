@@ -7725,6 +7725,38 @@ window.toggleAiToolsCollapse = function() {
   }
 };
 
+window.collapseAiTools = function() {
+  const el = document.getElementById('aiToolsCollapse');
+  const chev = document.getElementById('aiToolsChevron');
+  if (el) {
+    el.style.display = 'none';
+    if (chev) chev.textContent = '▾';
+  }
+};
+
+window.toggleStepNavControls = function() {
+  const el = document.getElementById('stepNavControlsContent');
+  const chev = document.getElementById('stepNavControlsChevron');
+  const btn = document.getElementById('toggleStepNavControlsBtn');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  if (isHidden) {
+    el.style.display = 'flex';
+    if (btn) {
+      const span = btn.querySelector('span');
+      if (span) span.textContent = 'Hide Panel';
+    }
+    if (chev) chev.textContent = '▲';
+  } else {
+    el.style.display = 'none';
+    if (btn) {
+      const span = btn.querySelector('span');
+      if (span) span.textContent = 'Show Panel';
+    }
+    if (chev) chev.textContent = '▼';
+  }
+};
+
 window.selectCreateStep = function(i) {
   currentNavStepIndex = i;
   const vid = document.getElementById('uploadedVideoPlayer');
@@ -10165,6 +10197,7 @@ window.aiDoEverything = async function() {
       renderCreateSteps(); renderTimeline();
       setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
       showTip(`⚡ All done! ${gem.loops.length} loop stops placed.`);
+      if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
       return;
     }
     // Fallback: transcribe then run each
@@ -10175,6 +10208,7 @@ window.aiDoEverything = async function() {
       await window.generateLoops();
       setAIStatus('✅ Done! Review the timeline.', true);
       showTip('⚡ AI completed all tasks!');
+      if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
     } else {
       setAIStatus('❌ Video too large for Whisper. Add your Gemini key to unlock large video support.', true);
     }
@@ -10413,6 +10447,7 @@ window.aiDoVideoOnly = async function() {
     setAIStatus('✅ AI successfully created steps from visual analysis!', true);
     showTip('⚡ AI completed video-only analysis!');
     window.setChatboxLoading(false, true);
+    if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
 
   } catch (err) {
     console.error('aiDoVideoOnly error:', err);

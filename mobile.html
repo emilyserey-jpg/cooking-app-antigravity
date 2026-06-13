@@ -105,39 +105,46 @@
                   <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; line-height: 1.4; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); max-width: 90%; word-break: break-word;"></span>
                 </div>
                 
-                <!-- Floating Controls Row -->
-                <div style="position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 8px; align-items: center;">
-                  <!-- Floating Back Button -->
-                  <button onclick="window.playerGoBack()" class="player-back-btn" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
-                    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back
-                  </button>
-                  
-                  <!-- Floating Edit Button (Only visible for recipe creators) -->
-                  <button id="playerEditRecipeBtn" tabindex="-1" style="display: none; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #eab308; color: #1e293b; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#facc15'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#eab308'; this.style.transform='scale(1)'">
-                    <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Edit
-                  </button>
+                <!-- Unified Floating Controls Header -->
+                <div class="player-top-controls-wrapper">
+                  <!-- Left Controls Group -->
+                  <div class="player-controls-left-group">
+                    <button onclick="window.playerGoBack()" class="player-top-btn player-back-btn" tabindex="-1">
+                      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                      <span class="player-btn-text">Back</span>
+                    </button>
+                    
+                    <button id="playerEditRecipeBtn" class="player-top-btn edit-btn" tabindex="-1" style="display: none;">
+                      <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i>
+                      <span class="player-btn-text">Edit</span>
+                    </button>
 
-                  <!-- Floating Remix Button -->
-                  <button id="playerRemixRecipeBtn" onclick="triggerRemix()" tabindex="-1" style="display: none; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: #8b5cf6; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#a78bfa'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='#8b5cf6'; this.style.transform='scale(1)'">
-                    <i data-lucide="git-fork" style="width: 13px; height: 13px;"></i> Remix
-                  </button>
+                    <button id="playerRemixRecipeBtn" onclick="triggerRemix()" class="player-top-btn remix-btn" tabindex="-1" style="display: none;">
+                      <i data-lucide="git-fork" style="width: 13px; height: 13px;"></i>
+                      <span class="player-btn-text">Remix</span>
+                    </button>
+                  </div>
 
-                  <!-- Floating Share Button -->
-                  <button id="playerShareRecipeBtn" onclick="window.shareCurrentRecipe()" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'; this.style.transform='scale(1.03)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'; this.style.transform='scale(1)'">
-                    <i data-lucide="share-2" style="width: 13px; height: 13px;"></i> Share
-                  </button>
+                  <!-- Right Controls Group -->
+                  <div class="player-controls-right-group">
+                    <button id="playerShareRecipeBtn" onclick="window.shareCurrentRecipe()" class="player-top-btn" tabindex="-1">
+                      <i data-lucide="share-2" style="width: 13px; height: 13px;"></i>
+                      <span class="player-btn-text">Share</span>
+                    </button>
+
+                    <button id="playerMultigridToggleBtn" onclick="window.togglePlayerMultigridMode()" class="player-top-btn" tabindex="-1">
+                      <i id="playerMultigridIcon" data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
+                      <span id="playerMultigridBtnText" class="player-btn-text">Multigrid</span>
+                    </button>
+
+                    <span id="activeModeBadge" class="mode-badge loop">
+                      <i data-lucide="repeat" style="width: 12px; height: 12px;"></i>
+                      <span class="player-btn-text">Loop Mode</span>
+                    </span>
+                  </div>
                 </div>
                 
-                <!-- Badges & Grid Controls -->
-                <div class="playback-controls-overlay" style="align-items: center; gap: 8px;">
-                  <!-- Floating Multigrid Toggle Button -->
-                  <button id="playerMultigridToggleBtn" onclick="window.togglePlayerMultigridMode()" tabindex="-1" style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); font-family: var(--font); font-size: 0.75rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
-                    <i id="playerMultigridIcon" data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> <span id="playerMultigridBtnText">Multigrid</span>
-                  </button>
-                  <span id="activeModeBadge" class="mode-badge loop">
-                    <i data-lucide="repeat"></i> Loop Mode
-                  </span>
-                </div>
+
                 
                 <div class="video-overlay-details">
                   <span id="videoTimeReadout">0:00 / 6:00</span>
@@ -1312,42 +1319,56 @@
         </div>
 
         <div id="stepNavControlsRow" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:9px 12px; display:flex; flex-direction:column; gap:8px; flex-shrink:0; margin-top:4px;">
-          <!-- Row 1: step navigator & info -->
-          <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px;">
-            <div style="flex:1; text-align:left; min-width:0; padding-right:8px;">
-              <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
-              <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
-            </div>
-            <!-- Seek Buttons Grouped Together -->
-            <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
-              <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 10px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-body); box-sizing:border-box; transition:all 0.15s;" title="Toggle Skip Mode">
-                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--text-body);"></i>
-                <span>Keyboard Shortcuts</span>
-              </button>
-              <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
-                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
-              <button onclick="toggleVideoPlay()" id="toolbarPlayBtnMobile" tabindex="-1"
-                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
-              <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
-                style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
-            </div>
+          <!-- Collapsible Section Header -->
+          <div class="collapsible-section-header">
+            <span class="collapsible-section-title">
+              <i data-lucide="sliders" style="width: 12px; height: 12px; color: var(--primary);"></i>
+              Playback & Edit Controls
+            </span>
+            <button type="button" onclick="window.toggleStepNavControls()" id="toggleStepNavControlsBtn" class="collapsible-section-toggle-btn">
+              <span>Hide Panel</span>
+              <span id="stepNavControlsChevron" style="margin-left: 2px; font-size: 0.6rem;">▲</span>
+            </button>
           </div>
 
-          <!-- Row 2: Add Stop & Loop / Stop -->
-          <div style="display:flex; align-items:center; gap:6px; width:100%;">
-            <div style="flex:1;">
-              <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
-                title="Add Loop Stop at Current Time">
-                <span>📍 Add Stop</span>
-              </button>
+          <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:8px; width:100%;">
+            <!-- Row 1: step navigator & info -->
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px;">
+              <div style="flex:1; text-align:left; min-width:0; padding-right:8px;">
+                <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
+                <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
+              </div>
+              <!-- Seek Buttons Grouped Together -->
+              <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
+                <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
+                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 10px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-body); box-sizing:border-box; transition:all 0.15s;" title="Toggle Skip Mode">
+                  <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--text-body);"></i>
+                  <span>Keyboard Shortcuts</span>
+                </button>
+                <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
+                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
+                <button onclick="toggleVideoPlay()" id="toolbarPlayBtnMobile" tabindex="-1"
+                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
+                <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
+                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
+              </div>
             </div>
-            <div style="flex:1;">
-              <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
-                style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">▶ Loop</button>
-              <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
-                style="display:none; width:100%; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--primary); cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">⏹ Stop</button>
+
+            <!-- Row 2: Add Stop & Loop / Stop -->
+            <div style="display:flex; align-items:center; gap:6px; width:100%;">
+              <div style="flex:1;">
+                <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+                  style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                  title="Add Loop Stop at Current Time">
+                  <span>📍 Add Stop</span>
+                </button>
+              </div>
+              <div style="flex:1;">
+                <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
+                  style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">▶ Loop</button>
+                <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
+                  style="display:none; width:100%; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--primary); cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">⏹ Stop</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1361,52 +1382,62 @@
           <div class="carousel-slide" id="slideStops">
             <!-- Loop Stops -->
             <div class="glass-card" id="editorStopsCard" style="padding:0; flex-shrink:0; overflow:hidden;">
-              <div style="display:flex; align-items:center; gap:6px; padding:9px 13px; user-select:none;">
-                <div style="font-weight:900; color:var(--text-heading); font-size:0.85rem; flex:1;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 13px; user-select:none; border-bottom:1px solid rgba(0,0,0,0.03);">
+                <div style="font-weight:900; color:var(--text-heading); font-size:0.85rem; flex-shrink:0;">
                   Loop Stops <span id="createStepCount" style="color:var(--text-muted); font-weight:600;">(0)</span>
+                </div>
+                <div style="margin-left:auto; display:flex; align-items:center; gap:4px;">
+                  <button id="toggleAiToolsBtn" onclick="window.toggleAiToolsCollapse()" title="Toggle AI generation buttons"
+                    style="background:#ede9ff; color:#7c3aed; border:1.5px solid rgba(124,58,237,0.3); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
+                    🤖 AI Generator <span id="aiToolsChevron">▾</span>
+                  </button>
                 </div>
               </div>
               <div id="stopsBody" style="padding:0 12px 10px;">
-                <!-- AI Custom Tweak Prompt (Hidden) -->
-                <div style="display:none !important;">
-                  <textarea id="aiTweakPrompt" placeholder="How/where to place loop stops? (e.g. 'Only 5 steps', 'Focus on baking')" 
-                    style="width:100%; height:38px; border:1.5px solid rgba(124,58,237,0.25); border-radius:8px; padding:6px 40px 6px 10px; font-family:var(--font); font-size:0.72rem; font-weight:600; resize:none; box-sizing:border-box; outline:none; transition:all 0.2s; background:rgba(255,255,255,0.6);"
-                    onfocus="this.style.borderColor='#7c3aed'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(124,58,237,0.1)';" 
-                    onblur="this.style.borderColor='rgba(124,58,237,0.25)'; this.style.background='rgba(255,255,255,0.6)'; this.style.boxShadow='none';"
-                    onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); window.showChatboxActionMenu(this); }"></textarea>
-                  <button onclick="window.showChatboxActionMenu(this)" title="Send Guidelines & Generate Stops" class="ai-tweak-send-btn"
-                    style="position:absolute; right:6px; background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; border-radius:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; box-shadow:0 2px 4px rgba(124,58,237,0.25); transition:transform 0.15s;"
-                    onmouseenter="this.style.transform='scale(1.05)';" onmouseleave="this.style.transform='scale(1)';">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"></line>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                    </svg>
+                <!-- Collapsible AI tools wrapper -->
+                <div id="aiToolsCollapse" style="display:none; flex-direction:column; gap:6px; margin-top:6px; margin-bottom:6px; border-bottom:1.5px dashed rgba(124,58,237,0.15); padding-bottom:8px;">
+                  <!-- AI Custom Tweak Prompt (Hidden) -->
+                  <div style="display:none !important;">
+                    <textarea id="aiTweakPrompt" placeholder="How/where to place loop stops? (e.g. 'Only 5 steps', 'Focus on baking')" 
+                      style="width:100%; height:38px; border:1.5px solid rgba(124,58,237,0.25); border-radius:8px; padding:6px 40px 6px 10px; font-family:var(--font); font-size:0.72rem; font-weight:600; resize:none; box-sizing:border-box; outline:none; transition:all 0.2s; background:rgba(255,255,255,0.6);"
+                      onfocus="this.style.borderColor='#7c3aed'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(124,58,237,0.1)';" 
+                      onblur="this.style.borderColor='rgba(124,58,237,0.25)'; this.style.background='rgba(255,255,255,0.6)'; this.style.boxShadow='none';"
+                      onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); window.showChatboxActionMenu(this); }"></textarea>
+                    <button onclick="window.showChatboxActionMenu(this)" title="Send Guidelines & Generate Stops" class="ai-tweak-send-btn"
+                      style="position:absolute; right:6px; background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; border-radius:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; box-shadow:0 2px 4px rgba(124,58,237,0.25); transition:transform 0.15s;"
+                      onmouseenter="this.style.transform='scale(1.05)';" onmouseleave="this.style.transform='scale(1)';">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                      </svg>
+                    </button>
+                  </div>
+                  <button id="aiLoopBtn" onclick="doItAll()"
+                    style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
+                    <span>🔁 AI: Create Steps from Analyzing Video</span>
+                    <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
                   </button>
+                  <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
+                    style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
+                    <span>🎥 AI: Analyze Video Only (No Audio)</span>
+                  </button>
+                  <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
+                    style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
+                    <span>🪄 AI: Audio-to-Step Generator</span>
+                  </button>
+                  <div style="display:flex; gap:6px; width:100%; margin-bottom:6px;">
+                    <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
+                      style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:8px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body); box-shadow:0 2px 6px rgba(0,0,0,0.03); box-sizing:border-box;" title="Type Stop Manually">
+                      <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
+                      <span>Input Stops Manually</span>
+                    </button>
+                    <button id="aiGenerateStepsBtnMobile" onclick="window.aiWriteStepDescriptions()" class="btn"
+                      style="flex:1; background:linear-gradient(135deg,#7c3aed,#ec4899); color:#fff; border:none; border-radius:8px; padding:8px; height:34px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(124,58,237,0.2); white-space:nowrap; box-sizing:border-box;">
+                      <span>Generate Steps</span>
+                    </button>
+                  </div>
                 </div>
-                <button id="aiLoopBtn" onclick="doItAll()"
-                  style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
-                  <span>🔁 AI: Create Steps from Analyzing Video</span>
-                  <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
-                </button>
-                <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
-                  style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
-                  <span>🎥 AI: Analyze Video Only (No Audio)</span>
-                </button>
-                <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
-                  style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
-                  <span>🪄 AI: Audio-to-Step Generator</span>
-                </button>
-                <div style="display:flex; gap:6px; width:100%; margin-bottom:6px;">
-                  <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
-                    style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:8px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body); box-shadow:0 2px 6px rgba(0,0,0,0.03); box-sizing:border-box;" title="Type Stop Manually">
-                    <i data-lucide="edit-3" style="width: 15px; height: 15px; color: var(--text-body);"></i>
-                    <span>Input Stops Manually</span>
-                  </button>
-                  <button id="aiGenerateStepsBtnMobile" onclick="window.aiWriteStepDescriptions()" class="btn"
-                    style="flex:1; background:linear-gradient(135deg,#7c3aed,#ec4899); color:#fff; border:none; border-radius:8px; padding:8px; height:34px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(124,58,237,0.2); white-space:nowrap; box-sizing:border-box;">
-                    <span>Generate Steps</span>
-                  </button>
-                </div>
+
 
                 <div id="createStepsList" style="margin-top:6px;"></div>
               </div>

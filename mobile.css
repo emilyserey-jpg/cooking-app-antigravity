@@ -2318,3 +2318,162 @@ a:focus-visible {
   }
 }
 
+/* ====================================================
+   UNIFIED RESPONSIVE PLAYER FLOATING CONTROLS
+   ==================================================== */
+.player-top-controls-wrapper {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.player-controls-left-group,
+.player-controls-right-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.player-top-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.player-top-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.03);
+}
+
+.player-top-btn:active {
+  transform: scale(1);
+}
+
+/* Specific button overrides */
+.player-top-btn.edit-btn {
+  background: #eab308;
+  color: #1e293b;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.player-top-btn.edit-btn:hover {
+  background: #facc15;
+}
+
+.player-top-btn.remix-btn {
+  background: #8b5cf6;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.player-top-btn.remix-btn:hover {
+  background: #a78bfa;
+}
+
+/* Active Mode Badge height constraint */
+.player-controls-right-group .mode-badge {
+  margin: 0;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-body);
+  border: 2px solid rgba(74, 144, 217, 0.15);
+}
+
+/* Responsive Rules to hide text on mobile screen size & simulated phone */
+@media (max-width: 480px) {
+  .player-btn-text {
+    display: none !important;
+  }
+  .player-top-btn {
+    padding: 6px 8px !important;
+    gap: 0 !important;
+  }
+  .player-controls-right-group .mode-badge {
+    padding: 4px 8px !important;
+    gap: 0 !important;
+  }
+}
+
+.phone-screen .player-btn-text {
+  display: none !important;
+}
+.phone-screen .player-top-btn {
+  padding: 6px 8px !important;
+  gap: 0 !important;
+}
+.phone-screen .player-controls-right-group .mode-badge {
+  padding: 4px 8px !important;
+  gap: 0 !important;
+}
+
+/* Collapsible Section Header Styles */
+.collapsible-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.06);
+  padding: 4px 6px 8px;
+  margin-bottom: 8px;
+  user-select: none;
+}
+.collapsible-section-title {
+  font-size: 0.68rem;
+  font-weight: 850;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.collapsible-section-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.collapsible-section-toggle-btn:hover {
+  background: rgba(74, 144, 217, 0.08);
+}
+
+
