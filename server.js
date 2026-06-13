@@ -554,8 +554,8 @@ Identify distinct cooking steps and return ONLY this JSON (no markdown):
 }
 Rules:
 - 3-12 loops, labels are 2-5 word action phrases, timestamps in whole seconds.
-- **Visual Scene Cuts & Camera Transitions**: Carefully analyze camera cuts, angle changes, or scene transitions. Align the `start` and `end` timestamps of loops with these visual cuts to ensure each loop begins and ends cleanly at a natural scene change.
-- **Visual Ingredient Detection**: Track when ingredients are visually introduced, prepped, or added on-screen. Use these events to demarcate steps and associate those ingredients with the respective loop's `ingredients` array.
+- **Visual Scene Cuts & Camera Transitions**: Carefully analyze camera cuts, angle changes, or scene transitions. Align the \`start\` and \`end\` timestamps of loops with these visual cuts to ensure each loop begins and ends cleanly at a natural scene change.
+- **Visual Ingredient Detection**: Track when ingredients are visually introduced, prepped, or added on-screen. Use these events to demarcate steps and associate those ingredients with the respective loop's \`ingredients\` array.
 - **On-Screen Text & Captions**: Scan for any graphic text overlays or captions in the video mentioning step titles or ingredients, using them to refine loop timings and description text.
 - Each loop must represent a meaningful, distinct cooking step that is useful to loop/repeat (e.g. chopping vegetables, seasoning, cooking pork, plating).
 - Avoid creating loop stops for trivial, brief micro-actions (such as unpacking ingredients, opening lids, or turning on burners). Merge these trivial prep actions into the main adjacent step (e.g. merge "unpacking pork" into "seasoning pork" or "cooking pork").
