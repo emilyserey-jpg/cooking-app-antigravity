@@ -20,7 +20,7 @@
     checkViewport();
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=7.0">
+  <link rel="stylesheet" href="styles.css?v=8.8">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1483,6 +1483,10 @@
                       <span>🔁 AI: Create Steps from Analyzing Video</span>
                       <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
                     </button>
+                    <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
+                      style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
+                      <span>🎥 AI: Analyze Video Only (No Audio)</span>
+                    </button>
                     <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
                       style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
                       <span>🪄 AI: Audio-to-Step Generator</span>
@@ -1813,6 +1817,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=8.7"></script>
+  <script type="module" src="app.js?v=8.8"></script>
 </body>
 </html>

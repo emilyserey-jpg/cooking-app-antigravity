@@ -487,7 +487,7 @@ Rules:
 
 // ─── AI: Gemini video analysis (Google File API → Gemini 2.0 Flash) ──────────
 app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res) => {
-  const { prompt: tweakPrompt } = req.body;
+  const { prompt: tweakPrompt, videoOnly } = req.body;
   if (!GEMINI_API_KEY)
     return res.status(503).json({ error: 'GEMINI_API_KEY not set in Railway variables.' });
   if (!req.file)
@@ -565,6 +565,10 @@ Rules:
 - Ensure the instruction and ingredients list for each loop contains the exact measurements mentioned in the speech or shown in the video.
 - Be chronological: each loop's instruction should describe the actions during and immediately surrounding its start/end window.
 - Provide detailed timestamped speech transcripts/subtitles in text_overlays matching the video timeline.`;
+
+    if (videoOnly === 'true') {
+      prompt += `\n\nCRITICAL RULE FOR THIS REQUEST (VIDEO ONLY - NO SPEECH):\n- Do NOT transcribe any speech or audio. Do NOT generate any subtitles/transcript words in the "text_overlays" array (it MUST be returned as an empty array: []).\n- The video may contain background music, songs, or noise. Completely ignore all audio/sounds/vocals.\n- Analyze the video PURELY visually. Identify the cooking steps, ingredients, and loop stops solely based on the visual scenes, transitions, and text/captions displayed on screen.`;
+    }
 
     if (tweakPrompt && tweakPrompt.trim()) {
       prompt += `\n\nApply these customization tweaks requested by the user:\n"${tweakPrompt.trim()}"`;

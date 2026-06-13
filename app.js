@@ -2915,7 +2915,7 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     const { supabase } = await import('./supabase-client.js');
     let { data: recipes, error } = await supabase
       .from('recipes')
-      .select('id, title, description, video_url, bundle_mode, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays, ingredients')
+      .select('id, title, video_url, bundle_mode, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays, ingredients')
       .eq('creator', creatorEmail)
       .eq('is_published', true)
       .eq('private_recipe', false)
@@ -2926,7 +2926,7 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
         console.warn('[Supabase] Retrying openPublicProfile without bundle_mode column');
         const retry = await supabase
           .from('recipes')
-          .select('id, title, description, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays, ingredients')
+          .select('id, title, video_url, duration, created_at, loops, steps, creator, is_published, private_recipe, text_overlays, ingredients')
           .eq('creator', creatorEmail)
           .eq('is_published', true)
           .eq('private_recipe', false)
@@ -9896,6 +9896,7 @@ function checkForceFreshAI() {
     _geminiCache = null;
     _geminiCacheFile = null;
     _geminiCacheTweak = null;
+    _geminiCacheVideoOnly = false;
     cachedTranscript = null;
     cachedSegments = null;
     checkbox.checked = false; // reset after triggering
@@ -9907,18 +9908,19 @@ function checkForceFreshAI() {
 let _geminiCache     = null; // cached result for current file
 let _geminiCacheFile = null; // which file was analyzed (detect new uploads)
 let _geminiCacheTweak = null; // tweak prompt used for this cached result
+let _geminiCacheVideoOnly = false; // whether it was analyzed as videoOnly
 
-async function tryGeminiFor(task) {
+async function tryGeminiFor(task, videoOnly = false) {
   if (!uploadedFile) return null;
 
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
 
-  // Return cached result if same file and same tweak (free reuse)
-  if (_geminiCache && _geminiCacheFile === uploadedFile && _geminiCacheTweak === tweak) {
+  // Return cached result if same file, same tweak, and same videoOnly flag (free reuse)
+  if (_geminiCache && _geminiCacheFile === uploadedFile && _geminiCacheTweak === tweak && _geminiCacheVideoOnly === videoOnly) {
     const hasLoops = Array.isArray(_geminiCache.loops) && _geminiCache.loops.length > 0;
     const hasTranscripts = Array.isArray(_geminiCache.text_overlays) && _geminiCache.text_overlays.length > 0;
 
-    if (task === 'transcribe' && !hasTranscripts) {
+    if (task === 'transcribe' && !hasTranscripts && !videoOnly) {
       console.log('[Gemini] Cache lacks transcripts, forcing fresh analysis');
     } else if (task === 'loops' && !hasLoops) {
       console.log('[Gemini] Cache lacks loops, forcing fresh analysis');
@@ -9933,6 +9935,9 @@ async function tryGeminiFor(task) {
   if (tweak) {
     formData.append('prompt', tweak);
   }
+  if (videoOnly) {
+    formData.append('videoOnly', 'true');
+  }
 
   const res  = await fetch('/api/ai/gemini-analyze', { method: 'POST', body: formData });
   const data = await res.json();
@@ -9946,6 +9951,7 @@ async function tryGeminiFor(task) {
   _geminiCache      = data;
   _geminiCacheFile  = uploadedFile;
   _geminiCacheTweak = tweak;
+  _geminiCacheVideoOnly = videoOnly;
   return data;
 }
 
@@ -10279,6 +10285,141 @@ window.doItAll = async function() {
       overlayBtn.style.opacity = '1';
       overlayBtn.innerHTML = '⚡ AI Stops';
     }
+    window.setChatboxLoading(false, false);
+  }
+};
+
+window.aiDoVideoOnly = async function() {
+  if (typeof checkForceFreshAI === 'function') {
+    checkForceFreshAI();
+  }
+
+  // Clear cached transcripts and segments to make sure they are not reused
+  cachedTranscript = '';
+  cachedSegments = [];
+  
+  const btn = document.getElementById('aiVideoOnlyBtn');
+  const loopBtn = document.getElementById('aiLoopBtn');
+  const transcriptBtn = document.getElementById('aiStepsFromTranscriptBtn');
+  const generateBtn = document.getElementById('aiGenerateStepsBtn') || document.getElementById('aiGenerateStepsBtnMobile');
+  const overlayBtn = document.getElementById('overlayAiBtn');
+
+  const setButtonsState = (disabled, text) => {
+    if (btn) {
+      btn.disabled = disabled;
+      if (disabled && text) {
+        btn.innerHTML = `<span>⏳</span><span>${text}</span>`;
+      } else if (!disabled) {
+        btn.style.background = '';
+        btn.innerHTML = `<span>🎥 AI: Analyze Video Only (No Audio)</span>`;
+      }
+    }
+    if (loopBtn) loopBtn.disabled = disabled;
+    if (transcriptBtn) transcriptBtn.disabled = disabled;
+    if (generateBtn) generateBtn.disabled = disabled;
+    
+    if (overlayBtn) {
+      overlayBtn.disabled = disabled;
+      if (disabled) {
+        overlayBtn.style.opacity = '0.7';
+        if (text) overlayBtn.innerHTML = `🤖 ${text}`;
+      } else {
+        overlayBtn.style.opacity = '1';
+        overlayBtn.innerHTML = '⚡ AI Stops';
+      }
+    }
+  };
+
+  if (!uploadedFile) {
+    setAIStatus('⚠️ Upload a video first.', true);
+    showTip('Upload your video first, then tap the button.');
+    setButtonsState(false);
+    return;
+  }
+
+  window.setChatboxLoading(true);
+  
+  try {
+    setButtonsState(true, 'Analyzing Video (No Audio)...');
+    setAIStatus('🤖 Analyzing video visually (ignoring audio)...', true);
+    showTip('🎥 Sending video to Gemini for visual-only analysis...');
+    
+    // Call Gemini with videoOnly=true
+    const gem = await tryGeminiFor('all', true);
+    
+    if (!gem || !gem.loops || !gem.loops.length) {
+      throw new Error('No loop steps were detected from the visual video analysis.');
+    }
+    
+    // Apply Gemini results
+    if (gem.title) {
+      const t = document.getElementById('newRecipeTitleInput');
+      if (t) t.value = gem.title;
+    }
+    if (gem.ingredients?.length) {
+      const b = document.getElementById('ingredientsText');
+      if (b) b.value = gem.ingredients.join('\n');
+      window._aiIngredients = gem.ingredients.join('\n');
+      const r = document.getElementById('ingredientsResult'); if (r) r.style.display='block';
+    }
+    if (gem.steps?.length) {
+      const b = document.getElementById('stepsText');
+      if (b) b.value = gem.steps.join('\n');
+      window._aiStepsText = gem.steps.join('\n');
+      const r = document.getElementById('stepsTextResult'); if (r) r.style.display='block';
+    }
+    
+    // Clear transcript text overlays
+    cachedSegments = [];
+    cachedTranscript = '';
+    const transcriptTextEl = document.getElementById('transcriptText');
+    if (transcriptTextEl) {
+      transcriptTextEl.textContent = 'Speech transcription disabled (Video-Only analysis)';
+    }
+
+    createStepsArr = gem.loops.map((l, i) => {
+      const t   = Number(l.start ?? l.time) || 0;
+      const end = (l.end ?? l.endTime) != null ? Number(l.end ?? l.endTime) : null;
+      const mm  = Math.floor(t / 60);
+      const ss  = Math.floor(t % 60).toString().padStart(2, '0');
+      
+      const rawDesc = l.instruction || gem.steps?.[i] || '';
+      return {
+        time: t,
+        endTime: end,
+        label: l.label || `Step ${i+1}`,
+        description: rawDesc,
+        ingredients: l.ingredients || [],
+        displayTime: `${mm}:${ss}`,
+        timers: undefined // force auto-detection of timers!
+      };
+    }).sort((a, b) => a.time - b.time);
+
+    renderCreateSteps();
+    renderTimeline();
+
+    // Success styling
+    if (btn) {
+      btn.disabled = false;
+      btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+      btn.innerHTML = '<span>✅</span><span>Video Steps Created!</span>';
+    }
+    if (overlayBtn) {
+      overlayBtn.disabled = false;
+      overlayBtn.style.opacity = '1';
+      overlayBtn.innerHTML = '⚡ AI Stops';
+    }
+
+    setAIStatus('✅ AI successfully created steps from visual analysis!', true);
+    showTip('⚡ AI completed video-only analysis!');
+    window.setChatboxLoading(false, true);
+
+  } catch (err) {
+    console.error('aiDoVideoOnly error:', err);
+    setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
+    showTip('❌ AI Analysis failed: ' + (err.message || 'Connection error.'));
+    
+    setButtonsState(false);
     window.setChatboxLoading(false, false);
   }
 };
