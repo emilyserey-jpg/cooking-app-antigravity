@@ -1,5 +1,5 @@
 // =====================================================
-// Supabase Client Configuration — Cooking GPS
+// Supabase Client Configuration — In The Loop.
 // =====================================================
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 

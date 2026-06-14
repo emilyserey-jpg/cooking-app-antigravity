@@ -35,6 +35,21 @@ const recipeData = {
   ]
 };
 
+// Helper to update a Lucide icon dynamically by replacing the element
+function updateLucideIcon(id, newIconName, width = '15px', height = '15px') {
+  const oldIcon = document.getElementById(id);
+  if (!oldIcon) return;
+  const newIcon = document.createElement('i');
+  newIcon.id = id;
+  newIcon.setAttribute('data-lucide', newIconName);
+  newIcon.style.width = width;
+  newIcon.style.height = height;
+  oldIcon.parentNode.replaceChild(newIcon, oldIcon);
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
 // Application UI States
 let currentUser = null;
 let authMode = 'signin'; // 'signin' or 'signup'
@@ -42,8 +57,8 @@ let currentView = 'create';
 let playerPreviousView = 'create';
 let playbackMode = 'loop';
 let isPlaying = false;
-let currentTime = 75.0;
-let activeStepIndex = 1;
+let currentTime = 0.0;
+let activeStepIndex = 0;
 let isScrollingAuto = false;
 let editingRecipeId = null;
 let playerCurrentRecipe = null;
@@ -736,11 +751,7 @@ function updateControlsUI() {
   }
   
   // Desktop play btn (workbench)
-  const dPlayIcon = document.getElementById('desktopPlayIcon');
-  if (dPlayIcon) {
-    dPlayIcon.setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
-    lucide.createIcons();
-  }
+  updateLucideIcon('desktopPlayIcon', isPlaying ? 'pause' : 'play', '24px', '24px');
 
   // Desktop player play btn
   const dPlayPauseBtn = document.getElementById('desktopPlayPauseBtn');
@@ -769,22 +780,18 @@ function updateMuteUI() {
   const realVideo = document.getElementById('mobileRealVideo');
   if (!realVideo) return;
   const muteBtn = document.getElementById('playerMuteBtn');
-  const muteIcon = document.getElementById('playerMuteIcon');
-  if (!muteBtn || !muteIcon) return;
+  if (!muteBtn) return;
 
   if (realVideo.muted) {
-    muteIcon.setAttribute('data-lucide', 'volume-x');
+    updateLucideIcon('playerMuteIcon', 'volume-x', '15px', '15px');
     muteBtn.title = 'Unmute';
     muteBtn.style.color = 'var(--red)';
     muteBtn.style.background = 'rgba(224, 92, 92, 0.08)';
   } else {
-    muteIcon.setAttribute('data-lucide', 'volume-2');
+    updateLucideIcon('playerMuteIcon', 'volume-2', '15px', '15px');
     muteBtn.title = 'Mute';
     muteBtn.style.color = '';
     muteBtn.style.background = '';
-  }
-  if (window.lucide) {
-    lucide.createIcons();
   }
 }
 
@@ -840,28 +847,25 @@ function setPlaybackMode(mode) {
   }
   
   // Update the new centered control-row cycle button
-  const cycleIcon = document.getElementById('playerModeCycleIcon');
   const cycleBtn  = document.getElementById('playerModeCycleBtn');
-  if (cycleIcon && cycleBtn) {
+  if (cycleBtn) {
     if (mode === 'loop') {
-      cycleIcon.setAttribute('data-lucide', 'repeat');
+      updateLucideIcon('playerModeCycleIcon', 'repeat', '15px', '15px');
       cycleBtn.style.background = 'rgba(74, 144, 217, 0.1)';
       cycleBtn.style.color = 'var(--primary)';
       cycleBtn.style.borderColor = 'rgba(74, 144, 217, 0.2)';
     } else if (mode === 'wait') {
-      cycleIcon.setAttribute('data-lucide', 'clock');
+      updateLucideIcon('playerModeCycleIcon', 'clock', '15px', '15px');
       cycleBtn.style.background = 'rgba(224, 122, 32, 0.1)';
       cycleBtn.style.color = '#e07a20';
       cycleBtn.style.borderColor = 'rgba(224, 122, 32, 0.2)';
     } else if (mode === 'continuous') {
-      cycleIcon.setAttribute('data-lucide', 'arrow-right-circle');
+      updateLucideIcon('playerModeCycleIcon', 'arrow-right-circle', '15px', '15px');
       cycleBtn.style.background = 'rgba(92, 184, 92, 0.1)';
       cycleBtn.style.color = 'var(--green)';
       cycleBtn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
     }
   }
-
-  lucide.createIcons();
   speakFeedback(mode + " mode activated.");
 }
 
@@ -3111,7 +3115,7 @@ window.toggleAuthMode = function() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   const isSignUp = authMode === 'signup';
   document.getElementById('authModalTitle').textContent = isSignUp ? 'Create account' : 'Welcome back!';
-  document.getElementById('authModalSubtitle').textContent = isSignUp ? 'Join Cooking GPS today — it\'s free!' : 'Sign in to your Cooking GPS account';
+  document.getElementById('authModalSubtitle').textContent = isSignUp ? 'Join In The Loop today — it\'s free!' : 'Sign in to your In The Loop account';
   document.getElementById('authSubmitBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
   document.getElementById('authToggleText').textContent = isSignUp ? 'Already have an account?' : 'Don\'t have an account?';
   document.getElementById('authToggleBtn').textContent = isSignUp ? 'Sign In' : 'Sign Up';
@@ -4504,15 +4508,7 @@ window.playerSkipTime = function(amount) {
   const vid = document.getElementById('mobileRealVideo');
   const hasRealVideo = vid && vid.style.display !== 'none';
   
-  let actualAmount = amount;
-  if (Math.abs(amount) === 1) {
-    const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
-    const seekSelect = document.getElementById('seekStepSelect');
-    const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
-    actualAmount = amount > 0 ? seekAmount : -seekAmount;
-  }
-  
-  const newTime = Math.max(0, Math.min(recipeData.duration, currentTime + actualAmount));
+  const newTime = Math.max(0, Math.min(recipeData.duration, currentTime + amount));
   
   if (hasRealVideo) {
     vid.currentTime = newTime;
@@ -4520,7 +4516,7 @@ window.playerSkipTime = function(amount) {
   currentTime = newTime;
   updateStepFromTime(currentTime);
   updateTimelineUI();
-  showTip(`Skipped ${actualAmount > 0 ? '+' : ''}${actualAmount}s ⏱️`);
+  showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s ⏱️`);
 };
 
 window.playerTimelineClick = function(e) {
@@ -4889,6 +4885,9 @@ window.loadRecipeToEditor = function(recipe) {
   showTip(`Editing recipe: ${recipe.title} ✏️`);
   if (typeof window.setupResponsiveDrawers === 'function') {
     window.setupResponsiveDrawers();
+  }
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
   }
 };
 
@@ -7057,37 +7056,10 @@ window.desktopPlayerPrev     = function() {
   }
   activeStepIndex = foundIndex;
 
-  const currentStepStart = recipeData.loops[activeStepIndex] || 0;
-
-  // If we are before the current step start, seek to 0.
-  if (currentTime < currentStepStart) {
-    currentTime = 0;
-    const realVideo = document.getElementById('mobileRealVideo');
-    if (realVideo && realVideo.style.display !== 'none') {
-      realVideo.currentTime = 0;
-    }
-    updateStepDetailsUI();
-    showTip("Beginning of video reached.");
-    return;
-  }
-
-  // If we are more than 1.0 seconds past the current step start, seek to current step start.
-  if (currentTime > currentStepStart + 1.0) {
-    seekToStep(activeStepIndex);
-    return;
-  }
-
-  // Otherwise, seek to the previous step start.
   if (activeStepIndex > 0) {
     seekToStep(activeStepIndex - 1);
   } else {
-    // We are at or near the first step start, go to 0.
-    currentTime = 0;
-    const realVideo = document.getElementById('mobileRealVideo');
-    if (realVideo && realVideo.style.display !== 'none') {
-      realVideo.currentTime = 0;
-    }
-    updateStepDetailsUI();
+    seekToStep(0);
     showTip("Beginning of video reached.");
   }
 };
@@ -7929,6 +7901,9 @@ function showEditorStage(videoUrl) {
   if (typeof window.setupResponsiveDrawers === 'function') {
     window.setupResponsiveDrawers();
   }
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
 }
 
 // Step colors — one per step, Wii-style pastels
@@ -7947,22 +7922,18 @@ window.updateEditorMuteUI = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (!videoEl) return;
   const muteBtn = document.getElementById('editorMuteBtn');
-  const muteIcon = document.getElementById('editorMuteIcon');
-  if (!muteBtn || !muteIcon) return;
+  if (!muteBtn) return;
 
   if (videoEl.muted) {
-    muteIcon.setAttribute('data-lucide', 'volume-x');
+    updateLucideIcon('editorMuteIcon', 'volume-x', '14px', '14px');
     muteBtn.title = 'Unmute';
     muteBtn.style.color = '#ef4444';
     muteBtn.style.background = 'rgba(239, 68, 68, 0.2)';
   } else {
-    muteIcon.setAttribute('data-lucide', 'volume-2');
+    updateLucideIcon('editorMuteIcon', 'volume-2', '14px', '14px');
     muteBtn.title = 'Mute';
     muteBtn.style.color = '#ffffff';
     muteBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-  }
-  if (window.lucide) {
-    lucide.createIcons();
   }
 };
 
@@ -7991,6 +7962,9 @@ let dragSrcIndex    = null;
 window.onVideoLoaded = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (videoEl) {
+    if (typeof window.adjustWorkbenchVideoSize === 'function') {
+      window.adjustWorkbenchVideoSize();
+    }
     const isMutedPref = localStorage.getItem('cooking_gps_editor_muted') !== 'false';
     videoEl.muted = isMutedPref;
     if (typeof window.updateEditorMuteUI === 'function') {
@@ -8391,18 +8365,18 @@ window.setKeyboardMode = function(mode) {
     if (pBtnScrub) { pBtnScrub.style.background = 'transparent';    pBtnScrub.style.color = 'var(--text-muted)'; }
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
 
-    if (kbToggleIcon && kbToggleBtn) {
+    if (kbToggleBtn) {
       kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       kbToggleBtn.style.color = 'var(--text-body)';
       kbToggleBtn.style.borderColor = 'var(--border-card)';
-      kbToggleIcon.setAttribute('data-lucide', 'chevrons-right');
+      updateLucideIcon('playerKbToggleIcon', 'chevrons-right', '15px', '15px');
     }
 
-    if (cKbToggleIcon && cKbToggleBtn) {
+    if (cKbToggleBtn) {
       cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       cKbToggleBtn.style.color = 'var(--text-body)';
       cKbToggleBtn.style.borderColor = 'var(--border-card)';
-      cKbToggleIcon.setAttribute('data-lucide', 'chevrons-right');
+      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '13px', '13px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = 'Skip: Steps';
     }
@@ -8425,18 +8399,18 @@ window.setKeyboardMode = function(mode) {
     
     if (pHint)  pHint.textContent = `Pressing Left / Right arrow keys will seek forward or backward by ${seekAmount} second${seekAmount === 1 ? '' : 's'}.`;
 
-    if (kbToggleIcon && kbToggleBtn) {
+    if (kbToggleBtn) {
       kbToggleBtn.style.background = 'var(--primary-soft)';
       kbToggleBtn.style.color = 'var(--primary-dark)';
       kbToggleBtn.style.borderColor = 'var(--primary)';
-      kbToggleIcon.setAttribute('data-lucide', 'timer');
+      updateLucideIcon('playerKbToggleIcon', 'timer', '15px', '15px');
     }
 
-    if (cKbToggleIcon && cKbToggleBtn) {
+    if (cKbToggleBtn) {
       cKbToggleBtn.style.background = 'var(--primary-soft)';
       cKbToggleBtn.style.color = 'var(--primary-dark)';
       cKbToggleBtn.style.borderColor = 'var(--primary)';
-      cKbToggleIcon.setAttribute('data-lucide', 'timer');
+      updateLucideIcon('createKbToggleIcon', 'timer', '13px', '13px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = `Skip: ${seekAmount}s`;
     }
@@ -11982,6 +11956,56 @@ window.shareCurrentRecipe = function() {
   window.openPlayerShareModal();
 };
 
+window.downloadCurrentVideo = async function() {
+  const realVideo = document.getElementById('mobileRealVideo');
+  const videoUrl = (realVideo && realVideo.src && !realVideo.src.includes('mobile.html')) ? realVideo.src : 
+                   ((typeof playerCurrentRecipe === 'object' && playerCurrentRecipe) ? playerCurrentRecipe.video_url : '') || 
+                   ((typeof recipeData === 'object' && recipeData) ? recipeData.video_url : '') || '';
+                   
+  if (!videoUrl) {
+    showTip("❌ No video URL found to download.");
+    return;
+  }
+
+  showTip("⏳ Fetching video for download...");
+
+  try {
+    const response = await fetch(videoUrl);
+    if (!response.ok) throw new Error("Network response was not ok");
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+
+    const recipeTitle = (typeof playerCurrentRecipe === 'object' && playerCurrentRecipe?.title) || 
+                        (typeof recipeData === 'object' && recipeData?.title) || 
+                        'recipe_video';
+                        
+    a.download = `${recipeTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.mp4`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up blob URL after a short delay
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    showTip("✅ Video download started!");
+  } catch (error) {
+    console.error("Download failed:", error);
+    // Fallback: open URL in a new tab if blob fetch fails (e.g. CORS)
+    const a = document.createElement('a');
+    a.href = videoUrl;
+    a.target = '_blank';
+    a.download = 'video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showTip("✅ Opening video in new tab for download.");
+  }
+};
+
 window.openPlayerShareModal = function() {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) {
     showTip('No recipe loaded to share.');
@@ -12009,24 +12033,24 @@ window.openPlayerShareModal = function() {
     previewTextEl.textContent = shareUrl;
   }
 
-  const title = playerCurrentRecipe.title || 'CookingGPS Recipe';
+  const title = playerCurrentRecipe.title || 'In The Loop. Recipe';
 
   // Configure SMS link
   const smsLink = document.getElementById('shareSmsLink');
   if (smsLink) {
-    smsLink.href = 'sms:?body=' + encodeURIComponent(`Check out this recipe on CookingGPS: ${title} — ${shareUrl}`);
+    smsLink.href = 'sms:?body=' + encodeURIComponent(`Check out this recipe on In The Loop.: ${title} — ${shareUrl}`);
   }
 
   // Configure Email link
   const emailLink = document.getElementById('shareEmailLink');
   if (emailLink) {
-    emailLink.href = 'mailto:?subject=' + encodeURIComponent(`Recipe: ${title}`) + '&body=' + encodeURIComponent(`Check out this cooking guide on CookingGPS: ${title}\n\n${shareUrl}`);
+    emailLink.href = 'mailto:?subject=' + encodeURIComponent(`Recipe: ${title}`) + '&body=' + encodeURIComponent(`Check out this cooking guide on In The Loop.: ${title}\n\n${shareUrl}`);
   }
 
   // Configure WhatsApp link
   const waLink = document.getElementById('shareWhatsappLink');
   if (waLink) {
-    waLink.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(`Check out this recipe on CookingGPS: ${title} — ${shareUrl}`);
+    waLink.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(`Check out this recipe on In The Loop.: ${title} — ${shareUrl}`);
   }
 
   // Check and show native share option if supported
@@ -12064,7 +12088,7 @@ window.closePlayerShareModal = function() {
 window.handleShareAction = function(action) {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) return;
   const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
-  const title = playerCurrentRecipe.title || 'CookingGPS Recipe';
+  const title = playerCurrentRecipe.title || 'In The Loop. Recipe';
 
   if (action === 'copy') {
     copyToClipboardHelper(shareUrl);
@@ -12095,7 +12119,7 @@ window.handleShareAction = function(action) {
     if (navigator.share) {
       navigator.share({
         title: title,
-        text: `Check out this cooking recipe step-by-step video loop on CookingGPS: ${title}!`,
+        text: `Check out this cooking recipe step-by-step video loop on In The Loop.: ${title}!`,
         url: shareUrl
       }).then(() => {
         showTip('Shared successfully! 🚀');
@@ -12445,6 +12469,50 @@ function setupWorkbenchResizer() {
 
   resizer.addEventListener('mousedown', onMouseDown);
 }
+
+window.adjustWorkbenchVideoSize = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const wrapper = document.getElementById('workbenchVideoWrapper');
+  const leftSide = document.getElementById('workbenchLeft');
+  if (!videoEl || !wrapper || !leftSide) return;
+
+  // Only apply custom height adjustments on desktop screens (width > 768)
+  if (window.innerWidth <= 768) {
+    wrapper.style.height = '';
+    wrapper.style.flex = '';
+    return;
+  }
+
+  // Get video metadata dimensions
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  
+  // If metadata isn't loaded yet, default to a safe 16:9 ratio style
+  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+  const containerWidth = leftSide.getBoundingClientRect().width;
+
+  if (aspectRatio >= 1) {
+    // Landscape video: match aspect ratio precisely to fit container width
+    let targetHeight = containerWidth / aspectRatio;
+    // Cap height between 320px and 520px to fit well on desktop
+    targetHeight = Math.max(320, Math.min(520, targetHeight));
+    wrapper.style.height = `${targetHeight}px`;
+    wrapper.style.flex = 'none';
+  } else {
+    // Portrait/Vertical video (e.g., 9:16)
+    // Scale height based on width, but cap it so it does not overflow viewport height
+    // We want the portrait video to display as large as possible
+    const maxAllowedHeight = Math.min(650, window.innerHeight * 0.65);
+    let targetHeight = containerWidth / aspectRatio;
+    targetHeight = Math.max(480, Math.min(maxAllowedHeight, targetHeight));
+    wrapper.style.height = `${targetHeight}px`;
+    wrapper.style.flex = 'none';
+  }
+};
+
+// Listen to window resize events to recalculate heights dynamically
+window.addEventListener('resize', window.adjustWorkbenchVideoSize);
+
 
 window.updateAIChecklists = function() {
   // 1. Place Loop Stops: done if createStepsArr has elements

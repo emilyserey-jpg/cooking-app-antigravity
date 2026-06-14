@@ -64,7 +64,7 @@
       checkViewport();
     })();
   </script>
-  <title>Cooking GPS — Interactive UI Prototype</title>
+  <title>In The Loop. — Interactive UI Prototype</title>
   <link rel="stylesheet" href="mobile.css?v=8.38">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
@@ -86,7 +86,7 @@
           <path d="M12 13v8" />
         </svg>
       </div>
-      <div class="logo-text">Cooking<span>GPS v8.38</span></div>
+      <div class="logo-text">In The<span>Loop. v8.38</span></div>
     </a>
     
     <div class="header-actions">
@@ -312,6 +312,12 @@
                      <span>Share Recipe</span>
                    </button>
 
+                   <!-- Download Video -->
+                   <button onclick="window.closePlayerActionsDropdown(); window.downloadCurrentVideo();" class="dropdown-item" tabindex="-1">
+                     <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                     <span>Download Video</span>
+                   </button>
+                   
                    <!-- Embed Video -->
                    <button onclick="window.closePlayerActionsDropdown(); window.location.href='/embed_test.html';" class="dropdown-item" tabindex="-1">
                      <i data-lucide="code" style="width: 14px; height: 14px;"></i>
@@ -862,7 +868,7 @@
           <div class="channel-banner-overlay"></div>
           <div style="position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.06); top:-50px; left:10%;"></div>
           <div style="position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.03); bottom:-100px; right:15%;"></div>
-          <div class="channel-banner-logo">CookingGPS</div>
+          <div class="channel-banner-logo">In The Loop.</div>
         </div>
 
         <!-- Identity row -->
@@ -1745,7 +1751,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <h2 id="authModalTitle" style="font-size:1.5rem;font-weight:900;color:#1a3a5c;margin-bottom:0.25rem;">Welcome back!</h2>
-        <p id="authModalSubtitle" style="color:#7a9ab8;font-size:0.875rem;font-weight:600;">Sign in to your Cooking GPS account</p>
+        <p id="authModalSubtitle" style="color:#7a9ab8;font-size:0.875rem;font-weight:600;">Sign in to your In The Loop account</p>
       </div>
 
       <!-- Error message -->
@@ -1829,6 +1835,13 @@
           onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
           <span>➕ Create New Folder...</span>
         </button>
+
+        <button onclick="window.downloadCurrentVideo(); window.closePlayerSaveToFolderModal();"
+          style="background:rgba(34,197,94,0.08);color:#16a34a;border:2px dashed rgba(34,197,94,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(34,197,94,0.12)';this.style.borderColor='rgba(34,197,94,0.5)';"
+          onmouseleave="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='rgba(34,197,94,0.3)';">
+          <span>📥 Save to Local Files (Download)</span>
+        </button>
         
         <button onclick="window.closePlayerSaveToFolderModal()"
           style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
@@ -1861,7 +1874,7 @@
       <!-- Preview URL Box -->
       <div style="background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.04);border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:0.72rem;color:var(--text-muted);flex:1;" id="shareUrlPreviewText">
-          cookinggps.com/recipe/...
+          intheloop.com/recipe/...
         </div>
         <button onclick="window.handleShareAction('copy')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:6px 12px;font-family:var(--font);font-size:0.7rem;font-weight:800;cursor:pointer;flex-shrink:0;transition:all 0.2s;" onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform='none'">Copy</button>
       </div>
@@ -1968,6 +1981,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=8.38"></script>
+  <script type="module" src="app.js?v=8.40"></script>
 </body>
 </html>
