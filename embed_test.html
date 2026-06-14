@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>In The Loop. — Social Media Embed & Loop Prototype</title>
+  <title>In The Loop — Social Media Embed & Loop Prototype</title>
   <link rel="stylesheet" href="styles.css?v=3.9">
   <style>
     body {
@@ -890,7 +890,7 @@
       try {
         const user = await getCurrentUser();
         if (!user) {
-          alert('🔑 Please sign in to In The Loop. (on the main page) before saving recipes!');
+          alert('🔑 Please sign in to In The Loop (on the main page) before saving recipes!');
           if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 Save Recipe';

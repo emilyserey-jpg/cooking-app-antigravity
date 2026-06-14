@@ -1,7 +1,7 @@
 {
   "name": "cooking-gps-ui",
   "version": "1.0.0",
-  "description": "In The Loop. — SIMR Recipe App",
+  "description": "In The Loop — SIMR Recipe App",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

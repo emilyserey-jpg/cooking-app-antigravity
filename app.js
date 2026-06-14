@@ -12033,24 +12033,24 @@ window.openPlayerShareModal = function() {
     previewTextEl.textContent = shareUrl;
   }
 
-  const title = playerCurrentRecipe.title || 'In The Loop. Recipe';
+  const title = playerCurrentRecipe.title || 'In The Loop Recipe';
 
   // Configure SMS link
   const smsLink = document.getElementById('shareSmsLink');
   if (smsLink) {
-    smsLink.href = 'sms:?body=' + encodeURIComponent(`Check out this recipe on In The Loop.: ${title} — ${shareUrl}`);
+    smsLink.href = 'sms:?body=' + encodeURIComponent(`Check out this recipe on In The Loop: ${title} — ${shareUrl}`);
   }
 
   // Configure Email link
   const emailLink = document.getElementById('shareEmailLink');
   if (emailLink) {
-    emailLink.href = 'mailto:?subject=' + encodeURIComponent(`Recipe: ${title}`) + '&body=' + encodeURIComponent(`Check out this cooking guide on In The Loop.: ${title}\n\n${shareUrl}`);
+    emailLink.href = 'mailto:?subject=' + encodeURIComponent(`Recipe: ${title}`) + '&body=' + encodeURIComponent(`Check out this cooking guide on In The Loop: ${title}\n\n${shareUrl}`);
   }
 
   // Configure WhatsApp link
   const waLink = document.getElementById('shareWhatsappLink');
   if (waLink) {
-    waLink.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(`Check out this recipe on In The Loop.: ${title} — ${shareUrl}`);
+    waLink.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(`Check out this recipe on In The Loop: ${title} — ${shareUrl}`);
   }
 
   // Check and show native share option if supported
@@ -12088,7 +12088,7 @@ window.closePlayerShareModal = function() {
 window.handleShareAction = function(action) {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) return;
   const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
-  const title = playerCurrentRecipe.title || 'In The Loop. Recipe';
+  const title = playerCurrentRecipe.title || 'In The Loop Recipe';
 
   if (action === 'copy') {
     copyToClipboardHelper(shareUrl);
@@ -12119,7 +12119,7 @@ window.handleShareAction = function(action) {
     if (navigator.share) {
       navigator.share({
         title: title,
-        text: `Check out this cooking recipe step-by-step video loop on In The Loop.: ${title}!`,
+        text: `Check out this cooking recipe step-by-step video loop on In The Loop: ${title}!`,
         url: shareUrl
       }).then(() => {
         showTip('Shared successfully! 🚀');
