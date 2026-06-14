@@ -5113,6 +5113,11 @@ window.openPlayerSaveToFolderModal = function() {
   const listContainer = document.getElementById('playerFolderModalList');
   if (!modal || !listContainer) return;
   
+  const searchInput = document.getElementById('playerFolderSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  
   if (typeof libLoad === 'function') {
     libLoad();
     console.log('[DEBUG] SaveToFolderModal: Loaded folders:', libState.folders);
@@ -5195,6 +5200,22 @@ window.openPlayerSaveToFolderModal = function() {
 window.closePlayerSaveToFolderModal = function() {
   const modal = document.getElementById('playerFolderSelectionModal');
   if (modal) modal.style.display = 'none';
+};
+
+window.filterPlayerFolders = function() {
+  const query = (document.getElementById('playerFolderSearchInput')?.value || '').toLowerCase().trim();
+  const listContainer = document.getElementById('playerFolderModalList');
+  if (!listContainer) return;
+  const items = listContainer.getElementsByClassName('player-modal-folder-item');
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const text = item.textContent.toLowerCase();
+    if (text.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  }
 };
 
 window.handlePlayerFolderChange = function(targetFolderId) {

@@ -1824,6 +1824,18 @@
       
       <div style="font-size:0.75rem;color:var(--text-muted);margin-top:-6px;line-height:1.35;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Choose a collection:</div>
       
+      <!-- Search input for filtering folders -->
+      <div style="position:relative; width:100%; box-sizing:border-box; margin-top:-2px;">
+        <input type="text" id="playerFolderSearchInput" placeholder="Search folders..." oninput="window.filterPlayerFolders()"
+          style="width:100%; border:2px solid rgba(0,0,0,0.06); border-radius:14px; padding:10px 12px 10px 36px; font-family:var(--font); font-size:0.85rem; font-weight:700; color:var(--text-heading); outline:none; box-sizing:border-box; background:#f8fafc; transition:all 0.2s;"
+          onfocus="this.style.borderColor='var(--primary)'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(74,144,217,0.1)';"
+          onblur="this.style.borderColor='rgba(0,0,0,0.06)'; this.style.background='#f8fafc'; this.style.boxShadow='none';" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+
       <div id="playerFolderModalList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px;box-sizing:border-box;">
         <!-- Dynamic list of folders -->
       </div>
@@ -1981,6 +1993,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=8.41"></script>
+  <script type="module" src="app.js?v=8.42"></script>
 </body>
 </html>
