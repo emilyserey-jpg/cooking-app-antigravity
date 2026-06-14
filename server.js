@@ -46,6 +46,15 @@ const geminiUpload = multer({
 });
 
 app.use(express.json());
+
+// Disable caching for development so edits are immediately visible on mobile devices
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 app.use(express.static(path.join(__dirname)));
 
 // ─── Cloudflare Stream: Get a direct upload URL ────────────────────────────

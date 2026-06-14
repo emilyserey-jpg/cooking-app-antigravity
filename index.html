@@ -4,29 +4,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
-    function checkViewport() {
-      // Only check viewport once on initial page load to send actual mobile devices to mobile.html.
-      // Do not redirect on resize if the user is in the middle of editing/publishing.
-      const stage2 = document.getElementById('createStage2');
-      const stage3 = document.getElementById('createStage3');
-      const isEditing = (stage2 && stage2.style.display !== 'none') || 
-                        (stage3 && stage3.style.display !== 'none');
-      if (isEditing) return;
+    (function() {
+      const CURRENT_VERSION = '8.38';
+      const urlParams = new URLSearchParams(window.location.search);
+      const reqVersion = urlParams.get('v');
 
-      if (window.innerWidth <= 768) {
-        window.location.replace('/mobile.html' + window.location.hash);
+      function parseVersion(v) {
+        return (v || '').split('.').map(Number).filter(n => !isNaN(n));
       }
-    }
-    checkViewport();
+
+      function isNewer(req, cur) {
+        const r = parseVersion(req);
+        const c = parseVersion(cur);
+        for (let i = 0; i < Math.max(r.length, c.length); i++) {
+          const rv = r[i] || 0;
+          const cv = c[i] || 0;
+          if (rv > cv) return true;
+          if (rv < cv) return false;
+        }
+        return false;
+      }
+
+      if (reqVersion) {
+        if (isNewer(reqVersion, CURRENT_VERSION)) {
+          if (urlParams.has('nc')) {
+            // Already tried a network reload, fallback to CURRENT_VERSION to break loop
+            urlParams.set('v', CURRENT_VERSION);
+            urlParams.delete('nc');
+            window.location.replace(window.location.pathname + '?' + urlParams.toString() + window.location.hash);
+          } else {
+            // The requested version is newer than this cached file, force network reload
+            window.location.replace(window.location.pathname + '?v=' + reqVersion + '&nc=' + Date.now() + window.location.hash);
+          }
+          return;
+        } else if (reqVersion !== CURRENT_VERSION) {
+          // The requested version is older, redirect to the current local version
+          urlParams.set('v', CURRENT_VERSION);
+          window.location.replace(window.location.pathname + '?' + urlParams.toString() + window.location.hash);
+          return;
+        }
+      } else {
+        // No version specified, redirect to current version
+        urlParams.set('v', CURRENT_VERSION);
+        window.location.replace(window.location.pathname + '?' + urlParams.toString() + window.location.hash);
+        return;
+      }
+      
+      function checkViewport() {
+        const stage2 = document.getElementById('createStage2');
+        const stage3 = document.getElementById('createStage3');
+        const isEditing = (stage2 && stage2.style.display !== 'none') || 
+                          (stage3 && stage3.style.display !== 'none');
+        if (isEditing) return;
+
+        if (window.innerWidth <= 768) {
+          window.location.replace('/mobile.html?v=' + CURRENT_VERSION + window.location.hash);
+        }
+      }
+      checkViewport();
+    })();
   </script>
   <title>Cooking GPS — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=8.9">
+  <link rel="stylesheet" href="styles.css?v=8.38">
   <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
-  <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tus-js-client@2.3.0/dist/tus.min.js"></script>
   <!-- hls.js: HLS video playback in Chrome/Firefox -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
 </head>
 <body>
 
@@ -41,7 +86,7 @@
           <path d="M12 13v8" />
         </svg>
       </div>
-      <div class="logo-text">Cooking<span>GPS</span></div>
+      <div class="logo-text">Cooking<span>GPS v8.38</span></div>
     </a>
     
     <div class="header-actions">
@@ -92,6 +137,11 @@
         
         <div class="phone-screen">
           <div class="player-left-column">
+            <!-- Recipe Title Display -->
+            <div id="playerRecipeTitleContainer" style="padding: 10px 14px 8px; background: #fff; border-bottom: 1.5px solid rgba(0,0,0,0.05);">
+              <h2 id="playerRecipeTitle" style="margin: 0; font-family: var(--font); font-size: 0.95rem; font-weight: 900; color: var(--text-title); line-height: 1.3;">Recipe Title</h2>
+            </div>
+
             <!-- Video Section -->
             <div class="mobile-video-container">
               <div class="mobile-video-placeholder">
@@ -112,34 +162,13 @@
                       <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
                       <span class="player-btn-text">Back</span>
                     </button>
-                    
-                    <button id="playerEditRecipeBtn" class="player-top-btn edit-btn" tabindex="-1" style="display: none;">
-                      <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i>
-                      <span class="player-btn-text">Edit</span>
-                    </button>
-
-                    <button id="playerRemixRecipeBtn" onclick="triggerRemix()" class="player-top-btn remix-btn" tabindex="-1" style="display: none;">
-                      <i data-lucide="git-fork" style="width: 13px; height: 13px;"></i>
-                      <span class="player-btn-text">Remix</span>
-                    </button>
                   </div>
-
                   <!-- Right Controls Group -->
                   <div class="player-controls-right-group">
-                    <button id="playerShareRecipeBtn" onclick="window.shareCurrentRecipe()" class="player-top-btn" tabindex="-1">
-                      <i data-lucide="share-2" style="width: 13px; height: 13px;"></i>
-                      <span class="player-btn-text">Share</span>
-                    </button>
-
                     <button id="playerMultigridToggleBtn" onclick="window.togglePlayerMultigridMode()" class="player-top-btn" tabindex="-1">
                       <i id="playerMultigridIcon" data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
                       <span id="playerMultigridBtnText" class="player-btn-text">Multigrid</span>
                     </button>
-
-                    <span id="activeModeBadge" class="mode-badge loop">
-                      <i data-lucide="repeat" style="width: 12px; height: 12px;"></i>
-                      <span class="player-btn-text">Loop Mode</span>
-                    </span>
                   </div>
                 </div>
                 
@@ -244,40 +273,77 @@
 
           <!-- Mobile App Body -->
           <div class="mobile-player-body">
-            <!-- Active Step Card -->
-            <div class="step-card-active" style="display:flex !important; flex-direction:row !important; align-items:center !important; justify-content:space-between !important; gap:12px !important;">
-              <!-- Left Column: Details -->
-              <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;">
-                <div class="step-meta-row">
-                  <span id="mobileStepLabel" class="step-indicator-text">Step 2 of 5</span>
-                  <span id="mobileStepTime" class="step-duration-badge">1:15 – 2:45</span>
-                </div>
-                <h3 id="mobileStepTitle" class="step-card-title">Sear the Chicken</h3>
-                <p id="mobileStepInstructions" class="step-instructions">
-                  Heat 1 tbsp of olive oil and 1 tbsp butter in a large skillet over medium-high heat. Add the seasoned chicken breasts. Cook for 5-7 minutes without moving, until beautifully browned.
-                </p>
-                <!-- Interactive Step Timer -->
-                <div id="playerTimerContainer" style="display:none; align-items:center; gap:8px; margin-top:8px; background:rgba(74,144,217,0.08); border:1.5px solid rgba(74,144,217,0.2); border-radius:10px; padding:8px 12px; width:fit-content; box-sizing:border-box;">
-                  <span style="font-size:1.1rem; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.1));">⏳</span>
-                  <div style="display:flex; flex-direction:column;">
-                    <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.04em; line-height:1;">Active Timer</span>
-                    <span id="playerTimerDisplay" style="font-size:1.3rem; font-weight:900; color:var(--text-heading); font-family: monospace; line-height:1.2; font-variant-numeric:tabular-nums; margin-top:2px;">10:00</span>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:6px; margin-left:12px;">
-                    <button id="playerTimerPlayPauseBtn" onclick="window.togglePlayerTimer()" style="background:var(--primary); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(74,144,217,0.2); transition:all 0.15s;" onmouseenter="this.style.background='var(--primary-hover)';" onmouseleave="this.style.background='var(--primary)';">Start</button>
-                    <button id="playerTimerResetBtn" onclick="window.resetPlayerTimer()" style="background:#fff; color:var(--text-body); border:1px solid rgba(0,0,0,0.15); border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='#fff';">Reset</button>
-                  </div>
-                </div>
+             <!-- Combined Tabs & Options Bar -->
+             <div id="playerMainTabsContainer" class="player-main-tabs" style="display: none; justify-content: space-between; align-items: center; width: 100%; overflow: visible; border-bottom: 1.5px solid rgba(0,0,0,0.05); padding: 6px 12px; box-sizing: border-box;">
+               <!-- Scrollable Tab Buttons -->
+               <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex: 1;">
+                 <button id="playerTabStepsBtn" onclick="window.switchPlayerMainTab('steps')" class="player-tab-btn">
+                   <i data-lucide="play-circle" style="width: 14px; height: 14px;"></i>Steps
+                 </button>
+                 <button id="playerTabIngredientsBtn" onclick="window.switchPlayerMainTab('ingredients')" class="player-tab-btn">
+                   <i data-lucide="shopping-cart" style="width: 14px; height: 14px;"></i>Ingredients
+                 </button>
+                 <button id="playerTabCommentsBtn" onclick="window.switchPlayerMainTab('comments')" class="player-tab-btn">
+                   <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>Comments (<span id="playerCommentsCountBadgeTab">0</span>)
+                 </button>
+               </div>
+               
+               <!-- Options Dropdown -->
+               <div class="actions-dropdown-wrapper" style="position: relative; flex-shrink: 0; margin-left: 8px; z-index: 1000;">
+                 <button id="playerActionsDropdownBtn" onclick="window.togglePlayerActionsDropdown()" class="sec-action-btn actions-menu-btn" tabindex="-1" style="height: 32px; padding: 0 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.06); box-shadow: none;">
+                   <span>Options</span>
+                   <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
+                 </button>
+                 
+                 <div id="playerActionsDropdownMenu" class="player-actions-dropdown-menu" style="display: none; right: 0; left: auto; top: calc(100% + 4px);">
+                   <!-- Library Folder Section -->
+                   <div class="dropdown-section">
+                     <span class="dropdown-section-title">Save</span>
+                     <button id="playerSaveToFolderBtn" onclick="window.openPlayerSaveToFolderModal()" class="folder-select-dropdown" tabindex="-1" title="Save" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;">
+                       <span>📂 Save</span>
+                     </button>
+                   </div>
+                   
+                   <div class="dropdown-divider"></div>
+                   
+                   <!-- Share Recipe -->
+                   <button onclick="window.closePlayerActionsDropdown(); window.shareCurrentRecipe();" class="dropdown-item" tabindex="-1">
+                     <i data-lucide="share-2" style="width: 14px; height: 14px;"></i>
+                     <span>Share Recipe</span>
+                   </button>
+                   
+                   <!-- Embed Video -->
+                   <button onclick="window.closePlayerActionsDropdown(); window.location.href='/embed_test.html';" class="dropdown-item" tabindex="-1">
+                     <i data-lucide="code" style="width: 14px; height: 14px;"></i>
+                     <span>Embed Video</span>
+                   </button>
+
+                   <!-- Edit Recipe -->
+                   <button id="playerEditRecipeBtn" class="dropdown-item edit-btn" tabindex="-1" style="display: none;">
+                     <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                     <span>Edit Recipe</span>
+                   </button>
+                 </div>
+               </div>
+             </div>
+            
+            <!-- Detached Active Step Timer container (will be dynamically appended inside the active card) -->
+            <div id="playerTimerContainer" style="display:none; align-items:center; gap:8px; background:rgba(74,144,217,0.08); border:1.5px solid rgba(74,144,217,0.2); border-radius:10px; padding:8px 12px; width:fit-content; box-sizing:border-box; margin-top:8px;">
+              <span style="font-size:1.1rem; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.1));">⏳</span>
+              <div style="display:flex; flex-direction:column;">
+                <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.04em; line-height:1;">Active Timer</span>
+                <span id="playerTimerDisplay" style="font-size:1.3rem; font-weight:900; color:var(--text-heading); font-family: monospace; line-height:1.2; font-variant-numeric:tabular-nums; margin-top:2px;">10:00</span>
               </div>
-              
-              <!-- Right Column: Checkoff circle icon + Reset Button -->
-              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0;">
-                <button id="playerMarkDoneBtn" onclick="window.togglePlayerStepDone()" tabindex="-1" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; transition:all 0.2s ease-in-out; background:rgba(74, 144, 217, 0.08); color:var(--primary);" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
-                  <i data-lucide="circle" style="width:18px; height:18px;"></i>
-                </button>
-                <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 4px 8px; border: none; border-radius: 6px; font-family: var(--font); font-size: 0.65rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
-                  Reset
-                </button>
+              <div style="display:flex; align-items:center; gap:6px; margin-left:12px;">
+                <button id="playerTimerPlayPauseBtn" onclick="window.togglePlayerTimer()" style="background:var(--primary); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; box-shadow:0 2px 6px rgba(74,144,217,0.2); transition:all 0.15s;" onmouseenter="this.style.background='var(--primary-hover)';" onmouseleave="this.style.background='var(--primary)';">Start</button>
+                <button id="playerTimerResetBtn" onclick="window.resetPlayerTimer()" style="background:#fff; color:var(--text-body); border:1px solid rgba(0,0,0,0.15); border-radius:6px; padding:4px 10px; font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='#fff';">Reset</button>
+              </div>
+            </div>
+
+            <!-- Slidable Step Description Cards Container -->
+            <div class="step-slider-viewport">
+              <div id="stepCardsSlider" class="step-cards-slider">
+                <!-- Step cards injected dynamically by JS -->
               </div>
             </div>
 
@@ -305,7 +371,12 @@
             <div class="step-nav-chips-container">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div class="step-nav-chips-title" style="margin: 0;">Recipe Timeline</div>
-                <span id="playerProgressReadout" style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted);">0 of 0 completed</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 4px 8px; border: none; border-radius: 6px; font-family: var(--font); font-size: 0.65rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
+                    Reset
+                  </button>
+                  <span id="playerProgressReadout" style="font-size: 0.68rem; font-weight: 800; color: var(--text-muted);">0 of 0 completed</span>
+                </div>
               </div>
               <!-- Cooking Progress Bar -->
               <div style="background: rgba(0,0,0,0.06); border-radius: 999px; height: 6px; overflow: hidden; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.02); display: flex;">
@@ -439,30 +510,6 @@
 
         <!-- ── Main library content ── -->
         <div id="libContent"><!-- rendered by JS --></div>
-
-        <!-- ── Create Folder Modal ── -->
-        <div id="libFolderModal"
-          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
-          <div style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
-            <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">📁 New Folder</h3>
-            <input id="libFolderNameInput" placeholder="Folder name…"
-              style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:10px;border:2px solid var(--border-card);font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--text-heading);outline:none;margin-bottom:1rem;"
-              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"
-              onkeydown="if(event.key==='Enter') libSaveFolder()">
-            <!-- Color swatches -->
-            <div style="margin-bottom:1rem;">
-              <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Folder color</div>
-              <div id="libColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-            </div>
-            <div style="display:flex;gap:10px;">
-              <button onclick="libSaveFolder()"
-                style="flex:1;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px;font-family:var(--font);font-weight:900;font-size:0.9rem;cursor:pointer;">Save</button>
-              <button onclick="libCloseModal()"
-                style="flex:1;background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:10px;padding:11px;font-family:var(--font);font-weight:800;font-size:0.9rem;cursor:pointer;">Cancel</button>
-            </div>
-          </div>
-        </div>
-
       </div>
     </section>
 
@@ -1817,6 +1864,173 @@
     </div>
   </div>
 
+  <!-- ── Create Folder Modal ── -->
+  <div id="libFolderModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">📁 New Folder</h3>
+      <input id="libFolderNameInput" placeholder="Folder name…"
+        style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:10px;border:2px solid var(--border-card);font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--text-heading);outline:none;margin-bottom:1rem;"
+        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"
+        onkeydown="if(event.key==='Enter') libSaveFolder()">
+      <!-- Color swatches -->
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Folder color</div>
+        <div id="libColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="libSaveFolder()"
+          style="flex:1;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px;font-family:var(--font);font-weight:900;font-size:0.9rem;cursor:pointer;">Save</button>
+        <button onclick="libCloseModal()"
+          style="flex:1;background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:10px;padding:11px;font-family:var(--font);font-weight:800;font-size:0.9rem;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Save to Folder Modal (Premium Custom Popup) ── -->
+  <div id="playerFolderSelectionModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+        <button onclick="window.closePlayerSaveToFolderModal()"
+          style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
+          onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
+      </div>
+      
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:-6px;line-height:1.35;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Choose a collection:</div>
+      
+      <div id="playerFolderModalList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px;box-sizing:border-box;">
+        <!-- Dynamic list of folders -->
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+        <button onclick="window.handlePlayerFolderChange('__new__')"
+          style="background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
+          onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
+          <span>➕ Create New Folder...</span>
+        </button>
+        
+        <button onclick="window.closePlayerSaveToFolderModal()"
+          style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
+          onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
+      </div>
+    </div>
+  <!-- ── Share Recipe Bottom Sheet (Premium Custom Share Sheet) ── -->
+  <div id="playerShareModal" onclick="if(event.target===this) window.closePlayerShareModal()"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:flex-end;justify-content:center;">
+    
+    <div id="playerShareSheetPanel"
+      style="background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px 28px 0 0;padding:20px 24px 34px 24px;width:100%;max-width:500px;box-shadow:0 -10px 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;gap:20px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-sizing:border-box;border-top:1px solid rgba(255,255,255,0.6);">
+      
+      <!-- Drag Handle -->
+      <div style="width:36px;height:5px;background:rgba(0,0,0,0.12);border-radius:3px;align-self:center;margin-bottom:-4px;"></div>
+      
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;letter-spacing:-0.02em;">Share Recipe</h3>
+          <p id="shareModalRecipeName" style="font-size:0.75rem;color:var(--text-muted);margin:4px 0 0 0;font-weight:600;"></p>
+        </div>
+        <button onclick="window.closePlayerShareModal()"
+          style="background:rgba(0,0,0,0.04);border:none;width:30px;height:30px;border-radius:50%;font-size:1.1rem;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-weight:bold;">×</button>
+      </div>
+
+      <!-- Preview URL Box -->
+      <div style="background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.04);border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:0.72rem;color:var(--text-muted);flex:1;" id="shareUrlPreviewText">
+          cookinggps.com/recipe/...
+        </div>
+        <button onclick="window.handleShareAction('copy')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:6px 12px;font-family:var(--font);font-size:0.7rem;font-weight:800;cursor:pointer;flex-shrink:0;transition:all 0.2s;" onmouseenter="this.style.transform='scale(1.04)'" onmouseleave="this.style.transform='none'">Copy</button>
+      </div>
+
+      <!-- Apps Row Grid -->
+      <div style="display:flex;justify-content:space-around;align-items:center;padding:10px 0;gap:12px;flex-wrap:nowrap;overflow-x:auto;">
+        
+        <!-- Messages -->
+        <a id="shareSmsLink" href="#" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #34d399, #059669);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(5,150,105,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">Messages</span>
+        </a>
+
+        <!-- WhatsApp -->
+        <a id="shareWhatsappLink" href="#" target="_blank" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #4ade80, #16a34a);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(22,163,74,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">WhatsApp</span>
+        </a>
+
+        <!-- Instagram -->
+        <div onclick="window.handleShareAction('instagram')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(220,39,67,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">Instagram</span>
+        </div>
+
+        <!-- TikTok -->
+        <div onclick="window.handleShareAction('tiktok')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #121212, #000000);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(0,0,0,0.25);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">TikTok</span>
+        </div>
+
+        <!-- Email -->
+        <a id="shareEmailLink" href="#" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #60a5fa, #2563eb);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(37,99,235,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">Email</span>
+        </a>
+
+        <!-- Copy -->
+        <div onclick="window.handleShareAction('copy')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #94a3b8, #475569);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(71,85,105,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">Copy Link</span>
+        </div>
+
+        <!-- More / Native -->
+        <div id="shareNativeBtn" onclick="window.handleShareAction('native')" style="display:none;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:64px;flex-shrink:0;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, #c084fc, #7c3aed);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(124,58,237,0.2);transition:all 0.2s;" class="share-app-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--text-heading);text-align:center;">More</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Global Voice Activity Overlay Indicator -->
   <div id="voiceHudPanel" class="voice-hud-panel hidden">
     <div id="voiceHudIndicator" class="voice-hud-indicator">
@@ -1835,6 +2049,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=8.9"></script>
+  <script type="module" src="app.js?v=8.38"></script>
 </body>
 </html>

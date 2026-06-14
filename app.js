@@ -44,8 +44,11 @@ let playbackMode = 'loop';
 let isPlaying = false;
 let currentTime = 75.0;
 let activeStepIndex = 1;
+let isScrollingAuto = false;
 let editingRecipeId = null;
 let playerCurrentRecipe = null;
+window.getPlayerCurrentRecipe = () => playerCurrentRecipe;
+window.setPlayerCurrentRecipe = (val) => { playerCurrentRecipe = val; };
 let playerCompletedSteps = new Set();
 let currentSpeechActive = false;
 let undoHistory = [];
@@ -120,6 +123,64 @@ function enableDragToScroll(el) {
   el.style.cursor = 'grab';
 }
 
+// Helper to enable horizontal touch swiping on active step cards to switch steps
+function initActiveStepCardSwiping() {
+  const cards = document.querySelectorAll('.step-card-active');
+  cards.forEach(card => {
+    if (card.dataset.swipeListenerAdded) return;
+    
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    
+    card.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+    }, { passive: true });
+    
+    card.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 1) return;
+      const diffX = e.touches[0].clientX - startX;
+      const diffY = e.touches[0].clientY - startY;
+      
+      // If horizontal movement is greater than vertical movement, prevent scrolling the page
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (e.cancelable) e.preventDefault();
+      }
+    }, { passive: false });
+    
+    card.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const diffX = e.changedTouches[0].clientX - startX;
+      const diffY = e.changedTouches[0].clientY - startY;
+      const elapsedTime = Date.now() - startTime;
+      
+      const threshold = 50; // min distance in px for horizontal swipe
+      const verticalLimit = 80; // max allowed vertical deviation in px
+      const timeLimit = 350; // max allowed time in ms
+      
+      if (Math.abs(diffX) >= threshold && Math.abs(diffY) <= verticalLimit && elapsedTime <= timeLimit) {
+        if (diffX < 0) {
+          // Swipe Left: Next Step
+          if (typeof window.desktopPlayerNext === 'function') {
+            window.desktopPlayerNext();
+          }
+        } else {
+          // Swipe Right: Prev Step
+          if (typeof window.desktopPlayerPrev === 'function') {
+            window.desktopPlayerPrev();
+          }
+        }
+      }
+    }, { passive: true });
+    
+    card.dataset.swipeListenerAdded = 'true';
+    card.style.touchAction = 'pan-y';
+  });
+}
+
 // Initialize App
 async function initializeApp() {
   canvasMobile = document.getElementById('mobileVideoCanvas');
@@ -137,6 +198,8 @@ async function initializeApp() {
   
   loadPlayerProgress(activePlayerRecipeId || 'local_default');
   renderStepChipsMobile();
+  renderStepCardsMobile();
+  initStepCardsSliderScroll();
   renderTimelineMarkersDesktop();
   renderStepListDesktop();
   startVideoSimulation();
@@ -821,24 +884,46 @@ function seekToStep(index) {
 }
 
 function updateStepDetailsUI() {
+  if (!recipeData || !recipeData.steps || recipeData.steps.length === 0) return;
   const step = recipeData.steps[activeStepIndex];
-  
-  // Update mobile fields
-  document.getElementById('mobileStepLabel').innerText = `Step ${activeStepIndex + 1} of ${recipeData.steps.length}`;
-  
-  const startVal = recipeData.loops[activeStepIndex] !== undefined ? recipeData.loops[activeStepIndex] : 0;
-  const endVal = recipeData.loops[activeStepIndex+1] !== undefined ? recipeData.loops[activeStepIndex+1] : recipeData.duration;
-  
-  const minStart = Math.floor(startVal / 60);
-  const secStart = Math.floor(startVal % 60);
-  const minEnd = Math.floor(endVal / 60);
-  const secEnd = Math.floor(endVal % 60);
-  document.getElementById('mobileStepTime').innerText = `${minStart}:${secStart.toString().padStart(2,'0')} – ${minEnd}:${secEnd.toString().padStart(2,'0')}`;
-  
-  document.getElementById('mobileStepTitle').innerText = step.title;
-  document.getElementById('mobileStepInstructions').innerText = step.instruction;
-  
-  // Update mobile done button checkbox state
+  if (!step) return;
+
+  // Toggle active class on card elements
+  document.querySelectorAll('.step-slider-card').forEach((card, idx) => {
+    if (idx === activeStepIndex) {
+      card.classList.add('active');
+    } else {
+      card.classList.remove('active');
+    }
+  });
+
+  // Move the playerTimerContainer into the active card's placeholder
+  const timerContainer = document.getElementById('playerTimerContainer');
+  const activePlaceholder = document.getElementById(`timerPlaceholder-${activeStepIndex}`);
+  if (timerContainer) {
+    if (activePlaceholder) {
+      activePlaceholder.appendChild(timerContainer);
+    } else {
+      const body = document.querySelector('.mobile-player-body');
+      if (body) body.appendChild(timerContainer);
+    }
+  }
+
+  // Smoothly scroll the active card into center focus
+  const activeCard = document.getElementById(`stepSliderCard-${activeStepIndex}`);
+  if (activeCard) {
+    isScrollingAuto = true;
+    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    
+    if (window.autoScrollResetTimeout) {
+      clearTimeout(window.autoScrollResetTimeout);
+    }
+    window.autoScrollResetTimeout = setTimeout(() => {
+      isScrollingAuto = false;
+    }, 600);
+  }
+
+  // Update mobile done button checkbox state across all cards
   updatePlayerMarkDoneButton();
 
   // Update step timers
@@ -911,12 +996,16 @@ window.renderMultigridDescriptions = function() {
     container.style.overflowY = 'hidden';
     container.style.cursor = 'grab';
     container.style.gap = '12px';
+    container.style.touchAction = 'pan-x';
+    container.style.webkitOverflowScrolling = 'touch';
   } else {
     container.style.flexDirection = 'column';
     container.style.overflowX = 'hidden';
     container.style.overflowY = 'visible';
     container.style.cursor = 'default';
     container.style.gap = '12px';
+    container.style.touchAction = '';
+    container.style.webkitOverflowScrolling = '';
   }
 
   // Render cards for only the selected steps
@@ -984,6 +1073,102 @@ window.setPlayerDescLayout = function(mode) {
   playerDescLayoutMode = mode;
   renderMultigridDescriptions();
 };
+
+function renderStepCardsMobile() {
+  const container = document.getElementById('stepCardsSlider');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  if (!recipeData || !recipeData.steps) return;
+  
+  recipeData.steps.forEach((step, idx) => {
+    const isDone = playerCompletedSteps.has(idx);
+    
+    // Calculate start/end time
+    const startVal = recipeData.loops[idx] !== undefined ? recipeData.loops[idx] : 0;
+    const endVal = recipeData.loops[idx+1] !== undefined ? recipeData.loops[idx+1] : recipeData.duration;
+    
+    const minStart = Math.floor(startVal / 60);
+    const secStart = Math.floor(startVal % 60);
+    const minEnd = Math.floor(endVal / 60);
+    const secEnd = Math.floor(endVal % 60);
+    const timeStr = `${minStart}:${secStart.toString().padStart(2,'0')} – ${minEnd}:${secEnd.toString().padStart(2,'0')}`;
+    
+    const card = document.createElement('div');
+    card.className = `step-slider-card ${idx === activeStepIndex ? 'active' : ''}`;
+    card.id = `stepSliderCard-${idx}`;
+    card.tabIndex = -1;
+    card.onclick = () => {
+      seekToStep(idx);
+    };
+    
+    card.innerHTML = `
+      <!-- Left Column: Details -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; text-align:left;">
+        <div class="step-meta-row">
+          <span class="step-indicator-text">Step ${idx + 1} of ${recipeData.steps.length}</span>
+          <span class="step-duration-badge">${timeStr}</span>
+        </div>
+        <h3 class="step-card-title" id="mobileStepTitle-${idx}">${step.title}</h3>
+        <p class="step-instructions" id="mobileStepInstructions-${idx}">${step.instruction}</p>
+        
+        <!-- Placeholder for active timer -->
+        <div class="timer-placeholder" id="timerPlaceholder-${idx}" style="margin-top:8px;"></div>
+      </div>
+      
+      <!-- Right Column: Checkoff circle icon -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0;">
+        <button class="player-mark-done-btn" id="playerMarkDoneBtn-${idx}" onclick="event.stopPropagation(); window.togglePlayerStepDone(${idx})" tabindex="-1" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; transition:all 0.2s ease-in-out; background:rgba(74, 144, 217, 0.08); color:var(--primary);" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">
+          <i data-lucide="${isDone ? 'check-circle' : 'circle'}" style="width:18px; height:18px;"></i>
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  if (window.lucide) lucide.createIcons();
+}
+window.renderStepCardsMobile = renderStepCardsMobile;
+
+function initStepCardsSliderScroll() {
+  const slider = document.getElementById('stepCardsSlider');
+  if (!slider) return;
+  
+  if (slider.dataset.scrollListenerAdded) return;
+  slider.dataset.scrollListenerAdded = 'true';
+  
+  let scrollTimeout = null;
+  slider.addEventListener('scroll', () => {
+    if (isScrollingAuto) return;
+    
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      if (isScrollingAuto) return;
+      
+      const sliderRect = slider.getBoundingClientRect();
+      const sliderCenter = sliderRect.left + (sliderRect.width / 2);
+      
+      const cards = slider.querySelectorAll('.step-slider-card');
+      let minDistance = Infinity;
+      let closestIndex = activeStepIndex;
+      
+      cards.forEach((card, idx) => {
+        const cardRect = card.getBoundingClientRect();
+        const cardCenter = cardRect.left + (cardRect.width / 2);
+        const distance = Math.abs(cardCenter - sliderCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIndex = idx;
+        }
+      });
+      
+      if (closestIndex !== activeStepIndex) {
+        seekToStep(closestIndex);
+      }
+    }, 150);
+  });
+}
+window.initStepCardsSliderScroll = initStepCardsSliderScroll;
 
 function renderStepChipsMobile() {
   const container = document.getElementById('chipsScrollX');
@@ -1286,8 +1471,9 @@ function saveStepDetailsFromInputs() {
   }
   
   // Live update displays
-  document.getElementById('mobileStepTitle').innerText = newTitle;
-  document.getElementById('mobileStepInstructions').innerText = newInstr;
+  if (typeof renderStepCardsMobile === 'function') {
+    renderStepCardsMobile();
+  }
   
   renderStepChipsMobile();
   renderStepListDesktop();
@@ -1330,6 +1516,7 @@ function runAiAnalysis() {
       }
       
       renderStepChipsMobile();
+      renderStepCardsMobile();
       renderTimelineMarkersDesktop();
       renderStepListDesktop();
       updateStepDetailsUI();
@@ -1364,6 +1551,7 @@ function triggerUndo() {
   recipeData.steps = prevState.steps;
   
   renderStepChipsMobile();
+  renderStepCardsMobile();
   renderTimelineMarkersDesktop();
   renderStepListDesktop();
   updateStepDetailsUI();
@@ -1386,6 +1574,7 @@ function triggerRedo() {
   recipeData.steps = nextState.steps;
   
   renderStepChipsMobile();
+  renderStepCardsMobile();
   renderTimelineMarkersDesktop();
   renderStepListDesktop();
   updateStepDetailsUI();
@@ -1655,8 +1844,6 @@ function switchView(viewId) {
     createTabEl.style.color      = viewId === 'create' ? '#fff' : '';
     createTabEl.style.boxShadow  = viewId === 'create' ? '0 3px 10px rgba(74,144,217,0.35)' : '';
   }
-
-  showTip(`Switched to ${viewId.replace(/-/g, ' ')}`);
 }
 
 function switchSidebarTab(tabId) {
@@ -1949,7 +2136,15 @@ function renderPlayerIngredients() {
     return;
   }
   
-  panel.style.display = 'flex';
+  // Tab-aware display toggling
+  const tabsContainer = document.getElementById('playerMainTabsContainer');
+  const isTabbed = tabsContainer && tabsContainer.style.display === 'flex';
+  
+  if (isTabbed && window.activePlayerMainTab !== 'ingredients') {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'flex';
+  }
   listEl.innerHTML = '';
   
   const ingredients = ingredientsStr
@@ -2211,7 +2406,7 @@ window.hideBentoWidget = function(widgetId) {
 };
 
 window.showBentoWidget = function(widgetId) {
-  localStorage.removeItem(`cooking_gps_widget_hidden_${widgetId}`);
+  localStorage.setItem(`cooking_gps_widget_hidden_${widgetId}`, 'false');
   window.refreshWidgetsVisibility();
   
   // Also initialize state for newly added widgets
@@ -2222,9 +2417,11 @@ window.showBentoWidget = function(widgetId) {
 };
 
 window.refreshWidgetsVisibility = function() {
-  const isEditing = document.getElementById('profileBentoGrid')?.classList.contains('dashboard-editing');
+  const bGrid = document.getElementById('profileBentoGrid');
+  if (!bGrid) return;
+  const isEditing = bGrid.classList.contains('dashboard-editing');
   
-  // Update visibility on all widgets
+  // 1. Update visibility on standard widgets
   ALL_BENTO_WIDGETS.forEach(w => {
     const el = document.getElementById(w.id);
     if (!el) return;
@@ -2235,7 +2432,87 @@ window.refreshWidgetsVisibility = function() {
     el.style.display = isHidden ? 'none' : '';
   });
 
-  // Update Add Widgets Panel
+  // 2. Remove old custom shuffle widgets from DOM to avoid duplication
+  document.querySelectorAll('.custom-shuffle-widget').forEach(el => el.remove());
+
+  // 3. Render custom shuffle widgets
+  let customWidgets = [];
+  try {
+    const raw = localStorage.getItem('cooking_gps_custom_shuffle_widgets');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      customWidgets = parsed;
+    }
+  } catch (err) {
+    console.error('Error parsing custom widgets:', err);
+  }
+  customWidgets.forEach(w => {
+    if (w.hidden) return;
+
+    const savedSize = localStorage.getItem(`cooking_gps_widget_size_${w.id}`) || w.size || 'span-1';
+    
+    let sizeLabel = 'Small';
+    if (savedSize === 'span-2') sizeLabel = 'Medium';
+    if (savedSize === 'span-3') sizeLabel = 'Large';
+
+    // Build folder dropdown options dynamically
+    const folderOptions = (libState && libState.folders || []).map(f => `
+      <option value="${f.id}" ${w.source === f.id ? 'selected' : ''}>Folder: ${escapeHTML(f.name)}</option>
+    `).join('');
+
+    const widgetEl = document.createElement('div');
+    widgetEl.className = `bento-widget custom-shuffle-widget ${savedSize}`;
+    widgetEl.id = w.id;
+    widgetEl.style.position = 'relative';
+
+    widgetEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; width:100%; flex-shrink:0;">
+        <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em; display:flex; align-items:center; gap:4px;">
+          🔀 <span id="shuffleWidgetTitleSpan_${w.id}">${escapeHTML(w.name)}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button onclick="window.configureShuffleWidget('${w.id}')" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Configure widget settings">⚙️ settings</button>
+          <button onclick="toggleWidgetSize('${w.id}')" id="resizeBtn_${w.id}" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Change layout size">↔ Size: ${sizeLabel}</button>
+          <button onclick="window.deleteShuffleWidget('${w.id}')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
+        </div>
+      </div>
+      
+      <!-- Inline settings overlay -->
+      <div id="shuffleSettings_${w.id}" style="display:none; width:100%; flex-direction:column; gap:8px; background:rgba(0,0,0,0.03); padding:10px; border-radius:12px; box-sizing:border-box; margin-bottom:8px; border:1px solid rgba(0,0,0,0.05);">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.03em;">Widget Title</label>
+          <input type="text" id="shuffleInputTitle_${w.id}" value="${escapeHTML(w.name)}" style="padding:6px 10px; font-family:var(--font); font-size:0.75rem; font-weight:600; border:1.5px solid var(--border-card); border-radius:8px; outline:none; background:#fff;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <label style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.03em;">Source Collection</label>
+          <select id="shuffleSelectSource_${w.id}" style="padding:6px 10px; font-family:var(--font); font-size:0.75rem; font-weight:600; border:1.5px solid var(--border-card); border-radius:8px; background:#fff; outline:none;">
+            <option value="all" ${w.source === 'all' ? 'selected' : ''}>Entire Library</option>
+            ${folderOptions}
+          </select>
+        </div>
+        <button onclick="window.saveShuffleWidgetSettings('${w.id}')" class="btn btn-primary" style="padding:6px; font-size:0.7rem; font-weight:800; border-radius:8px; width:100%;">Save Config</button>
+      </div>
+
+      <div class="shuffle-widget-content" style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:10px; width:100%;">
+        <!-- Picked Recipe Card Display -->
+        <div id="shufflePicked_${w.id}" style="display:none; width:100%; text-align:center; background:rgba(74,144,217,0.04); border:1px solid rgba(74,144,217,0.15); border-radius:12px; padding:10px; box-sizing:border-box;">
+          <div style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Chef's Suggestion 🍽️</div>
+          <div id="shufflePickedTitle_${w.id}" style="font-size:0.85rem; font-weight:800; color:var(--text-heading); margin-bottom:8px; line-height:1.3;">Recipe Title</div>
+          <button id="shuffleCookBtn_${w.id}" class="btn btn-primary" style="padding:6px 12px; font-size:0.7rem; font-weight:800; border-radius:8px; width:100%;">Cook Now 🍳</button>
+        </div>
+        
+        <!-- Shuffle action button -->
+        <button onclick="window.triggerShuffleWidget('${w.id}', event)" class="btn btn-primary" style="padding:10px 16px; font-size:0.8rem; font-weight:800; border-radius:12px; width:100%; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 10px rgba(74,144,217,0.2);">
+          <i data-lucide="shuffle" style="width:14px; height:14px;"></i>
+          <span id="shuffleWidgetBtnText_${w.id}">What's for Dinner?</span>
+        </button>
+      </div>
+    `;
+
+    bGrid.appendChild(widgetEl);
+  });
+
+  // 4. Update Add Widgets Panel
   const panel = document.getElementById('addWidgetsPanel');
   const container = document.getElementById('addWidgetsButtonsContainer');
   if (panel && container) {
@@ -2247,18 +2524,191 @@ window.refreshWidgetsVisibility = function() {
                (localStorage.getItem(`cooking_gps_widget_hidden_${w.id}`) === null && w.defaultHidden);
       });
       
-      if (hiddenWidgets.length === 0) {
-        container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">All widgets are active!</span>`;
-      } else {
-        container.innerHTML = hiddenWidgets.map(w => `
+      let html = '';
+      if (hiddenWidgets.length > 0) {
+        html += hiddenWidgets.map(w => `
           <button onclick="window.showBentoWidget('${w.id}')" style="background:#fff; border:1.5px solid rgba(74,144,217,0.25); border-radius:10px; padding:6px 12px; font-family:var(--font); font-size:0.72rem; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='#fff'; this.style.color='var(--primary)';">
             ➕ Add ${w.name.split(' ').slice(1).join(' ') || w.name}
           </button>
         `).join('');
       }
+      
+      // Add custom shuffle widget creator button
+      html += `
+        <button onclick="window.createNewShuffleWidget()" style="background:#fff; border:1.5px solid rgba(124,58,237,0.25); border-radius:10px; padding:6px 12px; font-family:var(--font); font-size:0.72rem; font-weight:800; color:#7c3aed; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;" onmouseenter="this.style.background='#7c3aed'; this.style.color='#fff';" onmouseleave="this.style.background='#fff'; this.style.color='#7c3aed';">
+          ➕ Create Shuffle Widget
+        </button>
+      `;
+      
+      container.innerHTML = html;
     } else {
       panel.style.display = 'none';
     }
+  }
+
+  if (window.lucide) lucide.createIcons();
+};
+
+window.createNewShuffleWidget = function() {
+  let widgets = [];
+  try {
+    const raw = localStorage.getItem('cooking_gps_custom_shuffle_widgets');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      widgets = parsed;
+    }
+  } catch (err) {
+    console.error('Error parsing custom widgets:', err);
+  }
+  const id = 'bentoShuffleWidget_' + Date.now();
+  const newWidget = {
+    id,
+    name: '🍽️ Meal Decider',
+    source: 'all',
+    size: 'span-1',
+    hidden: false
+  };
+  widgets.push(newWidget);
+  localStorage.setItem('cooking_gps_custom_shuffle_widgets', JSON.stringify(widgets));
+  
+  window.refreshWidgetsVisibility();
+  setTimeout(() => {
+    window.configureShuffleWidget(id);
+  }, 50);
+  showTip("Custom Cook Decider widget created!");
+};
+
+window.configureShuffleWidget = function(widgetId) {
+  const settingsDiv = document.getElementById(`shuffleSettings_${widgetId}`);
+  if (settingsDiv) {
+    if (settingsDiv.style.display === 'none') {
+      settingsDiv.style.display = 'flex';
+    } else {
+      settingsDiv.style.display = 'none';
+    }
+  }
+};
+
+window.saveShuffleWidgetSettings = function(widgetId) {
+  const inputTitle = document.getElementById(`shuffleInputTitle_${widgetId}`);
+  const selectSource = document.getElementById(`shuffleSelectSource_${widgetId}`);
+  if (!inputTitle || !selectSource) return;
+
+  const title = inputTitle.value.trim() || 'Meal Decider';
+  const source = selectSource.value;
+
+  let widgets = [];
+  try {
+    const raw = localStorage.getItem('cooking_gps_custom_shuffle_widgets');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      widgets = parsed;
+    }
+  } catch (err) {
+    console.error('Error parsing custom widgets:', err);
+  }
+  const index = widgets.findIndex(w => w.id === widgetId);
+  if (index !== -1) {
+    widgets[index].name = title;
+    widgets[index].source = source;
+    localStorage.setItem('cooking_gps_custom_shuffle_widgets', JSON.stringify(widgets));
+    
+    const titleSpan = document.getElementById(`shuffleWidgetTitleSpan_${widgetId}`);
+    if (titleSpan) titleSpan.textContent = title;
+    
+    const settingsDiv = document.getElementById(`shuffleSettings_${widgetId}`);
+    if (settingsDiv) settingsDiv.style.display = 'none';
+    
+    showTip("Shuffle Widget settings saved.");
+  }
+};
+
+window.deleteShuffleWidget = function(widgetId) {
+  let widgets = [];
+  try {
+    const raw = localStorage.getItem('cooking_gps_custom_shuffle_widgets');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      widgets = parsed;
+    }
+  } catch (err) {
+    console.error('Error parsing custom widgets:', err);
+  }
+  widgets = widgets.filter(w => w.id !== widgetId);
+  localStorage.setItem('cooking_gps_custom_shuffle_widgets', JSON.stringify(widgets));
+  
+  localStorage.removeItem(`cooking_gps_widget_size_${widgetId}`);
+  
+  window.refreshWidgetsVisibility();
+  showTip("Custom Shuffle Widget removed.");
+};
+
+window.triggerShuffleWidget = function(widgetId, e) {
+  let widgets = [];
+  try {
+    const raw = localStorage.getItem('cooking_gps_custom_shuffle_widgets');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      widgets = parsed;
+    }
+  } catch (err) {
+    console.error('Error parsing custom widgets:', err);
+  }
+  const widget = widgets.find(w => w.id === widgetId);
+  if (!widget) return;
+
+  let candidates = [];
+  if (widget.source === 'all') {
+    candidates = libAllRecipes || [];
+  } else {
+    const folder = (libState && libState.folders || []).find(f => f.id === widget.source);
+    if (folder) {
+      candidates = (libAllRecipes || []).filter(r => r && (folder.recipeIds || []).includes(r.id));
+    }
+  }
+
+  if (!candidates || candidates.length === 0) {
+    showTip("No recipes found in the selected folder/library.");
+    return;
+  }
+
+  const resultDiv = document.getElementById(`shufflePicked_${widgetId}`);
+  const resultTitle = document.getElementById(`shufflePickedTitle_${widgetId}`);
+  const resultCookBtn = document.getElementById(`shuffleCookBtn_${widgetId}`);
+  
+  if (resultDiv && resultTitle && resultCookBtn) {
+    resultDiv.style.display = 'block';
+    
+    let counter = 0;
+    const intervalTime = 80; // ms
+    const duration = 1200; // ms
+    const cycles = duration / intervalTime;
+    
+    const shuffleBtn = e ? e.currentTarget : null;
+    if (shuffleBtn) shuffleBtn.disabled = true;
+
+    const animInterval = setInterval(() => {
+      const tempIndex = Math.floor(Math.random() * candidates.length);
+      resultTitle.textContent = candidates[tempIndex].title;
+      counter++;
+      
+      if (counter >= cycles) {
+        clearInterval(animInterval);
+        
+        const finalRecipe = candidates[Math.floor(Math.random() * candidates.length)];
+        resultTitle.textContent = finalRecipe.title;
+        
+        resultDiv.style.boxShadow = '0 0 15px rgba(74, 144, 217, 0.4)';
+        setTimeout(() => { resultDiv.style.boxShadow = 'none'; }, 600);
+
+        resultCookBtn.onclick = () => {
+          window.loadRecipeById(finalRecipe.id);
+        };
+        
+        if (shuffleBtn) shuffleBtn.disabled = false;
+        showTip(`Decided! How about: ${finalRecipe.title}? 😋`);
+      }
+    }, intervalTime);
   }
 };
 
@@ -4090,6 +4540,106 @@ window.playerTimelineClick = function(e) {
   updateTimelineUI();
 };
 
+let playerTimerInterval = null;
+let playerTimerSecondsLeft = 0;
+let playerTimerInitialSeconds = 0;
+let playerTimerRunning = false;
+
+function updatePlayerTimerUI() {
+  const container = document.getElementById('playerTimerContainer');
+  const display = document.getElementById('playerTimerDisplay');
+  const playPauseBtn = document.getElementById('playerTimerPlayPauseBtn');
+  
+  if (!container || !display) return;
+  
+  // Clear any active player timer interval
+  if (playerTimerInterval) {
+    clearInterval(playerTimerInterval);
+    playerTimerInterval = null;
+  }
+  playerTimerRunning = false;
+  if (playPauseBtn) playPauseBtn.textContent = 'Start';
+  
+  const step = recipeData.steps[activeStepIndex];
+  const duration = step && step.timer ? Number(step.timer) : 0;
+  
+  if (duration > 0) {
+    container.style.display = 'flex';
+    playerTimerSecondsLeft = duration;
+    playerTimerInitialSeconds = duration;
+    
+    const mins = Math.floor(duration / 60);
+    const secs = duration % 60;
+    display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  } else {
+    container.style.display = 'none';
+    playerTimerSecondsLeft = 0;
+    playerTimerInitialSeconds = 0;
+  }
+}
+
+window.updatePlayerTimerUI = updatePlayerTimerUI;
+
+window.togglePlayerTimer = function() {
+  const display = document.getElementById('playerTimerDisplay');
+  const playPauseBtn = document.getElementById('playerTimerPlayPauseBtn');
+  if (!display || !playPauseBtn) return;
+  
+  if (playerTimerRunning) {
+    clearInterval(playerTimerInterval);
+    playerTimerInterval = null;
+    playerTimerRunning = false;
+    playPauseBtn.textContent = 'Resume';
+    showTip('Timer paused ⏸️');
+  } else {
+    if (playerTimerSecondsLeft <= 0) {
+      playerTimerSecondsLeft = playerTimerInitialSeconds;
+    }
+    
+    playerTimerRunning = true;
+    playPauseBtn.textContent = 'Pause';
+    showTip('Timer started ⏱️');
+    
+    playerTimerInterval = setInterval(() => {
+      playerTimerSecondsLeft--;
+      if (playerTimerSecondsLeft <= 0) {
+        clearInterval(playerTimerInterval);
+        playerTimerInterval = null;
+        playerTimerRunning = false;
+        playPauseBtn.textContent = 'Start';
+        display.textContent = '00:00';
+        showTip('🔔 Timer finished! Step complete!');
+        if (typeof speakFeedback === 'function') {
+          speakFeedback('Timer finished. Step complete.');
+        }
+      } else {
+        const mins = Math.floor(playerTimerSecondsLeft / 60);
+        const secs = playerTimerSecondsLeft % 60;
+        display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+  }
+};
+
+window.resetPlayerTimer = function() {
+  const display = document.getElementById('playerTimerDisplay');
+  const playPauseBtn = document.getElementById('playerTimerPlayPauseBtn');
+  if (!display) return;
+  
+  if (playerTimerInterval) {
+    clearInterval(playerTimerInterval);
+    playerTimerInterval = null;
+  }
+  playerTimerRunning = false;
+  if (playPauseBtn) playPauseBtn.textContent = 'Start';
+  
+  playerTimerSecondsLeft = playerTimerInitialSeconds;
+  const mins = Math.floor(playerTimerSecondsLeft / 60);
+  const secs = playerTimerSecondsLeft % 60;
+  display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  showTip('Timer reset 🔄');
+};
+
 function getPlayerProgressKey(recipeId) {
   const id = recipeId || 'local_default';
   return `cooking_gps_player_progress_${id}`;
@@ -4166,50 +4716,70 @@ function updatePlayerProgressBar() {
 }
 
 function updatePlayerMarkDoneButton() {
-  const btn = document.getElementById('playerMarkDoneBtn');
-  if (!btn) return;
-  
-  const isDone = playerCompletedSteps.has(activeStepIndex);
-  if (isDone) {
-    btn.innerHTML = `<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>`;
-    btn.style.background = '#22c55e';
-    btn.style.color = '#fff';
-    btn.style.boxShadow = '0 4px 10px rgba(34,197,94,0.3)';
-  } else {
-    btn.innerHTML = `<i data-lucide="circle" style="width: 18px; height: 18px;"></i>`;
-    btn.style.background = 'rgba(74, 144, 217, 0.08)';
-    btn.style.color = 'var(--primary)';
-    btn.style.boxShadow = 'none';
-  }
+  if (!recipeData || !recipeData.steps) return;
+  recipeData.steps.forEach((step, idx) => {
+    const btn = document.getElementById(`playerMarkDoneBtn-${idx}`);
+    if (!btn) return;
+    const isDone = playerCompletedSteps.has(idx);
+    if (isDone) {
+      btn.innerHTML = `<i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>`;
+      btn.style.background = '#22c55e';
+      btn.style.color = '#fff';
+      btn.style.boxShadow = '0 4px 10px rgba(34,197,94,0.3)';
+    } else {
+      btn.innerHTML = `<i data-lucide="circle" style="width: 18px; height: 18px;"></i>`;
+      btn.style.background = 'rgba(74, 144, 217, 0.08)';
+      btn.style.color = 'var(--primary)';
+      btn.style.boxShadow = 'none';
+    }
+  });
   if (window.lucide) lucide.createIcons();
 }
 
 function updatePlayerEditButtonVisibility() {
   const editBtn = document.getElementById('playerEditRecipeBtn');
-  const remixBtn = document.getElementById('playerRemixRecipeBtn');
   if (!editBtn) return;
   
-  const isOwner = playerCurrentRecipe && currentUser && playerCurrentRecipe.creator === currentUser.email;
-  
-  if (isOwner) {
+  if (playerCurrentRecipe) {
     editBtn.style.display = 'flex';
     editBtn.onclick = () => {
-      if (playerCurrentRecipe) {
-        window.loadRecipeToEditor(playerCurrentRecipe);
+      window.loadRecipeToEditor(playerCurrentRecipe);
+      if (typeof window.closePlayerActionsDropdown === 'function') {
+        window.closePlayerActionsDropdown();
       }
     };
-    if (remixBtn) remixBtn.style.display = 'none';
   } else {
     editBtn.style.display = 'none';
     editBtn.onclick = null;
-    if (remixBtn && playerCurrentRecipe) {
-      remixBtn.style.display = 'flex';
-    } else if (remixBtn) {
-      remixBtn.style.display = 'none';
-    }
   }
   if (window.lucide) lucide.createIcons();
 }
+
+window.togglePlayerActionsDropdown = function() {
+  const menu = document.getElementById('playerActionsDropdownMenu');
+  if (!menu) return;
+  if (menu.style.display === 'none' || menu.style.display === '') {
+    menu.style.display = 'flex';
+  } else {
+    menu.style.display = 'none';
+  }
+};
+
+window.closePlayerActionsDropdown = function() {
+  const menu = document.getElementById('playerActionsDropdownMenu');
+  if (menu) menu.style.display = 'none';
+};
+
+document.addEventListener('click', (e) => {
+  // If the target is the folder select/options, or if the element was detached from the DOM during click handling,
+  // do not close the player actions dropdown.
+  if (e.target && (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION' || e.target.isConnected === false)) {
+    return;
+  }
+  if (!e.target.closest('#playerActionsDropdownMenu') && !e.target.closest('#playerActionsDropdownBtn')) {
+    window.closePlayerActionsDropdown();
+  }
+});
 
 function renderPlayerTimelineMarkers() {
   const container = document.getElementById('videoBoundariesContainer');
@@ -4244,6 +4814,12 @@ function renderPlayerTimelineMarkers() {
 
 window.loadRecipeToEditor = function(recipe) {
   if (!recipe) return;
+  
+  // Switch to the create view so that the editor is visible to the user
+  if (typeof switchView === 'function') {
+    switchView('create');
+  }
+  
   editingRecipeId = recipe.id;
 
   // Load saved subtitles / transcription
@@ -4298,7 +4874,7 @@ window.loadRecipeToEditor = function(recipe) {
     return {
       time: t,
       endTime: end,
-      label: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
+      label: l.label || (recipe.steps && recipe.steps[idx] && (recipe.steps[idx].title || recipe.steps[idx].label || (typeof recipe.steps[idx] === 'string' ? recipe.steps[idx] : null))) || `Step ${idx + 1}`,
       displayTime: `${m}:${s}`,
       description: details.description,
       ingredients: details.ingredients,
@@ -4451,8 +5027,21 @@ window.loadPlayerRecipe = async function(recipeId) {
 
     // Refresh controls and details
     renderStepChipsMobile();
+    renderStepCardsMobile();
+    initStepCardsSliderScroll();
     updateStepDetailsUI();
     updateControlsUI();
+    
+    // Inject recipe title
+    const titleEl = document.getElementById('playerRecipeTitle');
+    if (titleEl) {
+      titleEl.textContent = recipeData.title;
+    }
+    
+    // Populate folder dropdown
+    if (typeof window.updatePlayerFolderSelect === 'function') {
+      window.updatePlayerFolderSelect();
+    }
     
     // Load progress, timeline stop ticks, and edit button permissions
     playerCurrentRecipe = recipe;
@@ -4460,21 +5049,25 @@ window.loadPlayerRecipe = async function(recipeId) {
     renderPlayerTimelineMarkers();
     updatePlayerEditButtonVisibility();
     
-    // Comments Section display
+    // Comments & Ingredients Main-Tabs display
     const isPublic = !recipe.private_recipe || recipe.is_published;
-    const commentsSec = document.getElementById('playerCommentsSection');
-    if (commentsSec) {
-      if (isPublic) {
-        commentsSec.style.display = 'flex';
-        loadPlayerComments(recipeId);
-        renderCommentForm(recipeId);
-        // Refresh Lucide icons in comments section
-        if (window.lucide) {
-          lucide.createIcons();
-        }
-      } else {
-        commentsSec.style.display = 'none';
-      }
+    const tabsContainer = document.getElementById('playerMainTabsContainer');
+    const commentsBtn = document.getElementById('playerTabCommentsBtn');
+    
+    // Always load comments in background if public so the count badge is fetched
+    if (isPublic) {
+      loadPlayerComments(recipeId);
+      renderCommentForm(recipeId);
+      if (commentsBtn) commentsBtn.style.display = 'flex';
+    } else {
+      if (commentsBtn) commentsBtn.style.display = 'none';
+    }
+    
+    if (tabsContainer) tabsContainer.style.display = 'flex';
+    
+    // Default to Steps tab
+    if (typeof window.switchPlayerMainTab === 'function') {
+      window.switchPlayerMainTab('steps');
     }
 
     if (typeof renderPlayerIngredients === 'function') renderPlayerIngredients();
@@ -4482,6 +5075,181 @@ window.loadPlayerRecipe = async function(recipeId) {
   } catch (err) {
     console.error('[Player] Load error:', err);
     showTip('Could not load recipe to player: ' + err.message);
+  }
+};
+
+window.updatePlayerFolderSelect = function() {
+  const btnEl = document.getElementById('playerSaveToFolderBtn');
+  if (!btnEl) return;
+  
+  if (typeof libLoad === 'function') {
+    libLoad();
+  } else {
+    return;
+  }
+  
+  const isSaved = libState.savedRecipeIds && libState.savedRecipeIds.includes(activePlayerRecipeId);
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : (isSaved ? '__loose__' : null);
+  
+  const span = btnEl.querySelector('span');
+  if (span) {
+    if (currentFolderId === '__loose__') {
+      span.textContent = '📂 Saved';
+    } else if (currentFolder) {
+      span.textContent = `📁 ${currentFolder.name}`;
+    } else {
+      span.textContent = '📂 Save';
+    }
+  }
+};
+
+window.openPlayerSaveToFolderModal = function() {
+  // Close player options dropdown first to clean up UI
+  if (typeof window.closePlayerActionsDropdown === 'function') {
+    window.closePlayerActionsDropdown();
+  }
+
+  const modal = document.getElementById('playerFolderSelectionModal');
+  const listContainer = document.getElementById('playerFolderModalList');
+  if (!modal || !listContainer) return;
+  
+  if (typeof libLoad === 'function') {
+    libLoad();
+    console.log('[DEBUG] SaveToFolderModal: Loaded folders:', libState.folders);
+  } else {
+    return;
+  }
+  
+  listContainer.innerHTML = '';
+  
+  const isSaved = libState.savedRecipeIds && libState.savedRecipeIds.includes(activePlayerRecipeId);
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : (isSaved ? '__loose__' : null);
+  
+  // 1. Loose / Default Library option
+  const looseItem = document.createElement('button');
+  looseItem.className = 'player-modal-folder-item';
+  looseItem.style.cssText = `
+    width: 100%;
+    background: ${currentFolderId === '__loose__' ? 'rgba(74,144,217,0.1)' : 'transparent'};
+    border: 1.5px solid ${currentFolderId === '__loose__' ? 'var(--primary)' : 'rgba(0,0,0,0.06)'};
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: ${currentFolderId === '__loose__' ? 'var(--primary)' : 'var(--text-heading)'};
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+  `;
+  looseItem.innerHTML = `
+    <span>📂 Save to Library</span>
+    ${currentFolderId === '__loose__' ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+  `;
+  looseItem.onclick = () => {
+    window.handlePlayerFolderChange('__loose__');
+  };
+  listContainer.appendChild(looseItem);
+  
+  // 2. Folder options
+  libState.folders.forEach(f => {
+    if (!f || typeof f !== 'object') return;
+    
+    const isSelected = currentFolderId === f.id;
+    const item = document.createElement('button');
+    item.className = 'player-modal-folder-item';
+    item.style.cssText = `
+      width: 100%;
+      background: ${isSelected ? 'rgba(74,144,217,0.1)' : 'transparent'};
+      border: 1.5px solid ${isSelected ? 'var(--primary)' : 'rgba(0,0,0,0.06)'};
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: ${isSelected ? 'var(--primary)' : 'var(--text-heading)'};
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    `;
+    item.innerHTML = `
+      <span>📁 ${escapeHTML(f.name)}</span>
+      ${isSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+    `;
+    item.onclick = () => {
+      window.handlePlayerFolderChange(f.id);
+    };
+    listContainer.appendChild(item);
+  });
+  
+  modal.style.display = 'flex';
+};
+
+window.closePlayerSaveToFolderModal = function() {
+  const modal = document.getElementById('playerFolderSelectionModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.handlePlayerFolderChange = function(targetFolderId) {
+  if (!activePlayerRecipeId) return;
+  
+  const isSaved = libState.savedRecipeIds && libState.savedRecipeIds.includes(activePlayerRecipeId);
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : (isSaved ? '__loose__' : null);
+  
+  if (targetFolderId === '__new__') {
+    // Create folder with pending recipe
+    window.libCreateFolder(activePlayerRecipeId);
+    
+    // Close the dropdown menu so it is not visible behind the folder creation modal
+    if (typeof window.closePlayerActionsDropdown === 'function') {
+      window.closePlayerActionsDropdown();
+    }
+    
+    // Close selection modal
+    if (typeof window.closePlayerSaveToFolderModal === 'function') {
+      window.closePlayerSaveToFolderModal();
+    }
+    return;
+  }
+  
+  // Toggle save status: if clicking the currently active selection, un-save the recipe
+  if (targetFolderId === currentFolderId) {
+    if (libState.savedRecipeIds) {
+      libState.savedRecipeIds = libState.savedRecipeIds.filter(id => id !== activePlayerRecipeId);
+    }
+    if (currentFolder) {
+      currentFolder.recipeIds = (currentFolder.recipeIds || []).filter(id => id !== activePlayerRecipeId);
+    }
+    libSave();
+    libRenderContent();
+    if (typeof mySpaceRenderFolderStrip === 'function') {
+      mySpaceRenderFolderStrip();
+    }
+    if (typeof window.updatePlayerFolderSelect === 'function') {
+      window.updatePlayerFolderSelect();
+    }
+    showTip("Removed from Library");
+  } else {
+    window.libMoveRecipeToFolder(activePlayerRecipeId, currentFolderId, targetFolderId);
+  }
+  
+  // Close the dropdown menu after moving to folder
+  if (typeof window.closePlayerActionsDropdown === 'function') {
+    window.closePlayerActionsDropdown();
+  }
+  
+  // Close selection modal
+  if (typeof window.closePlayerSaveToFolderModal === 'function') {
+    window.closePlayerSaveToFolderModal();
   }
 };
 
@@ -4586,6 +5354,78 @@ function timeAgo(dateString) {
 
 let activePlayerRecipeId = null;
 
+window.activePlayerMainTab = 'steps';
+
+window.switchPlayerMainTab = function(tabName) {
+  window.activePlayerMainTab = tabName;
+  
+  const stepsViewport = document.querySelector('.step-slider-viewport');
+  const stepsTimeline = document.querySelector('.step-nav-chips-container');
+  const ingPanel = document.getElementById('playerIngredientsPanel');
+  const comSec = document.getElementById('playerCommentsSection');
+  
+  // Multigrid containers
+  const mgControls = document.getElementById('playerMultigridDescControls');
+  const mgDesc = document.getElementById('playerMultigridDescriptions');
+  
+  // Tab buttons
+  const stepsBtn = document.getElementById('playerTabStepsBtn');
+  const ingBtn = document.getElementById('playerTabIngredientsBtn');
+  const comBtn = document.getElementById('playerTabCommentsBtn');
+  
+  if (!stepsBtn || !ingBtn || !comBtn) return;
+  
+  // Helper to activate button styling
+  const activateBtn = (btn) => {
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#fff';
+    btn.style.boxShadow = '0 4px 12px rgba(74, 144, 217, 0.25)';
+  };
+  const deactivateBtn = (btn) => {
+    btn.style.background = 'rgba(0, 0, 0, 0.05)';
+    btn.style.color = 'var(--text-muted)';
+    btn.style.boxShadow = 'none';
+  };
+  
+  // Reset all panels to display none
+  if (stepsViewport) stepsViewport.style.display = 'none';
+  if (stepsTimeline) stepsTimeline.style.display = 'none';
+  if (ingPanel) ingPanel.style.display = 'none';
+  if (comSec) comSec.style.display = 'none';
+  if (mgControls) mgControls.style.display = 'none';
+  if (mgDesc) mgDesc.style.display = 'none';
+  
+  deactivateBtn(stepsBtn);
+  deactivateBtn(ingBtn);
+  deactivateBtn(comBtn);
+  
+  if (tabName === 'steps') {
+    activateBtn(stepsBtn);
+    if (isPlayerMultigridActive) {
+      if (mgControls) mgControls.style.display = 'flex';
+      if (mgDesc) mgDesc.style.display = 'flex';
+    } else {
+      if (stepsViewport) stepsViewport.style.display = 'flex';
+      // Center active card when switching back to steps tab
+      const activeCard = document.getElementById(`stepSliderCard-${activeStepIndex}`);
+      if (activeCard) {
+        isScrollingAuto = true;
+        activeCard.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        setTimeout(() => { isScrollingAuto = false; }, 100);
+      }
+    }
+    if (stepsTimeline) stepsTimeline.style.display = 'block';
+  } else if (tabName === 'ingredients') {
+    activateBtn(ingBtn);
+    if (ingPanel) ingPanel.style.display = 'flex';
+  } else if (tabName === 'comments') {
+    activateBtn(comBtn);
+    if (comSec) comSec.style.display = 'flex';
+  }
+  
+  if (window.lucide) lucide.createIcons();
+};
+
 async function loadPlayerComments(recipeId) {
   activePlayerRecipeId = recipeId;
   const listEl = document.getElementById('playerCommentsList');
@@ -4599,6 +5439,9 @@ async function loadPlayerComments(recipeId) {
     const comments = await getRecipeComments(recipeId);
     
     if (badgeEl) badgeEl.textContent = comments.length;
+    
+    const badgeTab = document.getElementById('playerCommentsCountBadgeTab');
+    if (badgeTab) badgeTab.textContent = comments.length;
 
     if (!comments.length) {
       listEl.innerHTML = '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:15px;font-weight:600;">No comments yet. Be the first! 💬</div>';
@@ -5312,6 +6155,7 @@ let   libOpenFolderId  = null;   // null = root; string = folder id being viewed
 let   libEditFolderId  = null;   // null = create mode; string = edit mode
 let   libDragItem      = null;   // { type:'folder'|'recipe', id }
 let   libSelectedColor = FOLDER_COLORS[0];
+let   libPendingFolderRecipeId = null; // recipe to move after creating folder
 
 // ── State helpers ──────────────────────────────────────────────────────────
 function libLoad() {
@@ -5332,6 +6176,9 @@ function libLoad() {
   if (!libState.customOrder || !Array.isArray(libState.customOrder)) {
     libState.customOrder = [];
   }
+  if (!libState.savedRecipeIds || !Array.isArray(libState.savedRecipeIds)) {
+    libState.savedRecipeIds = [];
+  }
   if (!libState.sort) libState.sort = 'az';
   if (!libState.layout) libState.layout = 'grid';
 }
@@ -5350,36 +6197,79 @@ function libMakeId() {
 
 // ── Fetch user recipes from Supabase ──────────────────────────────────────
 async function libFetchRecipes() {
-  if (!currentUser) return [];
+  if (!libState) libLoad();
+  
+  const savedIds = [];
+  if (libState && Array.isArray(libState.folders)) {
+    libState.folders.forEach(f => {
+      if (f && Array.isArray(f.recipeIds)) {
+        f.recipeIds.forEach(id => {
+          if (id && !savedIds.includes(id)) savedIds.push(id);
+        });
+      }
+    });
+  }
+  if (libState && Array.isArray(libState.savedRecipeIds)) {
+    libState.savedRecipeIds.forEach(id => {
+      if (id && !savedIds.includes(id)) savedIds.push(id);
+    });
+  }
+
+  if (!currentUser && savedIds.length === 0) return [];
+
   try {
     const { supabase } = await import('./supabase-client.js');
-    let { data, error } = await supabase
-      .from('recipes')
-      .select('id, title, video_url, bundle_mode, duration, created_at, private_recipe')
-      .eq('creator', currentUser.email)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
-        console.warn('[Supabase] Retrying libFetchRecipes without bundle_mode column');
+    let fetchedRecipes = [];
+
+    if (currentUser) {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('id, title, video_url, bundle_mode, duration, created_at, private_recipe, creator')
+        .eq('creator', currentUser.email)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        if (error.message && (error.message.includes('bundle_mode') || error.message.includes('column'))) {
+          const retry = await supabase
+            .from('recipes')
+            .select('id, title, video_url, duration, created_at, private_recipe, creator')
+            .eq('creator', currentUser.email)
+            .order('created_at', { ascending: false });
+          if (retry.error) throw retry.error;
+          fetchedRecipes = retry.data || [];
+        } else {
+          throw error;
+        }
+      } else if (data) {
+        fetchedRecipes = data;
+      }
+    }
+
+    const missingIds = savedIds.filter(id => !fetchedRecipes.some(r => r.id === id));
+    if (missingIds.length > 0) {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('id, title, video_url, bundle_mode, duration, created_at, private_recipe, creator')
+        .in('id', missingIds);
+      
+      if (error) {
         const retry = await supabase
           .from('recipes')
-          .select('id, title, video_url, duration, created_at, private_recipe')
-          .eq('creator', currentUser.email)
-          .order('created_at', { ascending: false });
-        if (retry.error) throw retry.error;
-        const res = retry.data || [];
-        res.forEach(r => { r.thumbnail_url = null; });
-        return res;
+          .select('id, title, video_url, duration, created_at, private_recipe, creator')
+          .in('id', missingIds);
+        if (!retry.error && retry.data) {
+          retry.data.forEach(r => { r.thumbnail_url = null; });
+          fetchedRecipes = [...fetchedRecipes, ...retry.data];
+        }
+      } else if (data) {
+        fetchedRecipes = [...fetchedRecipes, ...data];
       }
-      throw error;
     }
-    if (data) {
-      data.forEach(r => {
-        r.thumbnail_url = r.bundle_mode || null;
-      });
-    }
-    return data || [];
+
+    fetchedRecipes.forEach(r => {
+      r.thumbnail_url = r.bundle_mode || null;
+    });
+    return fetchedRecipes;
   } catch (err) {
     console.error('libFetchRecipes error:', err);
     return [];
@@ -5564,10 +6454,33 @@ function libRecipeCardHTML(r, folderId) {
   const isDrag = libState.sort === 'custom';
   const layout = libState.layout || 'grid';
 
-  const removeBtn = folderId
-    ? `<button onclick="event.stopPropagation();libRemoveFromFolder('${r.id}','${folderId}')" title="Move to loose"
-         style="background:rgba(0,0,0,0.06);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:var(--text-muted);white-space:nowrap;">&#x21A9; Remove</button>`
-    : '';
+  const foldersList = (libState.folders || []).filter(ff => ff && typeof ff === 'object');
+  
+  let folderSelectHtml = '';
+  if (!folderId) {
+    // Loose video
+    folderSelectHtml = `
+      <select onchange="window.libMoveRecipeToFolder('${r.id}', null, this.value); this.value='';" 
+              class="lib-folder-select"
+              style="border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer;">
+        <option value="" selected disabled>📁 Save to folder</option>
+        ${foldersList.map(f => `<option value="${f.id}">📁 ${f.name}</option>`).join('')}
+        <option value="__new__">➕ Create Folder...</option>
+      </select>
+    `;
+  } else {
+    // In-folder video
+    folderSelectHtml = `
+      <select onchange="window.libMoveRecipeToFolder('${r.id}', '${folderId}', this.value); this.value='';" 
+              class="lib-folder-select"
+              style="border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer;">
+        <option value="" selected disabled>📁 Move to...</option>
+        <option value="__loose__">🎬 Loose Videos</option>
+        ${foldersList.filter(f => f.id !== folderId).map(f => `<option value="${f.id}">📁 ${f.name}</option>`).join('')}
+        <option value="__new__">➕ Create Folder...</option>
+      </select>
+    `;
+  }
 
   const deleteBtn = !folderId
     ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete video"
@@ -5614,7 +6527,7 @@ function libRecipeCardHTML(r, folderId) {
             </div>
           </div>
           <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;" onclick="event.stopPropagation()">
-            ${removeBtn}
+            ${folderSelectHtml}
             ${deleteBtn}
             ${isDrag && !folderId ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>` : ''}
           </div>
@@ -5651,7 +6564,7 @@ function libRecipeCardHTML(r, folderId) {
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
-            ${removeBtn}
+            ${folderSelectHtml}
             ${deleteBtn}
             ${isDrag && !folderId
               ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:4px 8px;">⠿</div>`
@@ -5683,7 +6596,7 @@ function libRecipeCardHTML(r, folderId) {
           ${mins ? `<span style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">(${mins})</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
-          ${removeBtn}
+          ${folderSelectHtml}
           ${deleteBtn}
           ${isDrag && !folderId
             ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>`
@@ -5812,6 +6725,51 @@ window.libRemoveFromFolder = function(recipeId, folderId) {
   libRenderContent();
 };
 
+window.libMoveRecipeToFolder = function(recipeId, currentFolderId, targetFolderId) {
+  if (!recipeId) return;
+
+  if (targetFolderId === '__new__') {
+    window.libCreateFolder(recipeId);
+    return;
+  }
+
+  // Ensure it is marked as saved in libState
+  if (!libState.savedRecipeIds) libState.savedRecipeIds = [];
+  if (!libState.savedRecipeIds.includes(recipeId)) {
+    libState.savedRecipeIds.push(recipeId);
+  }
+
+  // Remove from current folder if it was in one
+  if (currentFolderId && currentFolderId !== '__loose__') {
+    const curF = libGetFolder(currentFolderId);
+    if (curF) {
+      curF.recipeIds = (curF.recipeIds || []).filter(id => id !== recipeId);
+    }
+  }
+
+  // Add to target folder if specified and not "loose"
+  if (targetFolderId && targetFolderId !== '__loose__' && targetFolderId !== '') {
+    const targetF = libGetFolder(targetFolderId);
+    if (targetF) {
+      if (!targetF.recipeIds) targetF.recipeIds = [];
+      if (!targetF.recipeIds.includes(recipeId)) {
+        targetF.recipeIds.push(recipeId);
+      }
+    }
+  }
+
+  libSave();
+  libRenderContent();
+  
+  if (typeof mySpaceRenderFolderStrip === 'function') {
+    mySpaceRenderFolderStrip();
+  }
+  if (typeof window.updatePlayerFolderSelect === 'function') {
+    window.updatePlayerFolderSelect();
+  }
+  showTip("Video folder updated 📁");
+};
+
 window.libOpenRecipe = function(id) {
   const r = libAllRecipes.find(r => r.id === id);
   if (r) showTip('Opening "' + r.title + '"\u2026');
@@ -5859,8 +6817,9 @@ window.libSearch = function(q) {
 };
 
 // ── Folder CRUD ───────────────────────────────────────────────────────────
-window.libCreateFolder = function() {
+window.libCreateFolder = function(pendingRecipeId = null) {
   libEditFolderId  = null;
+  libPendingFolderRecipeId = pendingRecipeId;
   libSelectedColor = FOLDER_COLORS[libState.folders.length % FOLDER_COLORS.length];
   const title = document.getElementById('libModalTitle');
   const input = document.getElementById('libFolderNameInput');
@@ -5895,12 +6854,23 @@ window.libSaveFolder = function() {
     if (f) { f.name = name; f.color = libSelectedColor; }
   } else {
     const newFolder = { id: libMakeId(), name, color: libSelectedColor, recipeIds: [] };
+    if (libPendingFolderRecipeId) {
+      newFolder.recipeIds.push(libPendingFolderRecipeId);
+      libPendingFolderRecipeId = null;
+    }
     libState.folders.push(newFolder);
     libState.customOrder.push('folder:' + newFolder.id);
   }
   libSave();
   libCloseModal();
   libRenderContent();
+  
+  if (typeof mySpaceRenderFolderStrip === 'function') {
+    mySpaceRenderFolderStrip();
+  }
+  if (typeof window.updatePlayerFolderSelect === 'function') {
+    window.updatePlayerFolderSelect();
+  }
 };
 
 window.libDeleteFolder = function(id) {
@@ -5910,12 +6880,16 @@ window.libDeleteFolder = function(id) {
   libSave();
   if (libOpenFolderId === id) libOpenFolderId = null;
   libRenderContent();
+  if (typeof window.updatePlayerFolderSelect === 'function') {
+    window.updatePlayerFolderSelect();
+  }
 };
 
 window.libCloseModal = function() {
   const modal = document.getElementById('libFolderModal');
   if (modal) modal.style.display = 'none';
   libEditFolderId = null;
+  libPendingFolderRecipeId = null;
 };
 
 function libRenderSwatches() {
@@ -6243,6 +7217,12 @@ function updateMultigridLayoutClass() {
   const videoContainer = document.querySelector('.mobile-video-container');
   const multigridContainer = document.getElementById('playerMultigridContainer');
   const wrapper = document.querySelector('.player-mobile-wrapper');
+  const leftCol = document.querySelector('.player-left-column');
+
+  if (leftCol) {
+    leftCol.style.setProperty('height', 'auto', 'important');
+    leftCol.style.setProperty('flex', '0 0 auto', 'important');
+  }
 
   if (screen) {
     if (isPlayerMultigridActive && playerGridLayout === 'row') {
@@ -6267,10 +7247,26 @@ function updateMultigridLayoutClass() {
   }
 
   if (videoContainer) {
+    const placeholder = videoContainer.querySelector('.mobile-video-placeholder');
     if (isPlayerMultigridActive) {
       videoContainer.classList.add('multigrid-active');
+      videoContainer.style.setProperty('height', 'auto', 'important');
+      videoContainer.style.setProperty('aspect-ratio', 'auto', 'important');
+      if (placeholder) {
+        placeholder.style.setProperty('height', 'auto', 'important');
+        placeholder.style.setProperty('aspect-ratio', 'auto', 'important');
+      }
     } else {
       videoContainer.classList.remove('multigrid-active');
+      const screenWidth = screen ? screen.clientWidth : 390;
+      const w = videoContainer.getBoundingClientRect().width || videoContainer.clientWidth || screenWidth || 390;
+      const h = Math.round(w * 9 / 16);
+      videoContainer.style.setProperty('height', `${h}px`, 'important');
+      videoContainer.style.setProperty('aspect-ratio', '16/9', 'important');
+      if (placeholder) {
+        placeholder.style.setProperty('height', '100%', 'important');
+        placeholder.style.setProperty('aspect-ratio', '16/9', 'important');
+      }
     }
   }
 
@@ -6286,6 +7282,12 @@ function updateMultigridLayoutClass() {
   if (typeof renderMultigridDescriptions === 'function') {
     renderMultigridDescriptions();
   }
+
+  // Force layout reflow and repaint to solve Safari aspect-ratio and layout caching bugs
+  if (videoContainer) videoContainer.offsetHeight;
+  if (screen) screen.offsetHeight;
+  if (leftCol) leftCol.offsetHeight;
+  window.dispatchEvent(new Event('resize'));
 }
 
 window.toggleMultigridTilePlayback = function(event, idx) {
@@ -7192,8 +8194,19 @@ window.ensureContinuousSteps = function() {
   
   createStepsArr.forEach((step, idx) => {
     // Renumber default labels ("Step X") chronologically
-    if (!step.label || /^Step\s+\d+$/i.test(step.label.trim())) {
+    let labelStr = '';
+    if (step.label) {
+      if (typeof step.label === 'object') {
+        labelStr = String(step.label.title || step.label.label || '').trim();
+      } else {
+        labelStr = String(step.label).trim();
+      }
+    }
+    
+    if (!labelStr || /^Step\s+\d+$/i.test(labelStr)) {
       step.label = `Step ${idx + 1}`;
+    } else {
+      step.label = labelStr;
     }
 
     const next = createStepsArr[idx + 1];
@@ -10964,48 +11977,155 @@ window.updateSubtitles = function(timeSource, overlayId, segments) {
   }
 };
 
-// Copy or share link of the active recipe using Web Share API
+// Copy or share link of the active recipe using Custom Premium Share Modal
 window.shareCurrentRecipe = function() {
+  window.openPlayerShareModal();
+};
+
+window.openPlayerShareModal = function() {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) {
     showTip('No recipe loaded to share.');
     return;
   }
-  const shareUrl = window.location.origin + window.location.pathname + '#mobile-player?id=' + playerCurrentRecipe.id;
+
+  const modal = document.getElementById('playerShareModal');
+  if (!modal) return;
+
+  const panel = document.getElementById('playerShareSheetPanel');
+  if (panel) {
+    panel.style.transform = 'translateY(100%)';
+  }
+
+  // Populate preview and recipe name
+  const recipeNameEl = document.getElementById('shareModalRecipeName');
+  if (recipeNameEl) {
+    recipeNameEl.textContent = playerCurrentRecipe.title || 'Untitled Recipe';
+  }
+  
+  // URL binding
+  const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
+  const previewTextEl = document.getElementById('shareUrlPreviewText');
+  if (previewTextEl) {
+    previewTextEl.textContent = shareUrl;
+  }
+
   const title = playerCurrentRecipe.title || 'CookingGPS Recipe';
 
-  if (navigator.share) {
-    navigator.share({
-      title: title,
-      text: `Check out this cooking recipe step-by-step video loop on CookingGPS: ${title}!`,
-      url: shareUrl
-    }).then(() => {
-      showTip('Shared successfully! 🚀');
-    }).catch(err => {
-      console.warn('Native share failed or cancelled:', err);
-      // Fallback only if sharing wasn't cancelled by the user
-      if (err.name !== 'AbortError') {
-        copyToClipboardHelper(shareUrl);
-      }
-    });
-  } else {
+  // Configure SMS link
+  const smsLink = document.getElementById('shareSmsLink');
+  if (smsLink) {
+    smsLink.href = 'sms:?body=' + encodeURIComponent(`Check out this recipe on CookingGPS: ${title} — ${shareUrl}`);
+  }
+
+  // Configure Email link
+  const emailLink = document.getElementById('shareEmailLink');
+  if (emailLink) {
+    emailLink.href = 'mailto:?subject=' + encodeURIComponent(`Recipe: ${title}`) + '&body=' + encodeURIComponent(`Check out this cooking guide on CookingGPS: ${title}\n\n${shareUrl}`);
+  }
+
+  // Configure WhatsApp link
+  const waLink = document.getElementById('shareWhatsappLink');
+  if (waLink) {
+    waLink.href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(`Check out this recipe on CookingGPS: ${title} — ${shareUrl}`);
+  }
+
+  // Check and show native share option if supported
+  const nativeBtn = document.getElementById('shareNativeBtn');
+  if (nativeBtn) {
+    if (navigator.share) {
+      nativeBtn.style.display = 'flex';
+    } else {
+      nativeBtn.style.display = 'none';
+    }
+  }
+
+  modal.style.display = 'flex';
+
+  // Force reflow and slide up
+  setTimeout(() => {
+    if (panel) {
+      panel.style.transform = 'translateY(0)';
+    }
+  }, 10);
+};
+
+window.closePlayerShareModal = function() {
+  const modal = document.getElementById('playerShareModal');
+  const panel = document.getElementById('playerShareSheetPanel');
+  if (!modal) return;
+  if (panel) {
+    panel.style.transform = 'translateY(100%)';
+  }
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 300); // matches the 0.3s CSS transition duration
+};
+
+window.handleShareAction = function(action) {
+  if (!playerCurrentRecipe || !playerCurrentRecipe.id) return;
+  const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
+  const title = playerCurrentRecipe.title || 'CookingGPS Recipe';
+
+  if (action === 'copy') {
     copyToClipboardHelper(shareUrl);
+    window.closePlayerShareModal();
+  } else if (action === 'instagram') {
+    copyToClipboardHelper(shareUrl, 'Link copied! Opening Instagram to paste... 📸');
+    window.closePlayerShareModal();
+    setTimeout(() => {
+      window.open('instagram://', '_blank');
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          window.open('https://www.instagram.com/', '_blank');
+        }
+      }, 500);
+    }, 400);
+  } else if (action === 'tiktok') {
+    copyToClipboardHelper(shareUrl, 'Link copied! Opening TikTok to paste... 🎵');
+    window.closePlayerShareModal();
+    setTimeout(() => {
+      window.open('snssdk1180://', '_blank');
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          window.open('https://www.tiktok.com/', '_blank');
+        }
+      }, 500);
+    }, 400);
+  } else if (action === 'native') {
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: `Check out this cooking recipe step-by-step video loop on CookingGPS: ${title}!`,
+        url: shareUrl
+      }).then(() => {
+        showTip('Shared successfully! 🚀');
+        window.closePlayerShareModal();
+      }).catch(err => {
+        console.warn('Native share failed or cancelled:', err);
+        if (err.name !== 'AbortError') {
+          copyToClipboardHelper(shareUrl);
+          window.closePlayerShareModal();
+        }
+      });
+    }
   }
 };
 
-function copyToClipboardHelper(shareUrl) {
+function copyToClipboardHelper(shareUrl, customTip) {
+  const msg = customTip || 'Copied share link to clipboard! 🔗';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(shareUrl).then(() => {
-      showTip('Copied share link to clipboard! 🔗');
+      showTip(msg);
     }).catch(err => {
       console.error('Clipboard copy failed:', err);
-      copyFallback(shareUrl);
+      copyFallback(shareUrl, msg);
     });
   } else {
-    copyFallback(shareUrl);
+    copyFallback(shareUrl, msg);
   }
 }
 
-function copyFallback(text) {
+function copyFallback(text, msg) {
   const dummy = document.createElement('textarea');
   dummy.style.position = 'absolute';
   dummy.style.left = '-9999px';
@@ -11014,7 +12134,7 @@ function copyFallback(text) {
   dummy.select();
   try {
     document.execCommand('copy');
-    showTip('Copied share link to clipboard! 🔗');
+    showTip(msg || 'Copied share link to clipboard! 🔗');
   } catch (err) {
     console.error('Fallback copy failed:', err);
     showTip('Failed to copy. URL: ' + text);
