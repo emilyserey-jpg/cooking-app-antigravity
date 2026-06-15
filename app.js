@@ -13251,16 +13251,12 @@ window.adjustWorkbenchVideoSize = function() {
     }
   } else {
     // Portrait/Vertical video (e.g., 9:16)
-    // Scale height based on width, but cap it so it does not overflow viewport height
-    const maxAllowedHeight = Math.min(850, window.innerHeight * 0.85) * scale;
-    const minH = 480 * scale;
-    targetHeight = containerWidth / aspectRatio;
-    targetHeight = Math.max(minH, Math.min(maxAllowedHeight, targetHeight));
-    targetWidth = targetHeight * aspectRatio;
-    if (targetWidth > containerWidth) {
-      targetWidth = containerWidth;
-      targetHeight = targetWidth / aspectRatio;
-    }
+    // Set the wrapper width to fill the container width so controls have full space and do not squish,
+    // and cap the height appropriately so it does not overflow the desktop viewport.
+    const maxAllowedHeight = Math.min(750, window.innerHeight * 0.75) * scale;
+    const minH = 440 * scale;
+    targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 640 * scale));
+    targetWidth = containerWidth;
   }
 
   wrapper.style.height = `${targetHeight}px`;
