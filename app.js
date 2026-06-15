@@ -8737,52 +8737,46 @@ function renderTimeline() {
     const startPct = (step.time / videoDuration) * 100;
     const nextTime = step.endTime ?? (createStepsArr[i + 1]?.time ?? videoDuration);
     const widthPct = Math.max(((nextTime - step.time) / videoDuration) * 100, 0.5);
-    const color    = STEP_COLORS[i % STEP_COLORS.length];
 
-    // Full-height colored chapter band — label inside
+    // Full-height transparent click band for seeking
     const band = document.createElement('div');
-    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:${color};opacity:1;border-right:2px solid rgba(255,255,255,0.5);box-sizing:border-box;cursor:pointer;overflow:hidden;`;
-    // Clicking the band background still seeks
+    band.style.cssText = `position:absolute;top:0;left:${startPct}%;width:${widthPct}%;height:100%;background:transparent;box-sizing:border-box;cursor:pointer;overflow:hidden;`;
     band.addEventListener('click', (e) => { videoScrubberSeek(e); });
-    // Number badge + label + hover-delete button
-    band.innerHTML = `
-      <div style="padding:3px 5px;display:flex;flex-direction:column;gap:1px;height:100%;position:relative;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:2px;">
-          <div style="font-size:0.5rem;font-weight:900;color:rgba(20,20,50,0.7);line-height:1.6;">${i+1}</div>
-          <button class="band-del-btn"
-            title="Delete stop ${i+1}"
-            style="background:rgba(220,30,30,0.18);border:none;border-radius:3px;width:16px;height:16px;font-size:0.75rem;font-weight:900;color:rgba(180,0,0,0.9);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity 0.15s,background 0.1s;flex-shrink:0;line-height:1;"
-            onmouseenter="this.style.background='rgba(220,30,30,0.38)'"
-            onmouseleave="this.style.background='rgba(220,30,30,0.18)'">×</button>
-        </div>
-        <div style="font-size:0.6rem;font-weight:800;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${step.label}</div>
-        <div style="font-size:0.5rem;font-weight:600;color:rgba(20,20,50,0.55);margin-top:auto;">${step.displayTime}</div>
-      </div>`;
-    // Wire the delete button (created via innerHTML so use querySelector)
-    const delBtn = band.querySelector('.band-del-btn');
-    if (delBtn) {
-      delBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // don't seek
-        removeCreateStep(i);
-      });
-    }
-    // Show/hide delete button on band hover
-    band.addEventListener('mouseenter', () => { if (delBtn) delBtn.style.opacity = '1'; });
-    band.addEventListener('mouseleave', () => { if (delBtn) delBtn.style.opacity = '0'; });
     markers.appendChild(band);
 
-    // Draggable handle — thin vertical divider with circle dot at top
+    // Draggable handle — vertical capsule matching player ticks
     const handle = document.createElement('div');
     handle.dataset.isHandle = '1';
-    handle.title = `Drag to move: ${step.label}`;
+    handle.title = `Drag to move: ${step.label} (${step.displayTime})`;
     handle.style.cssText = `
-      position:absolute; top:0; bottom:0; left:${startPct}%;
-      width:14px; transform:translateX(-50%);
+      position:absolute; top:50%; left:${startPct}%;
+      width:16px; height:24px; transform:translate(-50%, -50%);
       cursor:ew-resize; z-index:30;
-      display:flex; align-items:flex-start; justify-content:center;
+      display:flex; align-items:center; justify-content:center;
       pointer-events:auto;
     `;
-    handle.innerHTML = `<div style="width:12px;height:12px;margin-top:2px;border-radius:50%;background:#fff;border:2.5px solid ${color};box-shadow:0 2px 5px rgba(0,0,0,0.3);pointer-events:none;flex-shrink:0;"></div>`;
+    handle.innerHTML = `<div style="width:5px;height:14px;border-radius:99px;background:#fff;border:1.5px solid #475569;box-shadow:0 1px 3px rgba(0,0,0,0.3);pointer-events:none;flex-shrink:0;transition:all 0.15s ease;"></div>`;
+
+    handle.addEventListener('mouseenter', () => {
+      const inner = handle.firstChild;
+      if (inner) {
+        inner.style.background = '#22c55e';
+        inner.style.borderColor = '#16a34a';
+        inner.style.height = '18px';
+        inner.style.width = '7px';
+        inner.style.boxShadow = '0 2px 8px rgba(34, 197, 94, 0.6)';
+      }
+    });
+    handle.addEventListener('mouseleave', () => {
+      const inner = handle.firstChild;
+      if (inner) {
+        inner.style.background = '#fff';
+        inner.style.borderColor = '#475569';
+        inner.style.height = '14px';
+        inner.style.width = '5px';
+        inner.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+      }
+    });
 
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation(); e.preventDefault();
