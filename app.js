@@ -13204,26 +13204,33 @@ function setupWorkbenchResizer() {
 window.adjustWorkbenchVideoSize = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   const wrapper = document.getElementById('workbenchVideoWrapper');
-  const leftSide = document.getElementById('workbenchLeft');
-  if (!videoEl || !wrapper || !leftSide) return;
+  if (!videoEl || !wrapper) return;
+
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
 
   // Only apply custom adjustments on desktop screens (width > 768)
   if (window.innerWidth <= 768) {
-    wrapper.style.height = '';
-    wrapper.style.width = '';
-    wrapper.style.flex = '';
+    wrapper.style.setProperty('width', '100%', 'important');
+    wrapper.style.flex = 'none';
     wrapper.style.alignSelf = '';
+    if (aspectRatio < 1) {
+      // Portrait video: set a taller height for a much larger display
+      wrapper.style.setProperty('height', 'min(460px, 60vh)', 'important');
+      wrapper.style.removeProperty('aspect-ratio');
+    } else {
+      // Landscape video: size naturally to aspect ratio
+      wrapper.style.setProperty('height', 'auto', 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 16} / ${videoHeight || 9}`, 'important');
+    }
     return;
   }
 
-  const scale = window.editorVideoScale || 1.0;
+  const leftSide = document.getElementById('workbenchLeft');
+  if (!leftSide) return;
 
-  // Get video metadata dimensions
-  const videoWidth = videoEl.videoWidth;
-  const videoHeight = videoEl.videoHeight;
-  
-  // If metadata isn't loaded yet, default to a safe 16:9 ratio style
-  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+  const scale = window.editorVideoScale || 1.0;
   const containerWidth = leftSide.getBoundingClientRect().width - 12; // account for padding/scrollbar
 
   let targetHeight, targetWidth;
