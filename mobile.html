@@ -1292,9 +1292,9 @@
         <!-- Main Mobile Workbench (No desktop 2-col wrapper, no workbenchGrid/Left/Right) -->
         
         <!-- Video Player Wrapper (Fixed-height on mobile) -->
-        <div id="workbenchVideoWrapper" style="width:100%; height:140px; background:transparent; border-radius:16px; overflow:hidden; position:relative; box-shadow:var(--shadow-md); flex-shrink:0;">
+        <div id="workbenchVideoWrapper" style="width:100%; height:140px; background:#000; border-radius:16px; overflow:hidden; position:relative; box-shadow:var(--shadow-md); flex-shrink:0;">
           <video id="uploadedVideoPlayer"
-            style="width:100%; height:100%; object-fit:cover; display:block;"
+            style="width:100%; height:100%; object-fit:contain; display:block;"
             preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
             onclick="toggleVideoPlay()"></video>
 
@@ -1368,60 +1368,51 @@
             </div>
 
             <!-- Unified Editor Controls Strip (All-in-One Row) -->
-            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
-              <!-- Left Group (aligned to the right inside its flex area) -->
-              <div style="flex: 1; display: flex; justify-content: flex-end; gap: 8px;">
-                <!-- Loop/Repeat Toggle -->
-                <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
-                  <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
-                </button>
+            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; gap: 8px; justify-content: center;">
+              <!-- Loop/Repeat Toggle -->
+              <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
+                <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+              </button>
 
-                <!-- Previous Button -->
-                <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
-                  <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
-                  <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-                </button>
-              </div>
+              <!-- Previous Button -->
+              <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
+                <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
+                <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+              </button>
 
-              <!-- Center Group (containing the 44px Play/Pause button) -->
-              <div style="display: flex; justify-content: center; margin: 0 8px; flex-shrink: 0;">
-                <!-- Play/Pause -->
-                <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
-                  <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
-                </button>
-              </div>
+              <!-- Play/Pause -->
+              <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
+                <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
+              </button>
 
-              <!-- Right Group (aligned to the left inside its flex area) -->
-              <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
-                <!-- Next Button -->
-                <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
-                  <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
-                  <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-                </button>
+              <!-- Next Button -->
+              <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
+                <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
+                <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+              </button>
 
-                <!-- Mute/Unmute -->
-                <button id="editorMuteBtnToolbarMobile" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
-                  <i id="editorMuteIconToolbarMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
-                </button>
+              <!-- Mute/Unmute -->
+              <button id="editorMuteBtnToolbarMobile" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
+                <i id="editorMuteIconToolbarMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+              </button>
 
-                <!-- Speed Control -->
-                <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px; height: 38px;">
-                  <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
-                </button>
-              </div>
+              <!-- Speed Control -->
+              <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
+                <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
+              </button>
             </div>
 
-            <!-- Add Stop & Keyboard Toggle Buttons Row (Triangle Layout) -->
-            <div class="player-controls-strip" style="margin-top: 6px; margin-bottom: 2px; gap: 16px; justify-content: center; width: 100%;">
-              <!-- Add Stop Button (44px Circle) -->
+            <!-- Add Stop & Keyboard Toggle Buttons Row -->
+            <div class="player-controls-strip" style="margin-top: 4px; margin-bottom: 2px; gap: 8px; justify-content: center; width: 100%; max-width: 220px; margin-left: auto; margin-right: auto;">
+              <!-- Add Stop Button -->
               <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
-                title="Add Stop at Current Time (📍)">
-                <span>📍</span>
+                style="flex:1; background:var(--primary); border:none; border-radius:8px; padding:9px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                title="Add Loop Stop at Current Time">
+                <span>📍 Add Stop</span>
               </button>
-              <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
-              <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
-                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
+              <!-- Keyboard Toggle (Skip Mode) -->
+              <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="flex-shrink:0; margin:0;">
+                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
               </button>
             </div>
             
