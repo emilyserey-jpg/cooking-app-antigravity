@@ -148,7 +148,7 @@
                 <!-- Animated Canvas representing video playback -->
                 <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
                 <!-- Real Video Player -->
-                <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
+                <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:transparent; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
                 
                 <!-- Subtitle Overlay -->
                 <div id="playerSubtitleOverlay" style="position: absolute; bottom: 50px; left: 10px; right: 10px; z-index: 5; pointer-events: none; display: none; justify-content: center; text-align: center;">
@@ -406,13 +406,7 @@
               </div>
             </div>
 
-            <!-- Voice Guide Assist tip -->
-            <div class="glass-card" style="padding: 12px; margin-top: auto; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="mic" style="color: var(--primary); flex-shrink: 0;"></i>
-              <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3;">
-                <strong>Hands-Free Control:</strong> Tap the mic button to start voice control. Say <span style="color:var(--primary); font-family: monospace;">"Next step"</span>, <span style="color:var(--primary); font-family: monospace;">"Repeat"</span> or <span style="color:var(--primary); font-family: monospace;">"Pause"</span>.
-              </p>
-            </div>
+
 
             <!-- Comments Section (only visible if public) -->
             <div id="playerCommentsSection" class="glass-card" style="display: none; padding: 14px; margin-top: 10px; border-radius: 12px; flex-direction: column; gap: 10px; border: 2px solid rgba(74,144,217,0.12); background: rgba(255,255,255,0.9); box-shadow: 0 4px 16px rgba(74,144,217,0.06);">
@@ -1316,6 +1310,26 @@
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
           <div id="workbenchLeft" style="width:660px;flex-shrink:0;display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;scrollbar-width:thin;padding-right:6px;">
 
+            <!-- Video Display Resizer Controls -->
+            <div id="videoResizerBar" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:12px;border:2px solid var(--border-card);flex-shrink:0;gap:12px;">
+              <span style="font-size:0.75rem;font-weight:900;color:var(--text-heading);display:flex;align-items:center;gap:5px;white-space:nowrap;">
+                🖥️ Video Size: <span id="videoSizeMultiplierLabel" style="color:var(--primary);font-weight:900;">100%</span>
+              </span>
+              <div style="display:flex;align-items:center;gap:8px;flex:1;max-width:260px;">
+                <span style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">S</span>
+                <input type="range" id="videoSizeScaleSlider" min="0.6" max="1.5" step="0.05" value="1.0" 
+                  style="flex:1;accent-color:var(--primary);cursor:pointer;height:5px;border-radius:3px;background:var(--border-card);outline:none;transition:opacity 0.2s;"
+                  oninput="window.changeEditorVideoScale(this.value)">
+                <span style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">XL</span>
+              </div>
+              <div style="display:flex;gap:4px;flex-shrink:0;">
+                <button type="button" onclick="window.setEditorVideoScale(0.8)" class="btn video-size-preset-btn" data-value="0.8" style="padding:4px 8px;font-size:0.68rem;font-weight:800;border-radius:8px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);background:var(--bg-card-soft);color:var(--text-body);transition:all 0.2s;">80%</button>
+                <button type="button" onclick="window.setEditorVideoScale(1.0)" class="btn video-size-preset-btn" data-value="1.0" style="padding:4px 8px;font-size:0.68rem;font-weight:800;border-radius:8px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);background:var(--bg-card-soft);color:var(--text-body);transition:all 0.2s;">100%</button>
+                <button type="button" onclick="window.setEditorVideoScale(1.2)" class="btn video-size-preset-btn" data-value="1.2" style="padding:4px 8px;font-size:0.68rem;font-weight:800;border-radius:8px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);background:var(--bg-card-soft);color:var(--text-body);transition:all 0.2s;">120%</button>
+                <button type="button" onclick="window.setEditorVideoScale(1.4)" class="btn video-size-preset-btn" data-value="1.4" style="padding:4px 8px;font-size:0.68rem;font-weight:800;border-radius:8px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);background:var(--bg-card-soft);color:var(--text-body);transition:all 0.2s;">140%</button>
+              </div>
+            </div>
+
             <!-- Video (overlay: only play/pause + add stop) -->
             <div id="workbenchVideoWrapper" style="flex:1;flex-shrink:0;min-height:440px;border-radius:16px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
               <video id="uploadedVideoPlayer"
@@ -1461,9 +1475,6 @@
               <button id="tabBtnStops" onclick="switchEditorTab('stops')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;">
                 📍 Loop Stops
               </button>
-              <button id="tabBtnVoiceover" onclick="switchEditorTab('voiceover')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
-                🎙️ AI Voiceover
-              </button>
               <button id="tabBtnIngredients" onclick="switchEditorTab('ingredients')" class="btn" style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
                 📝 Ingredients
               </button>
@@ -1474,34 +1485,12 @@
 
 
 
-            <!-- Col 2: AI Voiceover -->
-            <div id="rightColVoiceover" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
-              <!-- ▾ Voiceover accordion -->
-              <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899;background:linear-gradient(135deg,#fff1f2,#faf5ff);padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
-                <!-- Header (click to toggle) -->
-                <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;user-select:none;">
-                  <span style="font-size:1rem;">🎙️</span>
-                  <div style="font-weight:900;color:#ec4899;font-size:0.85rem;flex:1;">AI Voiceover</div>
-                  <span id="voiceoverStatusBadge" style="font-size:0.6rem;background:#fdf2f8;color:#ec4899;padding:2px 7px;border-radius:999px;font-weight:800;">ready</span>
-                  <span id="voiceoverChevron" style="font-size:0.75rem;color:#ec4899;font-weight:900;margin-left:4px;transition:transform 0.2s;">▾</span>
-                </div>
-                <!-- Collapsible body -->
-                <div id="voiceoverBody" style="padding:0 12px 12px;display:flex;flex-direction:column;gap:10px;">
-                  <button id="aiVoiceoverGenerateBtn" onclick="window.generateAllVoiceovers()" 
-                    style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
-                    <span>🎙️ AI: Generate Voiceovers for All Steps</span>
-                  </button>
-                  <div id="voiceoverStepsList" style="margin-top:6px;display:flex;flex-direction:row;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;-ms-overflow-style:none;">
-                    <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
-                  </div>
-                </div>
-              </div>
-            </div>
+
 
             <!-- Col 3: Loop Stops -->
-            <div id="rightColStops" style="display:none;flex-direction:column;gap:0.5rem;overflow:hidden;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+            <div id="rightColStops" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
               <!-- ▾ Loop Stops accordion -->
-              <div class="glass-card" id="editorStopsCard" style="padding:0;flex-shrink:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;height:100%;">
+              <div class="glass-card" id="editorStopsCard" style="padding:0;flex-shrink:0;overflow:visible;box-sizing:border-box;display:flex;flex-direction:column;height:auto;min-height:100%;">
                 <!-- Header row: title + scrollable buttons container -->
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 13px;user-select:none;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,0.03);">
                   <div style="font-weight:900;color:var(--text-heading);font-size:0.85rem;flex-shrink:0;">
@@ -1538,7 +1527,7 @@
                     </button>
                   </div>
                 </div>
-                <div id="stopsBody" style="padding:0 12px 4px;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+                <div id="stopsBody" style="padding:0 12px 4px;flex:1;height:auto;overflow:visible;display:flex;flex-direction:column;">
                   <!-- AI buttons wrapper -->
                   <div id="aiToolsCollapse" style="display:none;flex-direction:column;gap:6px;margin-top:6px;margin-bottom:6px;flex-shrink:0;border-bottom:1.5px dashed rgba(124,58,237,0.15);padding-bottom:8px;">
                     <!-- AI Custom Tweak Prompt (Hidden) -->
@@ -1570,7 +1559,7 @@
                       </button>
                     </div>
                   </div>
-                  <div style="position:relative;flex:1;display:flex;flex-direction:row;min-height:0;margin-top:6px;overflow:hidden;gap:12px;">
+                  <div style="position:relative;flex:1;height:auto;display:flex;flex-direction:row;margin-top:6px;overflow:visible;gap:12px;">
                     <!-- Fixed Transcript Panel (left) -->
                     <div id="fixedTranscriptPanel" style="width:230px;height:100%;flex-shrink:0;display:none;flex-direction:column;gap:5px;min-height:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(8px);border-radius:12px;border:1.5px solid rgba(124,58,237,0.15);padding:10px;box-sizing:border-box;">
                       <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;line-height:1.2;">Active Step Transcript</label>
@@ -1578,10 +1567,10 @@
                     </div>
 
                     <!-- Slider Container (right) -->
-                    <div style="flex:1;position:relative;display:flex;min-height:0;overflow:hidden;align-items:stretch;">
+                    <div style="flex:1;position:relative;display:flex;height:auto;overflow:visible;align-items:stretch;">
                       <!-- Left scroll button -->
                       <button onclick="window.scrollStepsList(-300)" id="stepsScrollLeftBtn" tabindex="-1"
-                        style="display:none;position:absolute;left:-4px;z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
+                        style="display:none;position:absolute;left:-4px;top:calc(50% - 14px);z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
                         onmouseenter="this.style.background='#7c3aed';this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.95)';this.style.color='#7c3aed';">
                         ‹
                       </button>
@@ -1590,7 +1579,7 @@
                       
                       <!-- Right scroll button -->
                       <button onclick="window.scrollStepsList(300)" id="stepsScrollRightBtn" tabindex="-1"
-                        style="display:none;position:absolute;right:-4px;z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
+                        style="display:none;position:absolute;right:-4px;top:calc(50% - 14px);z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
                         onmouseenter="this.style.background='#7c3aed';this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.95)';this.style.color='#7c3aed';">
                         ›
                       </button>

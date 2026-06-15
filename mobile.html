@@ -148,7 +148,7 @@
                 <!-- Animated Canvas representing video playback -->
                 <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
                 <!-- Real Video Player -->
-                <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:#000; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
+                <video id="mobileRealVideo" class="video-element-sim" style="display:none; position:absolute; inset:0; z-index:1; background:transparent; cursor:pointer;" onclick="toggleVideoPlayback()" playsinline webkit-playsinline></video>
                 
                 <!-- Subtitle Overlay -->
                 <div id="playerSubtitleOverlay" style="position: absolute; bottom: 50px; left: 10px; right: 10px; z-index: 5; pointer-events: none; display: none; justify-content: center; text-align: center;">
@@ -407,13 +407,7 @@
               </div>
             </div>
 
-            <!-- Voice Guide Assist tip -->
-            <div class="glass-card" style="padding: 12px; margin-top: auto; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="mic" style="color: var(--primary); flex-shrink: 0;"></i>
-              <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3;">
-                <strong>Hands-Free Control:</strong> Tap the mic button to start voice control. Say <span style="color:var(--primary); font-family: monospace;">"Next step"</span>, <span style="color:var(--primary); font-family: monospace;">"Repeat"</span> or <span style="color:var(--primary); font-family: monospace;">"Pause"</span>.
-              </p>
-            </div>
+
 
             <!-- Comments Section (only visible if public) -->
             <div id="playerCommentsSection" class="glass-card" style="display: none; padding: 14px; margin-top: 10px; border-radius: 12px; flex-direction: column; gap: 10px; border: 2px solid rgba(74,144,217,0.12); background: rgba(255,255,255,0.9); box-shadow: 0 4px 16px rgba(74,144,217,0.06);">
@@ -1491,27 +1485,7 @@
             </div>
           </div>
 
-          <!-- Slide 2: Voiceover -->
-          <div class="carousel-slide" id="slideVoiceover">
-            <!-- Voiceover Accordion Card -->
-            <div class="glass-card" id="voiceoverSection" style="border:2px solid #ec4899; background:linear-gradient(135deg,#fff1f2,#faf5ff); padding:0; flex-shrink:0; overflow:hidden;">
-              <div onclick="togglePanel('voiceoverBody','voiceoverChevron')" style="display:flex; align-items:center; gap:6px; padding:10px 12px; cursor:pointer; user-select:none;">
-                <span style="font-size:1rem;">🎙️</span>
-                <div style="font-weight:900; color:#ec4899; font-size:0.85rem; flex:1;">AI Voiceover</div>
-                <span id="voiceoverStatusBadge" style="font-size:0.6rem; background:#fdf2f8; color:#ec4899; padding:2px 7px; border-radius:999px; font-weight:800;">ready</span>
-                <span id="voiceoverChevron" style="font-size:0.75rem; color:#ec4899; font-weight:900; margin-left:4px; transition:transform 0.2s;">▾</span>
-              </div>
-              <div id="voiceoverBody" style="padding:0 12px 12px; display:flex; flex-direction:column; gap:10px;">
-                <button id="aiVoiceoverGenerateBtnMobile" onclick="window.generateAllVoiceovers()" 
-                  style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(236,72,153,0.3);margin-top:6px;">
-                  <span>🎙️ AI: Generate Voiceovers for All Steps</span>
-                </button>
-                <div id="voiceoverStepsListMobile" style="margin-top:6px; display:flex; flex-direction:row; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none;">
-                  <!-- Dynamically populated in JavaScript during renderCreateSteps! -->
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           <!-- Slide 3: Ingredients -->
           <div class="carousel-slide" id="slideIngredients">
@@ -1593,21 +1567,16 @@
           </div>
         </div>
 
-        <!-- Mobile Editor Navigation/Toolbar Bar -->
         <div id="mobileEditorToolbar" class="mobile-editor-toolbar">
           <button onclick="window.scrollToCarouselSlide(0)" id="btnToolbarStops" class="toolbar-btn active">
             <span class="icon">📍</span>
             <span class="label">Stops</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarVoiceover" class="toolbar-btn">
-            <span class="icon">🎙️</span>
-            <span class="label">Voiceover</span>
-          </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarIngredients" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarIngredients" class="toolbar-btn">
             <span class="icon">🥦</span>
             <span class="label">Ingredients</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>

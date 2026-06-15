@@ -231,6 +231,41 @@ async function initializeApp() {
       const segments = (recipeData && recipeData.text_overlays) || [];
       window.updateSubtitles(initVideo, 'playerSubtitleOverlay', segments);
     });
+
+    // Dynamically adjust player video container aspect ratio to prevent side panels
+    initVideo.addEventListener('loadedmetadata', () => {
+      const container = document.querySelector('.mobile-video-container');
+      const placeholder = document.querySelector('.mobile-video-placeholder');
+      if (initVideo.videoWidth && initVideo.videoHeight) {
+        const arStr = `${initVideo.videoWidth} / ${initVideo.videoHeight}`;
+        const isPortrait = initVideo.videoHeight > initVideo.videoWidth;
+
+        if (container) {
+          container.style.setProperty('aspect-ratio', arStr, 'important');
+          if (isPortrait) {
+            container.style.setProperty('height', 'min(480px, 50vh)', 'important');
+            container.style.setProperty('width', 'auto', 'important');
+            container.style.setProperty('margin', '0 auto', 'important');
+          } else {
+            container.style.setProperty('width', '100%', 'important');
+            container.style.setProperty('height', 'auto', 'important');
+            container.style.removeProperty('margin');
+          }
+        }
+        if (placeholder) {
+          placeholder.style.setProperty('aspect-ratio', arStr, 'important');
+          if (isPortrait) {
+            placeholder.style.setProperty('height', '100%', 'important');
+            placeholder.style.setProperty('width', 'auto', 'important');
+            placeholder.style.setProperty('margin', '0 auto', 'important');
+          } else {
+            placeholder.style.setProperty('width', '100%', 'important');
+            placeholder.style.setProperty('height', '100%', 'important');
+            placeholder.style.removeProperty('margin');
+          }
+        }
+      }
+    });
   }
   if (typeof updateMuteUI === 'function') {
     updateMuteUI();
@@ -2961,7 +2996,7 @@ async function initSupabase() {
     console.error('Initial user fetch error:', e);
   }
 
-  onAuthChange((user) => {
+  onAuthChange(async (user) => {
     const hasChanged = (!currentUser && user) || (currentUser && !user) || (currentUser && user && currentUser.id !== user.id);
 
     currentUser = user;
@@ -2973,6 +3008,7 @@ async function initSupabase() {
     if (user) {
       loadRealRecipes();
       populateProfilePage(user);
+      await window.syncFoldersWithSupabase();
       if (hasChanged) {
         showTip(`Welcome back, ${user.email.split('@')[0]}!`);
       }
@@ -5025,6 +5061,22 @@ window.loadPlayerRecipe = async function(recipeId) {
         realVideo.src = '';
       }
       if (canvas) canvas.style.display = 'block';
+
+      // Reset aspect ratio to default when no video is loaded
+      const container = document.querySelector('.mobile-video-container');
+      const placeholder = document.querySelector('.mobile-video-placeholder');
+      if (container) {
+        container.style.removeProperty('aspect-ratio');
+        container.style.removeProperty('height');
+        container.style.removeProperty('width');
+        container.style.removeProperty('margin');
+      }
+      if (placeholder) {
+        placeholder.style.removeProperty('aspect-ratio');
+        placeholder.style.removeProperty('height');
+        placeholder.style.removeProperty('width');
+        placeholder.style.removeProperty('margin');
+      }
     }
 
     // Refresh controls and details
@@ -5140,17 +5192,26 @@ window.openPlayerSaveToFolderModal = function() {
     return;
   }
   
-  const isSaved = libState.savedRecipeIds && libState.savedRecipeIds.includes(activePlayerRecipeId);
-  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
-  const currentFolderId = currentFolder ? currentFolder.id : (isSaved ? '__loose__' : null);
+  const recipeId = activePlayerRecipeId || window.activePlayerRecipeId;
   
-  window.playerFolderModalSelectedId = currentFolderId;
+  // Find all folder IDs that already contain activePlayerRecipeId/recipeId
+  const initialFolderIds = (libState.folders || [])
+    .filter(f => f && Array.isArray(f.recipeIds) && f.recipeIds.includes(recipeId))
+    .map(f => f.id);
+  
+  const isSaved = libState.savedRecipeIds && libState.savedRecipeIds.includes(recipeId);
+  
+  // Set of selected IDs (can contain '__loose__' and any folder IDs)
+  window.playerFolderModalSelectedIds = new Set(initialFolderIds);
+  if (isSaved) {
+    window.playerFolderModalSelectedIds.add('__loose__');
+  }
   
   window.updateFolderModalListSelection = function() {
     listContainer.innerHTML = '';
     
     // 1. Loose / Default Library option
-    const isLooseSelected = window.playerFolderModalSelectedId === '__loose__';
+    const isLooseSelected = window.playerFolderModalSelectedIds.has('__loose__');
     const looseItem = document.createElement('button');
     looseItem.className = 'player-modal-folder-item';
     looseItem.style.cssText = `
@@ -5175,7 +5236,11 @@ window.openPlayerSaveToFolderModal = function() {
       ${isLooseSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
     `;
     looseItem.onclick = () => {
-      window.playerFolderModalSelectedId = '__loose__';
+      if (window.playerFolderModalSelectedIds.has('__loose__')) {
+        window.playerFolderModalSelectedIds.delete('__loose__');
+      } else {
+        window.playerFolderModalSelectedIds.add('__loose__');
+      }
       window.updateFolderModalListSelection();
     };
     listContainer.appendChild(looseItem);
@@ -5184,7 +5249,7 @@ window.openPlayerSaveToFolderModal = function() {
     libState.folders.forEach(f => {
       if (!f || typeof f !== 'object') return;
       
-      const isSelected = window.playerFolderModalSelectedId === f.id;
+      const isSelected = window.playerFolderModalSelectedIds.has(f.id);
       const item = document.createElement('button');
       item.className = 'player-modal-folder-item';
       item.style.cssText = `
@@ -5209,7 +5274,11 @@ window.openPlayerSaveToFolderModal = function() {
         ${isSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
       `;
       item.onclick = () => {
-        window.playerFolderModalSelectedId = f.id;
+        if (window.playerFolderModalSelectedIds.has(f.id)) {
+          window.playerFolderModalSelectedIds.delete(f.id);
+        } else {
+          window.playerFolderModalSelectedIds.add(f.id);
+        }
         window.updateFolderModalListSelection();
       };
       listContainer.appendChild(item);
@@ -5221,18 +5290,74 @@ window.openPlayerSaveToFolderModal = function() {
   modal.style.display = 'flex';
 };
 
-window.confirmPlayerFolderChange = function() {
-  const targetFolderId = window.playerFolderModalSelectedId;
-  if (!targetFolderId) {
+window.confirmPlayerFolderChange = async function() {
+  const recipeId = activePlayerRecipeId || window.activePlayerRecipeId;
+  if (!recipeId) {
     window.closePlayerSaveToFolderModal();
     return;
   }
-  window.handlePlayerFolderChange(targetFolderId);
+  
+  if (!libState.savedRecipeIds) libState.savedRecipeIds = [];
+  
+  const selectedSet = window.playerFolderModalSelectedIds || new Set();
+  
+  // Update folder recipe arrays
+  libState.folders.forEach(f => {
+    if (!f || typeof f !== 'object') return;
+    if (!f.recipeIds) f.recipeIds = [];
+    
+    if (selectedSet.has(f.id)) {
+      if (!f.recipeIds.includes(recipeId)) {
+        f.recipeIds.push(recipeId);
+      }
+    } else {
+      f.recipeIds = f.recipeIds.filter(id => id !== recipeId);
+    }
+  });
+  
+  // General saved list check
+  const shouldBeSaved = selectedSet.has('__loose__') || selectedSet.size > 0;
+  if (shouldBeSaved) {
+    if (!libState.savedRecipeIds.includes(recipeId)) {
+      libState.savedRecipeIds.push(recipeId);
+    }
+  } else {
+    libState.savedRecipeIds = libState.savedRecipeIds.filter(id => id !== recipeId);
+  }
+  
+  if (currentUser) {
+    try {
+      const { assignRecipeToFolder } = await import('./supabase-client.js');
+      const folderIds = Array.from(selectedSet).filter(id => id !== '__loose__');
+      const targetFolderId = folderIds.length > 0 ? folderIds[0] : null;
+      await assignRecipeToFolder(recipeId, targetFolderId);
+    } catch (err) {
+      console.error('Error syncing recipe folder assignment to Supabase:', err);
+    }
+  }
+
+  libSave();
+  libRenderContent();
+  
+  if (typeof mySpaceRenderFolderStrip === 'function') {
+    mySpaceRenderFolderStrip();
+  }
+  if (typeof window.updatePlayerFolderSelect === 'function') {
+    window.updatePlayerFolderSelect();
+  }
+  
+  if (typeof window.closePlayerActionsDropdown === 'function') {
+    window.closePlayerActionsDropdown();
+  }
+  
+  window.closePlayerSaveToFolderModal();
+  showTip("Video folder updated 📁");
 };
 
 window.closePlayerSaveToFolderModal = function() {
   const modal = document.getElementById('playerFolderSelectionModal');
   if (modal) modal.style.display = 'none';
+  window.libPendingFolderRecipeId = null;
 };
 
 window.filterPlayerFolders = function() {
@@ -6283,7 +6408,7 @@ let   libOpenFolderId  = null;   // null = root; string = folder id being viewed
 let   libEditFolderId  = null;   // null = create mode; string = edit mode
 let   libDragItem      = null;   // { type:'folder'|'recipe', id }
 let   libSelectedColor = FOLDER_COLORS[0];
-let   libPendingFolderRecipeId = null; // recipe to move after creating folder
+window.libPendingFolderRecipeId = null; // recipe to move after creating folder
 
 // ── State helpers ──────────────────────────────────────────────────────────
 function libLoad() {
@@ -6404,6 +6529,94 @@ async function libFetchRecipes() {
   }
 }
 
+window.syncFoldersWithSupabase = async function() {
+  if (!currentUser) return;
+  try {
+    const { getFolders, createFolder, assignRecipeToFolder, supabase } = await import('./supabase-client.js');
+    
+    // 1. Fetch folders from Supabase
+    const dbFolders = await getFolders(currentUser.id);
+    
+    // 2. Fetch recipes from Supabase with folder_id
+    const { data: dbRecipes, error } = await supabase
+      .from('recipes')
+      .select('id, title, video_url, bundle_mode, duration, created_at, private_recipe, creator, folder_id')
+      .eq('creator', currentUser.email);
+      
+    if (error) throw error;
+    
+    if (!libState) libLoad();
+    
+    // 3. Sync local folders to DB
+    for (const localFolder of libState.folders) {
+      if (!localFolder || !localFolder.name) continue;
+      // Find matching folder in DB by name (case-insensitive) or by id
+      let dbF = dbFolders.find(df => df.id === localFolder.id || df.name.toLowerCase() === localFolder.name.toLowerCase());
+      if (!dbF) {
+        console.log(`Syncing folder "${localFolder.name}" to Supabase...`);
+        dbF = await createFolder(currentUser.id, localFolder.name, localFolder.color || '#4a90d9');
+        dbFolders.push(dbF);
+      }
+      
+      // Update local folder ID to match DB folder ID if they differ
+      const oldId = localFolder.id;
+      localFolder.id = dbF.id;
+      
+      // Replace references in customOrder
+      libState.customOrder = libState.customOrder.map(k => k === 'folder:' + oldId ? 'folder:' + dbF.id : k);
+      
+      // For each recipe in localFolder, assign it in Supabase
+      if (localFolder.recipeIds && Array.isArray(localFolder.recipeIds)) {
+        for (const rId of localFolder.recipeIds) {
+          const dbR = (dbRecipes || []).find(r => r.id === rId);
+          if (dbR && dbR.folder_id !== dbF.id) {
+            console.log(`Assigning recipe ${rId} to folder ${dbF.id} in Supabase...`);
+            await assignRecipeToFolder(rId, dbF.id);
+          }
+        }
+      }
+    }
+    
+    // 4. Sync DB folders to local
+    for (const dbF of dbFolders) {
+      let localFolder = libState.folders.find(lf => lf.id === dbF.id || lf.name.toLowerCase() === dbF.name.toLowerCase());
+      if (!localFolder) {
+        localFolder = {
+          id: dbF.id,
+          name: dbF.name,
+          color: dbF.color,
+          recipeIds: []
+        };
+        libState.folders.push(localFolder);
+      }
+      
+      // Fetch recipe IDs assigned to this folder in Supabase
+      const assignedRecipeIds = (dbRecipes || [])
+        .filter(r => r.folder_id === dbF.id)
+        .map(r => r.id);
+        
+      assignedRecipeIds.forEach(rId => {
+        if (!localFolder.recipeIds.includes(rId)) {
+          localFolder.recipeIds.push(rId);
+        }
+      });
+    }
+    
+    // Ensure all customOrder are present
+    const allIds = new Set(libState.customOrder);
+    libState.folders.forEach(f => {
+      if (f && f.id && !allIds.has('folder:' + f.id)) {
+        libState.customOrder.push('folder:' + f.id);
+      }
+    });
+    
+    libSave();
+    console.log("Supabase folder sync completed successfully!");
+  } catch (err) {
+    console.error("Error syncing folders with Supabase:", err);
+  }
+};
+
 // ── Main render ────────────────────────────────────────────────────────────
 async function renderLibrary() {
   const content = document.getElementById('libContent');
@@ -6411,6 +6624,10 @@ async function renderLibrary() {
 
   try {
     if (!libState) libLoad();
+
+    if (currentUser) {
+      await window.syncFoldersWithSupabase();
+    }
 
     // Show loading spinner while fetching
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
@@ -6582,31 +6799,24 @@ function libRecipeCardHTML(r, folderId) {
   const isDrag = libState.sort === 'custom';
   const layout = libState.layout || 'grid';
 
-  const foldersList = (libState.folders || []).filter(ff => ff && typeof ff === 'object');
-  
   let folderSelectHtml = '';
   if (!folderId) {
     // Loose video
     folderSelectHtml = `
-      <select onchange="window.libMoveRecipeToFolder('${r.id}', null, this.value); this.value='';" 
-              class="lib-folder-select"
-              style="border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer;">
-        <option value="" selected disabled>📁 Save to folder</option>
-        ${foldersList.map(f => `<option value="${f.id}">📁 ${f.name}</option>`).join('')}
-        <option value="__new__">➕ Create Folder...</option>
-      </select>
+      <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', null)" 
+              class="lib-folder-select-trigger"
+              style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
+        📁 Save to folder
+      </button>
     `;
   } else {
     // In-folder video
     folderSelectHtml = `
-      <select onchange="window.libMoveRecipeToFolder('${r.id}', '${folderId}', this.value); this.value='';" 
-              class="lib-folder-select"
-              style="border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer;">
-        <option value="" selected disabled>📁 Move to...</option>
-        <option value="__loose__">🎬 Loose Videos</option>
-        ${foldersList.filter(f => f.id !== folderId).map(f => `<option value="${f.id}">📁 ${f.name}</option>`).join('')}
-        <option value="__new__">➕ Create Folder...</option>
-      </select>
+      <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', '${folderId}')" 
+              class="lib-folder-select-trigger"
+              style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
+        📁 Move to...
+      </button>
     `;
   }
 
@@ -6853,7 +7063,7 @@ window.libRemoveFromFolder = function(recipeId, folderId) {
   libRenderContent();
 };
 
-window.libMoveRecipeToFolder = function(recipeId, currentFolderId, targetFolderId) {
+window.libMoveRecipeToFolder = async function(recipeId, currentFolderId, targetFolderId) {
   if (!recipeId) return;
 
   if (targetFolderId === '__new__') {
@@ -6886,6 +7096,16 @@ window.libMoveRecipeToFolder = function(recipeId, currentFolderId, targetFolderI
     }
   }
 
+  if (currentUser) {
+    try {
+      const { assignRecipeToFolder } = await import('./supabase-client.js');
+      const targetFolderIdOrNull = (targetFolderId && targetFolderId !== '__loose__') ? targetFolderId : null;
+      await assignRecipeToFolder(recipeId, targetFolderIdOrNull);
+    } catch (err) {
+      console.error('Error syncing recipe folder assignment in libMoveRecipeToFolder:', err);
+    }
+  }
+
   libSave();
   libRenderContent();
   
@@ -6896,6 +7116,114 @@ window.libMoveRecipeToFolder = function(recipeId, currentFolderId, targetFolderI
     window.updatePlayerFolderSelect();
   }
   showTip("Video folder updated 📁");
+};
+
+window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
+  event.stopPropagation();
+
+  if (!libState) {
+    try {
+      libLoad();
+    } catch (e) {
+      libState = { sort: 'az', folders: [], customOrder: [] };
+    }
+  }
+  if (!libState) {
+    libState = { sort: 'az', folders: [], customOrder: [] };
+  }
+
+  const btn = event.currentTarget;
+  let menu = document.getElementById('libFolderDropdownMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'libFolderDropdownMenu';
+    menu.style.position = 'absolute';
+    menu.style.background = '#ffffff';
+    menu.style.border = '1.5px solid rgba(124,58,237,0.2)';
+    menu.style.borderRadius = '12px';
+    menu.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.06)';
+    menu.style.zIndex = '99999';
+    menu.style.display = 'none';
+    menu.style.overflow = 'hidden';
+    menu.style.flexDirection = 'column';
+    menu.style.minWidth = '160px';
+    document.body.appendChild(menu);
+  }
+
+  if (menu.style.display === 'flex' && menu.dataset.recipeId === recipeId) {
+    menu.style.display = 'none';
+    return;
+  }
+
+  menu.dataset.recipeId = recipeId;
+  menu.dataset.currentFolderId = currentFolderId || '';
+
+  const foldersList = (libState.folders || []).filter(ff => ff && typeof ff === 'object');
+
+  let html = '';
+  // Header / Title
+  html += `
+    <div style="padding: 8px 16px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 800; border-bottom: 1px solid rgba(0,0,0,0.03);">
+      📁 ${currentFolderId ? 'Move to...' : 'Save to folder'}
+    </div>
+  `;
+
+  // Loose Videos option
+  if (currentFolderId) {
+    html += `
+      <button onclick="window.libMoveRecipeToFolder('${recipeId}', '${currentFolderId}', '__loose__'); window.closeLibFolderDropdown();" 
+              style="width: 100%; background: transparent; border: none; padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--text-heading); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s, color 0.12s;"
+              onmouseenter="this.style.background='#f5f0ff'; this.style.color='var(--primary)';" 
+              onmouseleave="this.style.background='transparent'; this.style.color='var(--text-heading)';">
+        <span>🎬</span> Loose Videos
+      </button>
+    `;
+  }
+
+  // Folders list
+  foldersList.forEach(f => {
+    // If we are already in this folder, skip it
+    if (f.id === currentFolderId) return;
+
+    // Bullet dot indicating folder color
+    const dotHtml = `<span style="display:inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${f.color || '#7c3aed'}; margin-right: 2px;"></span>`;
+
+    html += `
+      <button onclick="window.libMoveRecipeToFolder('${recipeId}', ${currentFolderId ? `'${currentFolderId}'` : 'null'}, '${f.id}'); window.closeLibFolderDropdown();" 
+              style="width: 100%; background: transparent; border: none; padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--text-heading); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s, color 0.12s;"
+              onmouseenter="this.style.background='#f5f0ff'; this.style.color='var(--primary)';" 
+              onmouseleave="this.style.background='transparent'; this.style.color='var(--text-heading)';">
+        ${dotHtml} ${f.name}
+      </button>
+    `;
+  });
+
+  // Create folder option
+  html += `
+    <button onclick="window.libCreateFolder('${recipeId}'); window.closeLibFolderDropdown();" 
+            style="width: 100%; background: transparent; border: none; border-top: 1px solid rgba(0,0,0,0.03); padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--primary); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s;"
+            onmouseenter="this.style.background='#f5f0ff';" 
+            onmouseleave="this.style.background='transparent';">
+      <span style="font-weight: 800; font-size: 0.8rem;">＋</span> Create Folder...
+    </button>
+  `;
+
+  menu.innerHTML = html;
+  menu.style.display = 'flex';
+
+  const rect = btn.getBoundingClientRect();
+  const menuHeight = menu.offsetHeight || 180;
+  if (rect.top - menuHeight > 10) {
+    menu.style.top = `${rect.top - menuHeight - 4 + window.scrollY}px`;
+  } else {
+    menu.style.top = `${rect.bottom + 4 + window.scrollY}px`;
+  }
+  menu.style.left = `${rect.left + window.scrollX}px`;
+};
+
+window.closeLibFolderDropdown = function() {
+  const menu = document.getElementById('libFolderDropdownMenu');
+  if (menu) menu.style.display = 'none';
 };
 
 window.libOpenRecipe = function(id) {
@@ -6947,7 +7275,7 @@ window.libSearch = function(q) {
 // ── Folder CRUD ───────────────────────────────────────────────────────────
 window.libCreateFolder = function(pendingRecipeId = null) {
   libEditFolderId  = null;
-  libPendingFolderRecipeId = pendingRecipeId;
+  window.libPendingFolderRecipeId = pendingRecipeId;
   libSelectedColor = FOLDER_COLORS[libState.folders.length % FOLDER_COLORS.length];
   const title = document.getElementById('libModalTitle');
   const input = document.getElementById('libFolderNameInput');
@@ -6972,19 +7300,48 @@ window.libRenameFolder = function(id) {
   if (modal) { modal.style.display = 'flex'; setTimeout(() => { input?.focus(); input?.select(); }, 60); }
 };
 
-window.libSaveFolder = function() {
+window.libSaveFolder = async function() {
   const input = document.getElementById('libFolderNameInput');
   const name  = input?.value?.trim();
   if (!name) { input?.focus(); return; }
 
   if (libEditFolderId) {
     const f = libGetFolder(libEditFolderId);
-    if (f) { f.name = name; f.color = libSelectedColor; }
+    if (f) {
+      f.name = name;
+      f.color = libSelectedColor;
+      if (currentUser) {
+        try {
+          const { supabase } = await import('./supabase-client.js');
+          await supabase.from('recipe_folders').update({ name, color: libSelectedColor }).eq('id', libEditFolderId);
+        } catch (err) {
+          console.error('Error updating folder in Supabase:', err);
+        }
+      }
+    }
   } else {
-    const newFolder = { id: libMakeId(), name, color: libSelectedColor, recipeIds: [] };
-    if (libPendingFolderRecipeId) {
-      newFolder.recipeIds.push(libPendingFolderRecipeId);
-      libPendingFolderRecipeId = null;
+    let newId = libMakeId();
+    if (currentUser) {
+      try {
+        const { createFolder } = await import('./supabase-client.js');
+        const dbF = await createFolder(currentUser.id, name, libSelectedColor);
+        if (dbF && dbF.id) newId = dbF.id;
+      } catch (err) {
+        console.error('Error creating folder in Supabase:', err);
+      }
+    }
+    const newFolder = { id: newId, name, color: libSelectedColor, recipeIds: [] };
+    if (window.libPendingFolderRecipeId) {
+      newFolder.recipeIds.push(window.libPendingFolderRecipeId);
+      if (currentUser) {
+        try {
+          const { assignRecipeToFolder } = await import('./supabase-client.js');
+          await assignRecipeToFolder(window.libPendingFolderRecipeId, newId);
+        } catch (err) {
+          console.error('Error assigning recipe to folder in Supabase:', err);
+        }
+      }
+      window.libPendingFolderRecipeId = null;
     }
     libState.folders.push(newFolder);
     libState.customOrder.push('folder:' + newFolder.id);
@@ -7001,7 +7358,7 @@ window.libSaveFolder = function() {
   }
 };
 
-window.libDeleteFolder = function(id) {
+window.libDeleteFolder = async function(id) {
   if (!confirm('Delete this folder? Videos inside will be moved back to loose.')) return;
   libState.folders = libState.folders.filter(f => f.id !== id);
   libState.customOrder = libState.customOrder.filter(k => k !== 'folder:' + id);
@@ -7011,13 +7368,22 @@ window.libDeleteFolder = function(id) {
   if (typeof window.updatePlayerFolderSelect === 'function') {
     window.updatePlayerFolderSelect();
   }
+  if (currentUser) {
+    try {
+      const { supabase } = await import('./supabase-client.js');
+      await supabase.from('recipe_folders').delete().eq('id', id);
+      await supabase.from('recipes').update({ folder_id: null }).eq('folder_id', id);
+    } catch (err) {
+      console.error('Error deleting folder in Supabase:', err);
+    }
+  }
 };
 
 window.libCloseModal = function() {
   const modal = document.getElementById('libFolderModal');
   if (modal) modal.style.display = 'none';
   libEditFolderId = null;
-  libPendingFolderRecipeId = null;
+  window.libPendingFolderRecipeId = null;
 };
 
 function libRenderSwatches() {
@@ -7060,7 +7426,7 @@ window.libOnDragLeave = function(e) {
   e.currentTarget.style.outline = '';
 };
 
-window.libOnDrop = function(e, targetType, targetId) {
+window.libOnDrop = async function(e, targetType, targetId) {
   e.preventDefault();
   e.currentTarget.style.outline = '';
   if (!libDragItem) return;
@@ -7071,6 +7437,14 @@ window.libOnDrop = function(e, targetType, targetId) {
     if (f && !f.recipeIds.includes(libDragItem.id)) {
       f.recipeIds.push(libDragItem.id);
       libSave();
+      if (currentUser) {
+        try {
+          const { assignRecipeToFolder } = await import('./supabase-client.js');
+          await assignRecipeToFolder(libDragItem.id, targetId);
+        } catch (err) {
+          console.error('Error syncing recipe folder assignment in drag-and-drop:', err);
+        }
+      }
     }
   }
   // If custom sort: reorder customOrder
@@ -8917,12 +9291,6 @@ window.updateStepsScrollButtons = function() {
   const rightBtn = document.getElementById('stepsScrollRightBtn');
   if (!el) return;
   
-  if (window.innerWidth > 768) {
-    if (leftBtn) leftBtn.style.display = 'none';
-    if (rightBtn) rightBtn.style.display = 'none';
-    return;
-  }
-  
   if (leftBtn) {
     leftBtn.style.display = el.scrollLeft > 5 ? 'flex' : 'none';
   }
@@ -9053,34 +9421,18 @@ function renderCreateSteps() {
 
   const isDesktop = window.innerWidth > 768;
 
-  if (isDesktop) {
-    list.style.display                 = 'flex';
-    list.style.flexDirection           = 'column';
-    list.style.gap                     = '12px';
-    list.style.paddingBottom           = '12px';
-    list.style.flexWrap                = 'nowrap';
-    list.style.overflowX               = 'hidden';
-    list.style.overflowY               = 'auto';
-    list.style.webkitOverflowScrolling = 'touch';
-    list.style.maxHeight               = 'none';
-    list.style.height                  = '100%';
-    list.style.flexShrink              = '0';
-    list.style.touchAction             = 'pan-y';
-  } else {
-    // Modern horizontal scroll/swipe layout for loop stops
-    list.style.display                 = 'flex';
-    list.style.flexDirection           = 'row';
-    list.style.gap                     = '12px';
-    list.style.paddingBottom           = '4px';
-    list.style.flexWrap                = 'nowrap';
-    list.style.overflowX               = 'auto';
-    list.style.overflowY               = 'hidden';
-    list.style.webkitOverflowScrolling = 'touch';
-    list.style.maxHeight               = 'none';
-    list.style.height                  = '100%';
-    list.style.flexShrink              = '0';
-    list.style.touchAction             = 'pan-x pan-y';
-  }
+  list.style.display                 = 'flex';
+  list.style.flexDirection           = 'row';
+  list.style.gap                     = '12px';
+  list.style.paddingBottom           = isDesktop ? '6px' : '4px';
+  list.style.flexWrap                = 'nowrap';
+  list.style.overflowX               = 'auto';
+  list.style.overflowY               = 'hidden';
+  list.style.webkitOverflowScrolling = 'touch';
+  list.style.maxHeight               = 'none';
+  list.style.height                  = isDesktop ? '430px' : '100%';
+  list.style.flexShrink              = '0';
+  list.style.touchAction             = 'pan-x pan-y';
 
   // Stop propagation of touch events to prevent swiping the parent carousel when scrolling loop stops horizontally
   if (!list.dataset.touchListenerAdded) {
@@ -9165,7 +9517,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="${isDesktop ? 'width:100%;height:auto;max-height:none;overflow-y:visible;' : 'width:280px;height:100%;max-height:100%;overflow-y:auto;'}flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;min-height:0;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:100%;max-height:100%;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;min-height:0;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -9317,8 +9669,14 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('#cardDropdownMenu') && !e.target.closest('.card-options-dropdown-btn')) {
     window.closeCardDropdown();
   }
+  if (!e.target.closest('#libFolderDropdownMenu') && !e.target.closest('.lib-folder-select-trigger')) {
+    window.closeLibFolderDropdown();
+  }
 });
-window.addEventListener('scroll', window.closeCardDropdown, true);
+window.addEventListener('scroll', () => {
+  window.closeCardDropdown();
+  window.closeLibFolderDropdown();
+}, true);
 
 window.mergeCreateStep = function(i) {
   if (i < 0 || i >= createStepsArr.length - 1) return;
@@ -10042,6 +10400,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         is_published:     createIsPublic,
         shared_on_profile: createIsPublic,
         text_overlays:    cachedSegments || [],
+        folder_id:        targetFolderId,
       };
       
       if (window._aiIngredients) updates.ingredients = window._aiIngredients;
@@ -10062,6 +10421,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         shared_on_profile: createIsPublic,
         ingredients:      window._aiIngredients || '',
         text_overlays:    cachedSegments || [],
+        folder_id:        targetFolderId,
       });
     }
 
@@ -11909,7 +12269,7 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Stops', 'Voiceover', 'Ingredients', 'Save'];
+  const tabs = ['Stops', 'Ingredients', 'Save'];
   tabs.forEach((tab, i) => {
     const btn = document.getElementById(`btnToolbar${tab}`);
     if (btn) {
@@ -11924,13 +12284,6 @@ function updateToolbarButtonStates(activeIndex) {
     if (stopsBody) {
       stopsBody.style.display = '';
       if (stopsChevron) stopsChevron.style.transform = '';
-    }
-  } else if (activeIndex === 1) { // Voiceover tab (index 1)
-    const voiceoverBody = document.getElementById('voiceoverBody');
-    const voiceoverChevron = document.getElementById('voiceoverChevron');
-    if (voiceoverBody) {
-      voiceoverBody.style.display = '';
-      if (voiceoverChevron) voiceoverChevron.style.transform = '';
     }
   }
 }
@@ -12324,6 +12677,7 @@ function copyFallback(text, msg) {
 let currentVoiceoverUrl = null;
 
 window.playVoiceoverForStep = function(stepIndex) {
+  return; // Speech/Audio feedback disabled per user request to prevent repeating steps
   if (!recipeData || !recipeData.steps) return;
   const step = recipeData.steps[stepIndex];
   if (!step) return;
@@ -12566,11 +12920,71 @@ document.addEventListener('mouseover', function(e) {
   }
 });
 
+window.editorVideoScale = parseFloat(localStorage.getItem('cooking_gps_video_scale')) || 1.0;
+
+window.changeEditorVideoScale = function(val) {
+  window.editorVideoScale = parseFloat(val);
+  localStorage.setItem('cooking_gps_video_scale', val);
+  
+  const label = document.getElementById('videoSizeMultiplierLabel');
+  if (label) {
+    label.textContent = `${Math.round(val * 100)}%`;
+  }
+  
+  const slider = document.getElementById('videoSizeScaleSlider');
+  if (slider) {
+    slider.value = val;
+  }
+
+  // Update active state on preset buttons
+  document.querySelectorAll('.video-size-preset-btn').forEach(btn => {
+    const btnVal = parseFloat(btn.getAttribute('data-value'));
+    if (Math.abs(btnVal - val) < 0.01) {
+      btn.style.background = 'var(--primary)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+    } else {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+    }
+  });
+
+  window.adjustWorkbenchVideoSize();
+};
+
+window.setEditorVideoScale = function(val) {
+  window.changeEditorVideoScale(val);
+};
+
 function setupWorkbenchResizer() {
   const resizer = document.getElementById('workbenchResizer');
   const leftSide = document.getElementById('workbenchLeft');
   const grid = document.getElementById('workbenchGrid');
   if (!resizer || !leftSide || !grid) return;
+
+  // Set initial slider & label values
+  const initialScale = window.editorVideoScale || 1.0;
+  const label = document.getElementById('videoSizeMultiplierLabel');
+  if (label) {
+    label.textContent = `${Math.round(initialScale * 100)}%`;
+  }
+  const slider = document.getElementById('videoSizeScaleSlider');
+  if (slider) {
+    slider.value = initialScale;
+  }
+  document.querySelectorAll('.video-size-preset-btn').forEach(btn => {
+    const btnVal = parseFloat(btn.getAttribute('data-value'));
+    if (Math.abs(btnVal - initialScale) < 0.01) {
+      btn.style.background = 'var(--primary)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+    } else {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+    }
+  });
 
   let startX = 0;
   let startWidth = 0;
@@ -12594,9 +13008,9 @@ function setupWorkbenchResizer() {
 
   function onMouseMove(e) {
     const deltaX = e.clientX - startX;
-    // Calculate new width, constrained between 320px and 800px (or 60% of window size)
+    // Calculate new width, constrained between 320px and 1100px (or 80% of window size)
     const minW = 320;
-    const maxW = Math.min(800, window.innerWidth * 0.6);
+    const maxW = Math.min(1100, window.innerWidth * 0.8);
     let newWidth = startWidth + deltaX;
     if (newWidth < minW) newWidth = minW;
     if (newWidth > maxW) newWidth = maxW;
@@ -12637,6 +13051,8 @@ window.adjustWorkbenchVideoSize = function() {
     return;
   }
 
+  const scale = window.editorVideoScale || 1.0;
+
   // Get video metadata dimensions
   const videoWidth = videoEl.videoWidth;
   const videoHeight = videoEl.videoHeight;
@@ -12651,7 +13067,9 @@ window.adjustWorkbenchVideoSize = function() {
     // Landscape video: match aspect ratio precisely to fit container width
     targetHeight = containerWidth / aspectRatio;
     // Cap height between 320px and 520px to fit well on desktop
-    targetHeight = Math.max(320, Math.min(520, targetHeight));
+    const minH = 320 * scale;
+    const maxH = 650 * scale;
+    targetHeight = Math.max(minH, Math.min(maxH, targetHeight));
     targetWidth = targetHeight * aspectRatio;
     if (targetWidth > containerWidth) {
       targetWidth = containerWidth;
@@ -12660,9 +13078,10 @@ window.adjustWorkbenchVideoSize = function() {
   } else {
     // Portrait/Vertical video (e.g., 9:16)
     // Scale height based on width, but cap it so it does not overflow viewport height
-    const maxAllowedHeight = Math.min(650, window.innerHeight * 0.65);
+    const maxAllowedHeight = Math.min(850, window.innerHeight * 0.85) * scale;
+    const minH = 480 * scale;
     targetHeight = containerWidth / aspectRatio;
-    targetHeight = Math.max(480, Math.min(maxAllowedHeight, targetHeight));
+    targetHeight = Math.max(minH, Math.min(maxAllowedHeight, targetHeight));
     targetWidth = targetHeight * aspectRatio;
     if (targetWidth > containerWidth) {
       targetWidth = containerWidth;
@@ -12720,7 +13139,6 @@ window.activeEditorTab = 'stops';
 window.switchEditorTab = function(tabName) {
   window.activeEditorTab = tabName;
   const tabs = {
-    voiceover: { colId: 'rightColVoiceover', btnId: 'tabBtnVoiceover' },
     stops: { colId: 'rightColStops', btnId: 'tabBtnStops' },
     ingredients: { colId: 'rightColIngredients', btnId: 'tabBtnIngredients' },
     save: { colId: 'rightColSave', btnId: 'tabBtnSave' }

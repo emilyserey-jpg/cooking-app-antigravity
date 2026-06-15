@@ -283,6 +283,9 @@ export async function createRecipe(recipe) {
     created_at:        new Date().toISOString(),
     updated_at:        new Date().toISOString(),
   };
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
 
   let { data, error } = await supabase
     .from('recipes')
