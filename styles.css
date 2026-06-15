@@ -1546,6 +1546,7 @@ h1, h2, h3, h4, h5 {
 
 .step-chip.active.done {
   background: #22c55e !important;
+  background-image: none !important;
   border-color: #22c55e !important;
   color: #fff !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
