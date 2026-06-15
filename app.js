@@ -5174,7 +5174,6 @@ window.openPlayerSaveToFolderModal = function() {
     looseItem.onclick = () => {
       window.playerFolderModalSelectedId = '__loose__';
       window.updateFolderModalListSelection();
-      window.renderPlayerFolderModalFiles('__loose__');
     };
     listContainer.appendChild(looseItem);
     
@@ -5209,65 +5208,14 @@ window.openPlayerSaveToFolderModal = function() {
       item.onclick = () => {
         window.playerFolderModalSelectedId = f.id;
         window.updateFolderModalListSelection();
-        window.renderPlayerFolderModalFiles(f.id);
       };
       listContainer.appendChild(item);
     });
   };
   
   window.updateFolderModalListSelection();
-  window.renderPlayerFolderModalFiles(window.playerFolderModalSelectedId);
   
   modal.style.display = 'flex';
-};
-
-window.renderPlayerFolderModalFiles = function(folderId) {
-  const section = document.getElementById('playerFolderFilesSection');
-  const list = document.getElementById('playerFolderFilesList');
-  if (!section || !list) return;
-
-  list.innerHTML = '';
-
-  let recipes = [];
-  if (folderId === '__loose__') {
-    recipes = (libAllRecipes || []).filter(r => {
-      return r && !libState.folders.some(f => f && Array.isArray(f.recipeIds) && f.recipeIds.includes(r.id));
-    });
-  } else if (folderId) {
-    const folder = libState.folders.find(f => f && f.id === folderId);
-    if (folder) {
-      recipes = (libAllRecipes || []).filter(r => r && Array.isArray(folder.recipeIds) && folder.recipeIds.includes(r.id));
-    }
-  }
-
-  section.style.display = 'flex';
-
-  if (recipes.length === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.style.cssText = 'font-size:0.75rem;color:var(--text-muted);padding:8px 12px;font-style:italic;background:rgba(0,0,0,0.01);border:1px dashed rgba(0,0,0,0.04);border-radius:10px;width:100%;box-sizing:border-box;';
-    emptyMsg.textContent = 'No recipes in this collection yet.';
-    list.appendChild(emptyMsg);
-  } else {
-    recipes.forEach(r => {
-      const item = document.createElement('div');
-      item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.04);border-radius:10px;font-size:0.8rem;color:var(--text-heading);font-weight:600;box-sizing:border-box;width:100%;';
-      
-      const iconWrap = document.createElement('span');
-      iconWrap.innerHTML = '<i data-lucide="video" style="width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0;"></i>';
-      item.appendChild(iconWrap);
-      
-      const titleSpan = document.createElement('span');
-      titleSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
-      titleSpan.textContent = r.title || 'Untitled Recipe';
-      item.appendChild(titleSpan);
-      
-      list.appendChild(item);
-    });
-    
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
-    }
-  }
 };
 
 window.confirmPlayerFolderChange = function() {
