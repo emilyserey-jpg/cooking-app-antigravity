@@ -5231,6 +5231,81 @@ window.filterPlayerFolders = function() {
   }
 };
 
+window.openPlayerEmbedModal = function() {
+  const modal = document.getElementById('playerEmbedModal');
+  if (!modal) return;
+
+  const widthInput = document.getElementById('playerEmbedWidthInput');
+  const heightInput = document.getElementById('playerEmbedHeightInput');
+  if (widthInput) widthInput.value = '100%';
+  if (heightInput) heightInput.value = '480';
+
+  window.updateEmbedCodeSnippet();
+  
+  modal.style.display = 'flex';
+};
+
+window.closePlayerEmbedModal = function() {
+  const modal = document.getElementById('playerEmbedModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.updateEmbedCodeSnippet = function() {
+  const textarea = document.getElementById('playerEmbedTextarea');
+  const widthInput = document.getElementById('playerEmbedWidthInput');
+  const heightInput = document.getElementById('playerEmbedHeightInput');
+  if (!textarea) return;
+
+  const w = (widthInput?.value || '100%').trim();
+  const h = (heightInput?.value || '480').trim();
+  const recipeId = activePlayerRecipeId || 'r1';
+
+  const origin = window.location.origin;
+  const embedUrl = `${origin}/mobile.html?id=${recipeId}#mobile-player`;
+
+  const code = `<iframe src="${embedUrl}" width="${w}" height="${h}" style="border:none; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,0.08);" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+
+  textarea.value = code;
+};
+
+window.copyEmbedCode = function() {
+  const textarea = document.getElementById('playerEmbedTextarea');
+  const btn = document.getElementById('playerCopyEmbedBtn');
+  if (!textarea) return;
+
+  textarea.select();
+  textarea.setSelectionRange(0, 99999);
+
+  try {
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      showCopyFeedback();
+    }).catch(() => {
+      document.execCommand('copy');
+      showCopyFeedback();
+    });
+  } catch (err) {
+    document.execCommand('copy');
+    showCopyFeedback();
+  }
+
+  function showCopyFeedback() {
+    if (btn) {
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<span>✓ Copied to Clipboard!</span>';
+      const origBg = btn.style.background;
+      const origShadow = btn.style.boxShadow;
+      btn.style.background = '#16a34a';
+      btn.style.boxShadow = '0 4px 12px rgba(22,163,74,0.25)';
+      setTimeout(() => {
+        btn.innerHTML = origText;
+        btn.style.background = origBg || 'var(--primary)';
+        btn.style.boxShadow = origShadow || '0 4px 12px rgba(74,144,217,0.25)';
+        window.closePlayerEmbedModal();
+      }, 1500);
+    }
+  }
+};
+
 window.handlePlayerFolderChange = function(targetFolderId) {
   if (!activePlayerRecipeId) return;
   
