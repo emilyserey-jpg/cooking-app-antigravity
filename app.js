@@ -8917,6 +8917,12 @@ window.updateStepsScrollButtons = function() {
   const rightBtn = document.getElementById('stepsScrollRightBtn');
   if (!el) return;
   
+  if (window.innerWidth > 768) {
+    if (leftBtn) leftBtn.style.display = 'none';
+    if (rightBtn) rightBtn.style.display = 'none';
+    return;
+  }
+  
   if (leftBtn) {
     leftBtn.style.display = el.scrollLeft > 5 ? 'flex' : 'none';
   }
@@ -9045,19 +9051,36 @@ function renderCreateSteps() {
     return;
   }
 
-  // Modern horizontal scroll/swipe layout for loop stops
-  list.style.display                 = 'flex';
-  list.style.flexDirection           = 'row';
-  list.style.gap                     = '12px';
-  list.style.paddingBottom           = '4px';
-  list.style.flexWrap                = 'nowrap';
-  list.style.overflowX               = 'auto';
-  list.style.overflowY               = 'hidden';
-  list.style.webkitOverflowScrolling = 'touch';
-  list.style.maxHeight               = 'none';
-  list.style.height                  = '100%';
-  list.style.flexShrink              = '0';
-  list.style.touchAction             = 'pan-x pan-y';
+  const isDesktop = window.innerWidth > 768;
+
+  if (isDesktop) {
+    list.style.display                 = 'flex';
+    list.style.flexDirection           = 'column';
+    list.style.gap                     = '12px';
+    list.style.paddingBottom           = '12px';
+    list.style.flexWrap                = 'nowrap';
+    list.style.overflowX               = 'hidden';
+    list.style.overflowY               = 'auto';
+    list.style.webkitOverflowScrolling = 'touch';
+    list.style.maxHeight               = 'none';
+    list.style.height                  = '100%';
+    list.style.flexShrink              = '0';
+    list.style.touchAction             = 'pan-y';
+  } else {
+    // Modern horizontal scroll/swipe layout for loop stops
+    list.style.display                 = 'flex';
+    list.style.flexDirection           = 'row';
+    list.style.gap                     = '12px';
+    list.style.paddingBottom           = '4px';
+    list.style.flexWrap                = 'nowrap';
+    list.style.overflowX               = 'auto';
+    list.style.overflowY               = 'hidden';
+    list.style.webkitOverflowScrolling = 'touch';
+    list.style.maxHeight               = 'none';
+    list.style.height                  = '100%';
+    list.style.flexShrink              = '0';
+    list.style.touchAction             = 'pan-x pan-y';
+  }
 
   // Stop propagation of touch events to prevent swiping the parent carousel when scrolling loop stops horizontally
   if (!list.dataset.touchListenerAdded) {
@@ -9142,7 +9165,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:280px;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;height:100%;max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="${isDesktop ? 'width:100%;height:auto;max-height:none;overflow-y:visible;' : 'width:280px;height:100%;max-height:100%;overflow-y:auto;'}flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;min-height:0;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
