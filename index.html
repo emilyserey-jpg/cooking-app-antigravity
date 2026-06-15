@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '8.38';
+      const CURRENT_VERSION = '8.52';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles.css?v=8.38">
+  <link rel="stylesheet" href="styles.css?v=8.52">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -227,15 +227,10 @@
                 <i id="playerModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
               </button>
 
-              <!-- Prev Step -->
-              <button id="playerPrevStepBtn" onclick="window.desktopPlayerPrev()" class="control-btn" tabindex="-1" title="Previous Step">
-                <i data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
-              </button>
-
-              <!-- Rewind 1s -->
-              <button id="playerSkipBack1sBtn" onclick="window.playerSkipTime(-1)" class="control-btn" tabindex="-1" title="Rewind 1s">
-                <i data-lucide="rewind" style="width: 15px; height: 15px;"></i>
-                <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
+              <!-- Combined Prev Button -->
+              <button id="playerCombinedPrevBtn" onclick="window.playerPrevAction()" class="control-btn" tabindex="-1" title="Previous Step">
+                <i id="playerCombinedPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
+                <span id="playerCombinedPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
               </button>
 
               <!-- Play/Pause -->
@@ -243,20 +238,15 @@
                 <i data-lucide="play" style="width: 16px; height: 16px;"></i>
               </button>
 
-              <!-- Forward 1s -->
-              <button id="playerSkipFwd1sBtn" onclick="window.playerSkipTime(1)" class="control-btn" tabindex="-1" title="Forward 1s">
-                <i data-lucide="fast-forward" style="width: 15px; height: 15px;"></i>
-                <span style="font-size:0.55rem; font-weight:800; margin-left:1px;">1s</span>
-              </button>
-
-              <!-- Next Step -->
-              <button id="playerNextStepBtn" onclick="window.desktopPlayerNext()" class="control-btn" tabindex="-1" title="Next Step">
-                <i data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
-              </button>
-
               <!-- Keyboard Toggle -->
               <button id="playerKbToggleBtn" onclick="window.togglePlayerKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Keyboard Mode">
                 <i id="playerKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
+              </button>
+
+              <!-- Combined Next Button -->
+              <button id="playerCombinedNextBtn" onclick="window.playerNextAction()" class="control-btn" tabindex="-1" title="Next Step">
+                <i id="playerCombinedNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
+                <span id="playerCombinedNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
               </button>
 
               <!-- Mute/Unmute -->
@@ -2130,6 +2120,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=8.50"></script>
+  <script type="module" src="app.js?v=8.52"></script>
 </body>
 </html>

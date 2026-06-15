@@ -363,6 +363,25 @@ async function initializeApp() {
   if (ingTextEl) {
     ingTextEl.addEventListener('input', window.updateAIChecklists);
   }
+
+  // Handle browser back/forward navigation using hashchange listener
+  window.addEventListener('hashchange', () => {
+    let targetView = window.location.hash.replace('#', '') || '';
+    let targetRecipeId = null;
+    if (targetView.includes('?')) {
+      const parts = targetView.split('?');
+      targetView = parts[0];
+      const params = new URLSearchParams(parts[1]);
+      targetRecipeId = params.get('id') || params.get('recipeId');
+    }
+    const validViews = ['create', 'discover', 'grid-view', 'profile', 'my-profile', 'mobile-player', 'bento-dashboard', 'desktop-workbench'];
+    if (validViews.includes(targetView) && targetView !== currentView) {
+      switchView(targetView);
+      if (targetView === 'mobile-player' && targetRecipeId) {
+        window.loadRecipeById(targetRecipeId);
+      }
+    }
+  });
   window.updateAIChecklists();
   window.setKeyboardMode(keyboardMode);
 }
@@ -3922,7 +3941,7 @@ function mySpaceRenderFolderStrip() {
       </svg>
     `;
 
-    let clickHandler = `libOpenFolderId='${f.id}'; switchView('grid-view')`;
+    let clickHandler = `window.libOpenFolderId='${f.id}'; switchView('grid-view')`;
     let editOverlay = '';
     let editClass = '';
 
@@ -6404,7 +6423,7 @@ const FOLDER_COLORS    = ['#a8d8f0','#b8f0c8','#f0d8a8','#d8b8f0','#f0b8c8','#a8
 let   libState         = null;   // loaded on first render
 let   libAllRecipes    = [];     // all recipes owned by user (from Supabase)
 let   libSearchQuery   = '';
-let   libOpenFolderId  = null;   // null = root; string = folder id being viewed
+window.libOpenFolderId = null;   // null = root; string = folder id being viewed
 let   libEditFolderId  = null;   // null = create mode; string = edit mode
 let   libDragItem      = null;   // { type:'folder'|'recipe', id }
 let   libSelectedColor = FOLDER_COLORS[0];
@@ -6674,7 +6693,7 @@ function libRenderContent() {
 
   try {
     // If drilling into a folder, show folder view
-    if (libOpenFolderId) {
+    if (window.libOpenFolderId) {
       libRenderFolderView(content);
       return;
     }
@@ -6976,13 +6995,13 @@ function libEmptyState(q) {
 
 // ── Folder drill-down ──────────────────────────────────────────────────────
 window.libOpenFolder = function(id) {
-  libOpenFolderId = id;
+  window.libOpenFolderId = id;
   libRenderContent();
 };
 
 function libRenderFolderView(content) {
-  const f = libGetFolder(libOpenFolderId);
-  if (!f) { libOpenFolderId = null; libRenderContent(); return; }
+  const f = libGetFolder(window.libOpenFolderId);
+  if (!f) { window.libOpenFolderId = null; libRenderContent(); return; }
 
   const recipes = libAllRecipes.filter(r => r && (f.recipeIds||[]).includes(r.id));
   const q = libSearchQuery.toLowerCase();
@@ -7041,7 +7060,7 @@ function libRenderFolderView(content) {
 }
 
 window.libCloseFolder = function() {
-  libOpenFolderId = null;
+  window.libOpenFolderId = null;
   libRenderContent();
 };
 
@@ -7363,7 +7382,7 @@ window.libDeleteFolder = async function(id) {
   libState.folders = libState.folders.filter(f => f.id !== id);
   libState.customOrder = libState.customOrder.filter(k => k !== 'folder:' + id);
   libSave();
-  if (libOpenFolderId === id) libOpenFolderId = null;
+  if (window.libOpenFolderId === id) window.libOpenFolderId = null;
   libRenderContent();
   if (typeof window.updatePlayerFolderSelect === 'function') {
     window.updatePlayerFolderSelect();
@@ -8872,6 +8891,7 @@ window.setKeyboardMode = function(mode) {
       kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       kbToggleBtn.style.color = 'var(--text-body)';
       kbToggleBtn.style.borderColor = 'var(--border-card)';
+      kbToggleBtn.style.boxShadow = 'var(--shadow-xs)';
       updateLucideIcon('playerKbToggleIcon', 'chevrons-right', '15px', '15px');
     }
 
@@ -8882,6 +8902,23 @@ window.setKeyboardMode = function(mode) {
       updateLucideIcon('createKbToggleIcon', 'chevrons-right', '13px', '13px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = 'Skip: Steps';
+    }
+
+    // Update Combined Prev button to Previous Step style
+    const cPrevBtn = document.getElementById('playerCombinedPrevBtn');
+    if (cPrevBtn) {
+      cPrevBtn.title = 'Previous Step';
+      updateLucideIcon('playerCombinedPrevIcon', 'skip-back', '15px', '15px');
+      const label = document.getElementById('playerCombinedPrevLabel');
+      if (label) label.style.display = 'none';
+    }
+    // Update Combined Next button to Next Step style
+    const cNextBtn = document.getElementById('playerCombinedNextBtn');
+    if (cNextBtn) {
+      cNextBtn.title = 'Next Step';
+      updateLucideIcon('playerCombinedNextIcon', 'skip-forward', '15px', '15px');
+      const label = document.getElementById('playerCombinedNextLabel');
+      if (label) label.style.display = 'none';
     }
 
     if (navPrev) {
@@ -8906,6 +8943,7 @@ window.setKeyboardMode = function(mode) {
       kbToggleBtn.style.background = 'var(--primary-soft)';
       kbToggleBtn.style.color = 'var(--primary-dark)';
       kbToggleBtn.style.borderColor = 'var(--primary)';
+      kbToggleBtn.style.boxShadow = 'none';
       updateLucideIcon('playerKbToggleIcon', 'timer', '15px', '15px');
     }
 
@@ -8916,6 +8954,23 @@ window.setKeyboardMode = function(mode) {
       updateLucideIcon('createKbToggleIcon', 'timer', '13px', '13px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = `Skip: ${seekAmount}s`;
+    }
+
+    // Update Combined Prev button to Rewind 1s style
+    const cPrevBtn = document.getElementById('playerCombinedPrevBtn');
+    if (cPrevBtn) {
+      cPrevBtn.title = 'Rewind 1s';
+      updateLucideIcon('playerCombinedPrevIcon', 'rewind', '15px', '15px');
+      const label = document.getElementById('playerCombinedPrevLabel');
+      if (label) label.style.display = 'inline-block';
+    }
+    // Update Combined Next button to Forward 1s style
+    const cNextBtn = document.getElementById('playerCombinedNextBtn');
+    if (cNextBtn) {
+      cNextBtn.title = 'Forward 1s';
+      updateLucideIcon('playerCombinedNextIcon', 'fast-forward', '15px', '15px');
+      const label = document.getElementById('playerCombinedNextLabel');
+      if (label) label.style.display = 'inline-block';
     }
 
     if (navPrev) {
@@ -8936,6 +8991,22 @@ window.setPlayerKeyboardMode = function(mode) {
   const seekSelect = document.getElementById('seekStepSelect');
   const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
   showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
+};
+
+window.playerPrevAction = function() {
+  if (keyboardMode === 'steps') {
+    window.desktopPlayerPrev();
+  } else {
+    window.playerSkipTime(-1);
+  }
+};
+
+window.playerNextAction = function() {
+  if (keyboardMode === 'steps') {
+    window.desktopPlayerNext();
+  } else {
+    window.playerSkipTime(1);
+  }
 };
 
 window.cyclePlaybackMode = function() {
@@ -12532,7 +12603,7 @@ window.openPlayerShareModal = function() {
   }
   
   // URL binding
-  const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
+  const shareUrl = window.location.origin + window.location.pathname + '?v=8.52#mobile-player?id=' + playerCurrentRecipe.id;
   const previewTextEl = document.getElementById('shareUrlPreviewText');
   if (previewTextEl) {
     previewTextEl.textContent = shareUrl;
@@ -12592,7 +12663,7 @@ window.closePlayerShareModal = function() {
 
 window.handleShareAction = function(action) {
   if (!playerCurrentRecipe || !playerCurrentRecipe.id) return;
-  const shareUrl = window.location.origin + window.location.pathname + '?v=8.38#mobile-player?id=' + playerCurrentRecipe.id;
+  const shareUrl = window.location.origin + window.location.pathname + '?v=8.52#mobile-player?id=' + playerCurrentRecipe.id;
   const title = playerCurrentRecipe.title || 'In The Loop Recipe';
 
   if (action === 'copy') {
