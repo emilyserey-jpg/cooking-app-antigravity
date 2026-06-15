@@ -1426,11 +1426,6 @@
                     <i id="toolbarPlayIcon" data-lucide="play" style="width: 16px; height: 16px;"></i>
                   </button>
 
-                  <!-- Keyboard Toggle (Skip Mode) -->
-                  <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode">
-                    <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
-                  </button>
-
                   <!-- Next Button -->
                   <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
                     <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
@@ -1448,12 +1443,17 @@
                   </button>
                 </div>
 
-                <!-- Add Stop Button -->
-                <div style="width:100%; margin-top:2px;">
+                <!-- Add Stop & Keyboard Toggle Buttons Row -->
+                <div class="player-controls-strip" style="margin-top: 4px; margin-bottom: 2px; gap: 8px; justify-content: center; width: 100%; max-width: 220px; margin-left: auto; margin-right: auto;">
+                  <!-- Add Stop Button -->
                   <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                    style="width:100%;background:var(--primary); border:none; border-radius:8px; padding:9px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                    style="flex:1; background:var(--primary); border:none; border-radius:8px; padding:9px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
                     title="Add Loop Stop at Current Time">
                     <span>📍 Add Stop</span>
+                  </button>
+                  <!-- Keyboard Toggle (Skip Mode) -->
+                  <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="flex-shrink:0; margin:0;">
+                    <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
                   </button>
                 </div>
                 
