@@ -12605,10 +12605,12 @@ window.adjustWorkbenchVideoSize = function() {
   const leftSide = document.getElementById('workbenchLeft');
   if (!videoEl || !wrapper || !leftSide) return;
 
-  // Only apply custom height adjustments on desktop screens (width > 768)
+  // Only apply custom adjustments on desktop screens (width > 768)
   if (window.innerWidth <= 768) {
     wrapper.style.height = '';
+    wrapper.style.width = '';
     wrapper.style.flex = '';
+    wrapper.style.alignSelf = '';
     return;
   }
 
@@ -12618,25 +12620,37 @@ window.adjustWorkbenchVideoSize = function() {
   
   // If metadata isn't loaded yet, default to a safe 16:9 ratio style
   const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
-  const containerWidth = leftSide.getBoundingClientRect().width;
+  const containerWidth = leftSide.getBoundingClientRect().width - 12; // account for padding/scrollbar
+
+  let targetHeight, targetWidth;
 
   if (aspectRatio >= 1) {
     // Landscape video: match aspect ratio precisely to fit container width
-    let targetHeight = containerWidth / aspectRatio;
+    targetHeight = containerWidth / aspectRatio;
     // Cap height between 320px and 520px to fit well on desktop
     targetHeight = Math.max(320, Math.min(520, targetHeight));
-    wrapper.style.height = `${targetHeight}px`;
-    wrapper.style.flex = 'none';
+    targetWidth = targetHeight * aspectRatio;
+    if (targetWidth > containerWidth) {
+      targetWidth = containerWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
   } else {
     // Portrait/Vertical video (e.g., 9:16)
     // Scale height based on width, but cap it so it does not overflow viewport height
-    // We want the portrait video to display as large as possible
     const maxAllowedHeight = Math.min(650, window.innerHeight * 0.65);
-    let targetHeight = containerWidth / aspectRatio;
+    targetHeight = containerWidth / aspectRatio;
     targetHeight = Math.max(480, Math.min(maxAllowedHeight, targetHeight));
-    wrapper.style.height = `${targetHeight}px`;
-    wrapper.style.flex = 'none';
+    targetWidth = targetHeight * aspectRatio;
+    if (targetWidth > containerWidth) {
+      targetWidth = containerWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
   }
+
+  wrapper.style.height = `${targetHeight}px`;
+  wrapper.style.width = `${targetWidth}px`;
+  wrapper.style.flex = 'none';
+  wrapper.style.alignSelf = 'center';
 };
 
 // Listen to window resize events to recalculate heights dynamically
