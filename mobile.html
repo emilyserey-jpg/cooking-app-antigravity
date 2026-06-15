@@ -1308,10 +1308,10 @@
         <div id="videoOverlayControls" style="background:#1e2235; border-top:1.5px solid var(--border-card); display:flex; align-items:center; gap:8px; padding:5px 10px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; touch-action:pan-x; flex-shrink:0;">
           <button onclick="toggleVideoPlay()" id="videoPlayBtn"
             style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:1rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;">▶</button>
-          <button onclick="window.toggleEditorMute()" id="editorMuteBtn"
+          <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlayMobile"
             style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:0.9rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;"
             title="Mute/Unmute">
-            <i id="editorMuteIcon" data-lucide="volume-x" style="width: 14px; height: 14px;"></i>
+            <i id="editorMuteIconOverlayMobile" data-lucide="volume-x" style="width: 14px; height: 14px;"></i>
           </button>
           <button onclick="window.cycleEditorSpeed()" id="editorSpeedBtn"
             style="background:rgba(255,255,255,0.2); border:none; border-radius:18px; height:32px; padding:0 8px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:700; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:4px;"
@@ -1360,45 +1360,64 @@
             </button>
           </div>
 
-          <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:8px; width:100%;">
+          <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:10px; width:100%;">
             <!-- Row 1: step navigator & info -->
-            <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:12px;">
-              <div style="flex:1; text-align:left; min-width:0; padding-right:8px;">
-                <div id="stepNavLabel" style="font-weight:900; color:var(--text-heading); font-size:0.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No stops yet</div>
-                <div id="stepNavCount" style="font-size:0.6rem; color:var(--text-muted); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add stops or run AI</div>
-              </div>
-              <!-- Seek Buttons Grouped Together -->
-              <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
-                <button onclick="window.toggleCreateKeyboardMode()" id="createKbToggleBtn" tabindex="-1"
-                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 10px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-body); box-sizing:border-box; transition:all 0.15s;" title="Toggle Skip Mode">
-                  <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 13px; height: 13px; color: var(--text-body);"></i>
-                  <span>Keyboard Shortcuts</span>
-                </button>
-                <button onclick="window.navStep(-1)" id="navPrevBtn" tabindex="-1"
-                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Previous step (← key)">←</button>
-                <button onclick="toggleVideoPlay()" id="toolbarPlayBtnMobile" tabindex="-1"
-                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Play/Pause (Spacebar)">▶</button>
-                <button onclick="window.navStep(1)" id="navNextBtn" tabindex="-1"
-                  style="background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:8px; padding:5px 11px; font-family:var(--font); font-weight:900; font-size:0.8rem; cursor:pointer;" title="Next step (→ key)">→</button>
-              </div>
+            <div style="display:flex;flex-direction:column;text-align:left;min-width:0;width:100%;margin-bottom:2px;border-bottom:1px solid rgba(0,0,0,0.04);padding-bottom:6px;">
+              <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
+              <div id="stepNavCount" style="font-size:0.65rem;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Add stops or run AI</div>
             </div>
 
-            <!-- Row 2: Add Stop & Loop / Stop -->
-            <div style="display:flex; align-items:center; gap:6px; width:100%;">
-              <div style="flex:1;">
-                <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                  style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
-                  title="Add Loop Stop at Current Time">
-                  <span>📍 Add Stop</span>
-                </button>
-              </div>
-              <div style="flex:1;">
-                <button onclick="previewCurrentNavStep()" id="previewLoopBtn" tabindex="-1"
-                  style="width:100%; background:var(--primary); border:none; border-radius:8px; padding:8px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">▶ Loop</button>
-                <button onclick="stopPreviewLoop()" id="stopPreviewBtn" tabindex="-1"
-                  style="display:none; width:100%; background:#f0f4ff; border:2px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--primary); cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); text-align:center;">⏹ Stop</button>
-              </div>
+            <!-- Unified Editor Controls Strip (All-in-One Row) -->
+            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; gap: 8px; justify-content: center;">
+              <!-- Loop/Repeat Toggle -->
+              <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
+                <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+              </button>
+
+              <!-- Previous Button -->
+              <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
+                <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
+                <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+              </button>
+
+              <!-- Play/Pause -->
+              <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
+                <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
+              </button>
+
+              <!-- Keyboard Toggle (Skip Mode) -->
+              <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode">
+                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
+              </button>
+
+              <!-- Next Button -->
+              <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
+                <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
+                <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+              </button>
+
+              <!-- Mute/Unmute -->
+              <button id="editorMuteBtnToolbarMobile" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
+                <i id="editorMuteIconToolbarMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+              </button>
+
+              <!-- Speed Control -->
+              <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
+                <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
+              </button>
             </div>
+
+            <!-- Add Stop Button -->
+            <div style="width:100%; margin-top:2px;">
+              <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+                style="width:100%;background:var(--primary); border:none; border-radius:8px; padding:9px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
+                title="Add Loop Stop at Current Time">
+                <span>📍 Add Stop</span>
+              </button>
+            </div>
+            
+            <!-- Hidden compatibility elements -->
+            <div id="stopPreviewBtn" style="display:none;"></div>
           </div>
         </div>
 
