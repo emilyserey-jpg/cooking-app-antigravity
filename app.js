@@ -13272,6 +13272,25 @@ window.adjustWorkbenchVideoSize = function() {
 // Listen to window resize events to recalculate heights dynamically
 window.addEventListener('resize', window.adjustWorkbenchVideoSize);
 
+window.toggleEditorSidebar = function() {
+  const rightPanel = document.getElementById('workbenchRight');
+  const resizer = document.getElementById('workbenchResizer');
+  if (!rightPanel) return;
+  
+  if (rightPanel.style.display === 'none') {
+    rightPanel.style.display = 'flex';
+    if (resizer) resizer.style.display = 'flex';
+  } else {
+    rightPanel.style.display = 'none';
+    if (resizer) resizer.style.display = 'none';
+  }
+  
+  // Re-adjust video sizes to expand/shrink based on space
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
+};
+
 
 window.updateAIChecklists = function() {
   // 1. Place Loop Stops: done if createStepsArr has elements

@@ -1321,9 +1321,26 @@
             </div>
 
             <!-- Video (overlay: only play/pause + add stop) -->
-            <div id="workbenchVideoWrapper" style="flex:1;flex-shrink:0;min-height:440px;border-radius:16px;overflow:hidden;background:transparent;position:relative;box-shadow:var(--shadow-md);">
+            <div id="workbenchVideoWrapper" style="flex:1;flex-shrink:0;min-height:440px;border-radius:24px;overflow:hidden;background:transparent;position:relative;box-shadow:var(--shadow-md);">
+              
+              <!-- Floating Top Controls Header (matching player mockup layout) -->
+              <div class="player-top-controls-wrapper" style="position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
+                <!-- Left Group (Back) -->
+                <div style="pointer-events: auto;">
+                  <button type="button" onclick="resetCreateView()" class="player-top-btn" style="padding: 6px 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" title="Go Back">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                  </button>
+                </div>
+                <!-- Right Group (Toggle Panel) -->
+                <div style="pointer-events: auto;">
+                  <button type="button" onclick="window.toggleEditorSidebar()" class="player-top-btn" style="padding: 6px 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: 1.5px solid rgba(255,255,255,0.25); cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s;" title="Toggle Panel">
+                    <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+                  </button>
+                </div>
+              </div>
+
               <video id="uploadedVideoPlayer"
-                style="width:100%;height:100%;object-fit:contain;display:block;background:transparent;"
+                style="width:100%;height:100%;object-fit:contain;display:block;background:transparent;border-radius:24px;"
                 preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
                 onclick="toggleVideoPlay()"></video>
 
