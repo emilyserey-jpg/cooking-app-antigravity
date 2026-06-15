@@ -4868,6 +4868,7 @@ function renderPlayerTimelineMarkers() {
 
 window.loadRecipeToEditor = function(recipe) {
   if (!recipe) return;
+  videoDuration = recipe.duration || 120;
   
   // Switch to the create view so that the editor is visible to the user
   if (typeof switchView === 'function') {
@@ -8499,7 +8500,7 @@ window.onVideoLoaded = function() {
     if (speedLabel) {
       speedLabel.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
     }
-    videoDuration = videoEl.duration || 0;
+    videoDuration = videoEl.duration || videoDuration || 0;
     const m = Math.floor(videoDuration / 60);
     const s = Math.floor(videoDuration % 60).toString().padStart(2, '0');
     const dur = document.getElementById('timelineDuration');
