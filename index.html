@@ -297,13 +297,11 @@
                  
                  <div id="playerActionsDropdownMenu" class="player-actions-dropdown-menu" style="display: none; right: 0; left: auto; top: calc(100% + 4px);">
                    <!-- Library Folder Section -->
-                   <div class="dropdown-section">
-                     <span class="dropdown-section-title">Save</span>
-                     <button id="playerSaveToFolderBtn" onclick="window.openPlayerSaveToFolderModal()" class="folder-select-dropdown" tabindex="-1" title="Save" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;">
-                       <span>📂 Save</span>
-                     </button>
-                   </div>
-                                <div class="dropdown-divider"></div>
+                    <!-- Save Recipe -->
+                    <button id="playerSaveToFolderBtn" onclick="window.openPlayerSaveToFolderModal()" class="dropdown-item" tabindex="-1">
+                      <i data-lucide="folder-heart" style="width: 14px; height: 14px;"></i>
+                      <span>Save</span>
+                    </button>
                     
                     <!-- Share Recipe -->
                     <button onclick="window.closePlayerActionsDropdown(); window.shareCurrentRecipe();" class="dropdown-item" tabindex="-1">
@@ -2073,6 +2071,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=8.42"></script>
+  <script type="module" src="app.js?v=8.43"></script>
 </body>
 </html>

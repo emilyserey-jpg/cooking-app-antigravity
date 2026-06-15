@@ -5092,13 +5092,26 @@ window.updatePlayerFolderSelect = function() {
   const currentFolderId = currentFolder ? currentFolder.id : (isSaved ? '__loose__' : null);
   
   const span = btnEl.querySelector('span');
+  const icon = btnEl.querySelector('i, svg');
   if (span) {
     if (currentFolderId === '__loose__') {
-      span.textContent = '📂 Saved';
+      span.textContent = 'Saved';
+      if (icon) {
+        icon.outerHTML = '<i data-lucide="folder-check" style="width: 14px; height: 14px; color: var(--primary);"></i>';
+      }
     } else if (currentFolder) {
-      span.textContent = `📁 ${currentFolder.name}`;
+      span.textContent = currentFolder.name;
+      if (icon) {
+        icon.outerHTML = '<i data-lucide="folder-check" style="width: 14px; height: 14px; color: var(--primary);"></i>';
+      }
     } else {
-      span.textContent = '📂 Save';
+      span.textContent = 'Save';
+      if (icon) {
+        icon.outerHTML = '<i data-lucide="folder-heart" style="width: 14px; height: 14px;"></i>';
+      }
+    }
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
     }
   }
 };
