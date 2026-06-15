@@ -1729,12 +1729,15 @@ function parseVoiceCommand(text) {
 function speakFeedback(phrase) {
   showTip(phrase);
   
+  // Audio SpeechSynthesis disabled per user request to prevent vocalizing every action
+  /*
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(phrase);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
   }
+  */
 }
 
 // ----------------------------------------------------
