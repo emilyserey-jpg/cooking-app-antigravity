@@ -241,27 +241,26 @@ async function initializeApp() {
         const isPortrait = initVideo.videoHeight > initVideo.videoWidth;
 
         if (container) {
-          container.style.setProperty('aspect-ratio', arStr, 'important');
           if (isPortrait) {
-            container.style.setProperty('height', 'min(480px, 50vh)', 'important');
-            container.style.setProperty('width', 'auto', 'important');
-            container.style.setProperty('margin', '0 auto', 'important');
+            container.style.setProperty('width', '100%', 'important');
+            container.style.setProperty('height', 'min(360px, 45vh)', 'important');
+            container.style.removeProperty('aspect-ratio');
+            container.style.removeProperty('margin');
           } else {
             container.style.setProperty('width', '100%', 'important');
+            container.style.setProperty('aspect-ratio', arStr, 'important');
             container.style.setProperty('height', 'auto', 'important');
             container.style.removeProperty('margin');
           }
         }
         if (placeholder) {
-          placeholder.style.setProperty('aspect-ratio', arStr, 'important');
+          placeholder.style.setProperty('width', '100%', 'important');
+          placeholder.style.setProperty('height', '100%', 'important');
+          placeholder.style.removeProperty('margin');
           if (isPortrait) {
-            placeholder.style.setProperty('height', '100%', 'important');
-            placeholder.style.setProperty('width', 'auto', 'important');
-            placeholder.style.setProperty('margin', '0 auto', 'important');
+            placeholder.style.removeProperty('aspect-ratio');
           } else {
-            placeholder.style.setProperty('width', '100%', 'important');
-            placeholder.style.setProperty('height', '100%', 'important');
-            placeholder.style.removeProperty('margin');
+            placeholder.style.setProperty('aspect-ratio', arStr, 'important');
           }
         }
       }
@@ -8975,7 +8974,7 @@ window.setKeyboardMode = function(mode) {
       cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       cKbToggleBtn.style.color = 'var(--text-body)';
       cKbToggleBtn.style.borderColor = 'var(--border-card)';
-      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '13px', '13px');
+      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '16px', '16px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = 'Skip: Steps';
     }
@@ -9027,7 +9026,7 @@ window.setKeyboardMode = function(mode) {
       cKbToggleBtn.style.background = 'var(--primary-soft)';
       cKbToggleBtn.style.color = 'var(--primary-dark)';
       cKbToggleBtn.style.borderColor = 'var(--primary)';
-      updateLucideIcon('createKbToggleIcon', 'timer', '13px', '13px');
+      updateLucideIcon('createKbToggleIcon', 'timer', '16px', '16px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = `Skip: ${seekAmount}s`;
     }

@@ -382,18 +382,18 @@ h1, h2, h3, h4, h5 {
 .mobile-video-container {
   width: 100%;
   aspect-ratio: 16/9;
-  background: #c8e0f0;
+  background: transparent;
   position: relative;
 }
 
 .mobile-video-container:not(.multigrid-active) {
   height: auto !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: 16/9;
 }
 
 .mobile-video-container:not(.multigrid-active) .mobile-video-placeholder {
   height: 100% !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: inherit;
 }
 
 .mobile-video-placeholder {
@@ -401,6 +401,7 @@ h1, h2, h3, h4, h5 {
   height: 100%;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 .video-element-sim {
