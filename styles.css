@@ -648,14 +648,14 @@ h1, h2, h3, h4, h5 {
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: var(--shadow-xs);
+  box-shadow: none !important;
 }
 
 .step-chip:hover {
   border-color: var(--primary);
   color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 @keyframes stepActivePulse {
@@ -669,8 +669,8 @@ h1, h2, h3, h4, h5 {
   background-image: none !important;
   border-color: #00c2ff !important;
   color: #fff !important;
-  transform: translateY(-2px) scale(1.03) !important;
-  animation: stepActivePulse 2s infinite ease-in-out !important;
+  transform: none !important;
+  box-shadow: none !important;
   font-weight: 800 !important;
 }
 
@@ -1549,7 +1549,7 @@ h1, h2, h3, h4, h5 {
   background-image: none !important;
   border-color: #22c55e !important;
   color: #fff !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: none !important;
 }
 
 .step-chip.active.done .step-chip-num {
