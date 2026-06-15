@@ -13212,15 +13212,17 @@ window.adjustWorkbenchVideoSize = function() {
 
   // Only apply custom adjustments on desktop screens (width > 768)
   if (window.innerWidth <= 768) {
-    wrapper.style.setProperty('width', '100%', 'important');
-    wrapper.style.flex = 'none';
-    wrapper.style.alignSelf = '';
+    wrapper.style.setProperty('flex', 'none', 'important');
+    wrapper.style.setProperty('margin', '0 auto', 'important');
     if (aspectRatio < 1) {
-      // Portrait video: set a taller height for a much larger display
+      // Portrait video: set a taller height and fit width to aspect ratio exactly
       wrapper.style.setProperty('height', 'min(460px, 60vh)', 'important');
-      wrapper.style.removeProperty('aspect-ratio');
+      wrapper.style.setProperty('width', 'auto', 'important');
+      wrapper.style.setProperty('max-width', '100%', 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
     } else {
       // Landscape video: size naturally to aspect ratio
+      wrapper.style.setProperty('width', '100%', 'important');
       wrapper.style.setProperty('height', 'auto', 'important');
       wrapper.style.setProperty('aspect-ratio', `${videoWidth || 16} / ${videoHeight || 9}`, 'important');
     }
