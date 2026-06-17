@@ -406,7 +406,7 @@ h1, h2, h3, h4, h5 {
 .video-element-sim {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .video-overlay-details {
@@ -2988,4 +2988,114 @@ a:focus-visible {
 .speed-option-btn.active {
   background: rgba(74, 144, 217, 0.1) !important;
   color: var(--primary) !important;
+}
+
+/* ====================================================
+   MOCKUP ALIGNMENT - RECIPE PLAYER VISUAL OVERRIDES
+   ==================================================== */
+
+/* 1. Video Container Rounded Corners & Shadow */
+.mobile-video-container {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: #000000 !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* 2. Floating Video Control Buttons - Circular */
+.phone-screen .player-top-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* 3. Title Card Container & Typography Override */
+#playerRecipeTitleContainer {
+  background: #ffffff !important;
+  border-radius: 18px !important;
+  border: 2px solid rgba(74, 144, 217, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 217, 0.06) !important;
+  padding: 14px 20px !important;
+  margin-bottom: 12px !important;
+  border-bottom: none !important;
+}
+
+#playerRecipeTitle {
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  line-height: 1.3 !important;
+}
+
+/* 4. Active & Inactive Step Card Styling */
+.step-slider-card {
+  flex-shrink: 0 !important;
+  width: calc(100vw - 64px) !important;
+  max-width: 320px !important;
+  scroll-snap-align: center;
+  background: #ffffff !important;
+  border-radius: 24px !important;
+  border: 2px solid rgba(74, 144, 217, 0.12) !important;
+  padding: 20px 24px !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px !important;
+  box-shadow: var(--shadow-sm) !important;
+  box-sizing: border-box;
+  transition: all var(--ease);
+  cursor: pointer;
+}
+
+.step-slider-card.active {
+  border: 3px solid #009eff !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 158, 255, 0.15), 0 0 0 3.5px rgba(0, 158, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+.step-indicator-text {
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: #009eff !important;
+  font-weight: 900 !important;
+}
+
+.step-card-title {
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  color: var(--text-heading) !important;
+  line-height: 1.25 !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+.step-instructions {
+  font-size: 0.85rem !important;
+  color: var(--text-body) !important;
+  line-height: 1.55 !important;
+  margin: 0 !important;
+}
+
+/* Desktop-specific Overrides */
+@media (min-width: 768px) {
+  .step-slider-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 28px !important;
+  }
+  .step-card-title {
+    font-size: 1.45rem !important;
+  }
+  .step-instructions {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+  }
 }

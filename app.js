@@ -1232,7 +1232,7 @@ function renderStepCardsMobile() {
       <!-- Left Column: Details -->
       <div style="flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; text-align:left;">
         <div class="step-meta-row">
-          <span class="step-indicator-text">Step ${idx + 1} of ${recipeData.steps.length}</span>
+          <span class="step-indicator-text">STEP ${idx + 1}</span>
           <span class="step-duration-badge">${timeStr}</span>
         </div>
         <h3 class="step-card-title" id="mobileStepTitle-${idx}">${step.title}</h3>
@@ -8479,7 +8479,6 @@ function updateMultigridLayoutClass() {
         videoContainer.classList.remove('multigrid-active');
         const screenWidth = screen ? screen.clientWidth : 390;
         const w = videoContainer.getBoundingClientRect().width || videoContainer.clientWidth || screenWidth || 390;
-        const h = Math.round(w * 9 / 16);
         
         let aspect = 16 / 9;
         const realVideo = document.getElementById('mobileRealVideo');
@@ -8488,15 +8487,41 @@ function updateMultigridLayoutClass() {
         }
         
         const isPortrait = aspect < 1;
+        const isDesktop = window.innerWidth >= 768;
+        
+        let h;
+        if (isPortrait) {
+          if (isDesktop) {
+            // On desktop, portrait video should be tall and prominent, matching Editor View height bounds
+            const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82);
+            h = Math.max(440, Math.min(maxAllowedHeight, 780));
+          } else {
+            // On mobile, portrait video matches Editor View: min(460px, 60vh)
+            h = Math.min(460, Math.round(window.innerHeight * 0.6));
+          }
+        } else {
+          h = Math.round(w * 9 / 16);
+        }
         
         videoContainer.style.setProperty('height', `${h}px`, 'important');
         videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
         
         if (isPortrait) {
-          // Shrink container width to match video aspect ratio at height h
-          const containerWidth = Math.round(h * aspect);
-          videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
-          videoContainer.style.setProperty('margin', '0 auto', 'important');
+          if (isDesktop) {
+            // Calculate container width based on aspect ratio
+            let containerWidth = Math.round(h * aspect);
+            if (containerWidth > w) {
+              containerWidth = w;
+              h = Math.round(containerWidth / aspect);
+              videoContainer.style.setProperty('height', `${h}px`, 'important');
+            }
+            videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
+            videoContainer.style.setProperty('margin', '0 auto', 'important');
+          } else {
+            // On mobile, let the video container be full width (100%) and match Editor View sizing
+            videoContainer.style.setProperty('width', '100%', 'important');
+            videoContainer.style.setProperty('margin', '0 auto', 'important');
+          }
         } else {
           videoContainer.style.setProperty('width', '100%', 'important');
           videoContainer.style.removeProperty('margin');
@@ -15013,88 +15038,6 @@ window.stopCardVideo = function(videoEl) {
 window.adjustWorkbenchVideoSize = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
   const wrapper = document.getElementById('workbenchVideoWrapper');
-  const leftSide = document.getElementById('workbenchLeft');
-  if (!videoEl || !wrapper || !leftSide) return;
-
-  // Only apply custom adjustments on desktop screens (width > 768)
-  if (window.innerWidth <= 768) {
-    wrapper.style.height = '';
-    wrapper.style.width = '';
-    wrapper.style.flex = '';
-    wrapper.style.alignSelf = '';
-    return;
-  }
-
-  // Get video metadata dimensions
-  const videoWidth = videoEl.videoWidth;
-  const videoHeight = videoEl.videoHeight;
-  
-  // If metadata isn't loaded yet, default to a safe 16:9 ratio style
-  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
-  const containerWidth = leftSide.getBoundingClientRect().width - 12; // account for padding/scrollbar
-
-  let targetHeight, targetWidth;
-
-  if (aspectRatio >= 1) {
-    // Landscape video: match aspect ratio precisely to fit container width
-    targetHeight = containerWidth / aspectRatio;
-    // Cap height between 320px and 520px to fit well on desktop
-    targetHeight = Math.max(320, Math.min(520, targetHeight));
-    targetWidth = targetHeight * aspectRatio;
-    if (targetWidth > containerWidth) {
-      targetWidth = containerWidth;
-      targetHeight = targetWidth / aspectRatio;
-    }
-  } else {
-    // Portrait/Vertical video (e.g., 9:16)
-    // Scale height based on width, but cap it so it does not overflow viewport height
-    const maxAllowedHeight = Math.min(650, window.innerHeight * 0.65);
-    targetHeight = containerWidth / aspectRatio;
-    targetHeight = Math.max(480, Math.min(maxAllowedHeight, targetHeight));
-    targetWidth = targetHeight * aspectRatio;
-    if (targetWidth > containerWidth) {
-      targetWidth = containerWidth;
-      targetHeight = targetWidth / aspectRatio;
-    }
-  }
-
-  wrapper.style.height = `${targetHeight}px`;
-  wrapper.style.width = `${targetWidth}px`;
-  wrapper.style.flex = 'none';
-  wrapper.style.alignSelf = 'center';
-};// Listen to window resize events to recalculate heights dynamically
-window.addEventListener('resize', window.adjustWorkbenchVideoSize);window.toggleEditorSidebar = function() {
-  const rightPanel = document.getElementById('workbenchRight');
-  const resizer = document.getElementById('workbenchResizer');
-  const leftCol = document.getElementById('workbenchLeft');
-  if (!rightPanel) return;
-  
-  if (rightPanel.style.display === 'none') {
-    rightPanel.style.display = 'flex';
-    if (resizer) resizer.style.display = 'flex';
-    if (leftCol) {
-      leftCol.style.width = 'calc(100% - 420px)';
-      leftCol.style.flex = 'none';
-    }
-  } else {
-    rightPanel.style.display = 'none';
-    if (resizer) resizer.style.display = 'none';
-    if (leftCol) {
-      leftCol.style.width = '100%';
-      leftCol.style.flex = '1';
-    }
-  }
-  
-  // Re-adjust video sizes to expand/shrink based on space
-  if (typeof window.adjustWorkbenchVideoSize === 'function') {
-    window.adjustWorkbenchVideoSize();
-  }
-};
-
-
-window.adjustWorkbenchVideoSize = function() {
-  const videoEl = document.getElementById('uploadedVideoPlayer');
-  const wrapper = document.getElementById('workbenchVideoWrapper');
   if (!videoEl || !wrapper) return;
 
   const videoWidth = videoEl.videoWidth;
@@ -15131,7 +15074,7 @@ window.adjustWorkbenchVideoSize = function() {
   if (aspectRatio >= 1) {
     // Landscape video: match aspect ratio precisely to fit container width
     targetHeight = containerWidth / aspectRatio;
-    // Cap height between 320px and 520px to fit well on desktop
+    // Cap height between 320px and 650px to fit well on desktop
     const minH = 320 * scale;
     const maxH = 650 * scale;
     targetHeight = Math.max(minH, Math.min(maxH, targetHeight));
@@ -15141,11 +15084,17 @@ window.adjustWorkbenchVideoSize = function() {
       targetHeight = targetWidth / aspectRatio;
     }
   } else {
+    // Portrait video: set size based on container width & aspect ratio, bounded by height
     const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82) * scale;
     const minH = 440 * scale;
     targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 780 * scale));
-    targetWidth = containerWidth;
-  }  wrapper.style.setProperty('height', `${targetHeight}px`, 'important');
+    targetWidth = targetHeight * aspectRatio;
+    if (targetWidth > containerWidth) {
+      targetWidth = containerWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
+  }
+  wrapper.style.setProperty('height', `${targetHeight}px`, 'important');
   wrapper.style.setProperty('width', `${targetWidth}px`, 'important');
   wrapper.style.setProperty('flex', 'none', 'important');
   wrapper.style.setProperty('align-self', 'center', 'important');
@@ -15158,14 +15107,23 @@ window.addEventListener('resize', window.adjustWorkbenchVideoSize);
 window.toggleEditorSidebar = function() {
   const rightPanel = document.getElementById('workbenchRight');
   const resizer = document.getElementById('workbenchResizer');
+  const leftCol = document.getElementById('workbenchLeft');
   if (!rightPanel) return;
   
   if (rightPanel.style.display === 'none') {
     rightPanel.style.display = 'flex';
     if (resizer) resizer.style.display = 'flex';
+    if (leftCol) {
+      leftCol.style.width = 'calc(100% - 420px)';
+      leftCol.style.flex = 'none';
+    }
   } else {
     rightPanel.style.display = 'none';
     if (resizer) resizer.style.display = 'none';
+    if (leftCol) {
+      leftCol.style.width = '100%';
+      leftCol.style.flex = '1';
+    }
   }
   
   // Re-adjust video sizes to expand/shrink based on space

@@ -403,7 +403,7 @@ h1, h2, h3, h4, h5 {
 .video-element-sim {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .video-overlay-details {
@@ -3589,7 +3589,6 @@ a:focus-visible {
 
 /* Panel-wide scroll rules for narrow desktop views */
 #videoResizerBar,
-#workbenchVideoWrapper,
 #editorScrubberCard,
 #stepNavControlsRow {
   min-width: 430px !important;
