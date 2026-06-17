@@ -296,9 +296,6 @@
                  <button id="playerTabStepsBtn" onclick="window.switchPlayerMainTab('steps')" class="player-tab-btn">
                    <i data-lucide="play-circle" style="width: 14px; height: 14px;"></i>Steps
                  </button>
-                 <button id="playerTabIngredientsBtn" onclick="window.switchPlayerMainTab('ingredients')" class="player-tab-btn">
-                   <i data-lucide="shopping-cart" style="width: 14px; height: 14px;"></i>Ingredients
-                 </button>
                  <button id="playerTabCommentsBtn" onclick="window.switchPlayerMainTab('comments')" class="player-tab-btn">
                    <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>Comments (<span id="playerCommentsCountBadgeTab">0</span>)
                  </button>
@@ -1511,6 +1508,29 @@
             
             <!-- Hidden compatibility elements -->
             <div id="stopPreviewBtn" style="display:none;"></div>
+            <div style="display:none;">
+              <!-- Slide 3: Ingredients (Hidden Compat) -->
+              <div class="carousel-slide" id="slideIngredients">
+                <div class="glass-card" style="padding:12px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
+                  <!-- AI Ingredients button moved from AI Tools -->
+                  <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
+                    style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
+                    <span>✍️ AI Ingredients</span>
+                    <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+                  </button>
+                  
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin:0;">Ingredients List</label>
+                    <button id="aiEditIngredientsBtn" onclick="window.editIngredientsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine the ingredients list"
+                      style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
+                      🪄 AI Edit
+                    </button>
+                  </div>
+                  <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
+                    style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.82rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1525,10 +1545,7 @@
           <button id="tabBtnPagesMobile" onclick="window.scrollToCarouselSlide(1)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
             📝 Pages
           </button>
-          <button id="tabBtnIngredientsMobile" onclick="window.scrollToCarouselSlide(2)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
-            🥦 Ingredients
-          </button>
-          <button id="tabBtnSaveMobile" onclick="window.scrollToCarouselSlide(3)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+          <button id="tabBtnSaveMobile" onclick="window.scrollToCarouselSlide(2)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
             💾 Save
           </button>
         </div>
@@ -1637,27 +1654,7 @@
           <div class="carousel-slide" id="rightColAddCustom">
           </div>
 
-          <!-- Slide 3: Ingredients -->
-          <div class="carousel-slide" id="slideIngredients">
-            <div class="glass-card" style="padding:12px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
-              <!-- AI Ingredients button moved from AI Tools -->
-              <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
-                style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
-                <span>✍️ AI Ingredients</span>
-                <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
-              </button>
-              
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin:0;">Ingredients List</label>
-                <button id="aiEditIngredientsBtn" onclick="window.editIngredientsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine the ingredients list"
-                  style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                  🪄 AI Edit
-                </button>
-              </div>
-              <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
-                style="width:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.82rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5;"></textarea>
-            </div>
-          </div>
+
 
           <!-- Slide 4: Save (Combined Details & Save) -->
           <div class="carousel-slide" id="slideSave">
@@ -1726,11 +1723,7 @@
             <span class="icon">📝</span>
             <span class="label">Pages</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarIngredients" class="toolbar-btn">
-            <span class="icon">🥦</span>
-            <span class="label">Ingredients</span>
-          </button>
-          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>

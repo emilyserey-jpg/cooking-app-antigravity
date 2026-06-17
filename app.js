@@ -2387,6 +2387,7 @@ function renderPlayerIngredients() {
 
     Object.keys(recipeCustomPages).forEach(tabId => {
       const page = recipeCustomPages[tabId];
+      if (!page.name || !page.name.trim()) return; // skip untitled custom pages in player
       
       const btn = document.createElement('button');
       btn.id = `playerTab_${tabId}`;
@@ -2437,8 +2438,8 @@ window.switchIngredientsSubtab = function(subtabName) {
 };
 
 function getActiveRecipeData() {
-  if (typeof recipeData !== 'undefined' && recipeData) return recipeData;
   if (window.recipeData) return window.recipeData;
+  if (typeof recipeData !== 'undefined' && recipeData) return recipeData;
   return null;
 }
 
@@ -12192,6 +12193,12 @@ Object.defineProperty(window, 'cachedTranscript', {
     if (typeof window.updateAIChecklists === 'function') {
       window.updateAIChecklists();
     }
+    const container = document.getElementById('transcriptModeContainer');
+    if (container && window.activeTranscriptMode === 'view') {
+      if (typeof window.switchTranscriptMode === 'function') {
+        window.switchTranscriptMode('view');
+      }
+    }
   }
 });
 
@@ -14022,19 +14029,16 @@ function updateToolbarButtonStates(activeIndex) {
       // Sync bottom toolbar active state
       const toolbarStops = document.getElementById('btnToolbarStops');
       const toolbarPages = document.getElementById('btnToolbarPages');
-      const toolbarIngredients = document.getElementById('btnToolbarIngredients');
       const toolbarSave = document.getElementById('btnToolbarSave');
       const isPagesActive = tabName === 'add_custom' || tabName.startsWith('custom_');
       if (toolbarStops) toolbarStops.classList.toggle('active', tabName === 'stops');
       if (toolbarPages) toolbarPages.classList.toggle('active', isPagesActive);
-      if (toolbarIngredients) toolbarIngredients.classList.toggle('active', tabName === 'ingredients');
       if (toolbarSave) toolbarSave.classList.toggle('active', tabName === 'save');
 
       // Sync top horizontal tab bar buttons styling
       const mobileBtns = {
         'tabBtnStopsMobile': tabName === 'stops',
         'tabBtnPagesMobile': isPagesActive,
-        'tabBtnIngredientsMobile': tabName === 'ingredients',
         'tabBtnSaveMobile': tabName === 'save'
       };
       
@@ -15352,7 +15356,11 @@ window.syncCustomPageUI = function() {
 window.activeEditorTab = 'stops';
 
 window.getEditorTabs = function() {
-  return ['stops', 'add_custom', 'ingredients', 'save'];
+  const isMobile = !!document.getElementById('mobileEditorCarousel');
+  if (isMobile) {
+    return ['stops', 'add_custom', 'save'];
+  }
+  return ['stops', 'add_custom', 'transcripts', 'save'];
 };
 
 window.toggleEditorTabDropdown = function(e) {
@@ -15395,9 +15403,10 @@ window.toggleEditorTabDropdown = function(e) {
     
     Object.keys(customPages).forEach(tabId => {
       const page = customPages[tabId];
+      if (!page.name || !page.name.trim()) return; // skip untitled custom pages in dropdown
       customOptionsHtml += `
         <button onclick="window.switchEditorTab('${tabId}')" id="optTab_${tabId}" class="custom-page-opt" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-          ${page.icon || '📝'} ${page.name || 'Untitled Page'}
+          ${page.icon || '📝'} ${page.name}
         </button>
       `;
     });
@@ -15405,19 +15414,24 @@ window.toggleEditorTabDropdown = function(e) {
     let transcriptOptionHtml = '';
     if (!isMobile) {
       transcriptOptionHtml = `
-        <button onclick="window.toggleStepTranscripts()" id="optTabTranscripts" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-          💬 View Transcripts
+        <button onclick="window.switchEditorTab('transcripts')" id="optTabTranscripts" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+          💬 Transcripts
         </button>
       `;
     }
+
+    const hasCustomPages = Object.keys(customPages).length > 0;
+    const customPagesTabHtml = hasCustomPages ? `
+      <button onclick="window.switchEditorTab('add_custom')" id="optTabAddCustom" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        📝 Custom Pages
+      </button>
+    ` : '';
 
     menu.innerHTML = `
       <button onclick="window.switchEditorTab('stops')" id="optTabStops" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         📍 Loop Stops
       </button>
-      <button onclick="window.switchEditorTab('ingredients')" id="optTabIngredients" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        📝 Ingredients
-      </button>
+      ${customPagesTabHtml}
       
       <div id="dynamicCustomPageOptions" style="display:flex; flex-direction:column; gap:4px;">
         ${customOptionsHtml}
@@ -15444,7 +15458,7 @@ window.toggleEditorTabDropdown = function(e) {
 
     let activeBtn = null;
     if (current === 'stops') activeBtn = document.getElementById('optTabStops');
-    else if (current === 'ingredients') activeBtn = document.getElementById('optTabIngredients');
+    else if (current === 'transcripts') activeBtn = document.getElementById('optTabTranscripts');
     else if (current === 'save') activeBtn = document.getElementById('optTabSave');
     else if (current === 'add_custom') activeBtn = document.getElementById('optTabAddCustom');
     else activeBtn = document.getElementById(`optTab_${current}`);
@@ -15452,16 +15466,11 @@ window.toggleEditorTabDropdown = function(e) {
     if (activeBtn) {
       activeBtn.style.background = 'var(--primary-light)';
       activeBtn.style.color = 'var(--primary)';
-    }
-
-    const optTranscripts = document.getElementById('optTabTranscripts');
-    if (optTranscripts) {
-      if (window.showStepTranscripts) {
-        optTranscripts.style.background = 'var(--primary-light)';
-        optTranscripts.style.color = 'var(--primary)';
-        optTranscripts.innerHTML = '💬 Hide Transcripts';
-      } else {
-        optTranscripts.innerHTML = '💬 View Transcripts';
+    } else if (current.startsWith('custom_')) {
+      const addCustomBtn = document.getElementById('optTabAddCustom');
+      if (addCustomBtn) {
+        addCustomBtn.style.background = 'var(--primary-light)';
+        addCustomBtn.style.color = 'var(--primary)';
       }
     }
 
@@ -15506,9 +15515,9 @@ window.switchEditorTab = function(tabName) {
   const labelEl = document.getElementById('editorTabSelectorLabel');
   if (labelEl) {
     if (tabName === 'stops') labelEl.textContent = '📍 Loop Stops';
-    else if (tabName === 'ingredients') labelEl.textContent = '📝 Ingredients';
     else if (tabName === 'save') labelEl.textContent = '🖼️ Preview & Save';
     else if (tabName === 'add_custom') labelEl.textContent = '📝 Custom Pages';
+    else if (tabName === 'transcripts') labelEl.textContent = '💬 Transcripts';
     else if (tabName.startsWith('custom_') && customPages[tabName]) {
       labelEl.textContent = `${customPages[tabName].icon || '📝'} ${customPages[tabName].name || 'Untitled Page'}`;
     }
@@ -15525,7 +15534,7 @@ window.switchEditorTab = function(tabName) {
     }
   } else {
     tabs.forEach(key => {
-      const colId = key === 'add_custom' ? 'rightColAddCustom' : (key.startsWith('custom_') ? `rightCol_${key}` : (key === 'stops' ? 'rightColStops' : (key === 'ingredients' ? 'rightColIngredients' : 'rightColSave')));
+      const colId = key === 'add_custom' ? 'rightColAddCustom' : (key.startsWith('custom_') ? `rightCol_${key}` : (key === 'stops' ? 'rightColStops' : (key === 'transcripts' ? 'rightColTranscripts' : 'rightColSave')));
       const col = document.getElementById(colId);
       if (col) {
         if (key === targetTabName) {
@@ -15537,7 +15546,157 @@ window.switchEditorTab = function(tabName) {
         }
       }
     });
+
+    if (tabName === 'transcripts') {
+      window.switchTranscriptMode(window.activeTranscriptMode || 'view');
+    }
+
+    // Desktop Tab Styling Sync
+    const isSelectorActive = tabName === 'stops' || tabName === 'add_custom' || tabName === 'transcripts' || tabName.startsWith('custom_');
+    const btnSelector = document.getElementById('editorTabSelectorBtn');
+    const btnSave = document.getElementById('tabBtnSave');
+
+    const activeStyle = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+    const activeColor = '#fff';
+    const activeBorder = 'transparent';
+    const activeShadow = '0 4px 12px var(--primary-glow)';
+
+    const inactiveBg = 'var(--bg-card-soft)';
+    const inactiveColor = 'var(--text-body)';
+    const inactiveBorder = 'var(--border-card)';
+
+    if (btnSelector) {
+      if (isSelectorActive) {
+        btnSelector.style.background = activeStyle;
+        btnSelector.style.color = activeColor;
+        btnSelector.style.borderColor = activeBorder;
+        btnSelector.style.boxShadow = activeShadow;
+      } else {
+        btnSelector.style.background = inactiveBg;
+        btnSelector.style.color = inactiveColor;
+        btnSelector.style.borderColor = inactiveBorder;
+        btnSelector.style.boxShadow = 'none';
+      }
+    }
+
+    if (btnSave) {
+      if (tabName === 'save') {
+        btnSave.style.background = activeStyle;
+        btnSave.style.color = activeColor;
+        btnSave.style.borderColor = activeBorder;
+        btnSave.style.boxShadow = activeShadow;
+      } else {
+        btnSave.style.background = inactiveBg;
+        btnSave.style.color = inactiveColor;
+        btnSave.style.borderColor = inactiveBorder;
+        btnSave.style.boxShadow = 'none';
+      }
+    }
   }
+};
+
+window.activeTranscriptMode = 'view';
+
+window.switchTranscriptMode = function(mode) {
+  window.activeTranscriptMode = mode;
+  
+  const modes = ['view', 'generate', 'edit'];
+  modes.forEach(m => {
+    const btn = document.getElementById(`modeBtn_${m}`);
+    if (btn) {
+      if (m === mode) {
+        btn.style.background = 'var(--primary)';
+        btn.style.color = '#fff';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+      }
+    }
+  });
+  
+  const container = document.getElementById('transcriptModeContainer');
+  if (!container) return;
+  
+  if (mode === 'view') {
+    if (!cachedTranscript || !cachedTranscript.trim()) {
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; gap:12px; padding:20px; box-sizing:border-box;">
+          <span style="font-size:2rem;">🎤</span>
+          <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); line-height:1.4; font-family:var(--font);">No transcript available yet.</div>
+          <p style="font-size:0.7rem; color:var(--text-muted); max-width:260px; margin:0 auto; font-family:var(--font); line-height:1.4;">Generate the transcript automatically from the video under the "Generate" mode tab.</p>
+        </div>
+      `;
+    } else {
+      if (cachedSegments && cachedSegments.length > 0) {
+        const segmentsHtml = cachedSegments.map(s => {
+          const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
+          const formatTime = (secs) => {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+          };
+          return `
+            <div class="transcript-segment-row" style="display:flex; gap:12px; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.03); align-items:flex-start;">
+              <button onclick="window.seekVideoTo(${start})" class="btn" style="padding:2px 6px; font-size:0.65rem; font-weight:800; border-radius:6px; background:var(--primary-light); color:var(--primary); border:none; cursor:pointer; font-family:var(--font); flex-shrink:0;">${formatTime(start)}</button>
+              <span style="font-size:0.75rem; color:var(--text-body); line-height:1.45; font-family:var(--font); font-weight:600;">${s.text.trim()}</span>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:4px; max-height:100%; overflow-y:auto; padding-right:4px;">
+            ${segmentsHtml}
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="font-size:0.78rem; color:var(--text-body); line-height:1.5; white-space:pre-wrap; background:var(--bg-card-soft); border:1.5px solid var(--border-card); border-radius:10px; padding:12px; font-family:var(--font); font-weight:600; max-height:100%; overflow-y:auto;">${cachedTranscript}</div>
+        `;
+      }
+    }
+  } 
+  else if (mode === 'generate') {
+    const isTranscribing = document.getElementById('transcribeBtn')?.disabled || false;
+    const btnLabel = isTranscribing ? '⏳ Transcribing...' : '🎤 Generate Transcript';
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; gap:12px; padding:20px; box-sizing:border-box;">
+        <span style="font-size:2rem;">⚡</span>
+        <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); font-family:var(--font);">Gemini & Whisper AI Transcription</div>
+        <p style="font-size:0.7rem; color:var(--text-muted); max-width:280px; margin:0 auto; font-family:var(--font); line-height:1.4;">Convert all spoken audio from the video into text segments. This will power subtitles, automated stops, and step descriptions.</p>
+        <button onclick="window.transcribeVideo()" id="fixedTranscribeBtn" class="btn" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-family:var(--font); font-weight:900; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 8px rgba(124,58,237,0.25);" ${isTranscribing ? 'disabled' : ''}>
+          ${btnLabel}
+        </button>
+      </div>
+    `;
+  }
+  else if (mode === 'edit') {
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:10px; flex:1; height:100%;">
+        <textarea id="transcriptEditText" style="width:100%; flex:1; min-height:200px; max-height:100%; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.8rem; font-weight:600; color:var(--text-body); resize:vertical; outline:none; line-height:1.5; box-sizing:border-box;" placeholder="Type or paste transcript here...">${cachedTranscript || ''}</textarea>
+        <button onclick="window.saveTranscriptEdits()" class="btn" style="align-self:flex-end; background:var(--primary); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px var(--primary-glow);">
+          💾 Save Changes
+        </button>
+      </div>
+    `;
+  }
+};
+
+window.seekVideoTo = function(seconds) {
+  const vid = document.getElementById('uploadedVideoPlayer');
+  if (vid) {
+    vid.currentTime = seconds;
+    if (typeof currentTime !== 'undefined') currentTime = seconds;
+  }
+};
+
+window.saveTranscriptEdits = function() {
+  const textarea = document.getElementById('transcriptEditText');
+  if (!textarea) return;
+  
+  const val = textarea.value;
+  window.cachedTranscript = val;
+  
+  showTip('💾 Transcript edits saved successfully!');
+  window.switchTranscriptMode('view');
 };
 
 // ── Custom Page Editor & Inline Creation Methods ──
@@ -15610,6 +15769,12 @@ window.removeCustomPageCard = function(tabId) {
 window.updateCustomPageName = function(tabId, val) {
   if (customPages[tabId]) {
     customPages[tabId].name = val;
+    if (window.activeEditorTab === tabId) {
+      const labelEl = document.getElementById('editorTabSelectorLabel');
+      if (labelEl) {
+        labelEl.textContent = `${customPages[tabId].icon || '📝'} ${val || 'Untitled Page'}`;
+      }
+    }
   }
 };
 
