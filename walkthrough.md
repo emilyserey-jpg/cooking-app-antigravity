@@ -12,6 +12,8 @@ This walkthrough details the structural changes, bug fixes, and test verificatio
   - Increased the minimum height of the editor cards (`#editorStopsBodyCard` and `#editorTranscriptsCard`) in [index.html](file:///Users/emilyserey/Desktop/App/index.html) from `450px` to `520px`.
   - Set the step card (`.loop-stop-card`) minimum height to `450px`, the steps list container (`#createStepsList`) minimum height to `470px`, and expanded the Step Ingredients textarea height to `85px` in [app.js](file:///Users/emilyserey/Desktop/App/app.js).
   - This ensures that all step card details (header, timers, description notes, ingredients, and the Edit Options dropdown action button) fit vertically and remain fully visible and clickable without being clipped by the parent container's vertical boundary.
+* **Removed Dashed Divider Line**: Removed the dashed divider element above the `+ Add Custom Page` option inside the dropdown menu, simplifying dropdown menu list structure.
+* **Dropdown Menu Reordering**: Changed the sorting order of the editor dropdown options from top to bottom to match the requested flow: `Loop Stops` -> `Add Custom Page` -> `Transcripts` -> `Preview & Save`.
 
 ### 2. Video Player Side Panels & Floating Controls Overlay
 * **Problem**: When a portrait/vertical video was played, it was letterboxed inside a 16:9 container, displaying light blue rectangular side panels. The floating back and grid buttons were also positioned on the far sides of these panels rather than on the video display itself.
