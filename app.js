@@ -15158,13 +15158,6 @@ window.syncCustomPageUI = function() {
     }
     const btnText = page.hasBeenSaved ? 'Update' : 'Save';
 
-    // AI Generation Button State
-    const isManual = page.content && page.content.trim().length > 0 && !page.content.startsWith('AI is generating');
-    const aiBtnHtml = isManual 
-      ? '<span>Content Saved Manually</span>' 
-      : '<span>AI: Generate Page Content</span>';
-    const aiBtnDisabled = isManual ? 'disabled' : '';
-
     cardsHtml += `
       <!-- Setup Details Card for ${tabId} -->
       <div class="glass-card" id="card_${tabId}" style="padding:12px;min-height:350px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;width:100%;flex-shrink:0;scroll-snap-align:center;">
@@ -15239,12 +15232,6 @@ window.syncCustomPageUI = function() {
               style="width:100%; height:120px; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">${page.content}</textarea>
           </div>
-
-          <!-- Create & Generate Button -->
-          <button id="createInlineCustomPageBtn_${tabId}" ${aiBtnDisabled} onclick="window.generateCustomPageBtnClick('${tabId}')"
-            style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;box-shadow:0 3px 8px var(--primary-glow);margin-top:auto;display:flex;align-items:center;justify-content:center;gap:4.5px;box-sizing:border-box;margin-bottom:6px;">
-            ${aiBtnHtml}
-          </button>
 
           <!-- Save/Update Page Changes Button -->
           <button id="saveInlineChangesBtn_${tabId}" onclick="window.saveInlineCustomPageChanges('${tabId}')"
@@ -15693,38 +15680,11 @@ window.updateCustomPageContent = function(tabId, val) {
   if (customPages[tabId]) {
     customPages[tabId].content = val;
   }
-  window.updateInlineCustomPageButtonText(tabId);
-};
-
-window.generateCustomPageBtnClick = function(tabId) {
-  const page = customPages[tabId];
-  if (!page) return;
-  
-  let detectedPromptType = page.promptType || 'custom';
-  if (detectedPromptType === 'custom') {
-    const nameLower = (page.name || '').toLowerCase();
-    if (nameLower.includes('ingredient')) detectedPromptType = 'ingredients';
-    else if (nameLower.includes('lyric') || nameLower.includes('song')) detectedPromptType = 'lyrics';
-    else if (nameLower.includes('utensil') || nameLower.includes('tool') || nameLower.includes('equipment')) detectedPromptType = 'utensils';
-    else if (nameLower.includes('nutrition') || nameLower.includes('calorie') || nameLower.includes('macro')) detectedPromptType = 'nutrition';
-    else if (nameLower.includes('tip') || nameLower.includes('advice')) detectedPromptType = 'tips';
-    else if (nameLower.includes('wine') || nameLower.includes('pairing') || nameLower.includes('drink')) detectedPromptType = 'wine';
-  }
-
-  window.generateContentForInlineSetup(tabId, detectedPromptType, page.name);
 };
 
 window.generateContentForInlineSetup = async function(tabId, promptType, pageName) {
   const contentInput = document.getElementById(`inlineCustomPageContentInput_${tabId}`);
   if (!contentInput) return;
-
-  const btn = document.getElementById(`createInlineCustomPageBtn_${tabId}`);
-  const origHtml = btn ? btn.innerHTML : '';
-  
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span>Generating...</span>';
-  }
 
   contentInput.value = `AI is generating content for "${pageName}"...`;
   contentInput.disabled = true;
@@ -15803,26 +15763,6 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
     contentInput.disabled = false;
     window.setCustomPageAiStatus(tabId, 'Failed: ' + err.message, 'error');
     if (typeof setAIStatus === 'function') setAIStatus('Failed: ' + err.message, false);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = origHtml;
-    }
-    window.updateInlineCustomPageButtonText(tabId);
-  }
-};
-
-window.updateInlineCustomPageButtonText = function(tabId) {
-  const contentInput = document.getElementById(`inlineCustomPageContentInput_${tabId}`);
-  const btn = document.getElementById(`createInlineCustomPageBtn_${tabId}`);
-  if (!btn) return;
-  const isManual = contentInput && contentInput.value.trim().length > 0 && !contentInput.value.startsWith('AI is generating');
-  if (isManual) {
-    btn.innerHTML = '<span>Content Saved Manually</span>';
-    btn.disabled = true;
-  } else {
-    btn.innerHTML = '<span>AI: Generate Page Content</span>';
-    btn.disabled = false;
   }
 };
 
