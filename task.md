@@ -43,6 +43,8 @@
 - [x] Convert bottom action button into a dedicated, single full-width Save Page Changes button
 - [x] Add "Save & Update" button next to "Generate Transcript" on simplified Video Transcript page and implement `window.saveTranscriptManualEdits` to persist edits to cachedTranscript and active recipe state
 - [x] Remove all emojis from the application UI elements (buttons, headers, labels, placeholders) in index.html, mobile.html, and app.js
+- [x] Restore "AI: Create Steps (With Audio)" and "AI: Analyze Video Only (No Audio)" buttons inside the Loop Stops tab header on desktop and verify they work
+
 
 
 - [x] Integrate Lucide check SVG vector icon into the Save Page Changes button
