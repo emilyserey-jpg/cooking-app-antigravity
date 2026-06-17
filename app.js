@@ -14158,7 +14158,7 @@ function updateToolbarButtonStates(activeIndex) {
         if (tabName === 'stops') labelEl.textContent = 'Loop Stops';
         else if (tabName === 'ingredients') labelEl.textContent = 'Ingredients';
         else if (tabName === 'save') labelEl.textContent = 'Preview & Save';
-        else if (tabName === 'add_custom') labelEl.textContent = 'Add Custom Page';
+        else if (tabName === 'add_custom') labelEl.textContent = 'Custom Pages';
         else if (customPages[tabName]) {
           labelEl.textContent = `${customPages[tabName].icon} ${customPages[tabName].name || 'Untitled Page'}`;
         }
@@ -15425,22 +15425,14 @@ window.toggleEditorTabDropdown = function(e) {
       `;
     }
 
-    const hasCustomPages = Object.keys(customPages).length > 0;
-    const customPagesTabHtml = hasCustomPages ? `
-      <button onclick="window.switchEditorTab('add_custom')" id="optTabAddCustom" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        Custom Pages
-      </button>
-    ` : '';
-
     menu.innerHTML = `
       <button onclick="window.switchEditorTab('stops')" id="optTabStops" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         Loop Stops
       </button>
       
-      <button onclick="window.addNewCustomPageCard()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        Add Custom Page
+      <button onclick="window.switchEditorTab('add_custom')" id="optTabAddCustom" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        Custom Pages
       </button>
-      ${customPagesTabHtml}
       <div id="dynamicCustomPageOptions" style="display:flex; flex-direction:column; gap:4px;">
         ${customOptionsHtml}
       </div>
