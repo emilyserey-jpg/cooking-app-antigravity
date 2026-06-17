@@ -42,6 +42,8 @@
 - [x] Remove emojis from all AI status update notifications inside `setCustomPageAiStatus` and `setAIStatus`
 - [x] Convert bottom action button into a dedicated, single full-width Save Page Changes button
 - [x] Add "Save & Update" button next to "Generate Transcript" on simplified Video Transcript page and implement `window.saveTranscriptManualEdits` to persist edits to cachedTranscript and active recipe state
+- [x] Remove all emojis from the application UI elements (buttons, headers, labels, placeholders) in index.html, mobile.html, and app.js
+
 
 - [x] Integrate Lucide check SVG vector icon into the Save Page Changes button
 - [x] Assert Save Page Changes button renders successfully inside integration test suite

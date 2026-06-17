@@ -493,7 +493,7 @@
         <!-- ── Library Header ── -->
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;">
           <div>
-            <h2 style="font-size:1.7rem;font-weight:900;color:var(--text-heading);margin-bottom:3px;">📁 My Library</h2>
+            <h2 style="font-size:1.7rem;font-weight:900;color:var(--text-heading);margin-bottom:3px;">My Library</h2>
             <p style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">Your saved videos — organized your way</p>
           </div>
           <button onclick="libCreateFolder()"
@@ -825,7 +825,7 @@
           style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;">
           <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+              <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">Save to Folder</h3>
               <button onclick="window.closePlayerSaveToFolderModal()"
                 style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
                 onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
@@ -873,7 +873,7 @@
 
       <!-- Section header -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-        <h2 style="font-size:1.5rem;font-weight:900;color:var(--text-heading);">🌎 Public Recipes</h2>
+        <h2 style="font-size:1.5rem;font-weight:900;color:var(--text-heading);">Public Recipes</h2>
         <span id="discoverCount" style="font-size:0.85rem;font-weight:700;color:var(--text-muted);">Loading...</span>
       </div>
 
@@ -1102,7 +1102,7 @@
             </div>
             <div style="background:rgba(168,85,247,0.06); border-radius:14px; padding:10px; text-align:center; border:1px solid var(--border-card); grid-column:span 2;">
               <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-                <span style="font-size:1.4rem;">🔥</span>
+                
                 <div>
                   <div id="profileStreakCount" style="font-size:1.2rem; font-weight:900; color:#f59e0b; line-height:1.2; text-align:left;">0 Days</div>
                   <div style="font-size:0.55rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; text-align:left;">Cooking Streak</div>
@@ -1116,7 +1116,7 @@
         <div class="bento-widget span-2" id="bentoCalendarWidget">
           <div class="bento-calendar-header">
             <div class="bento-calendar-title">
-              📅 Cooked Meal History
+              Cooked Meal History
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
@@ -1133,7 +1133,7 @@
         <div class="bento-widget" id="bentoGroceryWidget">
           <div class="grocery-widget-header">
             <div class="grocery-widget-title">
-              🛒 Shopping List
+              Shopping List
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="clearCompletedGroceryItems()" style="background:none; border:none; color:var(--primary); font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer;" title="Clear checked items">Clear Done</button>
@@ -1154,7 +1154,7 @@
         <!-- Widget 5: Quick Cook Timer (Span 1) -->
         <div class="bento-widget" id="bentoTimerWidget" style="display:none;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">⏱️ Quick Timer</div>
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Quick Timer</div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="toggleWidgetSize('bentoTimerWidget')" id="resizeBtn_bentoTimerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change timer widget layout size">↔ Size: Small</button>
               <button onclick="hideBentoWidget('bentoTimerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
@@ -1178,7 +1178,7 @@
         <!-- Widget 6: Water Intake Tracker (Span 1) -->
         <div class="bento-widget" id="bentoWaterWidget" style="display:none;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">💧 Daily Water Tracker</div>
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Daily Water Tracker</div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="toggleWidgetSize('bentoWaterWidget')" id="resizeBtn_bentoWaterWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change water widget layout size">↔ Size: Small</button>
               <button onclick="hideBentoWidget('bentoWaterWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
@@ -1196,7 +1196,7 @@
         <!-- Widget 7: Meal Planner Tracker (Span 1) -->
         <div class="bento-widget" id="bentoMealPlannerWidget" style="display:none;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">🍳 Today's Menu</div>
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Today's Menu</div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="toggleWidgetSize('bentoMealPlannerWidget')" id="resizeBtn_bentoMealPlannerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change meal planner widget layout size">↔ Size: Small</button>
               <button onclick="hideBentoWidget('bentoMealPlannerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
@@ -1223,7 +1223,7 @@
       <!-- ══ LIBRARY FOLDERS PREVIEW ══ -->
       <div class="bento-dashboard-folders-container">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">📁 My Library</div>
+          <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);">My Library</div>
           <button onclick="switchView('grid-view')" style="background:none;border:none;font-size:0.75rem;font-weight:800;color:var(--primary);cursor:pointer;">View All →</button>
         </div>
         <div id="mySpaceFolderStrip"
@@ -1237,13 +1237,13 @@
 
       <!-- ══ MY RECIPES ══ -->
       <div class="bento-dashboard-recipes-container">
-        <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:12px;">🎬 My Recipes</div>
+        <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:12px;">My Recipes</div>
         <!-- Filter tabs -->
         <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;">
           <button class="btn btn-primary" id="profileTabAll" onclick="filterProfileRecipes('all')" style="border-radius:999px;">All</button>
-          <button class="btn" id="profileTabPublic" onclick="filterProfileRecipes('public')" style="border-radius:999px;">🌎 Public</button>
-          <button class="btn" id="profileTabPrivate" onclick="filterProfileRecipes('private')" style="border-radius:999px;">🔒 Private</button>
-          <button class="btn" id="profileTabDraft" onclick="filterProfileRecipes('draft')" style="border-radius:999px;">📝 Drafts</button>
+          <button class="btn" id="profileTabPublic" onclick="filterProfileRecipes('public')" style="border-radius:999px;">Public</button>
+          <button class="btn" id="profileTabPrivate" onclick="filterProfileRecipes('private')" style="border-radius:999px;">Private</button>
+          <button class="btn" id="profileTabDraft" onclick="filterProfileRecipes('draft')" style="border-radius:999px;">Drafts</button>
         </div>
         <!-- Recipe grid -->
         <div id="profileGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;">
@@ -1515,7 +1515,7 @@
                   <!-- AI Ingredients button moved from AI Tools -->
                   <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
                     style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
-                    <span>✍️ AI Ingredients</span>
+                    <span>AI Ingredients</span>
                     <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
                   </button>
                   
@@ -1523,7 +1523,7 @@
                     <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin:0;">Ingredients List</label>
                     <button id="aiEditIngredientsBtn" onclick="window.editIngredientsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine the ingredients list"
                       style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
-                      🪄 AI Edit
+                      AI Edit
                     </button>
                   </div>
                   <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
@@ -1540,13 +1540,13 @@
         <!-- Mobile Editor Tab Bar (Horizontal Menu Bar) -->
         <div id="editorTabBarMobile" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding:4px 0 8px;margin-top:6px;flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
           <button id="tabBtnStopsMobile" onclick="window.scrollToCarouselSlide(0)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;box-shadow:0 4px 12px var(--primary-glow);">
-            📍 Stops
+            Stops
           </button>
           <button id="tabBtnPagesMobile" onclick="window.scrollToCarouselSlide(1)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
-            📝 Pages
+            Pages
           </button>
           <button id="tabBtnSaveMobile" onclick="window.scrollToCarouselSlide(2)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
-            💾 Save
+            Save
           </button>
         </div>
 
@@ -1563,7 +1563,7 @@
                 <div style="margin-left:auto; display:flex; align-items:center; gap:4px;">
                   <button id="toggleAiToolsBtn" onclick="window.toggleAiToolsCollapse()" title="Toggle AI generation buttons"
                     style="background:#ede9ff; color:#7c3aed; border:1.5px solid rgba(124,58,237,0.3); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
-                    🤖 AI Generator <span id="aiToolsChevron">▾</span>
+                    AI Generator <span id="aiToolsChevron">▾</span>
                   </button>
                 </div>
               </div>
@@ -1590,7 +1590,7 @@
                   <div style="position:relative;width:100%;margin-bottom:6px;">
                     <button id="aiLoopBtn" onclick="doItAll()"
                       style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
-                      <span>🔁 AI: Create Steps from Analyzing Video</span>
+                      <span>AI: Create Steps from Analyzing Video</span>
                       <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
                     </button>
                     <span onclick="event.stopPropagation(); window.toggleAiInfo('speech');" title="View details"
@@ -1606,7 +1606,7 @@
                   <div style="position:relative;width:100%;margin-bottom:6px;">
                     <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
                       style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
-                      <span>🎥 AI: Analyze Video Only (No Audio)</span>
+                      <span>AI: Analyze Video Only (No Audio)</span>
                     </button>
                     <span onclick="event.stopPropagation(); window.toggleAiInfo('video');" title="View details"
                       style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
@@ -1621,7 +1621,7 @@
                   <div style="position:relative;width:100%;margin-bottom:6px;">
                     <button id="transcribeBtnMobile" onclick="window.transcribeVideo()" class="btn"
                       style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(16,185,129,0.2);white-space:nowrap;margin-bottom:0;">
-                      <span>🎤 AI: Generate Transcript</span>
+                      <span>AI: Generate Transcript</span>
                       <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;">✓</span>
                     </button>
                     <span onclick="event.stopPropagation(); window.toggleAiInfo('transcript');" title="View details"
@@ -1670,7 +1670,7 @@
             <div class="glass-card" id="editorVisibilityCard" style="display:flex; align-items:center; justify-content:space-between; padding:9px 13px; flex-shrink:0;">
               <div>
                 <div style="font-weight:800; color:var(--text-heading); font-size:0.82rem;">Visibility</div>
-                <div id="privacyLabel" style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">🔒 Private</div>
+                <div id="privacyLabel" style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Private</div>
               </div>
               <div onclick="toggleCreatePrivacy()" id="privacyToggle"
                 style="width:48px; height:26px; border-radius:999px; background:#e0eaf4; cursor:pointer; position:relative; transition:background 0.25s; border:2px solid rgba(74,144,217,0.15);">
@@ -1683,16 +1683,16 @@
               <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Preview Cover (Thumbnail)</label>
               <div style="display:flex; gap:12px; align-items:center; margin-bottom:8px;">
                 <div id="createThumbnailPreviewContainer" style="width:96px; height:54px; border-radius:8px; background:#1a2235; overflow:hidden; border:2px solid var(--border-card); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
-                  <span id="createThumbnailPlaceholder" style="font-size:1.1rem;">🖼️</span>
+                  <span id="createThumbnailPlaceholder" style="font-size:1.1rem;display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i data-lucide="image" style="width:18px;height:18px;"></i></span>
                   <img id="createThumbnailPreviewImg" style="width:100%; height:100%; object-fit:cover; display:none; border-radius:6px;">
                 </div>
                 <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
                   <div style="display:flex; gap:6px;">
                     <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="flex:1; padding:6px 12px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; background:var(--bg-card-soft); border:2px solid var(--border-card); cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs);">
-                      📁 Choose Image
+                      Choose Image
                     </button>
                     <button type="button" onclick="window.generateAICover()" class="btn" style="flex:1; padding:6px 12px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs); background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; color:#fff;">
-                      🪄 AI Cover
+                      AI Cover
                     </button>
                   </div>
                   <span id="coverUploadStatus" style="font-size:0.58rem; color:var(--text-muted); font-weight:600; line-height:1.2;">Captured from video or custom</span>
@@ -1709,22 +1709,22 @@
             </button>
             <button onclick="saveDraft()" id="saveDraftBtn"
               style="width:100%; background:#fff; color:var(--text-muted); border:2px solid var(--border-card); border-radius:999px; padding:9px; font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; flex-shrink:0; margin-bottom:8px;">
-              💾 Save
+              Save
             </button>
           </div>
         </div>
 
         <div id="mobileEditorToolbar" class="mobile-editor-toolbar" style="display:none !important;">
           <button onclick="window.scrollToCarouselSlide(0)" id="btnToolbarStops" class="toolbar-btn active">
-            <span class="icon">📍</span>
+            <span class="icon"><i data-lucide="map-pin" style="width:14px;height:14px;"></i></span>
             <span class="label">Stops</span>
           </button>
           <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarPages" class="toolbar-btn">
-            <span class="icon">📝</span>
+            <span class="icon"><i data-lucide="book-open" style="width:14px;height:14px;"></i></span>
             <span class="label">Pages</span>
           </button>
           <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarSave" class="toolbar-btn">
-            <span class="icon">💾</span>
+            <span class="icon"><i data-lucide="save" style="width:14px;height:14px;"></i></span>
             <span class="label">Save</span>
           </button>
         </div>
@@ -1733,7 +1733,7 @@
         <div id="manualTimestampModal" class="timestamp-modal-overlay" style="display: none;">
           <div class="timestamp-modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading);">⌨️ Enter Timestamp</h3>
+              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading);">Enter Timestamp</h3>
               <button onclick="window.closeManualTimestampModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">&times;</button>
             </div>
             <div style="margin-bottom:16px;">
@@ -1751,7 +1751,7 @@
         <div id="aiTweakDescriptionModal" class="timestamp-modal-overlay" onclick="if(event.target===this) window.closeAiTweakDescriptionModal()" style="display: none;">
           <div class="timestamp-modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:6px;">✨ AI Description Edit</h3>
+              <h3 style="margin:0; font-size:1rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:6px;">AI Description Edit</h3>
               <button onclick="window.closeAiTweakDescriptionModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">&times;</button>
             </div>
             <div style="margin-bottom:16px;">
@@ -1770,7 +1770,7 @@
 
       <!-- STAGE 3: Success -->
       <div id="createStage3" style="display:none;max-width:500px;margin:4rem auto;text-align:center;">
-        <div style="font-size:5rem;margin-bottom:1rem;">🎉</div>
+        <div style="font-size:5rem;margin-bottom:1rem;color:var(--success);display:flex;align-items:center;justify-content:center;"><i data-lucide="check-circle" style="width:64px;height:64px;"></i></div>
         <h2 style="font-size:1.8rem;font-weight:900;color:var(--text-heading);margin-bottom:0.75rem;">Recipe Saved!</h2>
         <p id="savedRecipeMsg" style="color:var(--text-muted);font-weight:600;margin-bottom:2rem;">Your recipe has been saved to your library.</p>
         <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
@@ -1905,7 +1905,7 @@
   <div id="libFolderModal"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
-      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">📁 New Folder</h3>
+      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">New Folder</h3>
       <input id="libFolderNameInput" placeholder="Folder name…"
         style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:10px;border:2px solid var(--border-card);font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--text-heading);outline:none;margin-bottom:1rem;"
         onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"
@@ -1929,7 +1929,7 @@
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
     <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;border:1px solid rgba(0,0,0,0.1);box-sizing:border-box;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">Save to Folder</h3>
         <button onclick="window.closePlayerSaveToFolderModal()"
           style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
           onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
@@ -1962,7 +1962,7 @@
           style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
           onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
           onmouseleave="this.style.opacity='1';this.style.transform='none';">
-          <span>💾 Save to Selected Folder</span>
+          <span>Save to Selected Folder</span>
         </button>
 
         <div style="display:flex;gap:10px;">
@@ -1970,7 +1970,7 @@
             style="flex:1;background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
             onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
             onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
-            <span>➕ New Folder</span>
+            <span>New Folder</span>
           </button>
           
           <button onclick="window.closePlayerSaveToFolderModal()"
@@ -1983,7 +1983,7 @@
           style="background:rgba(34,197,94,0.08);color:#16a34a;border:2px dashed rgba(34,197,94,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
           onmouseenter="this.style.background='rgba(34,197,94,0.12)';this.style.borderColor='rgba(34,197,94,0.5)';"
           onmouseleave="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='rgba(34,197,94,0.3)';">
-          <span>📥 Save to Local Files (Download)</span>
+          <span>Save to Local Files (Download)</span>
         </button>
       </div>
     </div>
@@ -2034,7 +2034,7 @@
           style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
           onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
           onmouseleave="this.style.opacity='1';this.style.transform='none';">
-          <span>📋 Copy Embed Code</span>
+          <span>Copy Embed Code</span>
         </button>
         
         <button onclick="window.closePlayerEmbedModal()"
@@ -2090,7 +2090,7 @@
           style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
           onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
           onmouseleave="this.style.opacity='1';this.style.transform='none';">
-          <span>📋 Copy Embed Code</span>
+          <span>Copy Embed Code</span>
         </button>
         
         <button onclick="window.closePlayerEmbedModal()"
@@ -2218,7 +2218,7 @@
   <div id="libFolderModal"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
-      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">📁 New Folder</h3>
+      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">New Folder</h3>
       <input id="libFolderNameInput" placeholder="Folder name…"
         style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:10px;border:2px solid var(--border-card);font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--text-heading);outline:none;margin-bottom:1rem;"
         onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"
@@ -2242,7 +2242,7 @@
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
     <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;border:1px solid rgba(0,0,0,0.1);box-sizing:border-box;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">Save to Folder</h3>
         <button onclick="window.closePlayerSaveToFolderModal()"
           style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
           onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
@@ -2275,7 +2275,7 @@
           style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
           onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
           onmouseleave="this.style.opacity='1';this.style.transform='none';">
-          <span>💾 Save to Selected Folder</span>
+          <span>Save to Selected Folder</span>
         </button>
 
         <div style="display:flex;gap:10px;">
@@ -2283,7 +2283,7 @@
             style="flex:1;background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
             onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
             onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
-            <span>➕ New Folder</span>
+            <span>New Folder</span>
           </button>
           
           <button onclick="window.closePlayerSaveToFolderModal()"
@@ -2296,7 +2296,7 @@
           style="background:rgba(34,197,94,0.08);color:#16a34a;border:2px dashed rgba(34,197,94,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
           onmouseenter="this.style.background='rgba(34,197,94,0.12)';this.style.borderColor='rgba(34,197,94,0.5)';"
           onmouseleave="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='rgba(34,197,94,0.3)';">
-          <span>📥 Save to Local Files (Download)</span>
+          <span>Save to Local Files (Download)</span>
         </button>
       </div>
     </div>
@@ -2347,7 +2347,7 @@
           style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
           onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
           onmouseleave="this.style.opacity='1';this.style.transform='none';">
-          <span>📋 Copy Embed Code</span>
+          <span>Copy Embed Code</span>
         </button>
         
         <button onclick="window.closePlayerEmbedModal()"

@@ -2410,7 +2410,7 @@ function renderPlayerIngredients() {
       customPanel.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-card); padding-bottom:6px;">
           <span style="font-size:0.75rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:4px;">
-            ${page.icon || '📝'} ${page.name}
+            ${page.name}
           </span>
         </div>
         <div style="font-size:0.72rem; color:var(--text-body); line-height:1.5; font-weight:600; max-height:200px; overflow-y:auto; padding-right:2px; white-space: pre-wrap;">${page.content || 'No content generated yet.'}</div>
@@ -10798,7 +10798,7 @@ function renderCreateSteps() {
             <button id="regenVoiceoverBtn-${i}" onclick="window.generateSingleVoiceover(${i})" 
               style="background:#fff; color:#ec4899; border:1.5px solid rgba(236,72,153,0.25); border-radius:6px; padding:3px 8px; font-family:var(--font); font-weight:800; font-size:0.65rem; cursor:pointer; transition:all 0.15s; white-space:nowrap;"
               onmouseenter="this.style.background='#fff1f2';" onmouseleave="this.style.background='#fff';">
-              ${hasAudio ? '🎙️ Re-generate' : '🎙️ Generate'}
+              ${hasAudio ? 'Re-generate' : '🎙️ Generate'}
             </button>
           </div>
           <div style="font-size:0.7rem; color:var(--text-muted); font-style:italic; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
@@ -13474,17 +13474,17 @@ window.doItAll = async function() {
     let textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
     if (!textVal) {
       setButtonsState(true, '1/3: Transcribing...');
-      setAIStatus('🎤 Step 1/3: Generating video transcript...', true);
-      showTip('🎤 Transcribing audio...');
+      setAIStatus('Step 1/3: Generating video transcript...', true);
+      showTip('Transcribing audio...');
       await window.transcribeVideo();
       
       textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
       if (!textVal) {
         throw new Error('Could not generate transcript. Please ensure the video has audio or try again.');
       }
-      showTip('🎙️ Transcript successfully created!');
+      showTip('Transcript successfully created!');
     } else {
-      showTip('📖 Using current transcript to build steps...');
+      showTip('Using current transcript to build steps...');
     }
 
     // 2. Detect loop stops from transcript
@@ -13695,22 +13695,22 @@ window.createStepsFromTranscript = async function() {
   try {
     let textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
     if (!textVal) {
-      setAIStatus('🎤 Step 1/3: Generating video transcript...', true);
-      showTip('🎤 Transcribing audio...');
+      setAIStatus('Step 1/3: Generating video transcript...', true);
+      showTip('Transcribing audio...');
       await window.transcribeVideo();
       
       textVal = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
       if (!textVal) {
         throw new Error('Could not generate transcript. Please transcribe first.');
       }
-      showTip('🎙️ Transcript successfully created!');
+      showTip('Transcript successfully created!');
     } else {
-      showTip('📖 Using current transcript to build steps...');
+      showTip('Using current transcript to build steps...');
     }
 
     // 2. Detect loop stops from transcript
-    if (btn) btn.textContent = '⏳ 2/3: Loops...';
-    setAIStatus('🔁 Step 2/3: Detecting loop timestamps...', true);
+    if (btn) btn.textContent = '2/3: Loops...';
+    setAIStatus('Step 2/3: Detecting loop timestamps...', true);
     const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
     const loopsRes = await fetch('/api/ai/loops', {
       method: 'POST',
@@ -13736,15 +13736,15 @@ window.createStepsFromTranscript = async function() {
         endTime: end,
         label: l.label || `Step ${i+1}`,
         displayTime: `${m}:${s}`,
-        description: '⏳ Writing instruction...',
+        description: 'Writing instruction...',
         ingredients: [],
         timer: null
       };
     }).sort((a, b) => a.time - b.time);
 
     // 3. Write descriptions & ingredients for these loop stops from segments
-    if (btn) btn.textContent = '⏳ 3/3: Steps...';
-    setAIStatus('✍️ Step 3/3: Writing descriptions & ingredients...', true);
+    if (btn) btn.textContent = '3/3: Steps...';
+    setAIStatus('Step 3/3: Writing descriptions & ingredients...', true);
     const stepsPayload = tempSteps.map(s => ({
       label: s.label,
       startTime: s.time,
@@ -13788,15 +13788,15 @@ window.createStepsFromTranscript = async function() {
     renderCreateSteps();
     renderTimeline();
     
-    setAIStatus(`🎉 Successfully created ${createStepsArr.length} steps from transcript!`, true);
-    showTip(`✅ Steps successfully created based off transcript!`);
+    setAIStatus(`Successfully created ${createStepsArr.length} steps from transcript!`, true);
+    showTip(`Steps successfully created based off transcript!`);
   } catch (err) {
     setAIStatus('❌ ' + (err.message || 'Error.'), true);
     showTip('❌ Failed: ' + (err.message || 'Error.'));
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🪄 AI: Audio-to-Step Generator';
+      btn.textContent = 'AI: Audio-to-Step Generator';
     }
   }
 };
@@ -14064,10 +14064,10 @@ function updateToolbarButtonStates(activeIndex) {
       
       const labelEl = document.getElementById('editorTabSelectorLabel');
       if (labelEl) {
-        if (tabName === 'stops') labelEl.textContent = '📍 Loop Stops';
-        else if (tabName === 'ingredients') labelEl.textContent = '📝 Ingredients';
-        else if (tabName === 'save') labelEl.textContent = '🖼️ Preview & Save';
-        else if (tabName === 'add_custom') labelEl.textContent = '➕ Add Custom Page';
+        if (tabName === 'stops') labelEl.textContent = 'Loop Stops';
+        else if (tabName === 'ingredients') labelEl.textContent = 'Ingredients';
+        else if (tabName === 'save') labelEl.textContent = 'Preview & Save';
+        else if (tabName === 'add_custom') labelEl.textContent = 'Add Custom Page';
         else if (customPages[tabName]) {
           labelEl.textContent = `${customPages[tabName].icon} ${customPages[tabName].name || 'Untitled Page'}`;
         }
@@ -14266,11 +14266,11 @@ window.downloadCurrentVideo = async function() {
                    ((typeof recipeData === 'object' && recipeData) ? recipeData.video_url : '') || '';
                    
   if (!videoUrl) {
-    showTip("❌ No video URL found to download.");
+    showTip("No video URL found to download.");
     return;
   }
 
-  showTip("⏳ Fetching video for download...");
+  showTip("Fetching video for download...");
 
   try {
     const response = await fetch(videoUrl);
@@ -14294,7 +14294,7 @@ window.downloadCurrentVideo = async function() {
 
     // Clean up blob URL after a short delay
     setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-    showTip("✅ Video download started!");
+    showTip("Video download started!");
   } catch (error) {
     console.error("Download failed:", error);
     // Fallback: open URL in a new tab if blob fetch fails (e.g. CORS)
@@ -14305,7 +14305,7 @@ window.downloadCurrentVideo = async function() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    showTip("✅ Opening video in new tab for download.");
+    showTip("Opening video in new tab for download.");
   }
 };
 
@@ -14425,7 +14425,7 @@ window.handleShareAction = function(action) {
         text: `Check out this cooking recipe step-by-step video loop on In The Loop: ${title}!`,
         url: shareUrl
       }).then(() => {
-        showTip('Shared successfully! 🚀');
+        showTip('Shared successfully!');
         window.closePlayerShareModal();
       }).catch(err => {
         console.warn('Native share failed or cancelled:', err);
@@ -14439,7 +14439,7 @@ window.handleShareAction = function(action) {
 };
 
 function copyToClipboardHelper(shareUrl, customTip) {
-  const msg = customTip || 'Copied share link to clipboard! 🔗';
+  const msg = customTip || 'Copied share link to clipboard!';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(shareUrl).then(() => {
       showTip(msg);
@@ -14461,7 +14461,7 @@ function copyFallback(text, msg) {
   dummy.select();
   try {
     document.execCommand('copy');
-    showTip(msg || 'Copied share link to clipboard! 🔗');
+    showTip(msg || 'Copied share link to clipboard!');
   } catch (err) {
     console.error('Fallback copy failed:', err);
     showTip('Failed to copy. URL: ' + text);
@@ -14542,7 +14542,7 @@ window.generateAICover = async function() {
   const ingredients = document.getElementById('ingredientsText')?.value?.trim() || '';
   
   if (!title) {
-    showTip('Please enter a recipe title first so AI knows what to cook! 🍲');
+    showTip('Please enter a recipe title first so AI knows what to cook!');
     return;
   }
 
@@ -14554,12 +14554,12 @@ window.generateAICover = async function() {
   }
 
   const btn = event?.currentTarget;
-  const originalText = btn ? btn.innerHTML : '🪄 AI Cover';
+  const originalText = btn ? btn.innerHTML : 'AI Cover';
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '⏳ Generating...';
+    btn.innerHTML = 'Generating...';
   }
-  showTip('🪄 Generating gourmet cover image via Flux on Replicate...');
+  showTip('Generating gourmet cover image via Flux on Replicate...');
 
   try {
     const res = await fetch('/api/ai/generate-cover', {
@@ -14576,7 +14576,7 @@ window.generateAICover = async function() {
         coverInput.value = data.imageUrl;
       }
       window.updateCoverPreviewFromUrl(data.imageUrl);
-      showTip('✅ Gourmet Cover generated and saved to Supabase! 🖼️');
+      showTip('✅ Gourmet Cover generated and saved to Supabase!');
     } else {
       throw new Error('No imageUrl returned');
     }
@@ -14593,23 +14593,23 @@ window.generateAICover = async function() {
 
 window.generateAllVoiceovers = async function() {
   if (!createStepsArr.length) {
-    showTip('Add loop stops first, then tap 🎙️ AI Voiceovers.');
+    showTip('Add loop stops first, then tap AI Voiceovers.');
     return;
   }
 
   const btn = document.getElementById('aiVoiceoverGenerateBtn');
   const mBtn = document.getElementById('aiVoiceoverGenerateBtnMobile');
   
-  const originalText = btn ? btn.innerHTML : '🎙️ AI: Generate Voiceovers for All Steps';
-  const originalMText = mBtn ? mBtn.innerHTML : '🎙️ AI: Generate Voiceovers for All Steps';
+  const originalText = btn ? btn.innerHTML : 'AI: Generate Voiceovers for All Steps';
+  const originalMText = mBtn ? mBtn.innerHTML : 'AI: Generate Voiceovers for All Steps';
 
   const updateButtons = (text, disabled) => {
     if (btn) { btn.disabled = disabled; btn.innerHTML = `<span>${text}</span>`; }
     if (mBtn) { mBtn.disabled = disabled; mBtn.innerHTML = `<span>${text}</span>`; }
   };
 
-  updateButtons('⏳ Preparing...', true);
-  showTip('🎙️ Generating AI voiceovers for each step...');
+  updateButtons('Preparing...', true);
+  showTip('Generating AI voiceovers for each step...');
 
   try {
     const recipeId = editingRecipeId || 'new_recipe_' + Date.now();
@@ -14617,7 +14617,7 @@ window.generateAllVoiceovers = async function() {
       const step = createStepsArr[i];
       const text = step.description?.trim() || step.label?.trim() || `Step ${i + 1}`;
       
-      updateButtons(`🎙️ Step ${i + 1}/${createStepsArr.length}...`, true);
+      updateButtons(`Step ${i + 1}/${createStepsArr.length}...`, true);
       
       const res = await fetch('/api/ai/generate-voiceover', {
         method: 'POST',
@@ -14638,7 +14638,7 @@ window.generateAllVoiceovers = async function() {
     }
 
     renderCreateSteps();
-    showTip('✅ All AI Voiceovers generated and synced to steps! 🎙️');
+    showTip('✅ All AI Voiceovers generated and synced to steps!');
   } catch (err) {
     console.error('[Generate Voiceovers Error]:', err);
     showTip('❌ Voiceover generation failed: ' + err.message);
@@ -14654,8 +14654,8 @@ window.generateSingleVoiceover = async function(i) {
 
   const btn = document.getElementById(`regenVoiceoverBtn-${i}`);
   const btnMobile = document.getElementById(`regenVoiceoverBtnMobile-${i}`);
-  const originalText = btn ? btn.innerHTML : '🎙️ Re-generate';
-  const originalMText = btnMobile ? btnMobile.innerHTML : '🎙️ Re-generate';
+  const originalText = btn ? btn.innerHTML : 'Re-generate';
+  const originalMText = btnMobile ? btnMobile.innerHTML : 'Re-generate';
 
   const updateButtons = (text, disabled) => {
     if (btn) { btn.disabled = disabled; btn.innerHTML = text; }
@@ -15158,10 +15158,10 @@ window.syncCustomPageUI = function() {
     const btnText = page.hasBeenSaved ? 'Update' : 'Save';
 
     // AI Generation Button State
-    const isManual = page.content && page.content.trim().length > 0 && !page.content.startsWith('⏳ AI is generating');
+    const isManual = page.content && page.content.trim().length > 0 && !page.content.startsWith('AI is generating');
     const aiBtnHtml = isManual 
-      ? '<span>➕ Content Saved Manually</span>' 
-      : '<span>🪄 AI: Generate Page Content</span>';
+      ? '<span>Content Saved Manually</span>' 
+      : '<span>AI: Generate Page Content</span>';
     const aiBtnDisabled = isManual ? 'disabled' : '';
 
     cardsHtml += `
@@ -15182,7 +15182,7 @@ window.syncCustomPageUI = function() {
 
         <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
           <span style="font-weight:900;color:var(--text-heading);font-size:0.82rem;display:flex;align-items:center;gap:4px;">
-            📝 Page Details
+            Page Details
           </span>
           <div style="display:inline-flex; align-items:center; gap:6px;">
             <!-- Add Page Button in Header -->
@@ -15213,11 +15213,11 @@ window.syncCustomPageUI = function() {
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
             <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Quick Page Presets</label>
             <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; align-items:center;">
-              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Ingredients', '📝', 'ingredients')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
-                📝 Ingredients
+              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Ingredients', '', 'ingredients')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
+                Ingredients
               </button>
-              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Lyrics', '🎵', 'lyrics')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
-                🎵 Lyrics
+              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Lyrics', '', 'lyrics')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
+                Lyrics
               </button>
             </div>
           </div>
@@ -15283,7 +15283,7 @@ window.syncCustomPageUI = function() {
     if (keys.length === 0) {
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:35px 20px; text-align:center; gap:14px; border:2.5px dashed rgba(124, 58, 237, 0.15); border-radius:16px; margin: 12px; background:rgba(255,255,255,0.4); box-sizing:border-box;">
-          <span style="font-size:2.2rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));">📄</span>
+          <span style="font-size:2.2rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));"></span>
           <h3 style="margin:0; font-size:0.9rem; font-weight:900; color:var(--text-heading); font-family:var(--font);">Create Custom Pages</h3>
           <p style="margin:0; font-size:0.72rem; color:var(--text-muted); line-height:1.4; max-width:240px; font-family:var(--font); font-weight:600;">
             Add custom tab pages to your recipe player containing extra info like kitchen equipment, chef tips, or lyrics.
@@ -15400,7 +15400,7 @@ window.toggleEditorTabDropdown = function(e) {
       if (!page.name || !page.name.trim()) return; // skip untitled custom pages in dropdown
       customOptionsHtml += `
         <button onclick="window.switchEditorTab('${tabId}')" id="optTab_${tabId}" class="custom-page-opt" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-          ${page.icon || '📝'} ${page.name}
+          ${page.name}
         </button>
       `;
     });
@@ -15409,7 +15409,7 @@ window.toggleEditorTabDropdown = function(e) {
     if (!isMobile) {
       transcriptOptionHtml = `
         <button onclick="window.switchEditorTab('transcripts')" id="optTabTranscripts" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-          💬 Transcripts
+          Transcripts
         </button>
       `;
     }
@@ -15417,13 +15417,13 @@ window.toggleEditorTabDropdown = function(e) {
     const hasCustomPages = Object.keys(customPages).length > 0;
     const customPagesTabHtml = hasCustomPages ? `
       <button onclick="window.switchEditorTab('add_custom')" id="optTabAddCustom" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        📝 Custom Pages
+        Custom Pages
       </button>
     ` : '';
 
     menu.innerHTML = `
       <button onclick="window.switchEditorTab('stops')" id="optTabStops" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        📍 Loop Stops
+        Loop Stops
       </button>
       ${customPagesTabHtml}
       
@@ -15432,7 +15432,7 @@ window.toggleEditorTabDropdown = function(e) {
       </div>
 
       <button onclick="window.switchEditorTab('save')" id="optTabSave" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        🖼️ Preview & Save
+        Preview & Save
       </button>
       ${transcriptOptionHtml}
       
@@ -15492,7 +15492,7 @@ window.switchEditorTab = function(tabName) {
       const newId = 'custom_' + Date.now();
       customPages[newId] = {
         name: '',
-        icon: '📝',
+        icon: '',
         content: '',
         promptType: 'custom'
       };
@@ -15508,12 +15508,12 @@ window.switchEditorTab = function(tabName) {
 
   const labelEl = document.getElementById('editorTabSelectorLabel');
   if (labelEl) {
-    if (tabName === 'stops') labelEl.textContent = '📍 Loop Stops';
-    else if (tabName === 'save') labelEl.textContent = '🖼️ Preview & Save';
-    else if (tabName === 'add_custom') labelEl.textContent = '📝 Custom Pages';
-    else if (tabName === 'transcripts') labelEl.textContent = '💬 Transcripts';
+    if (tabName === 'stops') labelEl.textContent = 'Loop Stops';
+    else if (tabName === 'save') labelEl.textContent = 'Preview & Save';
+    else if (tabName === 'add_custom') labelEl.textContent = 'Custom Pages';
+    else if (tabName === 'transcripts') labelEl.textContent = 'Transcripts';
     else if (tabName.startsWith('custom_') && customPages[tabName]) {
-      labelEl.textContent = `${customPages[tabName].icon || '📝'} ${customPages[tabName].name || 'Untitled Page'}`;
+      labelEl.textContent = `${customPages[tabName].name || 'Untitled Page'}`;
     }
   }
 
@@ -15605,7 +15605,7 @@ window.saveTranscriptManualEdits = async function() {
     await window.saveActiveRecipeState();
   }
   if (typeof showTip === 'function') {
-    showTip('💾 Transcript saved and updated! 📝');
+    showTip('Transcript saved and updated!');
   }
 };
 
@@ -15661,7 +15661,7 @@ window.addNewCustomPageCard = function() {
   const newId = 'custom_' + Date.now();
   customPages[newId] = {
     name: '',
-    icon: '📝',
+    icon: '',
     content: '',
     promptType: 'custom'
   };
@@ -15682,7 +15682,7 @@ window.updateCustomPageName = function(tabId, val) {
     if (window.activeEditorTab === tabId) {
       const labelEl = document.getElementById('editorTabSelectorLabel');
       if (labelEl) {
-        labelEl.textContent = `${customPages[tabId].icon || '📝'} ${val || 'Untitled Page'}`;
+        labelEl.textContent = `${val || 'Untitled Page'}`;
       }
     }
   }
@@ -15722,10 +15722,10 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
   
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Generating...</span>';
+    btn.innerHTML = '<span>Generating...</span>';
   }
 
-  contentInput.value = `⏳ AI is generating content for "${pageName}"...`;
+  contentInput.value = `AI is generating content for "${pageName}"...`;
   contentInput.disabled = true;
 
   // Initialize status inside card
@@ -15815,12 +15815,12 @@ window.updateInlineCustomPageButtonText = function(tabId) {
   const contentInput = document.getElementById(`inlineCustomPageContentInput_${tabId}`);
   const btn = document.getElementById(`createInlineCustomPageBtn_${tabId}`);
   if (!btn) return;
-  const isManual = contentInput && contentInput.value.trim().length > 0 && !contentInput.value.startsWith('⏳ AI is generating');
+  const isManual = contentInput && contentInput.value.trim().length > 0 && !contentInput.value.startsWith('AI is generating');
   if (isManual) {
-    btn.innerHTML = '<span>➕ Content Saved Manually</span>';
+    btn.innerHTML = '<span>Content Saved Manually</span>';
     btn.disabled = true;
   } else {
-    btn.innerHTML = '<span>🪄 AI: Generate Page Content</span>';
+    btn.innerHTML = '<span>AI: Generate Page Content</span>';
     btn.disabled = false;
   }
 };
@@ -15940,7 +15940,7 @@ window.generateCustomPageContent = async function(tabId) {
   if (btnRow) {
     origRowText = btnRow.innerHTML;
     btnRow.disabled = true;
-    btnRow.innerHTML = '<span>⏳ Generating...</span>';
+    btnRow.innerHTML = '<span>Generating...</span>';
   }
 
   try {

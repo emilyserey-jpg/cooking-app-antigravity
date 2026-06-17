@@ -40,6 +40,14 @@ All layout, custom page, and workbench scroll tests run in the Chrome DevTools b
 
 ---
 
+## 🧹 Emoji Clean-up
+* **Problem**: The UI contained various emojis in buttons, tab labels, headers, and toast messages, which detracted from the professional styling.
+* **Fix**: Removed all emojis from UI text strings, headers, buttons, and status messages in [index.html](file:///Users/emilyserey/Desktop/App/index.html), [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html), and [app.js](file:///Users/emilyserey/Desktop/App/app.js).
+  * Prominent icon placeholders (like the `🔗` and `🎬` embed/upload cards) were replaced with clean, style-matched Lucide SVG icons (`link` and `video`).
+  * Other inline emojis (such as tab headers, save buttons, and status logs) were stripped entirely or replaced with native icons.
+
+---
+
 ## 📸 Screenshots
 
 ### Transcript "Save & Update" Button
