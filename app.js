@@ -15429,7 +15429,7 @@ window.toggleEditorTabDropdown = function(e) {
       ${transcriptOptionHtml}
       
       <div style="border-top: 1.5px dashed var(--border-card); margin: 4px 0;"></div>
-      <button onclick="window.openAddCustomPageModal()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+      <button onclick="window.addNewCustomPageCard()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; font-size:0.95rem; font-weight:800; color:inherit;">+</span> Add Custom Page
       </button>
     `;
@@ -15444,6 +15444,7 @@ window.toggleEditorTabDropdown = function(e) {
 
     let activeBtn = null;
     if (current === 'stops') activeBtn = document.getElementById('optTabStops');
+    else if (current === 'ingredients') activeBtn = document.getElementById('optTabIngredients');
     else if (current === 'save') activeBtn = document.getElementById('optTabSave');
     else if (current === 'add_custom') activeBtn = document.getElementById('optTabAddCustom');
     else activeBtn = document.getElementById(`optTab_${current}`);
@@ -15596,6 +15597,7 @@ window.addNewCustomPageCard = function() {
     promptType: 'custom'
   };
   window.syncCustomPageUI();
+  window.switchEditorTab(newId);
 };
 
 window.removeCustomPageCard = function(tabId) {
