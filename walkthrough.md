@@ -13,18 +13,26 @@ This walkthrough details the structural changes, bug fixes, and test verificatio
   - Set the step card (`.loop-stop-card`) minimum height to `450px`, the steps list container (`#createStepsList`) minimum height to `470px`, and expanded the Step Ingredients textarea height to `85px` in [app.js](file:///Users/emilyserey/Desktop/App/app.js).
   - This ensures that all step card details (header, timers, description notes, ingredients, and the Edit Options dropdown action button) fit vertically and remain fully visible and clickable without being clipped by the parent container's vertical boundary.
 
-### 2. Ingredient Checked State TypeError
+### 2. Video Player Side Panels & Floating Controls Overlay
+* **Problem**: When a portrait/vertical video was played, it was letterboxed inside a 16:9 container, displaying light blue rectangular side panels. The floating back and grid buttons were also positioned on the far sides of these panels rather than on the video display itself.
+* **Fix**:
+  - Modified the video container sizing logic inside `updateMultigridLayoutClass` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to retrieve the actual aspect ratio of the loaded video (`realVideo.videoWidth / realVideo.videoHeight`).
+  - If a portrait/vertical video is loaded, the container width is dynamically shrunk to exactly match the video's width at the target height, and centered horizontally (`margin: 0 auto;`).
+  - This completely eliminates the empty letterboxed side panels. Since the back, grid, time, and speed controls are absolutely positioned inside the container, they automatically reposition to overlay directly on the video bounds.
+  - Added a window resize event listener to ensure that the layout remains responsive and updates dynamically if the screen width changes.
+
+### 3. Ingredient Checked State TypeError
 * **Problem**: In the player view, rendering the ingredients checklist failed with `TypeError: Cannot read properties of undefined (reading 'has')` at `window.checkedIngredients.has(ing)`.
 * **Fix**: Initialized `window.checkedIngredients` as a new `Set` inside `renderPlayerIngredients` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) if it has not yet been initialized.
 
-### 3. Layout Switcher HierarchyRequestError
+### 4. Layout Switcher HierarchyRequestError
 * **Problem**: Toggling the Full Width recipe editor layout mode crashed the layout script with `HierarchyRequestError: Failed to execute 'appendChild' on 'Node': The new child element contains the parent`.
 * **Investigation**: `#workbenchBottom` was incorrectly nested inside `#recipePanelWrapper` in [index.html](file:///Users/emilyserey/Desktop/App/index.html). Since the layout switcher appends `#recipePanelWrapper` into `#workbenchBottom` for the bottom layout mode, this created a cyclic parent-child loop.
 * **Fix**: 
   - Removed the nested `#workbenchBottom` from `#recipePanelWrapper`.
   - Reinserted `#workbenchBottom` and `#workbenchHorizontalResizer` directly after `#workbenchGrid` as siblings in the vertical grid layout of `#createStage2`.
 
-### 4. Missing Scroll Layout CSS Constraints
+### 5. Missing Scroll Layout CSS Constraints
 * **Problem**: The scrolling integration test failed because the `min-width: 430px` constraints on workbench cards were missing in the active page stylesheet.
 * **Investigation**: `index.html` loads [styles_v853.css](file:///Users/emilyserey/Desktop/App/styles_v853.css) instead of `styles.css`. The rules were present in `styles.css` but missing from `styles_v853.css`.
 * **Fix**: Appended the panel-wide scroll rules (`min-width: 430px` for `#videoResizerBar`, `#workbenchVideoWrapper`, `#editorScrubberCard`, `#stepNavControlsRow`) to the end of `styles_v853.css`.
