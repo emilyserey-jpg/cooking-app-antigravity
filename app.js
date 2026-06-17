@@ -10887,7 +10887,7 @@ function renderCreateSteps() {
   list.style.webkitOverflowScrolling = 'touch';
   list.style.maxHeight               = 'none';
   list.style.height                  = 'calc(100% - 6px)';
-  list.style.minHeight               = '470px';
+  list.style.minHeight               = '570px';
   list.style.flexShrink              = '0';
   list.style.touchAction             = 'pan-x pan-y';
 
@@ -10983,7 +10983,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:450px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:550px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
