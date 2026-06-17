@@ -239,6 +239,11 @@ async function initializeApp() {
   
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('resize', () => {
+    if (typeof updateMultigridLayoutClass === 'function') {
+      updateMultigridLayoutClass();
+    }
+  });
   
   if (typeof window.setupResponsiveDrawers === 'function') {
     window.setupResponsiveDrawers();
@@ -269,35 +274,8 @@ async function initializeApp() {
 
     // Dynamically adjust player video container aspect ratio to prevent side panels
     initVideo.addEventListener('loadedmetadata', () => {
-      const container = document.querySelector('.mobile-video-container');
-      const placeholder = document.querySelector('.mobile-video-placeholder');
-      if (initVideo.videoWidth && initVideo.videoHeight) {
-        const arStr = `${initVideo.videoWidth} / ${initVideo.videoHeight}`;
-        const isPortrait = initVideo.videoHeight > initVideo.videoWidth;
-
-        if (container) {
-          if (isPortrait) {
-            container.style.setProperty('width', '100%', 'important');
-            container.style.setProperty('height', 'min(360px, 45vh)', 'important');
-            container.style.removeProperty('aspect-ratio');
-            container.style.removeProperty('margin');
-          } else {
-            container.style.setProperty('width', '100%', 'important');
-            container.style.setProperty('aspect-ratio', arStr, 'important');
-            container.style.setProperty('height', 'auto', 'important');
-            container.style.removeProperty('margin');
-          }
-        }
-        if (placeholder) {
-          placeholder.style.setProperty('width', '100%', 'important');
-          placeholder.style.setProperty('height', '100%', 'important');
-          placeholder.style.removeProperty('margin');
-          if (isPortrait) {
-            placeholder.style.removeProperty('aspect-ratio');
-          } else {
-            placeholder.style.setProperty('aspect-ratio', arStr, 'important');
-          }
-        }
+      if (typeof updateMultigridLayoutClass === 'function') {
+        updateMultigridLayoutClass();
       }
     });
   }
@@ -8440,6 +8418,8 @@ function updateMultigridLayoutClass() {
       videoContainer.classList.add('multigrid-active');
       videoContainer.style.setProperty('height', 'auto', 'important');
       videoContainer.style.setProperty('aspect-ratio', 'auto', 'important');
+      videoContainer.style.removeProperty('width');
+      videoContainer.style.removeProperty('margin');
       if (placeholder) {
         placeholder.style.setProperty('height', 'auto', 'important');
         placeholder.style.setProperty('aspect-ratio', 'auto', 'important');
@@ -8449,11 +8429,31 @@ function updateMultigridLayoutClass() {
       const screenWidth = screen ? screen.clientWidth : 390;
       const w = videoContainer.getBoundingClientRect().width || videoContainer.clientWidth || screenWidth || 390;
       const h = Math.round(w * 9 / 16);
+      
+      let aspect = 16 / 9;
+      const realVideo = document.getElementById('mobileRealVideo');
+      if (realVideo && realVideo.videoWidth && realVideo.videoHeight) {
+        aspect = realVideo.videoWidth / realVideo.videoHeight;
+      }
+      
+      const isPortrait = aspect < 1;
+      
       videoContainer.style.setProperty('height', `${h}px`, 'important');
-      videoContainer.style.setProperty('aspect-ratio', '16/9', 'important');
+      videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+      
+      if (isPortrait) {
+        // Shrink container width to match video aspect ratio at height h
+        const containerWidth = Math.round(h * aspect);
+        videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
+        videoContainer.style.setProperty('margin', '0 auto', 'important');
+      } else {
+        videoContainer.style.setProperty('width', '100%', 'important');
+        videoContainer.style.removeProperty('margin');
+      }
+      
       if (placeholder) {
         placeholder.style.setProperty('height', '100%', 'important');
-        placeholder.style.setProperty('aspect-ratio', '16/9', 'important');
+        placeholder.style.setProperty('aspect-ratio', `${aspect}`, 'important');
       }
     }
   }
