@@ -38,6 +38,7 @@ All layout, custom page, and workbench scroll tests run in the Chrome DevTools b
 | `test_custom_page_save_on_exit.js` | **PASSED** ✅ | Exiting to the player synchronizes saved custom page tabs. |
 | `verify_manual_save_button.js` | **PASSED** ✅ | Validates editing the `#transcriptText` textarea, clicking the "Save & Update" button, and asserting state update + toast notification visibility. |
 | `verify_ai_generate_buttons.js` | **PASSED** ✅ | Asserts the restored AI buttons render inside the Loop Stops tab header and are correctly wired to their respective functions. |
+| `verify_comprehensive.js` | **PASSED** ✅ | Comprehensive end-to-end integration test asserting tab header labels and action buttons are emoji-free, manual save functions, and state updates correctly. |
 
 ---
 
@@ -51,12 +52,17 @@ All layout, custom page, and workbench scroll tests run in the Chrome DevTools b
 
 ## 📸 Screenshots
 
-### Transcript "Save & Update" Button
-Below is the screenshot of the simplified Video Transcript card containing the newly added "Save & Update" button. The toast notification confirms successful save:
+### Loop Stops View (Restored AI Buttons, No Emojis)
+Below is the screenshot of the Loop Stops card header showing the restored "AI: Create Steps (With Audio)" and "AI: Analyze Video Only (No Audio)" buttons with emojis removed:
 
-![Manual Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/screenshot_manual_save.png)
+![Restored AI Buttons](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_stops_view.png)
 
-### Restored AI Generate Buttons
-Below is the screenshot of the Loop Stops card header showing the restored "AI: Create Steps (With Audio)" and "AI: Analyze Video Only (No Audio)" buttons:
+### Video Transcript View (Save & Update, No Emojis)
+Below is the screenshot of the simplified Video Transcript card containing the "Save & Update" button, with all emojis removed from headers, labels, and the toast notification:
 
-![Restored AI Buttons](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/screenshot_restored_ai_buttons.png)
+![Manual Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_transcripts_view.png)
+
+### Preview & Save View (No Emojis)
+Below is the screenshot of the Preview & Save view showing the cleaned, emoji-free tab bar:
+
+![Preview & Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_preview_save_view.png)
