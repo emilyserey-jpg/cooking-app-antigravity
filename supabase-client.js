@@ -286,6 +286,21 @@ export async function createRecipe(recipe) {
   if (recipe.folder_id !== undefined) {
     payload.folder_id = recipe.folder_id;
   }
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
+  if (recipe.folder_id !== undefined) {
+    payload.folder_id = recipe.folder_id;
+  }
 
   let { data, error } = await supabase
     .from('recipes')

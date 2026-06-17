@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '8.53';
+      const CURRENT_VERSION = '9.39';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -263,7 +263,33 @@
 
           <!-- Mobile App Body -->
           <div class="mobile-player-body">
-             <!-- Combined Tabs & Options Bar -->
+            <!-- Player Main Combined Actions Bar (Scrollable Carousel) -->             <!-- Player Secondary Actions Row -->
+             <div id="playerSecondaryActionsContainer" class="player-secondary-actions-bar" style="display: none; position: relative; overflow: visible;">
+               <div class="actions-dropdown-wrapper" style="position: relative; margin-left: auto;">
+                 <button id="playerActionsDropdownBtn" onclick="window.togglePlayerActionsDropdown()" class="sec-action-btn actions-menu-btn" tabindex="-1">
+                   <i data-lucide="more-horizontal" style="width: 14px; height: 14px;"></i>
+                   <span>Options</span>
+                   <i data-lucide="chevron-down" style="width: 12px; height: 12px; margin-left: 2px;"></i>
+                 </button>
+                 
+                 <div id="playerActionsDropdownMenu" class="player-actions-dropdown-menu" style="display: none;">
+                   <!-- Library Folder Section -->                    <div class="dropdown-section">
+                      <span class="dropdown-section-title">Save to Folder</span>
+                      <button id="playerSaveToFolderBtn" onclick="window.openPlayerSaveToFolderModal()" class="folder-select-dropdown" tabindex="-1" title="Save to Folder" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;">
+                        <span>📂 Save to Library</span>
+                      </button>
+                    </div>
+                   
+                   <div class="dropdown-divider"></div>
+                   
+                   <!-- Edit Recipe -->
+                   <button id="playerEditRecipeBtn" class="dropdown-item edit-btn" tabindex="-1" style="display: none;">
+                     <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                     <span>Edit Recipe</span>
+                   </button>             </div>
+             </div>
+
+             <!-- Player Main Tabs Bar -->
              <div id="playerMainTabsContainer" class="player-main-tabs" style="display: none; justify-content: space-between; align-items: center; width: 100%; overflow: visible; border-bottom: 1.5px solid rgba(0,0,0,0.05); padding: 6px 12px; box-sizing: border-box;">
                <!-- Scrollable Tab Buttons -->
                <div style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex: 1;">
@@ -388,11 +414,24 @@
                 <span style="font-size:0.75rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:4px;">
                   📋 Ingredients
                 </span>
-                <button onclick="addRecipeIngredientsToGrocery()" class="btn btn-primary" style="padding:4px 10px; font-size:0.68rem; font-weight:900; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);">
+                <button id="addRecipeIngredientsToGroceryBtn" onclick="addRecipeIngredientsToGrocery()" class="btn btn-primary" style="padding:4px 10px; font-size:0.68rem; font-weight:900; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);">
                   🛒 Add to Grocery
                 </button>
               </div>
-              <div id="playerIngredientsList" style="font-size:0.72rem; color:var(--text-muted); line-height:1.45; font-weight:600; max-height:120px; overflow-y:auto; padding-right:2px;">
+              
+              <!-- Ingredients Sub-tabs -->
+              <div class="ingredients-subtabs-bar" style="display: flex; gap: 12px; border-bottom: 1.5px solid rgba(0,0,0,0.05); padding-bottom: 4px; margin-top: 4px; margin-bottom: 2px;">
+                <button id="ingSubtabBtn_list" onclick="window.switchIngredientsSubtab('list')" style="background:none; border:none; padding: 2px 0; font-family:var(--font); font-size:0.68rem; font-weight:900; color:var(--primary); border-bottom:2px solid var(--primary); cursor:pointer; transition:all 0.15s; outline:none; display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="list" style="width:11px; height:11px; stroke-width:3px; display:inline-block; vertical-align:middle;"></i>
+                  <span style="display:inline-block; vertical-align:middle;">List</span>
+                </button>
+                <button id="ingSubtabBtn_checklist" onclick="window.switchIngredientsSubtab('checklist')" style="background:none; border:none; padding: 2px 0; font-family:var(--font); font-size:0.68rem; font-weight:900; color:var(--text-muted); border-bottom:2px solid transparent; cursor:pointer; transition:all 0.15s; outline:none; display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="check-square" style="width:11px; height:11px; stroke-width:3px; display:inline-block; vertical-align:middle;"></i>
+                  <span style="display:inline-block; vertical-align:middle;">Checklist</span>
+                </button>
+              </div>
+
+              <div id="playerIngredientsList" style="font-size:0.72rem; color:var(--text-muted); line-height:1.45; font-weight:600; max-height:280px; overflow-y:auto; padding-right:2px;">
                 <!-- Filled in dynamically by JS -->
               </div>
             </div>
@@ -780,11 +819,43 @@
                     <i data-lucide="sparkles"></i> Analyze Video Segment
                   </button>
                 </div>
-              </div>
-            </div>
-
+              </div>            </div>
           </div>
         </div>
+
+        <!-- ── Save to Folder Modal (Premium Custom Popup) ── -->
+        <div id="playerFolderSelectionModal"
+          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;">
+          <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+              <button onclick="window.closePlayerSaveToFolderModal()"
+                style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
+                onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
+            </div>
+            
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:-6px;line-height:1.35;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Choose a collection:</div>
+            
+            <div id="playerFolderModalList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px;box-sizing:border-box;">
+              <!-- Dynamic list of folders -->
+            </div>
+            
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+              <button onclick="window.handlePlayerFolderChange('__new__')"
+                style="background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+                onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
+                onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
+                <span>➕ Create New Folder...</span>
+              </button>
+              
+              <button onclick="window.closePlayerSaveToFolderModal()"
+                style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
+                onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
+                onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -1311,7 +1382,7 @@
           </div>
 
           <video id="uploadedVideoPlayer"
-            style="width:100%; height:100%; object-fit:contain; display:block; background:transparent; border-radius:24px;"
+            style="width:100%; height:100%; object-fit:cover; display:block; background:transparent; border-radius:24px;"
             preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
             onclick="toggleVideoPlay()"></video>
 
@@ -1349,7 +1420,7 @@
         </div>
 
         <!-- Chapter Scrubber -->
-        <div style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:6px 10px; flex-shrink:0; margin-top:4px;">
+        <div id="editorScrubberCard" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:6px 10px; flex-shrink:0; margin-top:4px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
             <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Loop Stops — drag to adjust</span>
             <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600;" id="chapterDurationLabel">0:00</span>
@@ -1371,10 +1442,6 @@
               <i data-lucide="sliders" style="width: 12px; height: 12px; color: var(--primary);"></i>
               Playback & Edit Controls
             </span>
-            <button type="button" onclick="window.toggleStepNavControls()" id="toggleStepNavControlsBtn" class="collapsible-section-toggle-btn">
-              <span>Hide Panel</span>
-              <span id="stepNavControlsChevron" style="margin-left: 2px; font-size: 0.6rem;">▲</span>
-            </button>
           </div>
 
           <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:10px; width:100%;">
@@ -1385,51 +1452,60 @@
             </div>
 
             <!-- Unified Editor Controls Strip (All-in-One Row) -->
-            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; gap: 8px; justify-content: center;">
-              <!-- Loop/Repeat Toggle -->
-              <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
-                <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
-              </button>
+            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+              <!-- Left Group (aligned to the right inside its flex area) -->
+              <div style="flex: 1; display: flex; justify-content: flex-end; gap: 8px;">
+                <!-- Loop/Repeat Toggle -->
+                <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
+                  <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+                </button>
 
-              <!-- Previous Button -->
-              <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
-                <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
-                <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-              </button>
+                <!-- Previous Button -->
+                <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
+                  <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
+                  <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+                </button>
+              </div>
 
-              <!-- Play/Pause -->
-              <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
-                <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
-              </button>
+              <!-- Center Group (containing the 44px Play/Pause button) -->
+              <div style="display: flex; justify-content: center; margin: 0 8px; flex-shrink: 0;">
+                <!-- Play/Pause -->
+                <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
+                  <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
+                </button>
+              </div>
 
-              <!-- Next Button -->
-              <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
-                <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
-                <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-              </button>
+              <!-- Right Group (aligned to the left inside its flex area) -->
+              <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
+                <!-- Next Button -->
+                <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
+                  <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
+                  <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+                </button>
 
-              <!-- Mute/Unmute -->
-              <button id="editorMuteBtnToolbarMobile" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
-                <i id="editorMuteIconToolbarMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
-              </button>
+                <!-- Mute/Unmute -->
+                <button id="editorMuteBtnToolbarMobile" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
+                  <i id="editorMuteIconToolbarMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+                </button>
 
-              <!-- Speed Control -->
-              <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
-                <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
-              </button>
+                <!-- Speed Control -->
+                <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px; height: 38px;">
+                  <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Add Stop & Keyboard Toggle Buttons Row -->
-            <div class="player-controls-strip" style="margin-top: 4px; margin-bottom: 2px; gap: 8px; justify-content: center; width: 100%; max-width: 220px; margin-left: auto; margin-right: auto;">
-              <!-- Add Stop Button -->
+            <!-- Add Stop & Keyboard Toggle Buttons Row (Triangle Layout) -->
+            <div class="player-controls-strip" style="margin-top: 6px; margin-bottom: 2px; gap: 16px; justify-content: center; width: 100%;">
+              <!-- Add Stop Button (44px Circle) -->
               <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                style="flex:1; background:var(--primary); border:none; border-radius:8px; padding:9px 12px; color:#fff; cursor:pointer; font-size:0.78rem; font-weight:900; font-family:var(--font); display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);"
-                title="Add Loop Stop at Current Time">
-                <span>📍 Add Stop</span>
+                style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
+                title="Add Stop at Current Time (📍)">
+                <span>📍</span>
               </button>
-              <!-- Keyboard Toggle (Skip Mode) -->
-              <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="flex-shrink:0; margin:0;">
-                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 15px; height: 15px;"></i>
+              <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
+              <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
+                <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
               </button>
             </div>
             
@@ -1440,6 +1516,22 @@
 
         <!-- Hidden compat elements -->
         <div id="createTimeline" style="display:none;"><div id="timelinePlayhead" style="display:none;"></div></div>
+
+        <!-- Mobile Editor Tab Bar (Horizontal Menu Bar) -->
+        <div id="editorTabBarMobile" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding:4px 0 8px;margin-top:6px;flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
+          <button id="tabBtnStopsMobile" onclick="window.scrollToCarouselSlide(0)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:linear-gradient(135deg, var(--primary), var(--primary-hover));color:#fff;border-color:transparent;box-shadow:0 4px 12px var(--primary-glow);">
+            📍 Stops
+          </button>
+          <button id="tabBtnPagesMobile" onclick="window.scrollToCarouselSlide(1)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+            📝 Pages
+          </button>
+          <button id="tabBtnIngredientsMobile" onclick="window.scrollToCarouselSlide(2)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+            🥦 Ingredients
+          </button>
+          <button id="tabBtnSaveMobile" onclick="window.scrollToCarouselSlide(3)" class="btn" style="flex:1;padding:8px 10px;font-size:0.75rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);">
+            💾 Save
+          </button>
+        </div>
 
         <!-- Mobile Editor Swipeable Carousel (Populated directly at markup-level) -->
         <div id="mobileEditorCarousel" class="editor-carousel" style="margin-top:4px;">
@@ -1477,19 +1569,52 @@
                       </svg>
                     </button>
                   </div>
-                  <button id="aiLoopBtn" onclick="doItAll()"
-                    style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
-                    <span>🔁 AI: Create Steps from Analyzing Video</span>
-                    <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
-                  </button>
-                  <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
-                    style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:6px;">
-                    <span>🎥 AI: Analyze Video Only (No Audio)</span>
-                  </button>
-                  <button id="aiStepsFromTranscriptBtn" onclick="window.createStepsFromTranscript()" class="btn"
-                    style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:8px;padding:8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(99,102,241,0.2);white-space:nowrap;margin-bottom:6px;">
-                    <span>🪄 AI: Audio-to-Step Generator</span>
-                  </button>
+                  <!-- AI: Create Steps from Analyzing Video -->
+                  <div style="position:relative;width:100%;margin-bottom:6px;">
+                    <button id="aiLoopBtn" onclick="doItAll()"
+                      style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
+                      <span>🔁 AI: Create Steps from Analyzing Video</span>
+                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                    </button>
+                    <span onclick="event.stopPropagation(); window.toggleAiInfo('speech');" title="View details"
+                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                    </span>
+                  </div>
+                  <div id="aiInfoSpeechMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
+                    <strong>Voice Analysis:</strong> Best for videos where the chef speaks and explains the steps. It transcribes the speech to detect precise timestamps and instructions.
+                  </div>
+
+                  <!-- AI: Analyze Video Only (No Audio) -->
+                  <div style="position:relative;width:100%;margin-bottom:6px;">
+                    <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
+                      style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
+                      <span>🎥 AI: Analyze Video Only (No Audio)</span>
+                    </button>
+                    <span onclick="event.stopPropagation(); window.toggleAiInfo('video');" title="View details"
+                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                    </span>
+                  </div>
+                  <div id="aiInfoVideoMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
+                    <strong>Visual Analysis:</strong> Best for videos with background music, songs, or no voice. It uses visual-only AI analysis of scenes, actions, and captions.
+                  </div>
+
+                  <!-- AI: Generate Transcript -->
+                  <div style="position:relative;width:100%;margin-bottom:6px;">
+                    <button id="transcribeBtnMobile" onclick="window.transcribeVideo()" class="btn"
+                      style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(16,185,129,0.2);white-space:nowrap;margin-bottom:0;">
+                      <span>🎤 AI: Generate Transcript</span>
+                      <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;">✓</span>
+                    </button>
+                    <span onclick="event.stopPropagation(); window.toggleAiInfo('transcript');" title="View details"
+                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                    </span>
+                  </div>
+                  <div id="aiInfoTranscriptMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
+                    <strong>Speech Transcript:</strong> Generates a full word-for-word transcript of all speech and vocals in the video to review or use as subtitles.
+                  </div>
                   <div style="display:flex; gap:6px; width:100%; margin-bottom:6px;">
                     <button onclick="window.openManualTimestampModal()" id="createManualTimeBtn" tabindex="-1"
                       style="flex:1; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:8px; padding:8px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body); box-shadow:0 2px 6px rgba(0,0,0,0.03); box-sizing:border-box;" title="Type Stop Manually">
@@ -1508,8 +1633,9 @@
               </div>
             </div>
           </div>
-
-
+          <!-- Slide 2: Pages (Custom Pages Editor) -->
+          <div class="carousel-slide" id="rightColAddCustom">
+          </div>
 
           <!-- Slide 3: Ingredients -->
           <div class="carousel-slide" id="slideIngredients">
@@ -1586,21 +1712,25 @@
             </button>
             <button onclick="saveDraft()" id="saveDraftBtn"
               style="width:100%; background:#fff; color:var(--text-muted); border:2px solid var(--border-card); border-radius:999px; padding:9px; font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; flex-shrink:0; margin-bottom:8px;">
-              💾 Save as Draft
+              💾 Save
             </button>
           </div>
         </div>
 
-        <div id="mobileEditorToolbar" class="mobile-editor-toolbar">
+        <div id="mobileEditorToolbar" class="mobile-editor-toolbar" style="display:none !important;">
           <button onclick="window.scrollToCarouselSlide(0)" id="btnToolbarStops" class="toolbar-btn active">
             <span class="icon">📍</span>
             <span class="label">Stops</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarIngredients" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(1)" id="btnToolbarPages" class="toolbar-btn">
+            <span class="icon">📝</span>
+            <span class="label">Pages</span>
+          </button>
+          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarIngredients" class="toolbar-btn">
             <span class="icon">🥦</span>
             <span class="label">Ingredients</span>
           </button>
-          <button onclick="window.scrollToCarouselSlide(2)" id="btnToolbarSave" class="toolbar-btn">
+          <button onclick="window.scrollToCarouselSlide(3)" id="btnToolbarSave" class="toolbar-btn">
             <span class="icon">💾</span>
             <span class="label">Save</span>
           </button>
@@ -1918,6 +2048,62 @@
           style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
           onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
           onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
+      </div>      </div>
+    </div>
+  </div>
+
+  <!-- ── Embed Video Modal (Premium Custom Popup) ── -->
+  <div id="playerEmbedModal" onclick="if(event.target===this) window.closePlayerEmbedModal()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;box-sizing:border-box;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Embed Video
+        </h3>
+        <button onclick="window.closePlayerEmbedModal()"
+          style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
+          onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
+      </div>
+      
+      <p style="font-size:0.8rem;color:var(--text-muted);margin:0;line-height:1.45;font-weight:600;">
+        Copy the HTML code below to embed this interactive recipe player on your website, blog, or other platforms:
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
+          <span>Iframe Embed Code:</span>
+        </div>
+        <textarea id="playerEmbedTextarea" readonly onclick="this.select()"
+          style="width:100%;height:110px;background:#f8fafc;border:2px solid rgba(0,0,0,0.06);border-radius:12px;padding:12px;font-family:monospace;font-size:0.75rem;color:var(--text-heading);outline:none;box-sizing:border-box;resize:none;line-height:1.4;white-space:pre-wrap;word-break:break-all;"></textarea>
+      </div>
+
+      <!-- Preview size inputs (Width / Height) -->
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);">Width</label>
+          <input type="text" id="playerEmbedWidthInput" value="100%" oninput="window.updateEmbedCodeSnippet()"
+            style="width:100%;border:2px solid rgba(0,0,0,0.06);border-radius:10px;padding:8px 12px;font-family:var(--font);font-size:0.8rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;background:#f8fafc;" />
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);">Height</label>
+          <input type="text" id="playerEmbedHeightInput" value="480" oninput="window.updateEmbedCodeSnippet()"
+            style="width:100%;border:2px solid rgba(0,0,0,0.06);border-radius:10px;padding:8px 12px;font-family:var(--font);font-size:0.8rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;background:#f8fafc;" />
+        </div>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+        <button id="playerCopyEmbedBtn" onclick="window.copyEmbedCode()"
+          style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
+          onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
+          onmouseleave="this.style.opacity='1';this.style.transform='none';">
+          <span>📋 Copy Embed Code</span>
+        </button>
+        
+        <button onclick="window.closePlayerEmbedModal()"
+          style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
+          onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
       </div>
     </div>
   </div>
@@ -2035,6 +2221,152 @@
     </div>
   </div>
 
+  <!-- ── Create Folder Modal ── -->
+  <div id="libFolderModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+      <h3 style="font-size:1.1rem;font-weight:900;color:var(--text-heading);margin-bottom:1rem;" id="libModalTitle">📁 New Folder</h3>
+      <input id="libFolderNameInput" placeholder="Folder name…"
+        style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:10px;border:2px solid var(--border-card);font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--text-heading);outline:none;margin-bottom:1rem;"
+        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'"
+        onkeydown="if(event.key==='Enter') libSaveFolder()">
+      <!-- Color swatches -->
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:8px;">Folder color</div>
+        <div id="libColorSwatches" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="libSaveFolder()"
+          style="flex:1;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px;font-family:var(--font);font-weight:900;font-size:0.9rem;cursor:pointer;">Save</button>
+        <button onclick="libCloseModal()"
+          style="flex:1;background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:10px;padding:11px;font-family:var(--font);font-weight:800;font-size:0.9rem;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Save to Folder Modal (Premium Custom Popup) ── -->
+  <div id="playerFolderSelectionModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
+    <div style="background:#fff;border-radius:24px;padding:24px;max-width:360px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;border:1px solid rgba(0,0,0,0.1);box-sizing:border-box;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">📁 Save to Folder</h3>
+        <button onclick="window.closePlayerSaveToFolderModal()"
+          style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
+          onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
+      </div>
+      
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:-6px;line-height:1.35;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Choose a collection:</div>
+      
+      <!-- Search input for filtering folders -->
+      <div style="position:relative; width:100%; box-sizing:border-box; margin-top:-2px;">
+        <input type="text" id="playerFolderSearchInput" placeholder="Search folders..." oninput="window.filterPlayerFolders()"
+          style="width:100%; border:2px solid rgba(0,0,0,0.06); border-radius:14px; padding:10px 12px 10px 36px; font-family:var(--font); font-size:0.85rem; font-weight:700; color:var(--text-heading); outline:none; box-sizing:border-box; background:#f8fafc; transition:all 0.2s;"
+          onfocus="this.style.borderColor='var(--primary)'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(74,144,217,0.1)';"
+          onblur="this.style.borderColor='rgba(0,0,0,0.06)'; this.style.background='#f8fafc'; this.style.boxShadow='none';" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+
+      <!-- Scrollable Box Container for Folders -->
+      <div style="background:#f8fafc; border:1.5px solid rgba(0,0,0,0.06); border-radius:18px; padding:10px; box-sizing:border-box; width:100%;">
+        <div id="playerFolderModalList" style="display:flex;flex-direction:column;gap:8px;max-height:160px;overflow-y:auto;padding-right:4px;box-sizing:border-box;">
+          <!-- Dynamic list of folders -->
+        </div>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+        <!-- Confirm Save Button -->
+        <button id="playerFolderModalSaveBtn" onclick="window.confirmPlayerFolderChange()"
+          style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
+          onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
+          onmouseleave="this.style.opacity='1';this.style.transform='none';">
+          <span>💾 Save to Selected Folder</span>
+        </button>
+
+        <div style="display:flex;gap:10px;">
+          <button onclick="window.handlePlayerFolderChange('__new__')"
+            style="flex:1;background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+            onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
+            onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
+            <span>➕ New Folder</span>
+          </button>
+          
+          <button onclick="window.closePlayerSaveToFolderModal()"
+            style="flex:1;background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
+            onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
+            onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
+        </div>
+
+        <button onclick="window.downloadCurrentVideo(); window.closePlayerSaveToFolderModal();"
+          style="background:rgba(34,197,94,0.08);color:#16a34a;border:2px dashed rgba(34,197,94,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(34,197,94,0.12)';this.style.borderColor='rgba(34,197,94,0.5)';"
+          onmouseleave="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='rgba(34,197,94,0.3)';">
+          <span>📥 Save to Local Files (Download)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Embed Video Modal (Premium Custom Popup) ── -->
+  <div id="playerEmbedModal" onclick="if(event.target===this) window.closePlayerEmbedModal()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;gap:16px;box-sizing:border-box;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:1.15rem;font-weight:900;color:var(--text-heading);margin:0;display:flex;align-items:center;gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Embed Video
+        </h3>
+        <button onclick="window.closePlayerEmbedModal()"
+          style="background:none;border:none;font-size:1.6rem;color:var(--text-muted);cursor:pointer;line-height:1;font-weight:700;padding:4px;"
+          onmouseenter="this.style.color='var(--text-heading)'" onmouseleave="this.style.color='var(--text-muted)'">×</button>
+      </div>
+      
+      <p style="font-size:0.8rem;color:var(--text-muted);margin:0;line-height:1.45;font-weight:600;">
+        Copy the HTML code below to embed this interactive recipe player on your website, blog, or other platforms:
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">
+          <span>Iframe Embed Code:</span>
+        </div>
+        <textarea id="playerEmbedTextarea" readonly onclick="this.select()"
+          style="width:100%;height:110px;background:#f8fafc;border:2px solid rgba(0,0,0,0.06);border-radius:12px;padding:12px;font-family:monospace;font-size:0.75rem;color:var(--text-heading);outline:none;box-sizing:border-box;resize:none;line-height:1.4;white-space:pre-wrap;word-break:break-all;"></textarea>
+      </div>
+
+      <!-- Preview size inputs (Width / Height) -->
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);">Width</label>
+          <input type="text" id="playerEmbedWidthInput" value="100%" oninput="window.updateEmbedCodeSnippet()"
+            style="width:100%;border:2px solid rgba(0,0,0,0.06);border-radius:10px;padding:8px 12px;font-family:var(--font);font-size:0.8rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;background:#f8fafc;" />
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.7rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);">Height</label>
+          <input type="text" id="playerEmbedHeightInput" value="480" oninput="window.updateEmbedCodeSnippet()"
+            style="width:100%;border:2px solid rgba(0,0,0,0.06);border-radius:10px;padding:8px 12px;font-family:var(--font);font-size:0.8rem;font-weight:700;color:var(--text-heading);outline:none;box-sizing:border-box;background:#f8fafc;" />
+        </div>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+        <button id="playerCopyEmbedBtn" onclick="window.copyEmbedCode()"
+          style="background:var(--primary);color:#fff;border:none;border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;box-shadow:0 4px 12px rgba(74,144,217,0.25);"
+          onmouseenter="this.style.opacity='0.95';this.style.transform='scale(1.01)';"
+          onmouseleave="this.style.opacity='1';this.style.transform='none';">
+          <span>📋 Copy Embed Code</span>
+        </button>
+        
+        <button onclick="window.closePlayerEmbedModal()"
+          style="background:var(--bg-card-soft);color:var(--text-muted);border:2px solid var(--border-card);border-radius:14px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s;"
+          onmouseenter="this.style.background='rgba(0,0,0,0.03)'"
+          onmouseleave="this.style.background='var(--bg-card-soft)'">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+
+
   <!-- Global Voice Activity Overlay Indicator -->
   <div id="voiceHudPanel" class="voice-hud-panel hidden">
     <div id="voiceHudIndicator" class="voice-hud-indicator">
@@ -2052,6 +2384,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=8.53"></script>
+  <script type="module" src="app.js?v=8.59"></script>
 </body>
 </html>

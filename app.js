@@ -52,9 +52,14 @@ function updateLucideIcon(id, newIconName, width = '15px', height = '15px') {
 
 // Application UI States
 let currentUser = null;
+Object.defineProperty(window, 'currentUser', {
+  get: () => currentUser,
+  set: (val) => { currentUser = val; }
+});
 let authMode = 'signin'; // 'signin' or 'signup'
 let currentView = 'create';
 let playerPreviousView = 'create';
+let editorPreviousView = 'create';
 let playbackMode = 'loop';
 let isPlaying = false;
 let currentTime = 0.0;
@@ -62,9 +67,38 @@ let activeStepIndex = 0;
 let isScrollingAuto = false;
 let editingRecipeId = null;
 let playerCurrentRecipe = null;
+let activePlayerRecipeId = null;
+let playerCompletedSteps = new Set();
 window.getPlayerCurrentRecipe = () => playerCurrentRecipe;
 window.setPlayerCurrentRecipe = (val) => { playerCurrentRecipe = val; };
-let playerCompletedSteps = new Set();
+Object.defineProperty(window, 'currentView', {
+  get: () => currentView,
+  set: (val) => { currentView = val; }
+});
+Object.defineProperty(window, 'playerPreviousView', {
+  get: () => playerPreviousView,
+  set: (val) => { playerPreviousView = val; }
+});
+Object.defineProperty(window, 'editorPreviousView', {
+  get: () => editorPreviousView,
+  set: (val) => { editorPreviousView = val; }
+});
+Object.defineProperty(window, 'editingRecipeId', {
+  get: () => editingRecipeId,
+  set: (val) => { editingRecipeId = val; }
+});
+Object.defineProperty(window, 'activePlayerRecipeId', {
+  get: () => activePlayerRecipeId,
+  set: (val) => { activePlayerRecipeId = val; }
+});
+Object.defineProperty(window, 'recipeData', {
+  get: () => recipeData,
+  set: (val) => {
+    if (val && typeof val === 'object') {
+      Object.assign(recipeData, val);
+    }
+  }
+});
 let currentSpeechActive = false;
 let undoHistory = [];
 let redoHistory = [];
@@ -221,6 +255,7 @@ async function initializeApp() {
   updateDetailFields();
   setupSpeechRecognition();
   setupDashboardTimer();
+  initActiveStepCardSwiping();
 
   // Initialize muted state based on preference
   const isMutedPref = localStorage.getItem('cooking_gps_player_muted') === 'true';
@@ -241,27 +276,26 @@ async function initializeApp() {
         const isPortrait = initVideo.videoHeight > initVideo.videoWidth;
 
         if (container) {
-          container.style.setProperty('aspect-ratio', arStr, 'important');
           if (isPortrait) {
-            container.style.setProperty('height', 'min(480px, 50vh)', 'important');
-            container.style.setProperty('width', 'auto', 'important');
-            container.style.setProperty('margin', '0 auto', 'important');
+            container.style.setProperty('width', '100%', 'important');
+            container.style.setProperty('height', 'min(360px, 45vh)', 'important');
+            container.style.removeProperty('aspect-ratio');
+            container.style.removeProperty('margin');
           } else {
             container.style.setProperty('width', '100%', 'important');
+            container.style.setProperty('aspect-ratio', arStr, 'important');
             container.style.setProperty('height', 'auto', 'important');
             container.style.removeProperty('margin');
           }
         }
         if (placeholder) {
-          placeholder.style.setProperty('aspect-ratio', arStr, 'important');
+          placeholder.style.setProperty('width', '100%', 'important');
+          placeholder.style.setProperty('height', '100%', 'important');
+          placeholder.style.removeProperty('margin');
           if (isPortrait) {
-            placeholder.style.setProperty('height', '100%', 'important');
-            placeholder.style.setProperty('width', 'auto', 'important');
-            placeholder.style.setProperty('margin', '0 auto', 'important');
+            placeholder.style.removeProperty('aspect-ratio');
           } else {
-            placeholder.style.setProperty('width', '100%', 'important');
-            placeholder.style.setProperty('height', '100%', 'important');
-            placeholder.style.removeProperty('margin');
+            placeholder.style.setProperty('aspect-ratio', arStr, 'important');
           }
         }
       }
@@ -357,6 +391,7 @@ async function initializeApp() {
     landingSelect.value = defaultPref;
   }
   setupWorkbenchResizer();
+  setupWorkbenchHorizontalResizer();
   
   // Wire updateAIChecklists to ingredientsText input edits
   const ingTextEl = document.getElementById('ingredientsText');
@@ -382,7 +417,27 @@ async function initializeApp() {
       }
     }
   });
+
+  // Handle browser back/forward navigation using hashchange listener
+  window.addEventListener('hashchange', () => {
+    let targetView = window.location.hash.replace('#', '') || '';
+    let targetRecipeId = null;
+    if (targetView.includes('?')) {
+      const parts = targetView.split('?');
+      targetView = parts[0];
+      const params = new URLSearchParams(parts[1]);
+      targetRecipeId = params.get('id') || params.get('recipeId');
+    }
+    const validViews = ['create', 'discover', 'grid-view', 'profile', 'my-profile', 'mobile-player', 'bento-dashboard', 'desktop-workbench'];
+    if (validViews.includes(targetView) && targetView !== currentView) {
+      switchView(targetView);
+      if (targetView === 'mobile-player' && targetRecipeId) {
+        window.loadRecipeById(targetRecipeId);
+      }
+    }
+  });
   window.updateAIChecklists();
+  window.syncCustomPageUI();
   window.setKeyboardMode(keyboardMode);
 }
 
@@ -1807,7 +1862,7 @@ function switchView(viewId) {
   }
 
   if (viewId === 'mobile-player') {
-    if (currentView && currentView !== 'mobile-player') {
+    if (currentView && currentView !== 'mobile-player' && currentView !== 'create') {
       playerPreviousView = currentView;
     }
   } else {
@@ -2087,6 +2142,9 @@ function getGroceryList() {
 
 function saveGroceryList(list) {
   localStorage.setItem('cooking_gps_grocery_list', JSON.stringify(list));
+  if (typeof window.updateGroceryButtonState === 'function') {
+    window.updateGroceryButtonState();
+  }
 }
 
 function renderBentoGrocery() {
@@ -2184,19 +2242,37 @@ function renderPlayerIngredients() {
   const listEl = document.getElementById('playerIngredientsList');
   if (!panel || !listEl) return;
   
-  if (!activePlayerRecipeId) {
+  if (!activePlayerRecipeId && !window.activePlayerRecipeId) {
     panel.style.display = 'none';
     return;
   }
   
   const recipeData = getActiveRecipeData();
-  const ingredientsStr = recipeData ? recipeData.ingredients : '';
+  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
   
-  if (!ingredientsStr || !ingredientsStr.trim()) {
+  if (!rawIngredientsStr || !rawIngredientsStr.trim()) {
     panel.style.display = 'none';
+    const tabsWrapper = document.querySelector('#playerMainTabsContainer > div');
+    if (tabsWrapper) {
+      tabsWrapper.querySelectorAll('.player-custom-tab-btn').forEach(btn => btn.remove());
+    }
+    document.querySelectorAll('.player-custom-panel').forEach(p => p.remove());
     return;
   }
   
+  let recipeCustomPages = {};
+  let cleanIngredientsStr = rawIngredientsStr || '';
+  if (rawIngredientsStr && rawIngredientsStr.includes('---CUSTOM_PAGES---')) {
+    const parts = rawIngredientsStr.split('---INGREDIENTS---');
+    const customPart = parts[0].replace('---CUSTOM_PAGES---', '').trim();
+    cleanIngredientsStr = parts[1] ? parts[1].trim() : '';
+    try {
+      recipeCustomPages = JSON.parse(customPart);
+    } catch(e) {
+      console.warn('Failed to parse custom pages in player:', e);
+    }
+  }
+
   // Tab-aware display toggling
   const tabsContainer = document.getElementById('playerMainTabsContainer');
   const isTabbed = tabsContainer && tabsContainer.style.display === 'flex';
@@ -2206,71 +2282,203 @@ function renderPlayerIngredients() {
   } else {
     panel.style.display = 'flex';
   }
-  listEl.innerHTML = '';
+  // Sync sub-tab buttons active state
+  const subtabName = window.ingredientsActiveSubtab || 'checklist';
+  const checklistBtns = document.querySelectorAll('#ingSubtabBtn_checklist');
+  const listBtns = document.querySelectorAll('#ingSubtabBtn_list');
   
-  const ingredients = ingredientsStr
+  if (subtabName === 'checklist') {
+    checklistBtns.forEach(btn => {
+      btn.style.color = 'var(--primary)';
+      btn.style.borderBottom = '2px solid var(--primary)';
+    });
+    listBtns.forEach(btn => {
+      btn.style.color = 'var(--text-muted)';
+      btn.style.borderBottom = '2px solid transparent';
+    });
+  } else {
+    checklistBtns.forEach(btn => {
+      btn.style.color = 'var(--text-muted)';
+      btn.style.borderBottom = '2px solid transparent';
+    });
+    listBtns.forEach(btn => {
+      btn.style.color = 'var(--primary)';
+      btn.style.borderBottom = '2px solid var(--primary)';
+    });
+  }
+
+  listEl.innerHTML = '';
+  if (!window.checkedIngredients) {
+    window.checkedIngredients = new Set();
+  }
+  
+  const ingredients = cleanIngredientsStr
     .split(/[\n;]/)
     .map(i => i.trim())
     .filter(i => i.length > 0);
     
   ingredients.forEach((ing) => {
     const itemDiv = document.createElement('div');
-    itemDiv.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid rgba(0,0,0,0.05); cursor:pointer; transition:background 0.2s; border-radius:6px;';
     
-    const checkbox = document.createElement('div');
-    checkbox.style.cssText = 'width:14px; height:14px; border:1.5px solid var(--border-card); border-radius:3px; display:flex; align-items:center; justify-content:center; background:#fff; font-size:0.6rem; color:#fff; flex-shrink:0;';
-    
-    const textSpan = document.createElement('span');
-    textSpan.style.cssText = 'transition:all 0.15s; flex:1;';
-    textSpan.textContent = ing;
-    
-    itemDiv.onclick = () => {
-      const isDone = itemDiv.classList.toggle('checked');
-      if (isDone) {
+    if (subtabName === 'list') {
+      itemDiv.style.cssText = 'display:flex; align-items:center; padding:6px 4px; transition:background 0.2s;';
+      
+      const textSpan = document.createElement('span');
+      textSpan.style.cssText = 'flex:1;';
+      textSpan.textContent = ing;
+      
+      itemDiv.appendChild(textSpan);
+    } else {
+      itemDiv.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 4px; cursor:pointer; transition:background 0.2s;';
+      
+      const checkbox = document.createElement('div');
+      checkbox.style.cssText = 'width:14px; height:14px; border:1.5px solid var(--border-card); border-radius:3px; display:flex; align-items:center; justify-content:center; background:#fff; font-size:0.6rem; color:#fff; flex-shrink:0;';
+      
+      const textSpan = document.createElement('span');
+      textSpan.style.cssText = 'transition:all 0.15s; flex:1;';
+      textSpan.textContent = ing;
+      
+      const isChecked = window.checkedIngredients.has(ing);
+      if (isChecked) {
+        itemDiv.classList.add('checked');
         itemDiv.style.background = 'rgba(34, 197, 94, 0.05)';
+        itemDiv.style.borderRadius = '6px';
         checkbox.style.background = 'var(--primary)';
         checkbox.style.borderColor = 'var(--primary)';
         checkbox.textContent = '✓';
         textSpan.style.textDecoration = 'line-through';
         textSpan.style.color = 'var(--text-muted)';
-      } else {
-        itemDiv.style.background = 'transparent';
-        checkbox.style.background = '#fff';
-        checkbox.style.borderColor = 'var(--border-card)';
-        checkbox.textContent = '';
-        textSpan.style.textDecoration = 'none';
-        textSpan.style.color = '';
       }
-    };
+      
+      itemDiv.onclick = () => {
+        const isDone = itemDiv.classList.toggle('checked');
+        if (isDone) {
+          window.checkedIngredients.add(ing);
+          itemDiv.style.background = 'rgba(34, 197, 94, 0.05)';
+          itemDiv.style.borderRadius = '6px';
+          checkbox.style.background = 'var(--primary)';
+          checkbox.style.borderColor = 'var(--primary)';
+          checkbox.textContent = '✓';
+          textSpan.style.textDecoration = 'line-through';
+          textSpan.style.color = 'var(--text-muted)';
+        } else {
+          window.checkedIngredients.delete(ing);
+          itemDiv.style.background = 'transparent';
+          itemDiv.style.borderRadius = '0';
+          checkbox.style.background = '#fff';
+          checkbox.style.borderColor = 'var(--border-card)';
+          checkbox.textContent = '';
+          textSpan.style.textDecoration = 'none';
+          textSpan.style.color = '';
+        }
+      };
+      
+      itemDiv.appendChild(checkbox);
+      itemDiv.appendChild(textSpan);
+    }
     
-    itemDiv.appendChild(checkbox);
-    itemDiv.appendChild(textSpan);
     listEl.appendChild(itemDiv);
   });
+
+  const tabsWrapper = document.querySelector('#playerMainTabsContainer > div');
+  if (tabsWrapper) {
+    tabsWrapper.querySelectorAll('.player-custom-tab-btn').forEach(btn => btn.remove());
+    document.querySelectorAll('.player-custom-panel').forEach(p => p.remove());
+
+    Object.keys(recipeCustomPages).forEach(tabId => {
+      const page = recipeCustomPages[tabId];
+      
+      const btn = document.createElement('button');
+      btn.id = `playerTab_${tabId}`;
+      btn.className = 'player-tab-btn player-custom-tab-btn';
+      btn.innerHTML = `${page.icon || '📝'}${page.name}`;
+      btn.onclick = () => window.switchPlayerMainTab(tabId);
+      
+      const commentsBtn = document.getElementById('playerTabCommentsBtn');
+      if (commentsBtn) {
+        tabsWrapper.insertBefore(btn, commentsBtn);
+      } else {
+        tabsWrapper.appendChild(btn);
+      }
+
+      const customPanel = document.createElement('div');
+      customPanel.className = 'glass-card player-custom-panel';
+      customPanel.id = `playerPanel_${tabId}`;
+      customPanel.style.cssText = 'padding: 12px; margin-top: 10px; border-radius: 12px; display: none; flex-direction: column; gap: 8px; border: 2px solid rgba(74,144,217,0.12); background: rgba(255,255,255,0.9); box-shadow: 0 4px 16px rgba(74,144,217,0.06);';
+      
+      customPanel.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-card); padding-bottom:6px;">
+          <span style="font-size:0.75rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:4px;">
+            ${page.icon || '📝'} ${page.name}
+          </span>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-body); line-height:1.5; font-weight:600; max-height:200px; overflow-y:auto; padding-right:2px; white-space: pre-wrap;">${page.content || 'No content generated yet.'}</div>
+      `;
+      
+      panel.parentNode.insertBefore(customPanel, panel.nextSibling);
+    });
+
+    if (window.lucide) lucide.createIcons();
+
+    if (window.activePlayerMainTab && window.activePlayerMainTab.startsWith('custom_')) {
+      window.switchPlayerMainTab(window.activePlayerMainTab);
+    }
+    if (typeof window.updateGroceryButtonState === 'function') {
+      window.updateGroceryButtonState();
+    }
+  }
 }
 
+window.switchIngredientsSubtab = function(subtabName) {
+  window.ingredientsActiveSubtab = subtabName;
+  if (typeof renderPlayerIngredients === 'function') {
+    renderPlayerIngredients();
+  }
+};
+
 function getActiveRecipeData() {
-  if (typeof activeRecipe !== 'undefined' && activeRecipe) return activeRecipe;
+  if (typeof recipeData !== 'undefined' && recipeData) return recipeData;
   if (window.recipeData) return window.recipeData;
   return null;
 }
 
 function addRecipeIngredientsToGrocery() {
   const recipeData = getActiveRecipeData();
-  const ingredientsStr = recipeData ? recipeData.ingredients : '';
-  if (!ingredientsStr || !ingredientsStr.trim()) {
+  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
+  let cleanIngredientsStr = rawIngredientsStr || '';
+  if (cleanIngredientsStr.includes('---CUSTOM_PAGES---')) {
+    const parts = cleanIngredientsStr.split('---INGREDIENTS---');
+    cleanIngredientsStr = parts[1] || '';
+  }
+  
+  if (!cleanIngredientsStr || !cleanIngredientsStr.trim()) {
     showTip('No ingredients found to add 🛒');
     return;
   }
   
-  const ingredients = ingredientsStr
+  const ingredients = cleanIngredientsStr
     .split(/[\n;]/)
     .map(i => i.trim())
     .filter(i => i.length > 0);
     
   const list = getGroceryList();
-  let addedCount = 0;
   
+  // Toggle: If all ingredients are already added, click acts as an undo action.
+  const allAdded = ingredients.every(ing => 
+    list.some(item => item.text.toLowerCase() === ing.toLowerCase())
+  );
+  
+  if (allAdded) {
+    const updatedList = list.filter(item => 
+      !ingredients.some(ing => ing.toLowerCase() === item.text.toLowerCase())
+    );
+    saveGroceryList(updatedList);
+    showTip('Removed ingredients from Shopping List! 🛒');
+    renderBentoGrocery();
+    return;
+  }
+  
+  let addedCount = 0;
   ingredients.forEach(ing => {
     if (!list.some(item => item.text.toLowerCase() === ing.toLowerCase())) {
       list.push({
@@ -2288,8 +2496,78 @@ function addRecipeIngredientsToGrocery() {
     renderBentoGrocery();
   } else {
     showTip('Ingredients already in Shopping List! 🛒');
+    if (typeof window.updateGroceryButtonState === 'function') {
+      window.updateGroceryButtonState();
+    }
   }
 }
+
+window.updateGroceryButtonState = function() {
+  const recipeData = getActiveRecipeData();
+  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
+  let cleanIngredientsStr = rawIngredientsStr || '';
+  if (cleanIngredientsStr.includes('---CUSTOM_PAGES---')) {
+    const parts = cleanIngredientsStr.split('---INGREDIENTS---');
+    cleanIngredientsStr = parts[1] || '';
+  }
+  
+  const ingredients = cleanIngredientsStr
+    .split(/[\n;]/)
+    .map(i => i.trim())
+    .filter(i => i.length > 0);
+
+  const btns = document.querySelectorAll('#addRecipeIngredientsToGroceryBtn');
+  if (ingredients.length === 0) {
+    btns.forEach(btn => {
+      btn.style.display = 'none';
+    });
+    return;
+  }
+
+  const list = getGroceryList();
+  const allAdded = ingredients.every(ing => 
+    list.some(item => item.text.toLowerCase() === ing.toLowerCase())
+  );
+
+  btns.forEach(btn => {
+    btn.style.display = '';
+    if (allAdded) {
+      btn.innerHTML = '✓ Added';
+      btn.className = 'btn';
+      btn.style.background = 'rgba(92, 184, 92, 0.08)';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
+      btn.style.boxShadow = 'none';
+      btn.style.pointerEvents = '';
+      btn.title = 'Click to undo and remove from shopping list';
+      
+      btn.onmouseenter = () => {
+        btn.innerHTML = '✕ Undo Add';
+        btn.style.background = 'rgba(239, 68, 68, 0.08)';
+        btn.style.color = 'var(--red)';
+        btn.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+      };
+      
+      btn.onmouseleave = () => {
+        btn.innerHTML = '✓ Added';
+        btn.style.background = 'rgba(92, 184, 92, 0.08)';
+        btn.style.color = 'var(--green)';
+        btn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
+      };
+    } else {
+      btn.innerHTML = '🛒 Add to Grocery';
+      btn.className = 'btn btn-primary';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      btn.style.boxShadow = '0 2px 6px rgba(74,144,217,0.2)';
+      btn.style.pointerEvents = '';
+      btn.title = 'Add all ingredients to shopping list';
+      btn.onmouseenter = null;
+      btn.onmouseleave = null;
+    }
+  });
+};
 
 function mySpaceInit() {
   // Bio
@@ -3574,9 +3852,16 @@ function pubRenderYTRecipes(recipes) {
     const relativeTime = getRelativeTime(r.created_at);
 
     return `
-      <div class="yt-video-card" onclick="openPubLightbox(${idx})">
+      <div class="yt-video-card" onclick="openPubLightbox(${idx})"
+           onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+           onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
         <div class="yt-thumbnail-wrapper">
           ${mediaHtml}
+          ${r.video_url ? `
+            <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
+                   style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
+            </video>
+          ` : ''}
           ${mins ? `<div class="yt-duration-badge">${mins}</div>` : ''}
         </div>
         <div class="yt-card-info">
@@ -3622,9 +3907,16 @@ function pubRenderYTHome(recipes) {
   featuredContainer.innerHTML = `
     <div class="yt-trailer-section">
       <div class="yt-trailer-thumbnail-container">
-        <div class="yt-thumbnail-wrapper" onclick="openPubLightbox(0)" style="cursor:pointer;">
+        <div class="yt-thumbnail-wrapper" onclick="openPubLightbox(0)" style="cursor:pointer;"
+             onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+             onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
           ${mediaHtml}
-          ${durationStr ? `<div class="yt-duration-badge">${durationStr}</div>` : ''}
+          ${trailer.video_url ? `
+            <video class="lib-card-video" data-src="${encodeURI(trailer.video_url)}" muted loop playsinline
+                   style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
+            </video>
+          ` : ''}
+          ${durationStr ? `<div class="yt-duration-badge" style="z-index:3;">${durationStr}</div>` : ''}
         </div>
       </div>
       <div class="yt-trailer-details">
@@ -3666,10 +3958,17 @@ function pubRenderYTHome(recipes) {
       const relTime = getRelativeTime(r.created_at);
 
       return `
-        <div class="yt-video-card" onclick="openPubLightbox(${idx})">
+        <div class="yt-video-card" onclick="openPubLightbox(${idx})"
+             onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+             onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
           <div class="yt-thumbnail-wrapper">
             ${cardMedia}
-            ${mins ? `<div class="yt-duration-badge">${mins}</div>` : ''}
+            ${r.video_url ? `
+              <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
+                     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
+              </video>
+            ` : ''}
+            ${mins ? `<div class="yt-duration-badge" style="z-index:3;">${mins}</div>` : ''}
           </div>
           <div class="yt-card-info">
             <div class="yt-card-avatar">${initial}</div>
@@ -4372,12 +4671,13 @@ window.deleteRecipeById = async function(id) {
 
 // Save as Draft (from Create view)
 window.saveDraft = async function() {
+  window._aiIngredients = window.serializeRecipeIngredients();
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim() || 'Untitled Draft';
-  if (!currentUser) { showTip('Sign in to save drafts.'); window.openAuthModal(); return; }
+  if (!currentUser) { showTip('Sign in to save.'); window.openAuthModal(); return; }
 
   const btn = document.getElementById('saveDraftBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving draft...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
   try {
     const videoEl = document.getElementById('uploadedVideoPlayer');
@@ -4386,7 +4686,7 @@ window.saveDraft = async function() {
     if (uploadedVideoUID) {
       videoUrl = `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`;
     } else if (uploadedFile) {
-      if (btn) btn.textContent = 'Uploading video file...';
+      if (btn) btn.textContent = 'Uploading...';
       try {
         const { uploadVideo } = await import('./supabase-client.js');
         const supabaseUrl = await uploadVideo(uploadedFile, currentUser.email);
@@ -4398,44 +4698,121 @@ window.saveDraft = async function() {
         showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
         throw new Error('Supabase video upload failed: ' + upErr.message);
       }
+    } else if (editingRecipeId && playerCurrentRecipe) {
+      videoUrl = playerCurrentRecipe.video_url || null;
     } else {
-      // No video uploaded (remix or empty)
       videoUrl = null;
     }
 
-    const { createRecipe } = await import('./supabase-client.js');
+    const duration = videoEl?.duration || 0;
+    const steps = createStepsArr.map(s => s.label);
+    const loops = createStepsArr.map(s => ({
+      start:       s.time,
+      end:         s.endTime ?? null,
+      label:       s.label,
+      description: s.description || '',
+      ingredients: s.ingredients || [],
+      audio_url:   s.audio_url || s.audioUrl || '',
+      timer:       s.timer,
+      timers:      s.timers || (s.timer ? [{ duration: Number(s.timer), label: 'Timer 1' }] : [])
+    }));
     const thumbnailUrl = await ensureThumbnailUrl();
-    await createRecipe({
-      title,
-      creator:  currentUser.email,
-      duration: videoEl?.duration || 0,
-      steps:    createStepsArr.map(s => s.label),
-      // Save full loop objects so viewers get exact AI-detected start+end times
-      loops:    createStepsArr.map(s => ({
-        start:       s.time,
-        end:         s.endTime ?? null,
-        label:       s.label,
-        description: s.description || '',
-        ingredients: s.ingredients || [],
-        audio_url:   s.audio_url || s.audioUrl || '',
-        timer:       s.timer,
-        timers:      s.timers || (s.timer ? [{ duration: Number(s.timer), label: 'Timer 1' }] : [])
-      })),
-      video_url: videoUrl,
-      thumbnail_url: thumbnailUrl,
-      is_draft: true,
-      text_overlays: cachedSegments || [],
-    });
 
-    const msg = document.getElementById('savedRecipeMsg');
-    if (msg) msg.textContent = `"${title}" saved as a draft — finish it later on My Page 📝`;
-    document.getElementById('createStage2').style.display = 'none';
-    document.body.classList.remove('mobile-editing-active');
-    document.getElementById('createStage3').style.display = 'block';
-    showTip(`Draft "${title}" saved!`);
+    let savedRecipe;
+    if (editingRecipeId) {
+      const { updateRecipe } = await import('./supabase-client.js');
+      const updates = {
+        title,
+        duration,
+        steps,
+        loops,
+        video_url:        videoUrl,
+        thumbnail_url:    thumbnailUrl,
+        text_overlays:    cachedSegments || [],
+      };
+      if (window._aiIngredients) updates.ingredients = window._aiIngredients;
+      savedRecipe = await updateRecipe(editingRecipeId, updates);
+      
+      // Update in-memory player recipe cache
+      if (savedRecipe) {
+        playerCurrentRecipe = savedRecipe;
+        recipeData.title = savedRecipe.title || 'Untitled Recipe';
+        recipeData.duration = savedRecipe.duration || 10;
+        recipeData.video_url = savedRecipe.video_url || '';
+        recipeData.text_overlays = savedRecipe.text_overlays || [];
+        recipeData.ingredients = savedRecipe.ingredients || '';
+        
+        const parsed = parseLoops(savedRecipe.loops);
+        if (parsed.length > 0) {
+          recipeData.loops = parsed.map(l => l.start);
+          if (recipeData.loops[recipeData.loops.length - 1] < recipeData.duration) {
+            recipeData.loops.push(recipeData.duration);
+          }
+          recipeData.steps = parsed.map((l, idx) => ({
+            title: l.label || (savedRecipe.steps && savedRecipe.steps[idx]) || `Step ${idx + 1}`,
+            instruction: l.description || '',
+            audio_url: l.audio_url || l.audioUrl || '',
+            timer: l.timer,
+            timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
+          }));
+        }
+        
+        if (typeof libAllRecipes !== 'undefined' && Array.isArray(libAllRecipes)) {
+          const idx = libAllRecipes.findIndex(r => r.id === savedRecipe.id);
+          if (idx !== -1) {
+            libAllRecipes[idx] = savedRecipe;
+          }
+        }
+        
+        if (typeof renderPlayerIngredients === 'function') {
+          renderPlayerIngredients();
+        }
+        if (typeof renderPlayerTimelineMarkers === 'function') {
+          renderPlayerTimelineMarkers();
+        }
+      }
+    } else {
+      const { createRecipe } = await import('./supabase-client.js');
+      savedRecipe = await createRecipe({
+        title,
+        creator:  currentUser.email,
+        duration,
+        steps,
+        loops,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        is_draft: true,
+        text_overlays: cachedSegments || [],
+        ingredients: window._aiIngredients || '',
+      });
+    }
+
+    showTip(`"${title}" saved!`);
+    if (btn) {
+      btn.disabled = false;
+      if (btn.querySelector('span')) {
+        btn.innerHTML = '<span>💾</span><span>Save</span>';
+      } else {
+        btn.textContent = '💾 Save';
+      }
+    }
   } catch (err) {
-    showTip('Could not save draft: ' + err.message);
-    if (btn) { btn.disabled = false; btn.textContent = '💾 Save as Draft'; }
+    showTip('Could not save: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      if (btn.querySelector('span')) {
+        btn.innerHTML = '<span>💾</span><span>Save</span>';
+      } else {
+        btn.textContent = '💾 Save';
+      }
+    }
+  }
+};
+
+window.saveActiveRecipeState = async function() {
+  if (editingRecipeId) {
+    window._aiIngredients = window.serializeRecipeIngredients();
+    await window.saveDraft();
   }
 };
 
@@ -4868,6 +5245,9 @@ function renderPlayerTimelineMarkers() {
 
 window.loadRecipeToEditor = function(recipe) {
   if (!recipe) return;
+
+  editorPreviousView = currentView;
+  videoDuration = recipe.duration || 120;
   videoDuration = recipe.duration || 120;
   
   // Switch to the create view so that the editor is visible to the user
@@ -4879,7 +5259,7 @@ window.loadRecipeToEditor = function(recipe) {
 
   // Load saved subtitles / transcription
   cachedSegments = recipe.text_overlays || [];
-  cachedTranscript = cachedSegments.map(s => s.text).join(' ');
+  cachedTranscript = recipe.transcript || cachedSegments.map(s => s.text).join(' ') || '';
   const preview = document.getElementById('transcriptPreview');
   const textEl  = document.getElementById('transcriptText');
   if (preview) preview.style.display = cachedTranscript ? 'block' : 'none';
@@ -4938,6 +5318,8 @@ window.loadRecipeToEditor = function(recipe) {
     };
   }).sort((a, b) => a.time - b.time);
 
+  window.createStepsArr = createStepsArr;
+
   renderCreateSteps();
   renderTimeline();
   switchView('create');
@@ -4948,6 +5330,9 @@ window.loadRecipeToEditor = function(recipe) {
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();
   }
+  if (typeof window.updateTranscriptButtonUI === 'function') {
+    window.updateTranscriptButtonUI();
+  }
 };
 
 let hlsInstance = null;
@@ -4956,6 +5341,8 @@ window.loadPlayerRecipe = async function(recipeId) {
   if (!recipeId) return;
   activePlayerRecipeId = recipeId;
   localStorage.setItem('cooking_gps_active_recipe_id', recipeId);
+  window.checkedIngredients = new Set();
+  window.ingredientsActiveSubtab = 'list';
 
   // Reset player multigrid state on new recipe load
   if (typeof stopAllPlayerMultigridLoops === 'function') {
@@ -5075,6 +5462,10 @@ window.loadPlayerRecipe = async function(recipeId) {
         speedLabel.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
       }
       realVideo.currentTime = 0;
+      if (typeof window.adjustPlayerVideoSize === 'function') {
+        window.adjustPlayerVideoSize();
+        window.triggerPlayerVideoSizingLoop();
+      }
     } else {
       if (realVideo) {
         realVideo.style.display = 'none';
@@ -5149,6 +5540,254 @@ window.loadPlayerRecipe = async function(recipeId) {
   } catch (err) {
     console.error('[Player] Load error:', err);
     showTip('Could not load recipe to player: ' + err.message);
+  }
+};
+
+window.updatePlayerFolderSelect = function() {
+  const btnEl = document.getElementById('playerSaveToFolderBtn');
+  if (!btnEl) return;  if (typeof libLoad === 'function') {
+    libLoad();
+    console.log('[DEBUG] SaveToFolderModal: Loaded folders:', libState.folders);
+  } else {
+    return;
+  }
+  
+  // Find if recipe is in a folder
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : '__loose__';
+  
+  const span = btnEl.querySelector('span');
+  if (span) {
+    if (currentFolderId === '__loose__') {
+      span.textContent = '📂 Save to Library';
+    } else if (currentFolder) {
+      span.textContent = `📁 ${currentFolder.name}`;
+    }
+  }
+};
+
+window.openPlayerSaveToFolderModal = function() {
+  // Close player options dropdown first to clean up UI
+  if (typeof window.closePlayerActionsDropdown === 'function') {
+    window.closePlayerActionsDropdown();
+  }  const modal = document.getElementById('playerFolderSelectionModal');
+  const listContainer = document.getElementById('playerFolderModalList');
+  if (!modal || !listContainer) return;
+  
+  const searchInput = document.getElementById('playerFolderSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  
+  if (typeof libLoad === 'function') {
+    libLoad();
+  } else {
+    return;
+  }
+  
+  listContainer.innerHTML = '';
+  
+  // Find current folder
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : '__loose__';
+  
+  // 1. Loose / Default Library option
+  const looseItem = document.createElement('button');
+  looseItem.className = 'player-modal-folder-item';
+  looseItem.style.cssText = `
+    width: 100%;
+    background: ${currentFolderId === '__loose__' ? 'rgba(74,144,217,0.1)' : 'transparent'};
+    border: 1.5px solid ${currentFolderId === '__loose__' ? 'var(--primary)' : 'rgba(0,0,0,0.06)'};
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: ${currentFolderId === '__loose__' ? 'var(--primary)' : 'var(--text-heading)'};
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+  `;
+  looseItem.innerHTML = `
+    <span>📂 Save to Library</span>
+    ${currentFolderId === '__loose__' ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+  `;
+  looseItem.onclick = () => {
+    window.handlePlayerFolderChange('__loose__');
+  };
+  listContainer.appendChild(looseItem);
+  
+  // 2. Folder options
+  libState.folders.forEach(f => {
+    if (!f || typeof f !== 'object') return;
+    
+    const isSelected = currentFolderId === f.id;
+    const item = document.createElement('button');
+    item.className = 'player-modal-folder-item';
+    item.style.cssText = `
+      width: 100%;
+      background: ${isSelected ? 'rgba(74,144,217,0.1)' : 'transparent'};
+      border: 1.5px solid ${isSelected ? 'var(--primary)' : 'rgba(0,0,0,0.06)'};
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: ${isSelected ? 'var(--primary)' : 'var(--text-heading)'};
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    `;
+    item.innerHTML = `
+      <span>📁 ${escapeHTML(f.name)}</span>
+      ${isSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+    `;
+    item.onclick = () => {
+      window.handlePlayerFolderChange(f.id);
+    };
+    listContainer.appendChild(item);
+  });
+  
+  modal.style.display = 'flex';
+};
+
+window.closePlayerSaveToFolderModal = function() {
+  const modal = document.getElementById('playerFolderSelectionModal');
+  if (modal) modal.style.display = 'none';
+};window.filterPlayerFolders = function() {
+  const query = (document.getElementById('playerFolderSearchInput')?.value || '').toLowerCase().trim();
+  const listContainer = document.getElementById('playerFolderModalList');
+  if (!listContainer) return;
+  const items = listContainer.getElementsByClassName('player-modal-folder-item');
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const text = item.textContent.toLowerCase();
+    if (text.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  }
+};
+
+window.openPlayerEmbedModal = function() {
+  const modal = document.getElementById('playerEmbedModal');
+  if (!modal) return;
+
+  const widthInput = document.getElementById('playerEmbedWidthInput');
+  const heightInput = document.getElementById('playerEmbedHeightInput');
+  if (widthInput) widthInput.value = '100%';
+  if (heightInput) heightInput.value = '480';
+
+  window.updateEmbedCodeSnippet();
+  
+  modal.style.display = 'flex';
+};
+
+window.closePlayerEmbedModal = function() {
+  const modal = document.getElementById('playerEmbedModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.updateEmbedCodeSnippet = function() {
+  const textarea = document.getElementById('playerEmbedTextarea');
+  const widthInput = document.getElementById('playerEmbedWidthInput');
+  const heightInput = document.getElementById('playerEmbedHeightInput');
+  if (!textarea) return;
+
+  const w = (widthInput?.value || '100%').trim();
+  const h = (heightInput?.value || '480').trim();
+  const recipeId = activePlayerRecipeId || 'r1';
+
+  const origin = window.location.origin;
+  const embedUrl = `${origin}/mobile.html?id=${recipeId}#mobile-player`;
+
+  const code = `<iframe src="${embedUrl}" width="${w}" height="${h}" style="border:none; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,0.08);" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+
+  textarea.value = code;
+};
+
+window.copyEmbedCode = function() {
+  const textarea = document.getElementById('playerEmbedTextarea');
+  const btn = document.getElementById('playerCopyEmbedBtn');
+  if (!textarea) return;
+
+  textarea.select();
+  textarea.setSelectionRange(0, 99999);
+
+  try {
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      showCopyFeedback();
+    }).catch(() => {
+      document.execCommand('copy');
+      showCopyFeedback();
+    });
+  } catch (err) {
+    document.execCommand('copy');
+    showCopyFeedback();
+  }
+
+  function showCopyFeedback() {
+    if (btn) {
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<span>✓ Copied to Clipboard!</span>';
+      const origBg = btn.style.background;
+      const origShadow = btn.style.boxShadow;
+      btn.style.background = '#16a34a';
+      btn.style.boxShadow = '0 4px 12px rgba(22,163,74,0.25)';
+      setTimeout(() => {
+        btn.innerHTML = origText;
+        btn.style.background = origBg || 'var(--primary)';
+        btn.style.boxShadow = origShadow || '0 4px 12px rgba(74,144,217,0.25)';
+        window.closePlayerEmbedModal();
+      }, 1500);
+    }
+  }
+};
+
+window.handlePlayerFolderChange = function(targetFolderId) {
+  if (!activePlayerRecipeId) return;
+  
+  const currentFolder = libState.folders.find(f => Array.isArray(f.recipeIds) && f.recipeIds.includes(activePlayerRecipeId));
+  const currentFolderId = currentFolder ? currentFolder.id : '__loose__';
+  
+  if (targetFolderId === '__new__') {
+    // Create folder with pending recipe
+    window.libCreateFolder(activePlayerRecipeId);
+    
+    // Close the dropdown menu so it is not visible behind the folder creation modal
+    if (typeof window.closePlayerActionsDropdown === 'function') {
+      window.closePlayerActionsDropdown();
+    }
+    
+    // Close selection modal
+    if (typeof window.closePlayerSaveToFolderModal === 'function') {
+      window.closePlayerSaveToFolderModal();
+    }
+    return;
+  }
+  
+  window.libMoveRecipeToFolder(activePlayerRecipeId, currentFolderId, targetFolderId);
+  
+  // Update the dropdown UI to reflect the change
+  if (typeof window.updatePlayerFolderSelect === 'function') {
+    window.updatePlayerFolderSelect();
+  }
+  
+  // Close the dropdown menu after moving to folder
+  if (typeof window.closePlayerActionsDropdown === 'function') {
+    window.closePlayerActionsDropdown();
+  }
+  
+  // Close selection modal
+  if (typeof window.closePlayerSaveToFolderModal === 'function') {
+    window.closePlayerSaveToFolderModal();
   }
 };
 
@@ -5624,8 +6263,6 @@ function timeAgo(dateString) {
     return 'some time ago';
   }
 }
-
-let activePlayerRecipeId = null;
 
 window.activePlayerMainTab = 'steps';
 
@@ -6430,6 +7067,17 @@ let   libDragItem      = null;   // { type:'folder'|'recipe', id }
 let   libSelectedColor = FOLDER_COLORS[0];
 window.libPendingFolderRecipeId = null; // recipe to move after creating folder
 
+Object.defineProperty(window, 'libState', {
+  get: () => libState,
+  set: (val) => { libState = val; }
+});
+Object.defineProperty(window, 'libAllRecipes', {
+  get: () => libAllRecipes,
+  set: (val) => { libAllRecipes = val; }
+});
+window.libSave = function() { libSave(); };
+window.libRenderContent = function() { libRenderContent(); };
+
 // ── State helpers ──────────────────────────────────────────────────────────
 function libLoad() {
   try {
@@ -6863,31 +7511,36 @@ function libRecipeCardHTML(r, folderId) {
                cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;position:relative;"
         onclick="libOpenRecipe('${r.id}')"
         ${dragAttr}
-        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(74,144,217,0.14)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';"
-        onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';">
+        onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 28px rgba(74,144,217,0.18)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+        onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
         
         <!-- Thumbnail -->
-        <div style="position:relative;height:140px;background:#111;overflow:hidden;flex-shrink:0;">
+        <div style="position:relative;height:220px;background:#111;overflow:hidden;flex-shrink:0;">
           ${thumbHtml}
-          ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
-          <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
-            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">▶</div>
+          ${r.video_url ? `
+            <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
+                   style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
+            </video>
+          ` : ''}
+          ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;z-index:3;">${mins}</div>` : ''}
+          <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;z-index:3;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);">▶</div>
           </div>
         </div>
 
         <!-- Info Body -->
-        <div style="padding:12px;flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
-          <div>
-            <div style="font-weight:900;font-size:0.86rem;color:var(--text-heading);margin-bottom:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:2.6rem;">${r.title || 'Untitled'}</div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-weight:900;font-size:0.86rem;color:var(--text-heading);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:2.6rem;">${r.title || 'Untitled'}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;gap:8px;" onclick="event.stopPropagation()">
             <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               ${privBadge}
               ${date ? `<span>• ${date}</span>` : ''}
             </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;" onclick="event.stopPropagation()">
-            ${folderSelectHtml}
-            ${deleteBtn}
-            ${isDrag && !folderId ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>` : ''}
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+              ${folderSelectHtml}
+              ${deleteBtn}
+              ${isDrag && !folderId ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>` : ''}
+            </div>
           </div>
         </div>
       </div>`;
@@ -7166,7 +7819,7 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
     menu.style.display = 'none';
     menu.style.overflow = 'hidden';
     menu.style.flexDirection = 'column';
-    menu.style.minWidth = '160px';
+    menu.style.minWidth = '175px';
     document.body.appendChild(menu);
   }
 
@@ -7188,10 +7841,25 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
     </div>
   `;
 
+  // Search input bar
+  html += `
+    <div style="padding: 6px 12px; border-bottom: 1px solid rgba(0,0,0,0.03); display: flex; align-items: center; gap: 6px; background: #fafafa;">
+      <span style="font-size: 0.7rem; color: var(--text-muted);">🔍</span>
+      <input type="text" placeholder="Search folders..." id="libFolderSearchInput"
+             oninput="window.filterLibFoldersDropdown(this.value)"
+             style="width: 100%; border: none; background: transparent; padding: 2px 0; font-family: var(--font); font-size: 0.72rem; font-weight: 700; outline: none; box-sizing: border-box; color: var(--text-heading);"
+             onclick="event.stopPropagation()">
+    </div>
+  `;
+
+  // Scrollable container for list options
+  html += `<div id="libFolderDropdownList" style="display:flex; flex-direction:column; max-height:160px; overflow-y:auto; scrollbar-width:thin;">`;
+
   // Loose Videos option
   if (currentFolderId) {
     html += `
       <button onclick="window.libMoveRecipeToFolder('${recipeId}', '${currentFolderId}', '__loose__'); window.closeLibFolderDropdown();" 
+              data-name="loose videos"
               style="width: 100%; background: transparent; border: none; padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--text-heading); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s, color 0.12s;"
               onmouseenter="this.style.background='#f5f0ff'; this.style.color='var(--primary)';" 
               onmouseleave="this.style.background='transparent'; this.style.color='var(--text-heading)';">
@@ -7210,6 +7878,7 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
 
     html += `
       <button onclick="window.libMoveRecipeToFolder('${recipeId}', ${currentFolderId ? `'${currentFolderId}'` : 'null'}, '${f.id}'); window.closeLibFolderDropdown();" 
+              data-name="${f.name.toLowerCase()}"
               style="width: 100%; background: transparent; border: none; padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--text-heading); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s, color 0.12s;"
               onmouseenter="this.style.background='#f5f0ff'; this.style.color='var(--primary)';" 
               onmouseleave="this.style.background='transparent'; this.style.color='var(--text-heading)';">
@@ -7218,7 +7887,9 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
     `;
   });
 
-  // Create folder option
+  html += `</div>`; // Close list container
+
+  // Create folder option (pinned at bottom)
   html += `
     <button onclick="window.libCreateFolder('${recipeId}'); window.closeLibFolderDropdown();" 
             style="width: 100%; background: transparent; border: none; border-top: 1px solid rgba(0,0,0,0.03); padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--primary); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s;"
@@ -7239,6 +7910,27 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
     menu.style.top = `${rect.bottom + 4 + window.scrollY}px`;
   }
   menu.style.left = `${rect.left + window.scrollX}px`;
+
+  // Focus the search input automatically
+  const searchInput = document.getElementById('libFolderSearchInput');
+  if (searchInput) {
+    setTimeout(() => searchInput.focus(), 50);
+  }
+};
+
+window.filterLibFoldersDropdown = function(query) {
+  const list = document.getElementById('libFolderDropdownList');
+  if (!list) return;
+  const q = query.trim().toLowerCase();
+  const buttons = list.querySelectorAll('button');
+  buttons.forEach(btn => {
+    const name = btn.getAttribute('data-name') || '';
+    if (!q || name.includes(q)) {
+      btn.style.display = 'flex';
+    } else {
+      btn.style.display = 'none';
+    }
+  });
 };
 
 window.closeLibFolderDropdown = function() {
@@ -8975,7 +9667,7 @@ window.setKeyboardMode = function(mode) {
       cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
       cKbToggleBtn.style.color = 'var(--text-body)';
       cKbToggleBtn.style.borderColor = 'var(--border-card)';
-      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '13px', '13px');
+      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '16px', '16px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = 'Skip: Steps';
     }
@@ -9027,7 +9719,7 @@ window.setKeyboardMode = function(mode) {
       cKbToggleBtn.style.background = 'var(--primary-soft)';
       cKbToggleBtn.style.color = 'var(--primary-dark)';
       cKbToggleBtn.style.borderColor = 'var(--primary)';
-      updateLucideIcon('createKbToggleIcon', 'timer', '13px', '13px');
+      updateLucideIcon('createKbToggleIcon', 'timer', '16px', '16px');
       const span = cKbToggleBtn.querySelector('span');
       if (span) span.textContent = `Skip: ${seekAmount}s`;
     }
@@ -9085,6 +9777,48 @@ window.playerNextAction = function() {
   }
 };
 
+window.playerPrevAction = function() {
+  if (keyboardMode === 'steps') {
+    window.desktopPlayerPrev();
+  } else {
+    window.playerSkipTime(-1);
+  }
+};
+
+window.playerNextAction = function() {
+  if (keyboardMode === 'steps') {
+    window.desktopPlayerNext();
+  } else {
+    window.playerSkipTime(1);  }
+};
+
+window.toggleAiInfo = function(type) {
+  const ids = {
+    speech: 'aiInfoSpeech',
+    video: 'aiInfoVideo',
+    transcript: 'aiInfoTranscript'
+  };
+  
+  const targetId = ids[type];
+  if (!targetId) return;
+
+  const targetEl = document.getElementById(targetId) || document.getElementById(targetId + 'Mobile');
+  if (!targetEl) return;
+
+  const isVisible = targetEl.style.display === 'block';
+  
+  // Close all others (both desktop and mobile IDs) for clean accordian style
+  Object.values(ids).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+    const elMobile = document.getElementById(id + 'Mobile');
+    if (elMobile) elMobile.style.display = 'none';
+  });
+
+  // Toggle current one
+  targetEl.style.display = isVisible ? 'none' : 'block';
+};
+
 window.cyclePlaybackMode = function() {
   const modes = ['loop', 'wait', 'continuous'];
   const nextIdx = (modes.indexOf(playbackMode) + 1) % modes.length;
@@ -9117,8 +9851,421 @@ window.navOrScrub = function(dir) {
       const amount = dir > 0 ? seekAmount : -seekAmount;
       vid.currentTime = Math.max(0, Math.min(vid.duration || Infinity, vid.currentTime + amount));
     }
+    }
+};
+
+window.currentWorkbenchLayout = 'standard';
+window.isControlsFullWidth = false;
+window.resizedRecipeHeight = 380;
+window.resizedControlsHeight = 220;
+
+window.toggleLayoutDropdown = function(e) {
+  if (e) e.stopPropagation();
+  const btn = document.getElementById('layoutSelectorBtn');
+  if (!btn) return;
+
+  let menu = document.getElementById('layoutDropdownContent');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'layoutDropdownContent';
+    menu.className = 'glass-card';
+    menu.style.position = 'absolute';
+    menu.style.width = '220px';
+    menu.style.zIndex = '999999';
+    menu.style.padding = '6px';
+    menu.style.boxShadow = 'var(--shadow-lg)';
+    menu.style.border = '2px solid var(--border-card)';
+    menu.style.flexDirection = 'column';
+    menu.style.gap = '4px';
+    menu.style.background = '#ffffff';
+    menu.style.borderRadius = '12px';
+    menu.style.display = 'none';
+
+    menu.innerHTML = `
+      <button onclick="window.switchWorkbenchLayout('standard')" id="optLayoutStandard" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        🖥️ Standard Layout
+      </button>
+      <button onclick="window.switchWorkbenchLayout('bottom-controls')" id="optLayoutControls" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        ↔️ Bottom Playback Controls
+      </button>
+      <button onclick="window.switchWorkbenchLayout('bottom-recipe')" id="optLayoutRecipe" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        📋 Bottom Editor / Timeline
+      </button>
+    `;
+    document.body.appendChild(menu);
+  }
+
+  const isHidden = menu.style.display === 'none' || menu.style.display === '';
+  if (isHidden) {
+    // Sync buttons active styling first
+    const current = window.currentWorkbenchLayout || 'standard';
+    const optStandard = document.getElementById('optLayoutStandard');
+    const optControls = document.getElementById('optLayoutControls');
+    const optRecipe = document.getElementById('optLayoutRecipe');
+    
+    [optStandard, optControls, optRecipe].forEach(el => {
+      if (el) {
+        el.style.background = 'transparent';
+        el.style.color = 'var(--text-body)';
+      }
+    });
+
+    let activeEl = null;
+    if (current === 'standard') activeEl = optStandard;
+    else if (current === 'bottom-controls') activeEl = optControls;
+    else if (current === 'bottom-recipe') activeEl = optRecipe;
+
+    if (activeEl) {
+      activeEl.style.background = 'var(--primary-light)';
+      activeEl.style.color = 'var(--primary)';
+    }
+
+    menu.style.display = 'flex';
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 6 + window.scrollY}px`;
+    menu.style.left = `${rect.left + window.scrollX}px`;
+  } else {
+    menu.style.display = 'none';
   }
 };
+
+window.switchWorkbenchLayout = function(layoutMode) {
+  window.currentWorkbenchLayout = layoutMode;
+  
+  // Close dropdown if open
+  const dd = document.getElementById('layoutDropdownContent');
+  if (dd) dd.style.display = 'none';
+  
+  // Update dropdown button label
+  const labelSpan = document.querySelector('#layoutSelectorBtn span:not(:last-child)');
+  if (labelSpan) {
+    if (layoutMode === 'standard') labelSpan.textContent = 'Layout: Standard';
+    else if (layoutMode === 'bottom-controls') labelSpan.textContent = 'Layout: Bottom Controls';
+    else if (layoutMode === 'bottom-recipe') labelSpan.textContent = 'Layout: Bottom Editor';
+  }
+
+  // Get key elements
+  const controls = document.getElementById('stepNavControlsRow');
+  const scrubber = document.getElementById('editorScrubberCard');
+  const leftCol = document.getElementById('workbenchLeft');
+  const rightCol = document.getElementById('workbenchRight');
+  const resizer = document.getElementById('workbenchResizer');
+  const hResizer = document.getElementById('workbenchHorizontalResizer');
+  const grid = document.getElementById('workbenchGrid');
+  const bottomCol = document.getElementById('workbenchBottom');
+  const stage2 = document.getElementById('createStage2');
+  const recipePanel = document.getElementById('recipePanelWrapper');
+
+  if (!controls || !leftCol || !rightCol || !resizer || !grid || !bottomCol) return;
+
+  // Restore controls strip default layout offset style
+  const controlsStrip = controls.querySelector('.player-controls-strip');
+  if (controlsStrip) {
+    controlsStrip.style.position = 'relative';
+    controlsStrip.style.left = '-35px';
+  }
+
+  // Reset parents and default styles first
+  if (scrubber) leftCol.appendChild(scrubber);
+  leftCol.appendChild(controls);
+  grid.appendChild(resizer);
+  grid.appendChild(rightCol);
+  rightCol.style.display = 'flex';
+  if (recipePanel) {
+    rightCol.appendChild(recipePanel);
+  }
+  
+  bottomCol.innerHTML = '';
+  bottomCol.style.display = 'none';
+  bottomCol.style.height = 'auto';
+  bottomCol.style.overflowY = 'visible';
+  resizer.style.display = 'flex';
+  if (hResizer) {
+    hResizer.style.display = 'none';
+  }
+
+  // Restore default left/right flex widths
+  leftCol.style.width = 'calc(100% - 420px)';
+  leftCol.style.flex = 'none';
+  rightCol.style.width = '420px';
+  rightCol.style.flex = 'none';
+  controls.style.flex = 'none';
+  controls.style.width = '100%';
+  if (scrubber) {
+    scrubber.style.flex = 'none';
+    scrubber.style.width = '100%';
+  }
+
+  // Reset grid and stage2 styles
+  if (stage2) {
+    stage2.style.overflowY = 'hidden';
+    stage2.style.height = 'calc(100vh - 80px)';
+  }
+  grid.style.flex = '1';
+  grid.style.height = 'auto';
+  grid.style.minHeight = '0';
+    leftCol.style.overflowY = 'auto';
+  leftCol.style.overflowX = 'auto';
+
+  if (layoutMode === 'standard') {
+    window.isControlsFullWidth = false;
+    
+    const panels = [
+      document.getElementById('rightColStops'),
+      document.getElementById('rightColIngredients'),
+      document.getElementById('rightColSave')
+    ];
+
+    if (window.swapWorkbenchPanels) {
+      if (recipePanel) {
+        leftCol.appendChild(recipePanel);
+        recipePanel.style.height = 'auto';
+        recipePanel.style.flex = 'none';
+      }
+      if (scrubber) {
+        rightCol.appendChild(scrubber);
+        scrubber.style.width = '100%';
+      }
+      rightCol.appendChild(controls);
+      controls.style.width = '100%';
+      
+      if (controlsStrip) {
+        controlsStrip.style.position = 'static';
+        controlsStrip.style.left = '0';
+      }
+      
+      panels.forEach(p => {
+        if (p) {
+          p.style.maxHeight = 'none';
+          p.style.overflowY = 'visible';
+        }
+      });
+    } else {
+      if (recipePanel) {
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
+      }
+      panels.forEach(p => {
+        if (p) {
+          p.style.maxHeight = '100%';
+          p.style.overflowY = 'auto';
+        }
+      });
+    }
+  } else if (layoutMode === 'bottom-controls') {
+    window.isControlsFullWidth = true;
+    if (scrubber) {
+      bottomCol.appendChild(scrubber);
+      scrubber.style.width = '100%';
+    }
+    bottomCol.appendChild(controls);
+    bottomCol.style.display = 'flex';
+    bottomCol.style.flexDirection = 'column';
+    bottomCol.style.gap = '8px';
+    bottomCol.style.overflowY = 'auto';
+    bottomCol.style.scrollbarWidth = 'thin';
+    
+    const h = window.resizedControlsHeight || 220;
+    bottomCol.style.height = h + 'px';
+    if (hResizer) {
+      hResizer.style.display = 'flex';
+    }
+
+    if (window.swapWorkbenchPanels) {
+      // Swapped: Video player and recipePanel in leftCol. Scrubber/controls in bottomCol.
+      if (recipePanel) {
+        leftCol.appendChild(recipePanel);
+        recipePanel.style.height = 'auto';
+        recipePanel.style.flex = 'none';
+      }
+      
+      // Hide rightCol and resizer since recipe is in leftCol
+      rightCol.style.display = 'none';
+      resizer.style.display = 'none';
+      
+      leftCol.style.width = '100%';
+      leftCol.style.flex = '1';
+    } else {
+      // Normal: Video player in leftCol, recipePanel in rightCol.
+      // Show resizer and right column
+      resizer.style.display = 'flex';
+      rightCol.style.display = 'flex';
+      
+      leftCol.style.width = 'calc(100% - 420px)';
+      leftCol.style.flex = 'none';
+      rightCol.style.width = '420px';
+      rightCol.style.flex = 'none';
+    }
+  } else if (layoutMode === 'bottom-recipe') {
+    window.isControlsFullWidth = false;
+    
+    // Keep stage2 fixed height and hidden overflow so resizer works
+    if (stage2) {
+      stage2.style.overflowY = 'hidden';
+      stage2.style.height = 'calc(100vh - 80px)';
+    }
+    grid.style.flex = '1';
+    grid.style.height = 'auto';
+    grid.style.minHeight = '0';
+    leftCol.style.overflowY = 'auto';
+
+    // 1. Move recipePanel to bottomCol
+    if (recipePanel) {
+      bottomCol.appendChild(recipePanel);
+      recipePanel.style.width = '100%';
+      recipePanel.style.height = '100%';
+      recipePanel.style.flex = '1';
+    }
+    
+    // Limit initial height to leave enough space for video player on small screen
+    const maxH = Math.max(150, (window.innerHeight - 80) - 300); // leave at least 300px for video
+    const h = Math.min(window.resizedRecipeHeight || 380, maxH);
+    bottomCol.style.height = h + 'px';
+    
+    bottomCol.style.display = 'flex';
+    bottomCol.style.flexDirection = 'column';
+    bottomCol.style.flexShrink = '0';
+    bottomCol.style.overflowY = 'hidden';
+
+    const panels = [
+      document.getElementById('rightColStops'),
+      document.getElementById('rightColIngredients'),
+      document.getElementById('rightColSave')
+    ];
+    panels.forEach(p => {
+      if (p) {
+        p.style.maxHeight = '100%';
+        p.style.overflowY = 'auto';
+      }
+    });
+
+    if (window.swapWorkbenchPanels) {
+      // Swapped: Video player in leftCol, scrubber/controls in rightCol. Recipe panel at bottomCol.
+      if (scrubber) {
+        rightCol.appendChild(scrubber);
+        scrubber.style.width = '100%';
+      }
+      rightCol.appendChild(controls);
+      controls.style.width = '100%';
+
+      if (controlsStrip) {
+        controlsStrip.style.position = 'static';
+        controlsStrip.style.left = '0';
+      }
+
+      // Show resizer and right column
+      resizer.style.display = 'flex';
+      rightCol.style.display = 'flex';
+      
+      // Restore default widths for columns in the top grid
+      leftCol.style.width = 'calc(100% - 420px)';
+      leftCol.style.flex = 'none';
+      rightCol.style.width = '420px';
+      rightCol.style.flex = 'none';
+    } else {
+      // Normal: Video player, scrubber and controls in leftCol. Recipe panel at bottomCol.
+      // Stretch leftCol to 100% width
+      leftCol.style.width = '100%';
+      leftCol.style.flex = '1';
+      
+      // Hide rightCol and resizer since recipe is at the bottom
+      rightCol.style.display = 'none';
+      resizer.style.display = 'none';
+    }
+
+    if (hResizer) {
+      hResizer.style.display = 'flex';
+    }
+  }
+
+  // Update card header toggle button
+  const layoutBtn = document.getElementById('playbackControlsLayoutBtn');
+  if (layoutBtn) {
+    if (layoutMode === 'bottom-recipe') {
+      layoutBtn.style.display = 'none';
+    } else {
+      layoutBtn.style.display = 'inline-flex';
+      const span = layoutBtn.querySelector('span');
+      if (span) {
+        span.textContent = (layoutMode === 'bottom-controls') ? '↔️ Column Layout' : '↔️ Full Width';
+      }
+    }
+  }
+
+  // Update recipe panel inline layout toggle button
+  const recipeLayoutBtn = document.getElementById('editorFullWidthBtn');
+  if (recipeLayoutBtn) {
+    if (layoutMode === 'bottom-controls') {
+      recipeLayoutBtn.style.display = 'none';
+    } else {
+      recipeLayoutBtn.style.display = 'inline-flex';
+      const span = recipeLayoutBtn.querySelector('span');
+      if (span) {
+        span.textContent = (layoutMode === 'bottom-recipe') ? '↔️ Column Layout' : '↔️ Full Width';
+      }
+    }
+  }
+
+  // No dropdown sync needed
+
+  // Sync the "Switch Spots" button styling
+  const swapBtn = document.getElementById('swapPanelsBtn');
+  if (swapBtn) {
+    if (window.swapWorkbenchPanels) {
+      swapBtn.style.background = 'var(--primary-light)';
+      swapBtn.style.color = 'var(--primary)';
+      swapBtn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+    } else {
+      swapBtn.style.background = 'var(--bg-card-soft)';
+      swapBtn.style.color = 'var(--text-body)';
+      swapBtn.style.borderColor = 'var(--border-card)';
+    }
+  }
+
+  // Sync the "Full Width" button styling
+  const fullWidthBtn = document.getElementById('editorFullWidthBtn');
+  if (fullWidthBtn) {
+    if (window.currentWorkbenchLayout === 'bottom-recipe') {
+      fullWidthBtn.style.background = 'var(--primary-light)';
+      fullWidthBtn.style.color = 'var(--primary)';
+      fullWidthBtn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+    } else {
+      fullWidthBtn.style.background = 'var(--bg-card-soft)';
+      fullWidthBtn.style.color = 'var(--text-body)';
+      fullWidthBtn.style.borderColor = 'var(--border-card)';
+    }
+  }
+
+  // Adjust video sizes to ensure proper video sizing
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
+};
+
+window.togglePlaybackControlsLayout = function() {
+  const nextLayout = (window.currentWorkbenchLayout === 'bottom-controls') ? 'standard' : 'bottom-controls';
+  window.switchWorkbenchLayout(nextLayout);
+};
+
+window.toggleRecipePanelLayout = function() {
+  const nextLayout = (window.currentWorkbenchLayout === 'bottom-recipe') ? 'standard' : 'bottom-recipe';
+  window.switchWorkbenchLayout(nextLayout);
+};
+
+window.toggleSwapPanels = function() {
+  window.swapWorkbenchPanels = !window.swapWorkbenchPanels;
+  
+  let nextLayout = window.currentWorkbenchLayout || 'standard';
+  if (nextLayout === 'bottom-recipe') {
+    nextLayout = 'bottom-controls';
+  } else if (nextLayout === 'bottom-controls') {
+    nextLayout = 'bottom-recipe';
+  }
+
+  window.switchWorkbenchLayout(nextLayout);
+};
+
+// No click-outside dropdown handling needed
 
 // Flash the on-screen arrow button briefly when keyboard triggers it
 function flashNavBtn(dir) {
@@ -9356,50 +10503,72 @@ window.toggleEditorLoopPreview = function() {
   }
 };
 
+window.toggleEditorLoopPreview = function() {
+  if (previewInterval) {
+    window.stopPreviewLoop();
+  } else {
+    window.previewCurrentNavStep();
+  }
+};
+
 window.toggleAiToolsCollapse = function() {
   const el = document.getElementById('aiToolsCollapse');
   const chev = document.getElementById('aiToolsChevron');
+  const btn = document.getElementById('toggleAiToolsBtn');
   if (!el) return;
   const isHidden = el.style.display === 'none';
   if (isHidden) {
     el.style.display = 'flex';
     if (chev) chev.textContent = '▴';
+    if (btn) {
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
+    }
   } else {
     el.style.display = 'none';
     if (chev) chev.textContent = '▾';
+    if (btn) {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+      btn.style.boxShadow = 'var(--shadow-xs)';
+    }
   }
 };
 
 window.collapseAiTools = function() {
   const el = document.getElementById('aiToolsCollapse');
   const chev = document.getElementById('aiToolsChevron');
+  const btn = document.getElementById('toggleAiToolsBtn');
   if (el) {
     el.style.display = 'none';
     if (chev) chev.textContent = '▾';
+    if (btn) {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+      btn.style.boxShadow = 'var(--shadow-xs)';
+    }
   }
 };
 
-window.toggleStepNavControls = function() {
-  const el = document.getElementById('stepNavControlsContent');
-  const chev = document.getElementById('stepNavControlsChevron');
-  const btn = document.getElementById('toggleStepNavControlsBtn');
-  if (!el) return;
-  const isHidden = el.style.display === 'none';
-  if (isHidden) {
-    el.style.display = 'flex';
-    if (btn) {
-      const span = btn.querySelector('span');
-      if (span) span.textContent = 'Hide Panel';
+
+window.scrollToActiveStep = function(i) {
+  setTimeout(() => {
+    const card = document.getElementById(`stepRow_${i}`);
+    const list = document.getElementById('createStepsList');
+    if (card && list) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-    if (chev) chev.textContent = '▲';
-  } else {
-    el.style.display = 'none';
-    if (btn) {
-      const span = btn.querySelector('span');
-      if (span) span.textContent = 'Show Panel';
+    
+    const tabEl = document.getElementById(`createStepTabBtn_${i}`);
+    const tabsCont = document.getElementById('createStepTabs');
+    if (tabEl && tabsCont) {
+      tabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-    if (chev) chev.textContent = '▼';
-  }
+  }, 100);
 };
 
 window.selectCreateStep = function(i) {
@@ -9409,26 +10578,127 @@ window.selectCreateStep = function(i) {
     window.previewStepLoop(i);
   } else {
     renderCreateSteps();
+    if (typeof window.scrollToActiveStep === 'function') {
+      window.scrollToActiveStep(i);
+    }
   }
 };
 
 window.showStepTranscripts = false;
+window.isTranscriptExtended = false;
+
+window.updateTranscriptButtonUI = function() {
+  const isShow = window.showStepTranscripts;
+  const isExtended = window.isTranscriptExtended;
+  
+  const optTranscripts = document.getElementById('optTabTranscripts');
+  if (optTranscripts) {
+    if (isShow) {
+      optTranscripts.style.background = 'var(--primary-light)';
+      optTranscripts.style.color = 'var(--primary)';
+      optTranscripts.innerHTML = '💬 Hide Transcripts';
+    } else {
+      optTranscripts.style.background = 'transparent';
+      optTranscripts.style.color = 'var(--text-body)';
+      optTranscripts.innerHTML = '💬 View Transcripts';
+    }
+  }
+
+  const panel = document.getElementById('fixedTranscriptPanel');
+  const btn = document.getElementById('transcriptSidebarToggleBtn');
+  const icon = document.getElementById('transcriptSidebarToggleIcon');
+  const wrapper = document.getElementById('transcriptSidebarWrapper');
+  const slider = document.getElementById('stopsSliderContainer');
+  const extendBtnLabel = document.getElementById('extendTranscriptLabel');
+  const extendBtnIcon = document.getElementById('extendTranscriptIcon');
+
+  if (panel && btn) {
+    if (isShow) {
+      if (isExtended) {
+        // Extended / Full Row view
+        panel.style.width = '100%';
+        panel.style.padding = '10px';
+        panel.style.borderWidth = '1.5px';
+        btn.style.borderRadius = '0 12px 12px 0';
+        if (icon) icon.textContent = '‹';
+        if (slider) slider.style.display = 'none'; // Hide step cards
+        if (wrapper) {
+          wrapper.style.width = '100%';
+          wrapper.style.flex = '1';
+        }
+        if (extendBtnLabel) extendBtnLabel.textContent = 'Standard';
+        if (extendBtnIcon) extendBtnIcon.textContent = '⤡';
+      } else {
+        // Standard split view (230px wide sidebar)
+        panel.style.width = '230px';
+        panel.style.padding = '10px';
+        panel.style.borderWidth = '1.5px';
+        btn.style.borderRadius = '0 12px 12px 0';
+        if (icon) icon.textContent = '‹';
+        if (slider) slider.style.display = 'flex'; // Show step cards
+        if (wrapper) {
+          wrapper.style.width = 'auto';
+          wrapper.style.flex = 'none';
+        }
+        if (extendBtnLabel) extendBtnLabel.textContent = 'Extend';
+        if (extendBtnIcon) extendBtnIcon.textContent = '⤢';
+      }
+    } else {
+      // Collapsed / Closed view
+      panel.style.width = '0px';
+      panel.style.padding = '0px';
+      panel.style.borderWidth = '0px';
+      btn.style.borderRadius = '12px';
+      if (icon) icon.textContent = '›';
+      if (slider) slider.style.display = 'flex'; // Show step cards
+      if (wrapper) {
+        wrapper.style.width = 'auto';
+        wrapper.style.flex = 'none';
+      }
+    }
+  }
+};
+
+window.toggleTranscriptExtend = function() {
+  window.isTranscriptExtended = !window.isTranscriptExtended;
+  window.updateTranscriptButtonUI();
+};
+
 window.toggleStepTranscripts = function() {
   window.showStepTranscripts = !window.showStepTranscripts;
+  
+  // Close dropdown if open
+  const dd = document.getElementById('editorTabDropdownContent');
+  if (dd) dd.style.display = 'none';
+
   const btn = document.getElementById('toggleStepTranscriptBtn');
   if (btn) {
     if (window.showStepTranscripts) {
-      btn.style.background = '#7c3aed';
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
       btn.style.color = '#fff';
       btn.style.borderColor = 'transparent';
-      btn.textContent = '💬 Hide Transcripts';
+      btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
+      btn.innerHTML = '💬 Hide Transcripts';
     } else {
-      btn.style.background = '#f5f0ff';
-      btn.style.color = '#7c3aed';
-      btn.style.borderColor = 'rgba(124,58,237,0.3)';
-      btn.textContent = '💬 View Transcripts';
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+      btn.style.boxShadow = 'var(--shadow-xs)';
+      btn.innerHTML = '💬 View Transcripts';
     }
   }
+  
+  if (window.showStepTranscripts) {
+    window.switchEditorTab('stops');
+  }
+  
+  window.updateTranscriptButtonUI();
+  renderCreateSteps();
+};
+
+window.toggleTranscriptSidebar = function() {
+  window.showStepTranscripts = !window.showStepTranscripts;
+  window.updateTranscriptButtonUI();
   renderCreateSteps();
 };
 
@@ -9565,13 +10835,43 @@ function renderCreateSteps() {
 
   const fixedPanel = document.getElementById('fixedTranscriptPanel');
   const fixedText = document.getElementById('fixedTranscriptText');
+  const tabsContainer = document.getElementById('createStepTabs');
 
   if (!createStepsArr.length) {
+    if (tabsContainer) {
+      tabsContainer.innerHTML = '';
+      tabsContainer.style.display = 'none';
+    }
     list.innerHTML = `<div style="color:var(--text-muted);font-weight:600;font-size:0.8rem;padding:8px 0;">No loop stops yet — run AI or tap 📍 Add Stop while playing</div>`;
     list.style.flexDirection = 'column';
-    if (fixedPanel) fixedPanel.style.display = 'none';
+    const wrapper = document.getElementById('transcriptSidebarWrapper');
+    if (wrapper) wrapper.style.display = 'none';
     refreshStepNavigator();
     return;
+  }
+
+  if (tabsContainer) {
+    tabsContainer.style.display = 'flex';
+    tabsContainer.innerHTML = createStepsArr.map((step, i) => {
+      const color = STEP_COLORS[i % STEP_COLORS.length];
+      const isActive = (i === currentNavStepIndex);
+      
+      const style = isActive
+        ? `background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px var(--primary-glow); font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px;`
+        : `background: var(--bg-card-soft); color: var(--text-body); border-color: var(--border-card); box-shadow: none; font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid var(--border-card); cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px;`;
+      
+      const dotStyle = `width: 8px; height: 8px; border-radius: 50%; background: ${color}; display: inline-block; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.15);`;
+      
+      const stepLabel = step.label ? step.label.replace(/"/g, '&quot;') : `Stop ${i + 1}`;
+      const displayName = `${i + 1}. ${stepLabel}`;
+      
+      return `<button id="createStepTabBtn_${i}" onclick="window.selectCreateStep(${i})" style="${style}" title="${stepLabel}"
+        onmouseenter="if(!${isActive}){this.style.background='var(--bg-card-hover)';this.style.borderColor='var(--primary-hover)';}"
+        onmouseleave="if(!${isActive}){this.style.background='var(--bg-card-soft)';this.style.borderColor='var(--border-card)';}">
+        <span style="${dotStyle}"></span>
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;">${displayName}</span>
+      </button>`;
+    }).join('');
   }
 
   const isDesktop = window.innerWidth > 768;
@@ -9585,7 +10885,8 @@ function renderCreateSteps() {
   list.style.overflowY               = 'hidden';
   list.style.webkitOverflowScrolling = 'touch';
   list.style.maxHeight               = 'none';
-  list.style.height                  = isDesktop ? '430px' : '100%';
+  list.style.height                  = 'calc(100% - 6px)';
+  list.style.minHeight               = '400px';
   list.style.flexShrink              = '0';
   list.style.touchAction             = 'pan-x pan-y';
 
@@ -9601,16 +10902,27 @@ function renderCreateSteps() {
   }
 
   // 1. Render Fixed Transcript Panel if enabled
+  const transWrapper = document.getElementById('transcriptSidebarWrapper');
+  if (transWrapper) transWrapper.style.display = 'flex';
+
   if (window.showStepTranscripts) {
-    if (fixedPanel) fixedPanel.style.display = 'flex';
-    
     // Calculate transcript for active step
     const activeStep = createStepsArr[currentNavStepIndex];
     if (activeStep) {
       const activeRawEnd = activeStep.endTime ?? (createStepsArr[currentNavStepIndex + 1]?.time ?? videoDuration);
       
       if (!cachedSegments || !cachedSegments.length) {
-        if (fixedText) fixedText.textContent = "No transcript available. Transcribe first!";
+        if (fixedText) {
+          fixedText.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; gap:12px; padding:10px; box-sizing:border-box;">
+              <span style="font-size:1.5rem;">🎤</span>
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); line-height:1.4;">No transcript available yet.</div>
+              <button onclick="window.transcribeVideo()" id="fixedTranscribeBtn" class="btn" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25); margin:0 auto;">
+                Generate Transcript
+              </button>
+            </div>
+          `;
+        }
       } else {
         const html = cachedSegments.map(s => {
           const start = Number(s.start ?? s.startTime ?? s.start_time) || 0;
@@ -9637,8 +10949,6 @@ function renderCreateSteps() {
         }
       }
     }
-  } else {
-    if (fixedPanel) fixedPanel.style.display = 'none';
   }
 
   // 2. Render Cards list
@@ -9672,7 +10982,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:100%;max-height:100%;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;min-height:0;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:380px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -9990,6 +11300,10 @@ window.previewStepLoop = function(i) {
   refreshStepNavigator();
   renderCreateSteps();
 
+  if (typeof window.scrollToActiveStep === 'function') {
+    window.scrollToActiveStep(i);
+  }
+
   // endTime: use explicit value, then next step's start, then video end
   const endTime = (step.endTime != null)
     ? step.endTime
@@ -10215,6 +11529,10 @@ window.navToStep = function(i) {
   vid.currentTime = createStepsArr[i].time;
   currentNavStepIndex = i;
   refreshStepNavigator();
+  renderCreateSteps();
+  if (typeof window.scrollToActiveStep === 'function') {
+    window.scrollToActiveStep(i);
+  }
 };
 window.removeCreateStep = (i)    => { createStepsArr.splice(i, 1); renderCreateSteps(); renderTimeline(); stopPreviewLoop(); };
 
@@ -10571,6 +11889,45 @@ window.saveNewRecipe = async function(targetFolderId) {
       if (window._aiIngredients) updates.ingredients = window._aiIngredients;
       
       savedRecipe = await updateRecipe(editingRecipeId, updates);
+      
+      // Update in-memory player recipe cache
+      if (savedRecipe) {
+        playerCurrentRecipe = savedRecipe;
+        recipeData.title = savedRecipe.title || 'Untitled Recipe';
+        recipeData.duration = savedRecipe.duration || 10;
+        recipeData.video_url = savedRecipe.video_url || '';
+        recipeData.text_overlays = savedRecipe.text_overlays || [];
+        recipeData.ingredients = savedRecipe.ingredients || '';
+        
+        const parsed = parseLoops(savedRecipe.loops);
+        if (parsed.length > 0) {
+          recipeData.loops = parsed.map(l => l.start);
+          if (recipeData.loops[recipeData.loops.length - 1] < recipeData.duration) {
+            recipeData.loops.push(recipeData.duration);
+          }
+          recipeData.steps = parsed.map((l, idx) => ({
+            title: l.label || (savedRecipe.steps && savedRecipe.steps[idx]) || `Step ${idx + 1}`,
+            instruction: l.description || '',
+            audio_url: l.audio_url || l.audioUrl || '',
+            timer: l.timer,
+            timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
+          }));
+        }
+        
+        if (typeof libAllRecipes !== 'undefined' && Array.isArray(libAllRecipes)) {
+          const idx = libAllRecipes.findIndex(r => r.id === savedRecipe.id);
+          if (idx !== -1) {
+            libAllRecipes[idx] = savedRecipe;
+          }
+        }
+        
+        if (typeof renderPlayerIngredients === 'function') {
+          renderPlayerIngredients();
+        }
+        if (typeof renderPlayerTimelineMarkers === 'function') {
+          renderPlayerTimelineMarkers();
+        }
+      }
       showTip('Changes saved successfully! 💾');
     } else {
       savedRecipe = await createRecipe({
@@ -10648,6 +12005,12 @@ window.createAndAddToNewFolder = function() {};
 
 
 window.resetCreateView = function() {
+  const wasEditing = !!editingRecipeId;
+  const targetView = editorPreviousView || playerPreviousView || 'grid-view';
+
+  if (typeof window.switchWorkbenchLayout === 'function') {
+    window.switchWorkbenchLayout('standard');
+  }
   if (typeof window.closeAllMobileDrawers === 'function') {
     window.closeAllMobileDrawers();
   }
@@ -10659,6 +12022,11 @@ window.resetCreateView = function() {
   cachedSegments   = null;
   createStepsArr   = [];
   createIsPublic   = false;
+  
+  customPages      = {};
+  document.querySelectorAll('.custom-page-col').forEach(el => el.remove());
+  document.querySelectorAll('.custom-page-slide').forEach(el => el.remove());
+  document.querySelectorAll('.custom-page-opt').forEach(el => el.remove());
 
   const videoEl = document.getElementById('uploadedVideoPlayer');
   if (videoEl) videoEl.src = '';
@@ -10679,13 +12047,31 @@ window.resetCreateView = function() {
   if (statusEl) statusEl.textContent = 'Captured from video or custom';
 
   // Reset AI section
-  document.getElementById('aiStatus').style.display       = 'none';
-  document.getElementById('transcriptPreview').style.display = 'none';
-  document.getElementById('aiActions').style.display      = 'none';
-  document.getElementById('ingredientsResult').style.display = 'none';
-  document.getElementById('stepsTextResult').style.display   = 'none';
-  document.getElementById('transcribeBtn').disabled       = false;
-  document.getElementById('transcribeBtn').textContent    = '🎤 Step 1: Transcribe Video';
+  const elStatus = document.getElementById('aiStatus');
+  if (elStatus) elStatus.style.display = 'none';
+  const elPreview = document.getElementById('transcriptPreview');
+  if (elPreview) elPreview.style.display = 'none';
+  const elActions = document.getElementById('aiActions');
+  if (elActions) elActions.style.display = 'none';
+  const elIngredients = document.getElementById('ingredientsResult');
+  if (elIngredients) elIngredients.style.display = 'none';
+  const elStepsText = document.getElementById('stepsTextResult');
+  if (elStepsText) elStepsText.style.display = 'none';
+
+  const tBtn = document.getElementById('transcribeBtn');
+  if (tBtn) {
+    tBtn.disabled = false;
+    tBtn.innerHTML = '<span>🎤 AI: Generate Transcript</span>';
+  }
+  const tBtnMob = document.getElementById('transcribeBtnMobile');
+  if (tBtnMob) {
+    tBtnMob.disabled = false;
+    tBtnMob.innerHTML = '<span>🎤 AI: Generate Transcript</span>';
+  }
+
+  if (typeof window.updateAIChecklists === 'function') {
+    window.updateAIChecklists();
+  }
 
   const toggle = document.getElementById('privacyToggle');
   const thumb  = document.getElementById('privacyThumb');
@@ -10696,14 +12082,62 @@ window.resetCreateView = function() {
 
   const fi = document.getElementById('videoFileInput');
   if (fi) fi.value = '';
+
+  if (wasEditing) {
+    if (typeof renderPlayerIngredients === 'function') {
+      renderPlayerIngredients();
+    }
+    if (typeof renderPlayerTimelineMarkers === 'function') {
+      renderPlayerTimelineMarkers();
+    }
+    switchView(targetView);
+  }
+  editorPreviousView = null;
 };
 
 // ============================================================
 // PHASE 4 — AI FEATURES
 // ============================================================
 let uploadedFile     = null;   // original File object (for Whisper)
+window.customPages   = {};     // custom pages mapping: { tabId: { name, icon, promptType, content } }
 let cachedTranscript = null;   // cached so we never transcribe twice
 let cachedSegments   = null;   // timestamped segments from Whisper
+
+window.serializeRecipeIngredients = function() {
+  const ingText = document.getElementById('ingredientsText')?.value || '';
+  
+  // Clean customPages to exclude elements that have empty names AND empty contents
+  const cleaned = {};
+  Object.keys(customPages).forEach(tabId => {
+    const p = customPages[tabId];
+    if ((p.name || '').trim() !== '' || (p.content || '').trim() !== '') {
+      cleaned[tabId] = p;
+    }
+  });
+
+  if (Object.keys(cleaned).length === 0) {
+    return ingText;
+  }
+  return `---CUSTOM_PAGES---\n${JSON.stringify(cleaned, null, 2)}\n---INGREDIENTS---\n${ingText}`;
+};
+
+window.deserializeRecipeIngredients = function(rawIngredients) {
+  customPages = {};
+  if (!rawIngredients) return '';
+  
+  if (rawIngredients.includes('---CUSTOM_PAGES---')) {
+    const parts = rawIngredients.split('---INGREDIENTS---');
+    const customPart = parts[0].replace('---CUSTOM_PAGES---', '').trim();
+    const ingredientsPart = parts[1] ? parts[1].trim() : '';
+    try {
+      customPages = JSON.parse(customPart);
+    } catch(e) {
+      console.warn('Failed to deserialize custom pages:', e);
+    }
+    return ingredientsPart;
+  }
+  return rawIngredients;
+};
 
 // ── Helper: Align manual edits to the transcript textbox back to time segments ──
 window.alignTranscriptEditsToSegments = function(newTranscript) {
@@ -10963,8 +12397,46 @@ function setAIStatus(msg, show = true) {
   const el = document.getElementById('aiStatus');
   const tx = document.getElementById('aiStatusText');
   if (el) el.style.display = show ? 'block' : 'none';
-  if (tx) tx.textContent   = msg;
+  if (tx) {
+    const cleanMsg = msg ? msg.replace(/\p{Extended_Pictographic}/gu, '').trim() : '';
+    tx.textContent = cleanMsg;
+  }
 }
+
+window.setCustomPageAiStatus = function(tabId, msg, type) {
+  const container = document.getElementById(`customPageAiStatusContainer_${tabId}`);
+  const textEl = document.getElementById(`customPageAiStatusText_${tabId}`);
+  const spinner = container ? container.querySelector('.custom-page-spinner') : null;
+  const dismiss = container ? container.querySelector('.custom-page-dismiss') : null;
+  if (!container || !textEl) return;
+
+  container.style.display = 'block';
+  const cleanMsg = msg ? msg.replace(/\p{Extended_Pictographic}/gu, '').trim() : '';
+  textEl.textContent = cleanMsg;
+
+  const btn = container.querySelector('button');
+  if (btn) {
+    if (type === 'loading') {
+      if (spinner) spinner.style.display = 'inline-block';
+      if (dismiss) dismiss.style.display = 'none';
+      btn.style.background = 'rgba(124, 58, 237, 0.05)';
+      btn.style.color = 'var(--primary)';
+      btn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+    } else if (type === 'success') {
+      if (spinner) spinner.style.display = 'none';
+      if (dismiss) dismiss.style.display = 'flex';
+      btn.style.background = 'rgba(16, 185, 129, 0.05)';
+      btn.style.color = '#10b981';
+      btn.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+    } else if (type === 'error') {
+      if (spinner) spinner.style.display = 'none';
+      if (dismiss) dismiss.style.display = 'flex';
+      btn.style.background = 'rgba(239, 68, 68, 0.05)';
+      btn.style.color = '#ef4444';
+      btn.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+    }
+  }
+};
 
 window.getTranscriptForTimeRange = function(startTime, endTime) {
   if (!cachedSegments || !cachedSegments.length) return "";
@@ -11152,9 +12624,56 @@ window.transcribeVideo = async function() {
   if (typeof checkForceFreshAI === 'function') {
     checkForceFreshAI();
   }
+  const networkUrl = ((typeof recipeData === 'object' && recipeData) ? recipeData.video_url : '') || 
+                     ((typeof playerCurrentRecipe === 'object' && playerCurrentRecipe) ? playerCurrentRecipe.video_url : '') || '';
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  let videoUrl = videoEl?.src || '';
+  if (networkUrl && (networkUrl.startsWith('http://') || networkUrl.startsWith('https://'))) {
+    videoUrl = networkUrl;
+  }
+
   if (!uploadedFile) {
-    showTip('Upload a video first before transcribing.');
-    return;
+    if (videoUrl && !videoUrl.startsWith('blob:') && (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
+      setButtonsState(true, '⏳ Transcribing (Replicate)...');
+      setAIStatus('🤖 Running Whisper on Replicate...', true);
+      showTip('Transcribing video via Whisper on Replicate...');
+      
+      try {
+        const repRes = await fetch('/api/ai/replicate-transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoUrl })
+        });
+        const repData = await repRes.json();
+        if (!repRes.ok || repData.error) throw new Error(repData.error || 'Replicate transcribe failed');
+        
+        cachedTranscript = repData.transcript;
+        cachedSegments = repData.segments || [];
+        
+        // Show transcript preview
+        const preview = document.getElementById('transcriptPreview');
+        const textEl  = document.getElementById('transcriptText');
+        if (preview) preview.style.display = 'block';
+        if (textEl)  textEl.textContent    = cachedTranscript;
+    
+        // Show AI action buttons
+        const actions = document.getElementById('aiActions');
+        if (actions) actions.style.display = 'block';
+    
+        setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
+        setButtonsState(false, '✅ Transcribed');
+        showTip('Transcription complete! Play video to view subtitles.');
+        if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+        if (typeof renderCreateSteps === 'function') renderCreateSteps();
+      } catch (err) {
+        console.warn('[AI] Replicate transcription from URL failed, trying Gemini fallback...', err.message);
+        await transcribeWithGeminiFallback(err.message);
+      }
+      return;
+    } else {
+      showTip('Upload a video first before transcribing.');
+      return;
+    }
   }
 
   // Use cache if already transcribed
@@ -11163,13 +12682,30 @@ window.transcribeVideo = async function() {
     return;
   }
 
-  const btn = document.getElementById('transcribeBtn');
+  const btns = [
+    document.getElementById('transcribeBtn'),
+    document.getElementById('transcribeBtnMobile'),
+    document.getElementById('fixedTranscribeBtn')
+  ].filter(Boolean);
+
+  const setButtonsState = (disabled, text) => {
+    btns.forEach(b => {
+      b.disabled = disabled;
+      if (text) {
+        if (b.id === 'fixedTranscribeBtn') {
+          b.textContent = text.replace('🎤 AI: ', '').replace('🎤 ', '');
+        } else {
+          b.textContent = text;
+        }
+      }
+    });
+  };
 
   async function transcribeWithGeminiFallback(reason) {
     console.log('[AI] Running Gemini transcription fallback due to:', reason);
     showTip('Using Gemini to analyze video and extract subtitles... 🚀');
     setAIStatus('🤖 Video analyze/transcribe via Gemini...', true);
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing (Gemini)...'; }
+    setButtonsState(true, '⏳ Transcribing (Gemini)...');
     try {
       const gem = await tryGeminiFor('transcribe');
       if (gem && Array.isArray(gem.text_overlays) && gem.text_overlays.length > 0) {
@@ -11203,6 +12739,7 @@ window.transcribeVideo = async function() {
               timer: detectedTimer
             };
           }).sort((a, b) => a.time - b.time);
+          window.createStepsArr = createStepsArr;
           renderCreateSteps();
           renderTimeline();
         }
@@ -11218,23 +12755,24 @@ window.transcribeVideo = async function() {
         if (actions) actions.style.display = 'block';
 
         setAIStatus('✅ Subtitles transcribed by Gemini! Play video to view.', true);
-        if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed (Gemini)'; }
+        setButtonsState(false, '✅ Transcribed (Gemini)');
         showTip('Transcription complete!');
         if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+        if (typeof renderCreateSteps === 'function') renderCreateSteps();
       } else {
         throw new Error('Gemini model did not return any subtitle text.');
       }
     } catch (gemErr) {
       console.error('[AI] Gemini fallback failed:', gemErr);
       setAIStatus('❌ Transcription failed: ' + gemErr.message);
-      if (btn) { btn.disabled = false; btn.textContent = '🎤 Transcribe audio only'; }
+      setButtonsState(false, '🎤 Transcribe audio only');
       showTip('Transcription failed: ' + gemErr.message);
       throw gemErr;
     }
   }
 
   if (uploadedFile.size > 25 * 1024 * 1024) {
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading large video...'; }
+    setButtonsState(true, '⏳ Uploading large video...');
     setAIStatus('📤 Uploading large video to Supabase Storage for transcription...', true);
     showTip('Uploading large video (>25MB) to Supabase Storage so Replicate can transcribe it... 🚀');
     
@@ -11242,7 +12780,7 @@ window.transcribeVideo = async function() {
       const { uploadVideo } = await import('./supabase-client.js');
       const supabaseUrl = await uploadVideo(uploadedFile, currentUser?.email || 'anon');
       
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing (Replicate)...'; }
+      setButtonsState(true, '⏳ Transcribing (Replicate)...');
       setAIStatus('🤖 Running Whisper on Replicate...', true);
       showTip('Transcribing video via Whisper on Replicate...');
       
@@ -11268,9 +12806,10 @@ window.transcribeVideo = async function() {
       if (actions) actions.style.display = 'block';
   
       setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
-      if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
+      setButtonsState(false, '✅ Transcribed');
       showTip('Transcription complete! Play video to view subtitles.');
       if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+      if (typeof renderCreateSteps === 'function') renderCreateSteps();
     } catch (err) {
       console.warn('[AI] Replicate Whisper failed, trying Gemini fallback...', err.message);
       await transcribeWithGeminiFallback(err.message);
@@ -11278,7 +12817,7 @@ window.transcribeVideo = async function() {
     return;
   }
 
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Transcribing...'; }
+  setButtonsState(true, '⏳ Transcribing...');
   setAIStatus('🎤 Sending to OpenAI Whisper...');
 
   try {
@@ -11304,9 +12843,10 @@ window.transcribeVideo = async function() {
     if (actions) actions.style.display = 'block';
 
     setAIStatus('✅ Transcription done! Play video to view subtitles.');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Transcribed'; }
+    setButtonsState(false, '✅ Transcribed');
     showTip('Transcription complete! Play video to view subtitles.');
     if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
+    if (typeof renderCreateSteps === 'function') renderCreateSteps();
   } catch (err) {
     console.warn('[AI] Whisper transcription failed, trying Gemini fallback...', err.message);
     await transcribeWithGeminiFallback(err.message);
@@ -11607,12 +13147,17 @@ let _geminiCacheTweak = null; // tweak prompt used for this cached result
 let _geminiCacheVideoOnly = false; // whether it was analyzed as videoOnly
 
 async function tryGeminiFor(task, videoOnly = false) {
-  if (!uploadedFile) return null;
+  const networkUrl = ((typeof recipeData === 'object' && recipeData) ? recipeData.video_url : '') || 
+                     ((typeof playerCurrentRecipe === 'object' && playerCurrentRecipe) ? playerCurrentRecipe.video_url : '') || '';
+  const hasNetworkUrl = networkUrl && (networkUrl.startsWith('http://') || networkUrl.startsWith('https://'));
+  
+  if (!uploadedFile && !hasNetworkUrl) return null;
 
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
 
-  // Return cached result if same file, same tweak, and same videoOnly flag (free reuse)
-  if (_geminiCache && _geminiCacheFile === uploadedFile && _geminiCacheTweak === tweak && _geminiCacheVideoOnly === videoOnly) {
+  // Return cached result if same file/URL, same tweak, and same videoOnly flag (free reuse)
+  const cacheKeyFile = uploadedFile || networkUrl;
+  if (_geminiCache && _geminiCacheFile === cacheKeyFile && _geminiCacheTweak === tweak && _geminiCacheVideoOnly === videoOnly) {
     const hasLoops = Array.isArray(_geminiCache.loops) && _geminiCache.loops.length > 0;
     const hasTranscripts = Array.isArray(_geminiCache.text_overlays) && _geminiCache.text_overlays.length > 0;
 
@@ -11627,7 +13172,11 @@ async function tryGeminiFor(task, videoOnly = false) {
 
   setAIStatus('🤖 Uploading to Gemini…', true);
   const formData = new FormData();
-  formData.append('video', uploadedFile, uploadedFile.name);
+  if (uploadedFile) {
+    formData.append('video', uploadedFile, uploadedFile.name);
+  } else {
+    formData.append('videoUrl', networkUrl);
+  }
   if (tweak) {
     formData.append('prompt', tweak);
   }
@@ -11645,7 +13194,7 @@ async function tryGeminiFor(task, videoOnly = false) {
 
   // Cache — subsequent taps reuse for free
   _geminiCache      = data;
-  _geminiCacheFile  = uploadedFile;
+  _geminiCacheFile  = cacheKeyFile;
   _geminiCacheTweak = tweak;
   _geminiCacheVideoOnly = videoOnly;
   return data;
@@ -11944,7 +13493,7 @@ window.doItAll = async function() {
     await window.generateLoops();
     
     if (!createStepsArr.length) {
-      throw new Error('No loop steps were detected from the audio transcript.');
+      throw new Error('No loop steps were detected from the audio transcript. (If the video has background music or no speech, try the "Analyze Video Only (No Audio)" button instead.)');
     }
 
     // 3. Write descriptions & ingredients for these loop stops
@@ -11975,7 +13524,7 @@ window.doItAll = async function() {
     
     if (btn) {
       btn.disabled = false;
-      btn.style.background = '';
+      btn.style.background = 'linear-gradient(135deg,#7c3aed,#6366f1)';
       btn.innerHTML = '<span>🔁 AI: Create Steps from Analyzing Video</span>';
     }
     if (overlayBtn) {
@@ -11988,13 +13537,7 @@ window.doItAll = async function() {
 };
 
 window.aiDoVideoOnly = async function() {
-  if (typeof checkForceFreshAI === 'function') {
-    checkForceFreshAI();
-  }
-
-  // Clear cached transcripts and segments to make sure they are not reused
-  cachedTranscript = '';
-  cachedSegments = [];
+  console.log('[AI] window.aiDoVideoOnly clicked!');
   
   const btn = document.getElementById('aiVideoOnlyBtn');
   const loopBtn = document.getElementById('aiLoopBtn');
@@ -12008,7 +13551,7 @@ window.aiDoVideoOnly = async function() {
       if (disabled && text) {
         btn.innerHTML = `<span>⏳</span><span>${text}</span>`;
       } else if (!disabled) {
-        btn.style.background = '';
+        btn.style.background = 'linear-gradient(135deg,#ec4899,#f43f5e)';
         btn.innerHTML = `<span>🎥 AI: Analyze Video Only (No Audio)</span>`;
       }
     }
@@ -12028,16 +13571,31 @@ window.aiDoVideoOnly = async function() {
     }
   };
 
-  if (!uploadedFile) {
-    setAIStatus('⚠️ Upload a video first.', true);
-    showTip('Upload your video first, then tap the button.');
-    setButtonsState(false);
-    return;
-  }
-
-  window.setChatboxLoading(true);
-  
   try {
+    if (typeof checkForceFreshAI === 'function') {
+      checkForceFreshAI();
+    }
+
+    // Clear cached transcripts and segments to make sure they are not reused
+    cachedTranscript = '';
+    cachedSegments = [];
+
+    console.log('[AI] DOM elements resolved:', { btn: !!btn, loopBtn: !!loopBtn, transcriptBtn: !!transcriptBtn, generateBtn: !!generateBtn, overlayBtn: !!overlayBtn });
+    console.log('[AI] uploadedFile state:', uploadedFile ? { name: uploadedFile.name, size: uploadedFile.size } : 'null');
+
+    const networkUrl = ((typeof recipeData === 'object' && recipeData) ? recipeData.video_url : '') || 
+                       ((typeof playerCurrentRecipe === 'object' && playerCurrentRecipe) ? playerCurrentRecipe.video_url : '') || '';
+    const hasNetworkUrl = networkUrl && (networkUrl.startsWith('http://') || networkUrl.startsWith('https://'));
+
+    if (!uploadedFile && !hasNetworkUrl) {
+      console.warn('[AI] Early exit in aiDoVideoOnly: uploadedFile is null and no networkUrl.');
+      setAIStatus('⚠️ Upload a video first.', true);
+      showTip('Upload your video first, then tap the button.');
+      setButtonsState(false);
+      return;
+    }
+
+    window.setChatboxLoading(true);
     setButtonsState(true, 'Analyzing Video (No Audio)...');
     setAIStatus('🤖 Analyzing video visually (ignoring audio)...', true);
     showTip('🎥 Sending video to Gemini for visual-only analysis...');
@@ -12245,12 +13803,12 @@ window.createStepsFromTranscript = async function() {
 // ── Update saveNewRecipe to include AI-generated content ───────────────────
 // Patch the save function to include ingredients and written steps
 const _origSaveNewRecipe = window.saveNewRecipe;
-window.saveNewRecipe = async function() {
+window.saveNewRecipe = async function(targetFolderId) {
   // Inject AI content into the recipe payload before saving
   // (the createRecipe function will pick these up via extra fields)
-  window._aiIngredients = document.getElementById('ingredientsText')?.value?.trim() || null;
+  window._aiIngredients = window.serializeRecipeIngredients();
   window._aiStepsText   = document.getElementById('stepsText')?.value?.trim() || null;
-  return _origSaveNewRecipe();
+  return _origSaveNewRecipe(targetFolderId);
 };
 
 // ============================================================
@@ -12434,16 +13992,93 @@ window.scrollToCarouselSlide = function(index) {
 
 // Update active states on bottom toolbar tabs
 function updateToolbarButtonStates(activeIndex) {
-  const tabs = ['Stops', 'Ingredients', 'Save'];
-  tabs.forEach((tab, i) => {
-    const btn = document.getElementById(`btnToolbar${tab}`);
-    if (btn) {
-      btn.classList.toggle('active', i === activeIndex);
+  const carousel = document.getElementById('mobileEditorCarousel');
+  const slide = carousel?.children[activeIndex];
+  if (slide) {
+    const id = slide.id;
+    let tabName = '';
+    if (id === 'slideStops') tabName = 'stops';
+    else if (id === 'rightColAddCustom') {
+      const keys = Object.keys(customPages);
+      if (keys.length > 0) {
+        const track = slide.querySelector('.custom-page-carousel-track');
+        if (track) {
+          const activeCardIdx = Math.round(track.scrollLeft / (track.clientWidth || 1));
+          tabName = keys[activeCardIdx] || keys[0];
+        } else {
+          tabName = keys[0];
+        }
+      } else {
+        tabName = 'add_custom';
+      }
     }
-  });
+    else if (id === 'slideIngredients') tabName = 'ingredients';
+    else if (id === 'slideSave') tabName = 'save';
+    else if (id.startsWith('rightCol_')) tabName = id.replace('rightCol_', '');
+    
+    if (tabName) {
+      window.activeEditorTab = tabName;
+      
+      // Sync bottom toolbar active state
+      const toolbarStops = document.getElementById('btnToolbarStops');
+      const toolbarPages = document.getElementById('btnToolbarPages');
+      const toolbarIngredients = document.getElementById('btnToolbarIngredients');
+      const toolbarSave = document.getElementById('btnToolbarSave');
+      const isPagesActive = tabName === 'add_custom' || tabName.startsWith('custom_');
+      if (toolbarStops) toolbarStops.classList.toggle('active', tabName === 'stops');
+      if (toolbarPages) toolbarPages.classList.toggle('active', isPagesActive);
+      if (toolbarIngredients) toolbarIngredients.classList.toggle('active', tabName === 'ingredients');
+      if (toolbarSave) toolbarSave.classList.toggle('active', tabName === 'save');
 
-  // Auto-expand accordion body when sliding to its tab
-  if (activeIndex === 0) { // Stops tab (index 0)
+      // Sync top horizontal tab bar buttons styling
+      const mobileBtns = {
+        'tabBtnStopsMobile': tabName === 'stops',
+        'tabBtnPagesMobile': isPagesActive,
+        'tabBtnIngredientsMobile': tabName === 'ingredients',
+        'tabBtnSaveMobile': tabName === 'save'
+      };
+      
+      const activeStyle = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+      const activeColor = '#fff';
+      const activeBorder = 'transparent';
+      const activeShadow = '0 4px 12px var(--primary-glow)';
+      
+      const inactiveBg = 'var(--bg-card-soft)';
+      const inactiveColor = 'var(--text-body)';
+      const inactiveBorder = 'var(--border-card)';
+      
+      for (const [btnId, active] of Object.entries(mobileBtns)) {
+        const btnEl = document.getElementById(btnId);
+        if (btnEl) {
+          if (active) {
+            btnEl.style.background = activeStyle;
+            btnEl.style.color = activeColor;
+            btnEl.style.borderColor = activeBorder;
+            btnEl.style.boxShadow = activeShadow;
+          } else {
+            btnEl.style.background = inactiveBg;
+            btnEl.style.color = inactiveColor;
+            btnEl.style.borderColor = inactiveBorder;
+            btnEl.style.boxShadow = 'none';
+          }
+        }
+      }
+      
+      const labelEl = document.getElementById('editorTabSelectorLabel');
+      if (labelEl) {
+        if (tabName === 'stops') labelEl.textContent = '📍 Loop Stops';
+        else if (tabName === 'ingredients') labelEl.textContent = '📝 Ingredients';
+        else if (tabName === 'save') labelEl.textContent = '🖼️ Preview & Save';
+        else if (tabName === 'add_custom') labelEl.textContent = '➕ Add Custom Page';
+        else if (customPages[tabName]) {
+          labelEl.textContent = `${customPages[tabName].icon} ${customPages[tabName].name || 'Untitled Page'}`;
+        }
+      }
+    }
+  }
+
+  // Auto-expand accordion body when sliding to stops
+  if (window.activeEditorTab === 'stops') {
     const stopsBody = document.getElementById('stopsBody');
     const stopsChevron = document.getElementById('stopsChevron');
     if (stopsBody) {
@@ -13193,13 +14828,205 @@ function setupWorkbenchResizer() {
     
     const line = document.getElementById('resizerLine');
     if (line) {
-      line.style.background = 'var(--border-card)';
+      line.style.background = 'rgba(124, 58, 237, 0.35)';
     }
-    resizer.style.background = 'transparent';
+    resizer.style.background = 'rgba(124, 58, 237, 0.06)';
   }
 
   resizer.addEventListener('mousedown', onMouseDown);
 }
+
+function setupWorkbenchHorizontalResizer() {
+  const hResizer = document.getElementById('workbenchHorizontalResizer');
+  const bottomCol = document.getElementById('workbenchBottom');
+  const grid = document.getElementById('workbenchGrid');
+  if (!hResizer || !bottomCol || !grid) return;
+
+  let startY = 0;
+  let startHeight = 0;
+
+  function onMouseDown(e) {
+    startY = e.clientY;
+    startHeight = bottomCol.getBoundingClientRect().height;
+    
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'row-resize';
+    
+    const line = document.getElementById('horizontalResizerLine');
+    if (line) line.style.background = 'var(--primary)';
+    hResizer.style.background = 'rgba(74,144,217,0.1)';
+  }
+
+  function onMouseMove(e) {
+    const deltaY = e.clientY - startY;
+    let newHeight = startHeight - deltaY;
+
+    // Constrain height based on current layout mode
+    let minH = 150;
+    let maxH = window.innerHeight * 0.8;
+    if (window.currentWorkbenchLayout === 'bottom-controls') {
+      minH = 140;
+      maxH = 400;
+    } else if (window.currentWorkbenchLayout === 'bottom-recipe') {
+      maxH = Math.max(200, (window.innerHeight - 80) - 300); // leave at least 300px for video
+    }
+
+    if (newHeight < minH) newHeight = minH;
+    if (newHeight > maxH) newHeight = maxH;
+
+    if (window.currentWorkbenchLayout === 'bottom-recipe') {
+      window.resizedRecipeHeight = newHeight;
+    } else if (window.currentWorkbenchLayout === 'bottom-controls') {
+      window.resizedControlsHeight = newHeight;
+    }
+
+    bottomCol.style.height = newHeight + 'px';
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    
+    const line = document.getElementById('horizontalResizerLine');
+    if (line) {
+      line.style.background = 'rgba(124, 58, 237, 0.35)';
+    }
+    hResizer.style.background = 'rgba(124, 58, 237, 0.06)';
+  }
+
+  hResizer.addEventListener('mousedown', onMouseDown);
+}
+
+window.playCardVideo = function(videoEl) {
+  if (!videoEl) return;
+  const src = videoEl.getAttribute('data-src');
+  if (!src) return;
+
+  if (!videoEl.src) {
+    if (src.includes('.m3u8')) {
+      if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(videoEl);
+        videoEl.hlsInstance = hls;
+      } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        videoEl.src = src;
+      }
+    } else {
+      videoEl.src = src;
+    }
+  }
+
+  videoEl.style.opacity = '1';
+  const playPromise = videoEl.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(e => {
+      console.warn("Autoplay blocked or delayed:", e);
+    });
+  }
+};
+
+window.stopCardVideo = function(videoEl) {
+  if (!videoEl) return;
+  videoEl.style.opacity = '0';
+  videoEl.pause();
+  if (videoEl.hlsInstance) {
+    videoEl.hlsInstance.destroy();
+    videoEl.hlsInstance = null;
+    videoEl.src = '';
+  } else {
+    videoEl.currentTime = 0;
+  }
+};
+
+window.adjustWorkbenchVideoSize = function() {
+  const videoEl = document.getElementById('uploadedVideoPlayer');
+  const wrapper = document.getElementById('workbenchVideoWrapper');
+  const leftSide = document.getElementById('workbenchLeft');
+  if (!videoEl || !wrapper || !leftSide) return;
+
+  // Only apply custom adjustments on desktop screens (width > 768)
+  if (window.innerWidth <= 768) {
+    wrapper.style.height = '';
+    wrapper.style.width = '';
+    wrapper.style.flex = '';
+    wrapper.style.alignSelf = '';
+    return;
+  }
+
+  // Get video metadata dimensions
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  
+  // If metadata isn't loaded yet, default to a safe 16:9 ratio style
+  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+  const containerWidth = leftSide.getBoundingClientRect().width - 12; // account for padding/scrollbar
+
+  let targetHeight, targetWidth;
+
+  if (aspectRatio >= 1) {
+    // Landscape video: match aspect ratio precisely to fit container width
+    targetHeight = containerWidth / aspectRatio;
+    // Cap height between 320px and 520px to fit well on desktop
+    targetHeight = Math.max(320, Math.min(520, targetHeight));
+    targetWidth = targetHeight * aspectRatio;
+    if (targetWidth > containerWidth) {
+      targetWidth = containerWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
+  } else {
+    // Portrait/Vertical video (e.g., 9:16)
+    // Scale height based on width, but cap it so it does not overflow viewport height
+    const maxAllowedHeight = Math.min(650, window.innerHeight * 0.65);
+    targetHeight = containerWidth / aspectRatio;
+    targetHeight = Math.max(480, Math.min(maxAllowedHeight, targetHeight));
+    targetWidth = targetHeight * aspectRatio;
+    if (targetWidth > containerWidth) {
+      targetWidth = containerWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
+  }
+
+  wrapper.style.height = `${targetHeight}px`;
+  wrapper.style.width = `${targetWidth}px`;
+  wrapper.style.flex = 'none';
+  wrapper.style.alignSelf = 'center';
+};// Listen to window resize events to recalculate heights dynamically
+window.addEventListener('resize', window.adjustWorkbenchVideoSize);window.toggleEditorSidebar = function() {
+  const rightPanel = document.getElementById('workbenchRight');
+  const resizer = document.getElementById('workbenchResizer');
+  const leftCol = document.getElementById('workbenchLeft');
+  if (!rightPanel) return;
+  
+  if (rightPanel.style.display === 'none') {
+    rightPanel.style.display = 'flex';
+    if (resizer) resizer.style.display = 'flex';
+    if (leftCol) {
+      leftCol.style.width = 'calc(100% - 420px)';
+      leftCol.style.flex = 'none';
+    }
+  } else {
+    rightPanel.style.display = 'none';
+    if (resizer) resizer.style.display = 'none';
+    if (leftCol) {
+      leftCol.style.width = '100%';
+      leftCol.style.flex = '1';
+    }
+  }
+  
+  // Re-adjust video sizes to expand/shrink based on space
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
+};
+
 
 window.adjustWorkbenchVideoSize = function() {
   const videoEl = document.getElementById('uploadedVideoPlayer');
@@ -13250,19 +15077,15 @@ window.adjustWorkbenchVideoSize = function() {
       targetHeight = targetWidth / aspectRatio;
     }
   } else {
-    // Portrait/Vertical video (e.g., 9:16)
-    // Set the wrapper width to fill the container width so controls have full space and do not squish,
-    // and cap the height appropriately so it does not overflow the desktop viewport.
-    const maxAllowedHeight = Math.min(750, window.innerHeight * 0.75) * scale;
+    const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82) * scale;
     const minH = 440 * scale;
-    targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 640 * scale));
+    targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 780 * scale));
     targetWidth = containerWidth;
-  }
-
-  wrapper.style.height = `${targetHeight}px`;
-  wrapper.style.width = `${targetWidth}px`;
-  wrapper.style.flex = 'none';
-  wrapper.style.alignSelf = 'center';
+  }  wrapper.style.setProperty('height', `${targetHeight}px`, 'important');
+  wrapper.style.setProperty('width', `${targetWidth}px`, 'important');
+  wrapper.style.setProperty('flex', 'none', 'important');
+  wrapper.style.setProperty('align-self', 'center', 'important');
+  wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
 };
 
 // Listen to window resize events to recalculate heights dynamically
@@ -13318,49 +15141,800 @@ window.updateAIChecklists = function() {
   });
   document.querySelectorAll('.check-transcribe').forEach(el => {
     el.style.display = hasTranscript ? 'inline-flex' : 'none';
-  });
-  document.querySelectorAll('.check-do-everything').forEach(el => {
+  });  document.querySelectorAll('.check-do-everything').forEach(el => {
     el.style.display = isDoEverythingDone ? 'inline-flex' : 'none';
   });
 };
 
-window.activeEditorTab = 'stops';
-window.switchEditorTab = function(tabName) {
-  window.activeEditorTab = tabName;
-  const tabs = {
-    stops: { colId: 'rightColStops', btnId: 'tabBtnStops' },
-    ingredients: { colId: 'rightColIngredients', btnId: 'tabBtnIngredients' },
-    save: { colId: 'rightColSave', btnId: 'tabBtnSave' }
-  };
-  
-  Object.keys(tabs).forEach(key => {
-    const col = document.getElementById(tabs[key].colId);
-    const btn = document.getElementById(tabs[key].btnId);
-    if (key === tabName) {
-      if (col) {
-        col.style.display = 'flex';
-        col.style.width = '100%';
-        col.style.flex = '1';
-      }
-      if (btn) {
-        btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
-        btn.style.color = '#fff';
-        btn.style.borderColor = 'transparent';
-        btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
-      }
+window.syncCustomPageUI = function() {
+  const keys = Object.keys(customPages);
+
+  // Generate cards HTML
+  let cardsHtml = '';
+  Object.keys(customPages).forEach(tabId => {
+    const page = customPages[tabId];
+    const hasBeenSaved = page.hasBeenSaved || (page.content && page.content.trim().length > 0);
+    if (page.hasBeenSaved === undefined) {
+      page.hasBeenSaved = !!hasBeenSaved;
+    }
+    const btnText = page.hasBeenSaved ? 'Update' : 'Save';
+
+    // AI Generation Button State
+    const isManual = page.content && page.content.trim().length > 0 && !page.content.startsWith('⏳ AI is generating');
+    const aiBtnHtml = isManual 
+      ? '<span>➕ Content Saved Manually</span>' 
+      : '<span>🪄 AI: Generate Page Content</span>';
+    const aiBtnDisabled = isManual ? 'disabled' : '';
+
+    cardsHtml += `
+      <!-- Setup Details Card for ${tabId} -->
+      <div class="glass-card" id="card_${tabId}" style="padding:12px;min-height:350px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;width:100%;flex-shrink:0;scroll-snap-align:center;">
+        <!-- AI Status Button -->
+        <div id="customPageAiStatusContainer_${tabId}" style="display:none; margin-bottom: 2px; position: relative;">
+          <button class="btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 32px 10px 10px; font-family:var(--font); font-size:0.75rem; font-weight:800; border-radius:10px; border:1.5px solid rgba(124, 58, 237, 0.2); background:rgba(124, 58, 237, 0.05); color:var(--primary); transition:all 0.3s; pointer-events:none; cursor:default; text-align: center; line-height: 1.4;">
+            <span class="custom-page-spinner" style="width:12px; height:12px; border:2px solid var(--primary); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; display:inline-block; flex-shrink: 0;"></span>
+            <span id="customPageAiStatusText_${tabId}">Idle</span>
+          </button>
+          <span class="custom-page-dismiss" onclick="this.parentElement.style.display='none'" title="Dismiss"
+            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; font-weight:900; font-size:0.9rem; color:inherit; display:none; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; transition:background 0.2s; user-select:none; pointer-events:auto; z-index: 10;"
+            onmouseenter="this.style.background='rgba(0,0,0,0.08)'" onmouseleave="this.style.background='transparent'">
+            ×
+          </span>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+          <span style="font-weight:900;color:var(--text-heading);font-size:0.82rem;display:flex;align-items:center;gap:4px;">
+            📝 Page Details
+          </span>
+          <div style="display:inline-flex; align-items:center; gap:6px;">
+            <!-- Add Page Button in Header -->
+            <button onclick="window.addNewCustomPageCard()" title="Add another page setup"
+              style="padding:6.5px 12px; font-size:0.75rem; font-weight:800; border-radius:10px; border:1.5px solid rgba(124,58,237,0.18); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; background:rgba(124,58,237,0.05); color:var(--primary); line-height:1; white-space:nowrap; box-sizing:border-box;"
+              onmouseenter="this.style.background='rgba(124,58,237,0.12)'; this.style.borderColor='rgba(124,58,237,0.35)';"
+              onmouseleave="this.style.background='rgba(124,58,237,0.05)'; this.style.borderColor='rgba(124,58,237,0.18)';"
+              onmousedown="this.style.transform='scale(0.96)';"
+              onmouseup="this.style.transform='scale(1)';">
+              <i data-lucide="plus" style="width:12px; height:12px; display:inline-block; vertical-align:middle; stroke-width:2.5px;"></i>
+              <span style="display:inline-block; vertical-align:middle;">Add Page</span>
+            </button>
+            <!-- Delete Card button -->
+            <button onclick="window.removeCustomPageCard('${tabId}')" title="Delete this page"
+              style="padding:6.5px 12px; font-size:0.75rem; font-weight:800; border-radius:10px; border:1.5px solid rgba(239,68,68,0.18); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; background:rgba(239,68,68,0.05); color:#ef4444; line-height:1; white-space:nowrap; box-sizing:border-box;"
+              onmouseenter="this.style.background='rgba(239,68,68,0.12)'; this.style.borderColor='rgba(239,68,68,0.35)';"
+              onmouseleave="this.style.background='rgba(239,68,68,0.05)'; this.style.borderColor='rgba(239,68,68,0.18)';"
+              onmousedown="this.style.transform='scale(0.96)';"
+              onmouseup="this.style.transform='scale(1)';">
+              <i data-lucide="trash-2" style="width:12px; height:12px; display:inline-block; vertical-align:middle; stroke-width:2.5px;"></i>
+              <span style="display:inline-block; vertical-align:middle;">Delete Page</span>
+            </button>
+          </div>
+        </div>
+        
+        <div style="display:flex;flex-direction:column;gap:10px;flex:1;justify-content:flex-start;">
+          <!-- Quick presets row -->
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+            <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Quick Page Presets</label>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; align-items:center;">
+              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Ingredients', '📝', 'ingredients')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
+                📝 Ingredients
+              </button>
+              <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Lyrics', '🎵', 'lyrics')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
+                🎵 Lyrics
+              </button>
+            </div>
+          </div>
+
+          <!-- Page Name Input -->
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Page Name</label>
+            <input type="text" id="inlineCustomPageNameInput_${tabId}" value="${page.name}" placeholder="e.g. Kitchen Equipment, Chef Tips" 
+              oninput="window.updateCustomPageName('${tabId}', this.value)"
+              style="width:100%; padding:8px 12px; border:2px solid var(--border-card); border-radius:8px; font-family:var(--font); font-size:0.75rem; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none;"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'" />
+          </div>
+
+          <!-- Page Content Textarea -->
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+            <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Page Content (Optional)</label>
+            <textarea id="inlineCustomPageContentInput_${tabId}" oninput="window.updateCustomPageContent('${tabId}', this.value)" placeholder="Type page content here manually... (or leave blank to auto-generate using AI)" 
+              style="width:100%; height:120px; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none;"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">${page.content}</textarea>
+          </div>
+
+          <!-- Create & Generate Button -->
+          <button id="createInlineCustomPageBtn_${tabId}" ${aiBtnDisabled} onclick="window.generateCustomPageBtnClick('${tabId}')"
+            style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:0.8rem;cursor:pointer;box-shadow:0 3px 8px var(--primary-glow);margin-top:auto;display:flex;align-items:center;justify-content:center;gap:4.5px;box-sizing:border-box;margin-bottom:6px;">
+            ${aiBtnHtml}
+          </button>
+
+          <!-- Save/Update Page Changes Button -->
+          <button id="saveInlineChangesBtn_${tabId}" onclick="window.saveInlineCustomPageChanges('${tabId}')"
+            title="${btnText}"
+            style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; border-radius:10px; border:none; cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s; background:linear-gradient(135deg, #7c3aed, #6366f1); color:#fff; box-shadow:0 3px 8px rgba(124,58,237,0.25); box-sizing:border-box; white-space:nowrap;"
+            onmouseenter="this.style.opacity='0.9';"
+            onmouseleave="this.style.opacity='1';"
+            onmousedown="this.style.transform='scale(0.96)';"
+            onmouseup="this.style.transform='scale(1)';">
+            <i data-lucide="check" style="width:12px; height:12px; stroke-width:3px; display:inline-block; vertical-align:middle;"></i>
+            <span style="display:inline-block; vertical-align:middle;">${btnText}</span>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  // Generate dots HTML
+  let dotsHtml = '';
+  const currentKeys = Object.keys(customPages);
+  currentKeys.forEach((tabId, idx) => {
+    const isActive = idx === 0;
+    const width = isActive ? '16px' : '6px';
+    const radius = isActive ? '3px' : '50%';
+    const bg = isActive ? 'var(--primary)' : 'rgba(124, 58, 237, 0.2)';
+    dotsHtml += `
+      <span class="carousel-dot" 
+        onclick="this.parentElement.previousElementSibling.children[${idx}].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })"
+        style="width:${width}; height:6px; border-radius:${radius}; background:${bg}; transition:all 0.25s ease; cursor:pointer; display:inline-block;"
+        title="Page ${idx + 1}"></span>
+    `;
+  });
+
+    // Render to all rightColAddCustom elements (both desktop and mobile!)
+  const containers = document.querySelectorAll('#rightColAddCustom');
+  containers.forEach(container => {
+    if (keys.length === 0) {
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:35px 20px; text-align:center; gap:14px; border:2.5px dashed rgba(124, 58, 237, 0.15); border-radius:16px; margin: 12px; background:rgba(255,255,255,0.4); box-sizing:border-box;">
+          <span style="font-size:2.2rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1));">📄</span>
+          <h3 style="margin:0; font-size:0.9rem; font-weight:900; color:var(--text-heading); font-family:var(--font);">Create Custom Pages</h3>
+          <p style="margin:0; font-size:0.72rem; color:var(--text-muted); line-height:1.4; max-width:240px; font-family:var(--font); font-weight:600;">
+            Add custom tab pages to your recipe player containing extra info like kitchen equipment, chef tips, or lyrics.
+          </p>
+          <button onclick="window.addNewCustomPageCard()" class="btn" style="background:linear-gradient(135deg, var(--primary), var(--primary-hover)); color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 3px 8px var(--primary-glow); display:flex; align-items:center; gap:5px; font-family:var(--font);">
+            <i data-lucide="plus" style="width:14px; height:14px; stroke-width:3px; display:inline-block; vertical-align:middle;"></i>
+            <span style="display:inline-block; vertical-align:middle;">Create Custom Page</span>
+          </button>
+        </div>
+      `;
     } else {
-      if (col) {
-        col.style.display = 'none';
-      }
-      if (btn) {
-        btn.style.background = 'var(--bg-card-soft)';
-        btn.style.color = 'var(--text-body)';
-        btn.style.borderColor = 'var(--border-card)';
-        btn.style.boxShadow = 'none';
+      container.innerHTML = `
+        <style>
+          .custom-page-carousel-track::-webkit-scrollbar {
+            display: none;
+          }
+        </style>
+        <div class="custom-page-carousel-track" style="display:flex; flex-direction:row; gap:16px; overflow-x:auto; scroll-snap-type: x mandatory; width:100%; box-sizing:border-box; scrollbar-width: none; -ms-overflow-style: none;">
+          ${cardsHtml}
+        </div>
+        <div class="carousel-dots-row" style="display:flex; justify-content:center; gap:6px; margin-top:8px; align-items:center;">
+          ${dotsHtml}
+        </div>
+      `;
+
+      // Attach scroll listener to update dots in real-time
+      const track = container.querySelector('.custom-page-carousel-track');
+      if (track) {
+        track.addEventListener('scroll', () => {
+          const activeIndex = Math.round(track.scrollLeft / (track.clientWidth || 1));
+          const dots = container.querySelectorAll('.carousel-dot');
+          dots.forEach((dot, idx) => {
+            if (idx === activeIndex) {
+              dot.style.background = 'var(--primary)';
+              dot.style.width = '16px';
+              dot.style.borderRadius = '3px';
+            } else {
+              dot.style.background = 'rgba(124, 58, 237, 0.2)';
+              dot.style.width = '6px';
+              dot.style.borderRadius = '50%';
+            }
+          });
+
+          // Sync active tab and dropdown selector label as carousel scrolls
+          const keys = Object.keys(customPages);
+          if (keys[activeIndex]) {
+            const activeTab = keys[activeIndex];
+            window.activeEditorTab = activeTab;
+            const labelEl = document.getElementById('editorTabSelectorLabel');
+            if (labelEl && customPages[activeTab]) {
+              labelEl.textContent = `${customPages[activeTab].icon} ${customPages[activeTab].name || 'Untitled Page'}`;
+            }
+          }
+        });
       }
     }
   });
+
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 };
+
+window.activeEditorTab = 'stops';
+
+window.getEditorTabs = function() {
+  return ['stops', 'add_custom', 'ingredients', 'save'];
+};
+
+window.toggleEditorTabDropdown = function(e) {
+  if (e) e.stopPropagation();
+  const btn = document.getElementById('editorTabSelectorBtn');
+  if (!btn) return;
+
+  let menu = document.getElementById('editorTabDropdownContent');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'editorTabDropdownContent';
+    menu.className = 'glass-card';
+    menu.style.position = 'absolute';
+    menu.style.width = '220px';
+    menu.style.zIndex = '999999';
+    menu.style.padding = '6px';
+    menu.style.boxShadow = 'var(--shadow-lg)';
+    menu.style.border = '2px solid var(--border-card)';
+    menu.style.flexDirection = 'column';
+    menu.style.gap = '4px';
+    menu.style.background = '#ffffff';
+    menu.style.borderRadius = '12px';
+    menu.style.display = 'none';
+    document.body.appendChild(menu);
+
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      #editorTabDropdownContent button:hover {
+        background: rgba(124, 58, 237, 0.08) !important;
+        color: var(--primary) !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
+
+  const isHidden = menu.style.display === 'none' || menu.style.display === '';
+  if (isHidden) {
+    const isMobile = !!document.getElementById('mobileEditorCarousel');
+    let customOptionsHtml = '';
+    
+    Object.keys(customPages).forEach(tabId => {
+      const page = customPages[tabId];
+      customOptionsHtml += `
+        <button onclick="window.switchEditorTab('${tabId}')" id="optTab_${tabId}" class="custom-page-opt" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+          ${page.icon || '📝'} ${page.name || 'Untitled Page'}
+        </button>
+      `;
+    });
+
+    let transcriptOptionHtml = '';
+    if (!isMobile) {
+      transcriptOptionHtml = `
+        <button onclick="window.toggleStepTranscripts()" id="optTabTranscripts" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+          💬 View Transcripts
+        </button>
+      `;
+    }
+
+    menu.innerHTML = `
+      <button onclick="window.switchEditorTab('stops')" id="optTabStops" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        📍 Loop Stops
+      </button>
+      <button onclick="window.switchEditorTab('ingredients')" id="optTabIngredients" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        📝 Ingredients
+      </button>
+      
+      <div id="dynamicCustomPageOptions" style="display:flex; flex-direction:column; gap:4px;">
+        ${customOptionsHtml}
+      </div>
+
+      <button onclick="window.switchEditorTab('save')" id="optTabSave" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        🖼️ Preview & Save
+      </button>
+      ${transcriptOptionHtml}
+      
+      <div style="border-top: 1.5px dashed var(--border-card); margin: 4px 0;"></div>
+      <button onclick="window.openAddCustomPageModal()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; font-size:0.95rem; font-weight:800; color:inherit;">+</span> Add Custom Page
+      </button>
+    `;
+
+    const current = window.activeEditorTab || 'stops';
+    
+    const allButtons = menu.querySelectorAll('button');
+    allButtons.forEach(btnEl => {
+      btnEl.style.background = 'transparent';
+      btnEl.style.color = 'var(--text-body)';
+    });
+
+    let activeBtn = null;
+    if (current === 'stops') activeBtn = document.getElementById('optTabStops');
+    else if (current === 'save') activeBtn = document.getElementById('optTabSave');
+    else if (current === 'add_custom') activeBtn = document.getElementById('optTabAddCustom');
+    else activeBtn = document.getElementById(`optTab_${current}`);
+
+    if (activeBtn) {
+      activeBtn.style.background = 'var(--primary-light)';
+      activeBtn.style.color = 'var(--primary)';
+    }
+
+    const optTranscripts = document.getElementById('optTabTranscripts');
+    if (optTranscripts) {
+      if (window.showStepTranscripts) {
+        optTranscripts.style.background = 'var(--primary-light)';
+        optTranscripts.style.color = 'var(--primary)';
+        optTranscripts.innerHTML = '💬 Hide Transcripts';
+      } else {
+        optTranscripts.innerHTML = '💬 View Transcripts';
+      }
+    }
+
+    menu.style.display = 'flex';
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 6 + window.scrollY}px`;
+    
+    const menuWidth = 220;
+    const padding = 10;
+    const viewportWidth = window.innerWidth;
+    let left = rect.left + window.scrollX;
+    if (left + menuWidth > viewportWidth - padding) {
+      left = Math.max(padding, viewportWidth - menuWidth - padding);
+    }
+    menu.style.left = `${left}px`;
+  } else {
+    menu.style.display = 'none';
+  }
+};
+
+window.switchEditorTab = function(tabName) {
+  if (tabName === 'add_custom') {
+    const keys = Object.keys(customPages);
+    if (keys.length === 0) {
+      const newId = 'custom_' + Date.now();
+      customPages[newId] = {
+        name: '',
+        icon: '📝',
+        content: '',
+        promptType: 'custom'
+      };
+      window.syncCustomPageUI();
+      tabName = newId;
+    }
+  }
+
+  window.activeEditorTab = tabName;
+  
+  const dd = document.getElementById('editorTabDropdownContent');
+  if (dd) dd.style.display = 'none';
+
+  const labelEl = document.getElementById('editorTabSelectorLabel');
+  if (labelEl) {
+    if (tabName === 'stops') labelEl.textContent = '📍 Loop Stops';
+    else if (tabName === 'ingredients') labelEl.textContent = '📝 Ingredients';
+    else if (tabName === 'save') labelEl.textContent = '🖼️ Preview & Save';
+    else if (tabName === 'add_custom') labelEl.textContent = '📝 Custom Pages';
+    else if (tabName.startsWith('custom_') && customPages[tabName]) {
+      labelEl.textContent = `${customPages[tabName].icon || '📝'} ${customPages[tabName].name || 'Untitled Page'}`;
+    }
+  }
+
+  const tabs = window.getEditorTabs();
+  const isMobile = !!document.getElementById('mobileEditorCarousel');
+  const targetTabName = tabName.startsWith('custom_') ? 'add_custom' : tabName;
+  
+  if (isMobile) {
+    const index = tabs.indexOf(targetTabName);
+    if (index !== -1) {
+      window.scrollToCarouselSlide(index);
+    }
+  } else {
+    tabs.forEach(key => {
+      const colId = key === 'add_custom' ? 'rightColAddCustom' : (key.startsWith('custom_') ? `rightCol_${key}` : (key === 'stops' ? 'rightColStops' : (key === 'ingredients' ? 'rightColIngredients' : 'rightColSave')));
+      const col = document.getElementById(colId);
+      if (col) {
+        if (key === targetTabName) {
+          col.style.display = 'flex';
+          col.style.width = '100%';
+          col.style.flex = '1';
+        } else {
+          col.style.display = 'none';
+        }
+      }
+    });
+  }
+};
+
+// ── Custom Page Editor & Inline Creation Methods ──
+window.toggleInlineAddCustomAiCollapse = function() {
+  const el = document.getElementById('inlineAddCustomAiToolsCollapse');
+  const chev = document.getElementById('inlineAddCustomAiChevron');
+  const btn = document.getElementById('toggleInlineAddCustomAiBtn');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  if (isHidden) {
+    el.style.display = 'flex';
+    if (chev) chev.textContent = '▴';
+    if (btn) {
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
+    }
+  } else {
+    el.style.display = 'none';
+    if (chev) chev.textContent = '▾';
+    if (btn) {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+      btn.style.boxShadow = 'none';
+    }
+  }
+};
+
+window.selectInlineCustomPageEmoji = function(emoji) {
+  const input = document.getElementById('inlineCustomPageEmojiInput');
+  if (input) input.value = emoji;
+};
+
+window.applyCustomPagePreset = function(tabId, name, emoji, templateValue) {
+  if (customPages[tabId]) {
+    customPages[tabId].name = name;
+    customPages[tabId].icon = emoji;
+    customPages[tabId].promptType = templateValue;
+    
+    // Update inputs in DOM directly to keep UI snappy
+    const nameInput = document.getElementById(`inlineCustomPageNameInput_${tabId}`);
+    if (nameInput) nameInput.value = name;
+    
+    // Trigger AI generation
+    window.generateContentForInlineSetup(tabId, templateValue, name);
+  }
+};
+
+window.addNewCustomPageCard = function() {
+  const newId = 'custom_' + Date.now();
+  customPages[newId] = {
+    name: '',
+    icon: '📝',
+    content: '',
+    promptType: 'custom'
+  };
+  window.syncCustomPageUI();
+};
+
+window.removeCustomPageCard = function(tabId) {
+  if (confirm('Are you sure you want to delete this custom page?')) {
+    delete customPages[tabId];
+    window.syncCustomPageUI();
+  }
+};
+
+window.updateCustomPageName = function(tabId, val) {
+  if (customPages[tabId]) {
+    customPages[tabId].name = val;
+  }
+};
+
+window.updateCustomPageContent = function(tabId, val) {
+  if (customPages[tabId]) {
+    customPages[tabId].content = val;
+  }
+  window.updateInlineCustomPageButtonText(tabId);
+};
+
+window.generateCustomPageBtnClick = function(tabId) {
+  const page = customPages[tabId];
+  if (!page) return;
+  
+  let detectedPromptType = page.promptType || 'custom';
+  if (detectedPromptType === 'custom') {
+    const nameLower = (page.name || '').toLowerCase();
+    if (nameLower.includes('ingredient')) detectedPromptType = 'ingredients';
+    else if (nameLower.includes('lyric') || nameLower.includes('song')) detectedPromptType = 'lyrics';
+    else if (nameLower.includes('utensil') || nameLower.includes('tool') || nameLower.includes('equipment')) detectedPromptType = 'utensils';
+    else if (nameLower.includes('nutrition') || nameLower.includes('calorie') || nameLower.includes('macro')) detectedPromptType = 'nutrition';
+    else if (nameLower.includes('tip') || nameLower.includes('advice')) detectedPromptType = 'tips';
+    else if (nameLower.includes('wine') || nameLower.includes('pairing') || nameLower.includes('drink')) detectedPromptType = 'wine';
+  }
+
+  window.generateContentForInlineSetup(tabId, detectedPromptType, page.name);
+};
+
+window.generateContentForInlineSetup = async function(tabId, promptType, pageName) {
+  const contentInput = document.getElementById(`inlineCustomPageContentInput_${tabId}`);
+  if (!contentInput) return;
+
+  const btn = document.getElementById(`createInlineCustomPageBtn_${tabId}`);
+  const origHtml = btn ? btn.innerHTML : '';
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Generating...</span>';
+  }
+
+  contentInput.value = `⏳ AI is generating content for "${pageName}"...`;
+  contentInput.disabled = true;
+
+  // Initialize status inside card
+  window.setCustomPageAiStatus(tabId, '📡 Sending request to AI...', 'loading');
+
+  try {
+    let contextText = '';
+    
+    // We check cachedTranscript first, if missing try to transcribe
+    if (!cachedTranscript) {
+      window.setCustomPageAiStatus(tabId, '🎤 Transcribing video...', 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus('🎤 Transcribing video...', true);
+      try {
+        await window.transcribeVideo();
+      } catch (e) {
+        console.warn('Transcription failed, trying visual context fallback:', e);
+      }
+    }
+    
+    let visualContext = '';
+    if (typeof createStepsArr !== 'undefined' && createStepsArr && createStepsArr.length > 0) {
+      visualContext = createStepsArr.map(s => `${s.label}: ${s.description}`).join('\n');
+    } else if (typeof _aiStepsText !== 'undefined' && _aiStepsText) {
+      visualContext = _aiStepsText;
+    } else if (window.createStepsArr && window.createStepsArr.length > 0) {
+      visualContext = window.createStepsArr.map(s => `${s.label}: ${s.description}`).join('\n');
+    } else if (window._aiStepsText) {
+      visualContext = window._aiStepsText;
+    }
+
+    if (cachedTranscript) {
+      contextText = `Video Audio Transcript:\n${cachedTranscript}`;
+      if (visualContext) {
+        contextText += `\n\nVideo Visual Steps & Ingredients:\n${visualContext}`;
+      }
+      window.setCustomPageAiStatus(tabId, `🧠 AI is generating "${pageName}" content...`, 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${pageName}...`, true);
+    } else if (visualContext) {
+      contextText = visualContext;
+      window.setCustomPageAiStatus(tabId, '⚠️ Using visual video analysis (no audio)...', 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${pageName} from visual analysis...`, true);
+    } else {
+      throw new Error('No recipe video is loaded. Please load a YouTube video or upload a local video first so the AI has audio content to transcribe and write the page details!');
+    }
+    
+    const res = await fetch('/api/ai/custom-page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript: contextText,
+        promptType: promptType,
+        pageName: pageName
+      })
+    });
+    
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP error ${res.status}`);
+    }
+    
+    const data = await res.json();
+    if (customPages[tabId]) {
+      customPages[tabId].content = data.content || '';
+    }
+    
+    contentInput.value = data.content || '';
+    contentInput.disabled = false;
+    
+    window.setCustomPageAiStatus(tabId, `✅ Done generating "${pageName}"!`, 'success');
+    if (typeof setAIStatus === 'function') setAIStatus(`✅ Done generating "${pageName}"!`, false);
+  } catch (err) {
+    console.error(err);
+    contentInput.value = '';
+    contentInput.disabled = false;
+    window.setCustomPageAiStatus(tabId, '❌ Failed: ' + err.message, 'error');
+    if (typeof setAIStatus === 'function') setAIStatus('❌ Failed: ' + err.message, false);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+    window.updateInlineCustomPageButtonText(tabId);
+  }
+};
+
+window.updateInlineCustomPageButtonText = function(tabId) {
+  const contentInput = document.getElementById(`inlineCustomPageContentInput_${tabId}`);
+  const btn = document.getElementById(`createInlineCustomPageBtn_${tabId}`);
+  if (!btn) return;
+  const isManual = contentInput && contentInput.value.trim().length > 0 && !contentInput.value.startsWith('⏳ AI is generating');
+  if (isManual) {
+    btn.innerHTML = '<span>➕ Content Saved Manually</span>';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = '<span>🪄 AI: Generate Page Content</span>';
+    btn.disabled = false;
+  }
+};
+
+
+
+window.deleteCustomPage = function(tabId) {
+  if (confirm(`Are you sure you want to delete this custom page?`)) {
+    delete customPages[tabId];
+    window.syncCustomPageUI();
+    window.switchEditorTab('add_custom');
+  }
+};
+
+window.updateCustomPageContent = function(tabId, val) {
+  if (customPages[tabId]) {
+    customPages[tabId].content = val;
+  }
+};
+
+window.saveInlineCustomPageChanges = function(tabId) {
+  const page = customPages[tabId];
+  if (!page) return;
+
+  const btn = document.getElementById(`saveInlineChangesBtn_${tabId}`);
+  if (btn) {
+    page.hasBeenSaved = true;
+    const nextText = 'Update';
+    
+    btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    btn.innerHTML = '<span>✓ Saved!</span>';
+    btn.disabled = true;
+    
+    if (typeof window.saveActiveRecipeState === 'function') {
+      window.saveActiveRecipeState();
+    }
+    
+    setTimeout(() => {
+      btn.style.background = '';
+      btn.innerHTML = `<i data-lucide="check" style="width:12px; height:12px; stroke-width:3px; display:inline-block; vertical-align:middle;"></i> <span style="display:inline-block; vertical-align:middle;">${nextText}</span>`;
+      btn.disabled = false;
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    }, 1500);
+  }
+};
+
+window.toggleCustomPageAiCollapse = function(tabId) {
+  const el = document.getElementById(`customPageAiToolsCollapse_${tabId}`);
+  const chev = document.getElementById(`customPageAiToolsChevron_${tabId}`);
+  const btn = document.getElementById(`toggleCustomPageAiToolsBtn_${tabId}`);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  if (isHidden) {
+    el.style.display = 'flex';
+    if (chev) chev.textContent = '▴';
+    if (btn) {
+      btn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
+    }
+  } else {
+    el.style.display = 'none';
+    if (chev) chev.textContent = '▾';
+    if (btn) {
+      btn.style.background = 'var(--bg-card-soft)';
+      btn.style.color = 'var(--text-body)';
+      btn.style.borderColor = 'var(--border-card)';
+      btn.style.boxShadow = 'var(--shadow-xs)';
+    }
+  }
+};
+
+window.toggleCustomPageAiInfo = function(tabId) {
+  const infoEl = document.getElementById(`customPageAiInfoPanel_${tabId}`);
+  if (!infoEl) return;
+  
+  const isVisible = infoEl.style.display === 'block';
+  infoEl.style.display = isVisible ? 'none' : 'block';
+};
+
+function getCustomPageInfoText(promptType, pageName) {
+  switch (promptType) {
+    case 'utensils':
+      return `<strong>Kitchen Tools & Utensils:</strong> Generates a list of recommended cooking utensils, pots, pans, and cutlery required for this recipe based on the video scenes.`;
+    case 'nutrition':
+      return `<strong>Nutrition Facts & Macros:</strong> Estimates calorie count, protein, carbs, fats, and dietary info for the ingredients processed in the video.`;
+    case 'tips':
+      return `<strong>Chef Tips & Advice:</strong> Generates useful tips, preparation techniques, hacks, and mistakes to avoid for this specific recipe.`;
+    case 'wine':
+      return `<strong>Beverage/Wine Pairing:</strong> Suggests ideal wine, beer, or non-alcoholic beverage pairings that complement the flavor profile of the dish.`;
+    case 'lyrics':
+      return `<strong>Recipe Lyrics/Song:</strong> Generates fun, catchy song lyrics about the recipe steps and ingredients.`;
+    case 'ingredients':
+      return `<strong>Ingredients List:</strong> Extracts a clean, formatted list of core ingredients and quantities from the video.`;
+    case 'custom':
+    default:
+      return `<strong>Custom Description/Notes:</strong> Generates a general summary, backstory, or culinary description of the dish.`;
+  }
+}
+
+window.generateCustomPageContent = async function(tabId) {
+  const page = customPages[tabId];
+  if (!page) return;
+
+  const btn = document.getElementById(`aiBtn_${tabId}`);
+  const btnRow = document.getElementById(`aiGenerateContentBtn_${tabId}`);
+  let origText = '';
+  let origRowText = '';
+  if (btn) {
+    origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>🤖 AI: Generating...</span>';
+  }
+  if (btnRow) {
+    origRowText = btnRow.innerHTML;
+    btnRow.disabled = true;
+    btnRow.innerHTML = '<span>⏳ Generating...</span>';
+  }
+
+  try {
+    if (!cachedTranscript) {
+      if (typeof setAIStatus === 'function') setAIStatus('🎤 Transcribing video first...', true);
+      await window.transcribeVideo();
+    }
+    if (!cachedTranscript) {
+      throw new Error('Could not transcribe video. Please make sure a video is loaded.');
+    }
+
+    if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${page.name}...`, true);
+
+    const res = await fetch('/api/ai/custom-page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript: cachedTranscript,
+        promptType: page.promptType,
+        pageName: page.name
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    page.content = data.content;
+    const textarea = document.getElementById(`textarea_${tabId}`);
+    if (textarea) {
+      textarea.value = data.content;
+      textarea.dispatchEvent(new Event('input'));
+    }
+
+    if (btn) {
+      btn.innerHTML = '<span>✅ AI: Generated!</span>';
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }, 2000);
+    }
+    if (btnRow) {
+      btnRow.innerHTML = '<span>✅ Generated!</span>';
+      setTimeout(() => {
+        btnRow.disabled = false;
+        btnRow.innerHTML = origRowText;
+      }, 2000);
+    }
+    if (typeof setAIStatus === 'function') setAIStatus(`✅ Generated ${page.name}!`, true);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to generate: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+    if (btnRow) {
+      btnRow.disabled = false;
+      btnRow.innerHTML = origRowText;
+    }
+    if (typeof setAIStatus === 'function') setAIStatus('❌ Generation failed.', true);
+  }
+};
+
+// Global click listener to auto-dismiss editor tab dropdown
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('editorTabDropdownContent');
+  if (menu && menu.style.display === 'flex') {
+    if (!e.target.closest('#editorTabDropdownContent') && !e.target.closest('#editorTabSelectorBtn')) {
+      menu.style.display = 'none';
+    }
+  }
+});
 
 // ── App execution trigger at very bottom ──
 if (document.readyState === 'loading') {

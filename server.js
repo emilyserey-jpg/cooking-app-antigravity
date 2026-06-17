@@ -382,6 +382,40 @@ app.post('/api/ai/ingredients', async (req, res) => {
   }
 });
 
+// ─── AI: Generate custom page content from transcript & template ────────────
+app.post('/api/ai/custom-page', async (req, res) => {
+  const { transcript, promptType, pageName } = req.body;
+  if (!transcript) return res.status(400).json({ error: 'No transcript.' });
+  if (!pageName) return res.status(400).json({ error: 'No page name.' });
+
+  let systemPrompt = '';
+  if (promptType === 'ingredients' || pageName.toLowerCase() === 'ingredients') {
+    systemPrompt = 'You are a professional recipe editor. Extract a clean, direct list of ingredients with their approximate quantities (if mentioned or implied) from the transcript. Do NOT write introductory sentences, conclusions, extra advice, or conversational filler. Only list the core ingredients as clear, concise bullet points (e.g. using "- [Ingredient Name]" or similar format).';
+  } else if (promptType === 'utensils') {
+    systemPrompt = 'You are a recipe assistant. Analyze the video transcript and extract a clean list of kitchen utensils, equipment, tools, and cookwares needed to make this recipe. Format them beautifully with emoji icons if relevant. Only list items clearly implied or mentioned. Be concise.';
+  } else if (promptType === 'nutrition') {
+    systemPrompt = 'You are a nutrition expert. Estimate the nutrition facts, macros (protein, carbs, fat, calories) and dietary info for this recipe based on the transcript. Format them beautifully. Mention that these are estimated values. Be concise.';
+  } else if (promptType === 'tips') {
+    systemPrompt = 'You are a professional chef. Analyze the transcript and provide chef tips, culinary techniques, troubleshooting advice, or preparation hacks to make this recipe turn out perfectly. Format as bullet points with emojis. Be concise.';
+  } else if (promptType === 'wine') {
+    systemPrompt = 'You are a sommelier. Suggest alcoholic or non-alcoholic beverage, wine, or cocktail pairings that would go perfectly with the food in this cooking video transcript. Explain why they pair well. Be concise.';
+  } else if (promptType === 'lyrics') {
+    systemPrompt = 'You are a creative songwriter and chef. Write fun, catchy, and rhythmic song lyrics about this recipe based on the cooking video transcript. Include verses, a chorus, and details about the ingredients and cooking steps in a musical and lighthearted way. Be creative but keep the song lyrics relatively concise.';
+  } else {
+    systemPrompt = `You are a culinary writer. Write a descriptive guide, culinary notes, or summary about the topic of "${pageName}" for this recipe based on the transcript. Be concise.`;
+  }
+
+  try {
+    const content = await getChatCompletion({
+      systemPrompt: systemPrompt,
+      userPrompt: `Generate content for page "${pageName}" from this transcript:\n\n${transcript}`
+    });
+    res.json({ content: content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── AI: Write step-by-step instructions from transcript ───────────────────
 app.post('/api/ai/steps', async (req, res) => {
   const { transcript } = req.body;
@@ -486,8 +520,38 @@ Rules:
       jsonMode: true
     });
     
+    const fs = require('fs');
     const result = cleanAndParseJSON(content);
-    res.json({ loops: Array.isArray(result.steps) ? result.steps : [] });
+    
+    let loops = [];
+    if (result) {
+      if (Array.isArray(result.steps)) {
+        loops = result.steps;
+      } else if (Array.isArray(result.loops)) {
+        loops = result.loops;
+      } else if (Array.isArray(result.recipe_steps)) {
+        loops = result.recipe_steps;
+      } else if (Array.isArray(result.cooking_steps)) {
+        loops = result.cooking_steps;
+      } else if (Array.isArray(result)) {
+        loops = result;
+      }
+    }
+
+    // Write a debug log in the workspace for easier diagnostics
+    try {
+      fs.writeFileSync('/Users/emilyserey/Desktop/App/server_loops_debug.log', JSON.stringify({
+        timestamp: new Date().toISOString(),
+        userPromptText,
+        rawContent: content,
+        parsedResult: result,
+        finalLoops: loops
+      }, null, 2));
+    } catch (logErr) {
+      console.error('Failed to write debug log:', logErr.message);
+    }
+
+    res.json({ loops });
   } catch (err) {
     console.error('[AI Loops] Error:', err.message);
     res.status(500).json({ error: err.message });
@@ -496,18 +560,40 @@ Rules:
 
 // ─── AI: Gemini video analysis (Google File API → Gemini 2.0 Flash) ──────────
 app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res) => {
-  const { prompt: tweakPrompt, videoOnly } = req.body;
+  const { prompt: tweakPrompt, videoOnly, videoUrl } = req.body;
   if (!GEMINI_API_KEY)
     return res.status(503).json({ error: 'GEMINI_API_KEY not set in Railway variables.' });
-  if (!req.file)
-    return res.status(400).json({ error: 'No video file received.' });
 
-  const mimeType = getValidMimeType(req.file);
-  // Auth header works with both AIzaSy and AQ. key formats
-  const authHeader = { 'x-goog-api-key': GEMINI_API_KEY };
-  console.log(`[Gemini] File: ${req.file.originalname}, ${(req.file.size/1024/1024).toFixed(1)}MB, MIME: ${mimeType}`);
+  let fileBuffer;
+  let mimeType;
+  let originalName;
 
   try {
+    if (req.file) {
+      fileBuffer = req.file.buffer;
+      mimeType = getValidMimeType(req.file);
+      originalName = req.file.originalname;
+    } else if (videoUrl) {
+      let absoluteUrl = videoUrl;
+      if (videoUrl.startsWith('/')) {
+        absoluteUrl = `http://localhost:${PORT}${videoUrl}`;
+      }
+      console.log(`[Gemini] Fetching video from URL: ${absoluteUrl}`);
+      const fetchRes = await fetch(absoluteUrl);
+      if (!fetchRes.ok) {
+        throw new Error(`Failed to fetch video from URL: ${fetchRes.statusText}`);
+      }
+      const arrayBuffer = await fetchRes.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+      
+      const contentType = fetchRes.headers.get('content-type');
+      mimeType = contentType || 'video/mp4';
+      originalName = videoUrl.split('/').pop().split('?')[0] || 'video.mp4';
+    } else {
+      return res.status(400).json({ error: 'No video file or URL received.' });
+    }
+
+    console.log(`[Gemini] File: ${originalName}, ${(fileBuffer.length/1024/1024).toFixed(1)}MB, MIME: ${mimeType}`);
     // ── Step 1: Upload to Google File API ───────────────────────────────
     console.log('[Gemini] Uploading to File API...');
     const uploadRes = await fetch(
@@ -519,7 +605,7 @@ app.post('/api/ai/gemini-analyze', geminiUpload.single('video'), async (req, res
           'X-Goog-Upload-Content-Type': mimeType,
           'X-Goog-Upload-Protocol': 'raw',
         },
-        body: req.file.buffer,
+        body: fileBuffer,
       }
     );
     if (!uploadRes.ok) {

@@ -382,18 +382,18 @@ h1, h2, h3, h4, h5 {
 .mobile-video-container {
   width: 100%;
   aspect-ratio: 16/9;
-  background: #c8e0f0;
+  background: transparent;
   position: relative;
 }
 
 .mobile-video-container:not(.multigrid-active) {
   height: auto !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: 16/9;
 }
 
 .mobile-video-container:not(.multigrid-active) .mobile-video-placeholder {
   height: 100% !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: inherit;
 }
 
 .mobile-video-placeholder {
@@ -401,6 +401,7 @@ h1, h2, h3, h4, h5 {
   height: 100%;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 .video-element-sim {
@@ -601,6 +602,13 @@ h1, h2, h3, h4, h5 {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+}
+
+#playerMultigridDescriptions {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 #playerMultigridDescriptions {
@@ -1702,8 +1710,8 @@ a:focus-visible {
   #workbenchVideoWrapper {
     position: relative !important;
     flex: 1 !important;
-    min-height: 240px !important;
-    max-height: 520px !important;
+    min-height: 300px !important;
+    max-height: 680px !important;
     width: 100% !important;
   }
   
@@ -2867,6 +2875,258 @@ a:focus-visible {
   color: #c46820 !important;
   border-color: rgba(196, 104, 32, 0.15) !important;
   background: rgba(196, 104, 32, 0.05) !important;
+}.mode-badge.continuous {
+  color: var(--green) !important;
+  border-color: rgba(34, 197, 94, 0.15) !important;
+  background: rgba(34, 197, 94, 0.05) !important;
+}
+
+/* Share App Icon Micro-interactions */
+.share-app-icon {
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.share-app-icon:hover {
+  transform: scale(1.08) translateY(-2px);
+  filter: brightness(1.04);
+}
+.share-app-icon:active {
+  transform: scale(0.92);
+  filter: brightness(0.92);
+}
+
+
+.player-main-tabs {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  padding: 10px 12px 6px 12px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  overflow: visible !important;
+  flex-wrap: nowrap !important;
+  scrollbar-width: none !important;
+  position: relative !important;
+  z-index: 999 !important;
+}
+
+.player-main-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.player-tab-btn {
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  border: none !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-family: var(--font) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all var(--ease) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+.sec-action-btn {
+  flex-shrink: 0 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-family: var(--font) !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all var(--ease) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  background: #fff !important;
+  color: var(--text-heading) !important;
+}
+
+.sec-action-btn:hover {
+  background: #f3f4f6 !important;
+}
+
+.sec-action-btn.edit-btn {
+  background: #fef08a !important; /* Yellow light background */
+  border-color: #fde047 !important;
+  color: #854d0e !important;
+}
+
+.sec-action-btn.edit-btn:hover {
+  background: #fef9c3 !important;
+}
+
+.sec-action-btn.remix-btn {
+  background: #dbeafe !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
+}
+
+.sec-action-btn.remix-btn:hover {
+  background: #eff6ff !important;
+}
+
+/* Secondary Actions Row */
+.player-secondary-actions-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important; /* Right-align Options button */
+  gap: 10px !important;
+  padding: 8px 12px 6px 12px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  background: #fff !important;
+  border-bottom: 1.5px solid rgba(0,0,0,0.05) !important;
+}
+
+/* Premium Options Dropdown Menu */
+.player-actions-dropdown-menu {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #fff !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  z-index: 100 !important;
+  min-width: 180px !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+}
+
+.dropdown-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  padding: 4px 6px !important;
+}
+
+.dropdown-section-title {
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  color: var(--text-muted, #64748b) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+.dropdown-divider {
+  height: 1px !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+  margin: 4px 0 !important;
+  width: 100% !important;
+}
+
+.dropdown-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  font-family: var(--font) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  color: var(--text-heading, #1e293b) !important;
+  transition: background 0.15s ease !important;
+  text-align: left !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.dropdown-item.edit-btn {
+  color: #854d0e !important;
+}
+.dropdown-item.edit-btn:hover {
+  background: #fef9c3 !important;
+}
+
+.dropdown-item.remix-btn {
+  color: #1e40af !important;
+}
+.dropdown-item.remix-btn:hover {
+  background: #eff6ff !important;
+}
+
+.dropdown-item-badge-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 4px 6px !important;
+}
+
+.dropdown-item-badge-wrap span {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: var(--text-heading, #1e293b) !important;
+}
+
+/* Save to Folder Select */
+.folder-select-dropdown {
+  flex-shrink: 0 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  padding: 6px 24px 6px 10px !important;
+  border-radius: 8px !important;
+  font-family: var(--font) !important;
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center/10px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  color: var(--text-heading) !important;
+  white-space: nowrap;
+}
+
+/* Mode Badge inside the player view */
+.mode-badge {
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  padding: 6px 10px !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  border-radius: 8px !important;
+  background: rgba(0,0,0,0.03) !important;
+  color: var(--text-body) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+.mode-badge.loop {
+  color: var(--primary) !important;
+  border-color: rgba(74, 144, 217, 0.15) !important;
+  background: rgba(74, 144, 217, 0.05) !important;
+}
+
+.mode-badge.wait {
+  color: #c46820 !important;
+  border-color: rgba(196, 104, 32, 0.15) !important;
+  background: rgba(196, 104, 32, 0.05) !important;
 }
 
 .mode-badge.continuous {
@@ -2888,5 +3148,64 @@ a:focus-visible {
   filter: brightness(0.92);
 }
 
-
-
+/* Condensed Editor Controls & Scrubber Layout */
+#editorScrubberCard {
+  padding: 5px 10px !important;
+  margin-top: 2px !important;
+}
+#stepNavControlsRow {
+  padding: 6px 10px !important;
+  gap: 4px !important;
+  margin-top: 3px !important;
+}
+#stepNavControlsContent {
+  gap: 4px !important;
+}
+#editorScrubberCard #videoScrubber {
+  height: 6px !important;
+  margin: 6px 0 4px !important;
+}
+#editorScrubberCard #videoThumb {
+  width: 12px !important;
+  height: 12px !important;
+  border-width: 1.5px !important;
+}
+#view-create .player-controls-strip .control-btn {
+  width: 32px !important;
+  height: 32px !important;
+}
+#view-create .player-controls-strip .control-btn.play-btn {
+  width: 38px !important;
+  height: 38px !important;
+}
+#view-create .player-controls-strip .control-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+#view-create .player-controls-strip .control-btn.play-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+#view-create #navAddStopBtn {
+  padding: 6px 10px !important;
+  font-size: 0.72rem !important;
+}
+#view-create #createKbToggleBtn {
+  width: 32px !important;
+  height: 32px !important;
+}
+#view-create #createKbToggleBtn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+#view-create .collapsible-section-header {
+  padding: 2px 4px 4px !important;
+  margin-bottom: 4px !important;
+}
+#view-create .collapsible-section-title {
+  font-size: 0.62rem !important;
+}
+#view-create #playbackControlsLayoutBtn {
+  font-size: 0.6rem !important;
+  padding: 1px 4px !important;
+}

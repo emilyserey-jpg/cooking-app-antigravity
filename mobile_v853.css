@@ -382,18 +382,18 @@ h1, h2, h3, h4, h5 {
 .mobile-video-container {
   width: 100%;
   aspect-ratio: 16/9;
-  background: #c8e0f0;
+  background: transparent;
   position: relative;
 }
 
 .mobile-video-container:not(.multigrid-active) {
   height: auto !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: 16/9;
 }
 
 .mobile-video-container:not(.multigrid-active) .mobile-video-placeholder {
   height: 100% !important;
-  aspect-ratio: 16/9 !important;
+  aspect-ratio: inherit;
 }
 
 .mobile-video-placeholder {
@@ -401,6 +401,7 @@ h1, h2, h3, h4, h5 {
   height: 100%;
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 .video-element-sim {
@@ -1702,8 +1703,8 @@ a:focus-visible {
   #workbenchVideoWrapper {
     position: relative !important;
     flex: 1 !important;
-    min-height: 240px !important;
-    max-height: 520px !important;
+    min-height: 300px !important;
+    max-height: 680px !important;
     width: 100% !important;
   }
   
@@ -2888,5 +2889,64 @@ a:focus-visible {
   filter: brightness(0.92);
 }
 
-
-
+/* Condensed Editor Controls & Scrubber Layout */
+#editorScrubberCard {
+  padding: 5px 10px !important;
+  margin-top: 2px !important;
+}
+#stepNavControlsRow {
+  padding: 6px 10px !important;
+  gap: 4px !important;
+  margin-top: 3px !important;
+}
+#stepNavControlsContent {
+  gap: 4px !important;
+}
+#editorScrubberCard #videoScrubber {
+  height: 6px !important;
+  margin: 6px 0 4px !important;
+}
+#editorScrubberCard #videoThumb {
+  width: 12px !important;
+  height: 12px !important;
+  border-width: 1.5px !important;
+}
+#view-create .player-controls-strip .control-btn {
+  width: 32px !important;
+  height: 32px !important;
+}
+#view-create .player-controls-strip .control-btn.play-btn {
+  width: 38px !important;
+  height: 38px !important;
+}
+#view-create .player-controls-strip .control-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+#view-create .player-controls-strip .control-btn.play-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+#view-create #navAddStopBtn {
+  padding: 6px 10px !important;
+  font-size: 0.72rem !important;
+}
+#view-create #createKbToggleBtn {
+  width: 32px !important;
+  height: 32px !important;
+}
+#view-create #createKbToggleBtn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+#view-create .collapsible-section-header {
+  padding: 2px 4px 4px !important;
+  margin-bottom: 4px !important;
+}
+#view-create .collapsible-section-title {
+  font-size: 0.62rem !important;
+}
+#view-create #playbackControlsLayoutBtn {
+  font-size: 0.6rem !important;
+  padding: 1px 4px !important;
+}
