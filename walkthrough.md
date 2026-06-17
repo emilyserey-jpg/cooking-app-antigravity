@@ -15,6 +15,8 @@ This walkthrough details the structural changes, bug fixes, and test verificatio
 * **Removed Dashed Divider Line**: Removed the dashed divider element above the `Add Custom Page` option inside the dropdown menu, simplifying dropdown menu list structure.
 * **Dropdown Menu Reordering**: Changed the sorting order of the editor dropdown options from top to bottom to match the requested flow: `Loop Stops` -> `Add Custom Page` -> `Transcripts` -> `Preview & Save`.
 * **Removed Plus (+) Sign from Dropdown Option**: Removed the leading `+` sign from the `Add Custom Page` button text inside the editor tab dropdown menu to match the clean aesthetic and styling of other options.
+* **Removed Redundant "Preview & Save" Button**: Removed the redundant, standalone `Preview & Save` button from the desktop editor tab bar. All editor tabs (including `Preview & Save`) are now accessed uniformly through the clean active tab dropdown selector, and the dropdown button itself correctly retains active styling across all tabs.
+
 
 
 ### 2. Video Player Side Panels & Floating Controls Overlay

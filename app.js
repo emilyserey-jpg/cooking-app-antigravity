@@ -15536,9 +15536,8 @@ window.switchEditorTab = function(tabName) {
     }
 
     // Desktop Tab Styling Sync
-    const isSelectorActive = tabName === 'stops' || tabName === 'add_custom' || tabName === 'transcripts' || tabName.startsWith('custom_');
+    const isSelectorActive = tabName === 'stops' || tabName === 'add_custom' || tabName === 'transcripts' || tabName === 'save' || tabName.startsWith('custom_');
     const btnSelector = document.getElementById('editorTabSelectorBtn');
-    const btnSave = document.getElementById('tabBtnSave');
 
     const activeStyle = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';
     const activeColor = '#fff';
@@ -15560,20 +15559,6 @@ window.switchEditorTab = function(tabName) {
         btnSelector.style.color = inactiveColor;
         btnSelector.style.borderColor = inactiveBorder;
         btnSelector.style.boxShadow = 'none';
-      }
-    }
-
-    if (btnSave) {
-      if (tabName === 'save') {
-        btnSave.style.background = activeStyle;
-        btnSave.style.color = activeColor;
-        btnSave.style.borderColor = activeBorder;
-        btnSave.style.boxShadow = activeShadow;
-      } else {
-        btnSave.style.background = inactiveBg;
-        btnSave.style.color = inactiveColor;
-        btnSave.style.borderColor = inactiveBorder;
-        btnSave.style.boxShadow = 'none';
       }
     }
   }
