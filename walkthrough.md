@@ -4,23 +4,39 @@ This walkthrough details the structural changes, bug fixes, and test verificatio
 
 ---
 
-## 🛠️ Bugs Resolved
+## 🛠️ Bugs & Layout Improvements Resolved
 
-### 1. Ingredient Checked State TypeError
+### 1. Card Height Extension and Section Clipping Prevention
+* **Problem**: The step options button (`Edit Options ▾`) and ingredients textarea at the bottom of the loop stop cards were clipped vertically by parent container overflow rules, particularly on shorter screen heights.
+* **Fix**:
+  - Increased the minimum height of the editor cards (`#editorStopsBodyCard` and `#editorTranscriptsCard`) in [index.html](file:///Users/emilyserey/Desktop/App/index.html) from `450px` to `520px`.
+  - Set the step card (`.loop-stop-card`) minimum height to `450px`, the steps list container (`#createStepsList`) minimum height to `470px`, and expanded the Step Ingredients textarea height to `85px` in [app.js](file:///Users/emilyserey/Desktop/App/app.js).
+  - This ensures that all step card details (header, timers, description notes, ingredients, and the Edit Options dropdown action button) fit vertically and remain fully visible and clickable without being clipped by the parent container's vertical boundary.
+
+### 2. Ingredient Checked State TypeError
 * **Problem**: In the player view, rendering the ingredients checklist failed with `TypeError: Cannot read properties of undefined (reading 'has')` at `window.checkedIngredients.has(ing)`.
 * **Fix**: Initialized `window.checkedIngredients` as a new `Set` inside `renderPlayerIngredients` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) if it has not yet been initialized.
 
-### 2. Layout Switcher HierarchyRequestError
+### 3. Layout Switcher HierarchyRequestError
 * **Problem**: Toggling the Full Width recipe editor layout mode crashed the layout script with `HierarchyRequestError: Failed to execute 'appendChild' on 'Node': The new child element contains the parent`.
 * **Investigation**: `#workbenchBottom` was incorrectly nested inside `#recipePanelWrapper` in [index.html](file:///Users/emilyserey/Desktop/App/index.html). Since the layout switcher appends `#recipePanelWrapper` into `#workbenchBottom` for the bottom layout mode, this created a cyclic parent-child loop.
 * **Fix**: 
-  1. Removed the nested `#workbenchBottom` from `#recipePanelWrapper`.
-  2. Reinserted `#workbenchBottom` and `#workbenchHorizontalResizer` directly after `#workbenchGrid` as siblings in the vertical grid layout of `#createStage2`.
+  - Removed the nested `#workbenchBottom` from `#recipePanelWrapper`.
+  - Reinserted `#workbenchBottom` and `#workbenchHorizontalResizer` directly after `#workbenchGrid` as siblings in the vertical grid layout of `#createStage2`.
 
-### 3. Missing Scroll Layout CSS Constraints
+### 4. Missing Scroll Layout CSS Constraints
 * **Problem**: The scrolling integration test failed because the `min-width: 430px` constraints on workbench cards were missing in the active page stylesheet.
 * **Investigation**: `index.html` loads [styles_v853.css](file:///Users/emilyserey/Desktop/App/styles_v853.css) instead of `styles.css`. The rules were present in `styles.css` but missing from `styles_v853.css`.
 * **Fix**: Appended the panel-wide scroll rules (`min-width: 430px` for `#videoResizerBar`, `#workbenchVideoWrapper`, `#editorScrubberCard`, `#stepNavControlsRow`) to the end of `styles_v853.css`.
+
+---
+
+## 🧹 Complete Emoji Clean-up (100% Emoji-Free State)
+* **Problem**: The application interface contained numerous emojis across headers, dropdown menus, button texts, toast messages, and dynamic state logs, detracting from the premium style.
+* **Fix**: Systematically scrubbed and replaced **every single emoji** in [index.html](file:///Users/emilyserey/Desktop/App/index.html), [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html), and [app.js](file:///Users/emilyserey/Desktop/App/app.js) with style-matched Lucide SVG icons or clean text equivalents.
+  - Replaced UI-specific emojis like `⏱️`, `⏳`, `⚙️`, `▶`, `⏩`, `🔊` with standard text or Lucide SVG icons (e.g., `timer`, `settings`, `play`, `fast-forward`, `volume-2`, `check-circle`, `folder`, `calendar`).
+  - Rewrote the dynamic play/pause overlay states for player overlays to use Lucide SVG icon injections.
+  - Ran a comprehensive emoji scanner script that verified exactly **0** emojis remain in any HTML or JS file.
 
 ---
 
@@ -39,14 +55,7 @@ All layout, custom page, and workbench scroll tests run in the Chrome DevTools b
 | `verify_manual_save_button.js` | **PASSED** ✅ | Validates editing the `#transcriptText` textarea, clicking the "Save & Update" button, and asserting state update + toast notification visibility. |
 | `verify_ai_generate_buttons.js` | **PASSED** ✅ | Asserts the restored AI buttons render inside the Loop Stops tab header and are correctly wired to their respective functions. |
 | `verify_comprehensive.js` | **PASSED** ✅ | Comprehensive end-to-end integration test asserting tab header labels and action buttons are emoji-free, manual save functions, and state updates correctly. |
-
----
-
-## 🧹 Emoji Clean-up
-* **Problem**: The UI contained various emojis in buttons, tab labels, headers, and toast messages, which detracted from the professional styling.
-* **Fix**: Removed all emojis from UI text strings, headers, buttons, and status messages in [index.html](file:///Users/emilyserey/Desktop/App/index.html), [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html), and [app.js](file:///Users/emilyserey/Desktop/App/app.js).
-  * Prominent icon placeholders (like the `🔗` and `🎬` embed/upload cards) were replaced with clean, style-matched Lucide SVG icons (`link` and `video`).
-  * Other inline emojis (such as tab headers, save buttons, and status logs) were stripped entirely or replaced with native icons.
+| `verify_dom_heights.js` | **PASSED** ✅ | Asserts editor panel card layout minimum heights (`520px` for `#editorStopsBodyCard` and `#editorTranscriptsCard`) in the browser DOM. |
 
 ---
 
