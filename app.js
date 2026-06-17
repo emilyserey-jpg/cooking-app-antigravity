@@ -8378,105 +8378,123 @@ window.togglePlayerMultigridMute = function(event, idx) {
   if (window.lucide) lucide.createIcons();
 };
 
+let isUpdatingMultigridLayout = false;
 function updateMultigridLayoutClass() {
-  const screen = document.querySelector('.phone-screen');
-  const videoContainer = document.querySelector('.mobile-video-container');
-  const multigridContainer = document.getElementById('playerMultigridContainer');
-  const wrapper = document.querySelector('.player-mobile-wrapper');
-  const leftCol = document.querySelector('.player-left-column');
+  if (isUpdatingMultigridLayout) return;
+  isUpdatingMultigridLayout = true;
+  try {
+    const screen = document.querySelector('.phone-screen');
+    const videoContainer = document.querySelector('.mobile-video-container');
+    const multigridContainer = document.getElementById('playerMultigridContainer');
+    const wrapper = document.querySelector('.player-mobile-wrapper');
+    const leftCol = document.querySelector('.player-left-column');
 
-  if (leftCol) {
-    leftCol.style.setProperty('height', 'auto', 'important');
-    leftCol.style.setProperty('flex', '0 0 auto', 'important');
-  }
-
-  if (screen) {
-    if (isPlayerMultigridActive && playerGridLayout === 'row') {
-      screen.classList.add('multigrid-row-mode');
-    } else {
-      screen.classList.remove('multigrid-row-mode');
+    if (leftCol) {
+      leftCol.style.setProperty('height', 'auto', 'important');
+      leftCol.style.setProperty('flex', '0 0 auto', 'important');
     }
 
-    if (isPlayerMultigridActive) {
-      screen.classList.add('multigrid-active');
-    } else {
-      screen.classList.remove('multigrid-active');
-    }
-  }
-
-  if (wrapper) {
-    if (isPlayerMultigridActive) {
-      wrapper.classList.add('multigrid-active');
-    } else {
-      wrapper.classList.remove('multigrid-active');
-    }
-  }
-
-  if (videoContainer) {
-    const placeholder = videoContainer.querySelector('.mobile-video-placeholder');
-    if (isPlayerMultigridActive) {
-      videoContainer.classList.add('multigrid-active');
-      videoContainer.style.setProperty('height', 'auto', 'important');
-      videoContainer.style.setProperty('aspect-ratio', 'auto', 'important');
-      videoContainer.style.removeProperty('width');
-      videoContainer.style.removeProperty('margin');
-      if (placeholder) {
-        placeholder.style.setProperty('height', 'auto', 'important');
-        placeholder.style.setProperty('aspect-ratio', 'auto', 'important');
-      }
-    } else {
-      videoContainer.classList.remove('multigrid-active');
-      const screenWidth = screen ? screen.clientWidth : 390;
-      const w = videoContainer.getBoundingClientRect().width || videoContainer.clientWidth || screenWidth || 390;
-      const h = Math.round(w * 9 / 16);
-      
-      let aspect = 16 / 9;
-      const realVideo = document.getElementById('mobileRealVideo');
-      if (realVideo && realVideo.videoWidth && realVideo.videoHeight) {
-        aspect = realVideo.videoWidth / realVideo.videoHeight;
-      }
-      
-      const isPortrait = aspect < 1;
-      
-      videoContainer.style.setProperty('height', `${h}px`, 'important');
-      videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
-      
-      if (isPortrait) {
-        // Shrink container width to match video aspect ratio at height h
-        const containerWidth = Math.round(h * aspect);
-        videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
-        videoContainer.style.setProperty('margin', '0 auto', 'important');
+    if (screen) {
+      if (isPlayerMultigridActive && playerGridLayout === 'row') {
+        screen.classList.add('multigrid-row-mode');
       } else {
-        videoContainer.style.setProperty('width', '100%', 'important');
+        screen.classList.remove('multigrid-row-mode');
+      }
+
+      if (isPlayerMultigridActive) {
+        screen.classList.add('multigrid-active');
+      } else {
+        screen.classList.remove('multigrid-active');
+      }
+    }
+
+    if (wrapper) {
+      if (isPlayerMultigridActive) {
+        wrapper.classList.add('multigrid-active');
+      } else {
+        wrapper.classList.remove('multigrid-active');
+      }
+    }
+
+    if (videoContainer) {
+      const placeholder = videoContainer.querySelector('.mobile-video-placeholder');
+      if (isPlayerMultigridActive) {
+        videoContainer.classList.add('multigrid-active');
+        videoContainer.style.setProperty('height', 'auto', 'important');
+        videoContainer.style.setProperty('aspect-ratio', 'auto', 'important');
+        videoContainer.style.removeProperty('width');
         videoContainer.style.removeProperty('margin');
-      }
-      
-      if (placeholder) {
-        placeholder.style.setProperty('height', '100%', 'important');
-        placeholder.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+        if (placeholder) {
+          placeholder.style.setProperty('height', 'auto', 'important');
+          placeholder.style.setProperty('aspect-ratio', 'auto', 'important');
+        }
+      } else {
+        videoContainer.classList.remove('multigrid-active');
+        const screenWidth = screen ? screen.clientWidth : 390;
+        const w = videoContainer.getBoundingClientRect().width || videoContainer.clientWidth || screenWidth || 390;
+        const h = Math.round(w * 9 / 16);
+        
+        let aspect = 16 / 9;
+        const realVideo = document.getElementById('mobileRealVideo');
+        if (realVideo && realVideo.videoWidth && realVideo.videoHeight) {
+          aspect = realVideo.videoWidth / realVideo.videoHeight;
+        }
+        
+        const isPortrait = aspect < 1;
+        
+        videoContainer.style.setProperty('height', `${h}px`, 'important');
+        videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+        
+        if (isPortrait) {
+          // Shrink container width to match video aspect ratio at height h
+          const containerWidth = Math.round(h * aspect);
+          videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
+          videoContainer.style.setProperty('margin', '0 auto', 'important');
+        } else {
+          videoContainer.style.setProperty('width', '100%', 'important');
+          videoContainer.style.removeProperty('margin');
+        }
+        
+        if (placeholder) {
+          placeholder.style.setProperty('height', '100%', 'important');
+          placeholder.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+        }
       }
     }
-  }
 
-  if (multigridContainer) {
-    if (isPlayerMultigridActive) {
-      multigridContainer.classList.add('multigrid-active');
-    } else {
-      multigridContainer.classList.remove('multigrid-active');
+    if (multigridContainer) {
+      if (isPlayerMultigridActive) {
+        multigridContainer.classList.add('multigrid-active');
+      } else {
+        multigridContainer.classList.remove('multigrid-active');
+      }
     }
-  }
 
-  // Render descriptions
-  if (typeof renderMultigridDescriptions === 'function') {
-    renderMultigridDescriptions();
-  }
+    // Render descriptions
+    if (typeof renderMultigridDescriptions === 'function') {
+      renderMultigridDescriptions();
+    }
 
-  // Force layout reflow and repaint to solve Safari aspect-ratio and layout caching bugs
-  if (videoContainer) videoContainer.offsetHeight;
-  if (screen) screen.offsetHeight;
-  if (leftCol) leftCol.offsetHeight;
-  window.dispatchEvent(new Event('resize'));
+    // Force layout reflow and repaint to solve Safari aspect-ratio and layout caching bugs
+    if (videoContainer) videoContainer.offsetHeight;
+    if (screen) screen.offsetHeight;
+    if (leftCol) leftCol.offsetHeight;
+    window.dispatchEvent(new Event('resize'));
+  } finally {
+    isUpdatingMultigridLayout = false;
+  }
 }
+
+window.adjustPlayerVideoSize = function() {
+  if (typeof updateMultigridLayoutClass === 'function') {
+    updateMultigridLayoutClass();
+  }
+};
+window.triggerPlayerVideoSizingLoop = function() {
+  if (typeof updateMultigridLayoutClass === 'function') {
+    updateMultigridLayoutClass();
+  }
+};
 
 window.toggleMultigridTilePlayback = function(event, idx) {
   if (event) event.stopPropagation();

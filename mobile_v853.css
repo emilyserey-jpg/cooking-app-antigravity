@@ -387,7 +387,6 @@ h1, h2, h3, h4, h5 {
 }
 
 .mobile-video-container:not(.multigrid-active) {
-  height: auto !important;
   aspect-ratio: 16/9;
 }
 
