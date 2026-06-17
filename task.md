@@ -50,3 +50,5 @@
 - [x] Integrate Lucide check SVG vector icon into the Save Page Changes button
 - [x] Assert Save Page Changes button renders successfully inside integration test suite
 - [x] Remove leading "+" sign from the "Add Custom Page" option in the editor tab dropdown menu
+- [x] Move the purple and pink AI buttons above the step tabs in Loop Stops
+
