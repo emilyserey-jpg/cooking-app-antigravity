@@ -887,19 +887,54 @@ let playerPlaybackSpeedIndex = 1; // Default to 1.0
 const PLAYER_SPEEDS = [0.5, 1.0, 1.25, 1.5, 2.0];
 window.playerPlaybackSpeed = 1.0; // Global for canvas simulation sync
 
-window.cyclePlayerSpeed = function() {
-  const realVideo = document.getElementById('mobileRealVideo');
-  if (!realVideo) return;
+window.togglePlayerSpeedDropdown = function(event) {
+  if (event) event.stopPropagation();
+  const speedMenu = document.getElementById('playerSpeedDropdownMenu');
+  if (!speedMenu) return;
 
-  playerPlaybackSpeedIndex = (playerPlaybackSpeedIndex + 1) % PLAYER_SPEEDS.length;
-  const speed = PLAYER_SPEEDS[playerPlaybackSpeedIndex];
-  realVideo.playbackRate = speed;
+  const isHidden = speedMenu.style.display === 'none' || speedMenu.style.display === '';
+  if (isHidden) {
+    speedMenu.style.display = 'flex';
+    // Highlight the active option
+    const currentSpeed = window.playerPlaybackSpeed || 1.0;
+    speedMenu.querySelectorAll('.speed-option-btn').forEach(btn => {
+      const btnSpeed = parseFloat(btn.textContent);
+      if (btnSpeed === currentSpeed) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  } else {
+    speedMenu.style.display = 'none';
+  }
+};
+
+window.setPlayerSpeed = function(speed) {
+  const realVideo = document.getElementById('mobileRealVideo');
+  if (realVideo) {
+    realVideo.playbackRate = speed;
+  }
   window.playerPlaybackSpeed = speed;
+  playerPlaybackSpeedIndex = PLAYER_SPEEDS.indexOf(speed);
+  if (playerPlaybackSpeedIndex === -1) {
+    playerPlaybackSpeedIndex = 1; // fallback to 1.0
+  }
 
   const label = document.getElementById('playerSpeedLabel');
   if (label) {
     label.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
   }
+
+  const speedMenu = document.getElementById('playerSpeedDropdownMenu');
+  if (speedMenu) {
+    speedMenu.style.display = 'none';
+  }
+};
+
+window.cyclePlayerSpeed = function() {
+  const nextSpeedIndex = (playerPlaybackSpeedIndex + 1) % PLAYER_SPEEDS.length;
+  window.setPlayerSpeed(PLAYER_SPEEDS[nextSpeedIndex]);
 };
 
 function setPlaybackMode(mode) {
@@ -15958,12 +15993,18 @@ window.generateCustomPageContent = async function(tabId) {
   }
 };
 
-// Global click listener to auto-dismiss editor tab dropdown
+// Global click listener to auto-dismiss editor tab dropdown and speed dropdown
 document.addEventListener('click', (e) => {
   const menu = document.getElementById('editorTabDropdownContent');
   if (menu && menu.style.display === 'flex') {
     if (!e.target.closest('#editorTabDropdownContent') && !e.target.closest('#editorTabSelectorBtn')) {
       menu.style.display = 'none';
+    }
+  }
+  const speedMenu = document.getElementById('playerSpeedDropdownMenu');
+  if (speedMenu && speedMenu.style.display === 'flex') {
+    if (!e.target.closest('#playerSpeedDropdownMenu') && !e.target.closest('#playerSpeedBtn')) {
+      speedMenu.style.display = 'none';
     }
   }
 });

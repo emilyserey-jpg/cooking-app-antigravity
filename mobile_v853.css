@@ -2949,3 +2949,43 @@ a:focus-visible {
   font-size: 0.6rem !important;
   padding: 1px 4px !important;
 }
+
+/* Speed Dropdown Menu styling */
+.player-speed-dropdown-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 60px;
+  padding: 4px 0;
+  flex-direction: column;
+}
+
+.speed-option-btn {
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 6px 12px;
+  font-family: var(--font);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-body);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.speed-option-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.speed-option-btn.active {
+  background: rgba(74, 144, 217, 0.1) !important;
+  color: var(--primary) !important;
+}
