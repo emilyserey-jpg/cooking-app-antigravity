@@ -41,5 +41,7 @@
 - [x] Assert dynamic Lucide SVG plus icon renders successfully inside integration test suite
 - [x] Remove emojis from all AI status update notifications inside `setCustomPageAiStatus` and `setAIStatus`
 - [x] Convert bottom action button into a dedicated, single full-width Save Page Changes button
+- [x] Add "Save & Update" button next to "Generate Transcript" on simplified Video Transcript page and implement `window.saveTranscriptManualEdits` to persist edits to cachedTranscript and active recipe state
+
 - [x] Integrate Lucide check SVG vector icon into the Save Page Changes button
 - [x] Assert Save Page Changes button renders successfully inside integration test suite

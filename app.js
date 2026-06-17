@@ -15596,6 +15596,19 @@ window.saveTranscriptTextareaEdits = function(val) {
   window.cachedTranscript = val;
 };
 
+window.saveTranscriptManualEdits = async function() {
+  const textarea = document.getElementById('transcriptText');
+  if (textarea) {
+    window.cachedTranscript = textarea.value;
+  }
+  if (typeof window.saveActiveRecipeState === 'function') {
+    await window.saveActiveRecipeState();
+  }
+  if (typeof showTip === 'function') {
+    showTip('💾 Transcript saved and updated! 📝');
+  }
+};
+
 // ── Custom Page Editor & Inline Creation Methods ──
 window.toggleInlineAddCustomAiCollapse = function() {
   const el = document.getElementById('inlineAddCustomAiToolsCollapse');

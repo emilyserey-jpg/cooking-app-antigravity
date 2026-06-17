@@ -36,3 +36,13 @@ All layout, custom page, and workbench scroll tests run in the Chrome DevTools b
 | `test_custom_page_remove_empty.js` | **PASSED** ✅ | Auto-cleaning and creation loops for custom page instances. |
 | `test_custom_page_fallback.js` | **PASSED** ✅ | Untitled name fallbacks in editor lists and tab dropdowns. |
 | `test_custom_page_save_on_exit.js` | **PASSED** ✅ | Exiting to the player synchronizes saved custom page tabs. |
+| `verify_manual_save_button.js` | **PASSED** ✅ | Validates editing the `#transcriptText` textarea, clicking the "Save & Update" button, and asserting state update + toast notification visibility. |
+
+---
+
+## 📸 Screenshots
+
+### Transcript "Save & Update" Button
+Below is the screenshot of the simplified Video Transcript card containing the newly added "Save & Update" button. The toast notification confirms successful save:
+
+![Manual Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/screenshot_manual_save.png)
