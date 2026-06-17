@@ -120,7 +120,7 @@
         <!-- User Dropdown Menu -->
         <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; width:120px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
           <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
-            <span>🚪</span> Log Out
+            <i data-lucide="log-out" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Log Out
           </button>
         </div>
       </div>
@@ -276,7 +276,7 @@
                    <!-- Library Folder Section -->                    <div class="dropdown-section">
                       <span class="dropdown-section-title">Save to Folder</span>
                       <button id="playerSaveToFolderBtn" onclick="window.openPlayerSaveToFolderModal()" class="folder-select-dropdown" tabindex="-1" title="Save to Folder" style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;">
-                        <span>📂 Save to Library</span>
+                        <span>Save to Library</span>
                       </button>
                     </div>
                    
@@ -345,7 +345,7 @@
             
             <!-- Detached Active Step Timer container (will be dynamically appended inside the active card) -->
             <div id="playerTimerContainer" style="display:none; align-items:center; gap:8px; background:rgba(74,144,217,0.08); border:1.5px solid rgba(74,144,217,0.2); border-radius:10px; padding:8px 12px; width:fit-content; box-sizing:border-box; margin-top:8px;">
-              <span style="font-size:1.1rem; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.1));">⏳</span>
+              <i data-lucide="timer" style="width: 20px; height: 20px; color: var(--primary);"></i>
               <div style="display:flex; flex-direction:column;">
                 <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.04em; line-height:1;">Active Timer</span>
                 <span id="playerTimerDisplay" style="font-size:1.3rem; font-weight:900; color:var(--text-heading); font-family: monospace; line-height:1.2; font-variant-numeric:tabular-nums; margin-top:2px;">10:00</span>
@@ -409,10 +409,10 @@
             <div class="glass-card" id="playerIngredientsPanel" style="padding: 12px; margin-top: 10px; border-radius: 12px; display: none; flex-direction: column; gap: 8px; border: 2px solid rgba(74,144,217,0.12); background: rgba(255,255,255,0.9); box-shadow: 0 4px 16px rgba(74,144,217,0.06);">
               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-card); padding-bottom:6px;">
                 <span style="font-size:0.75rem; font-weight:900; color:var(--text-heading); display:flex; align-items:center; gap:4px;">
-                  📋 Ingredients
+                  Ingredients
                 </span>
                 <button id="addRecipeIngredientsToGroceryBtn" onclick="addRecipeIngredientsToGrocery()" class="btn btn-primary" style="padding:4px 10px; font-size:0.68rem; font-weight:900; border-radius:8px; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(74,144,217,0.2);">
-                  🛒 Add to Grocery
+                  Add to Grocery
                 </button>
               </div>
               
@@ -506,7 +506,7 @@
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;">
           <!-- Search -->
           <div style="flex:1;min-width:200px;position:relative;">
-            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none;">🔍</span>
+            <i data-lucide="search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted);pointer-events:none;"></i>
             <input id="libSearchInput" oninput="libSearch(this.value)" placeholder="Search folders & videos…"
               style="width:100%;box-sizing:border-box;padding:10px 14px 10px 36px;border-radius:12px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.88rem;font-weight:600;color:var(--text-heading);outline:none;transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
@@ -525,9 +525,9 @@
             style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 145px;"
             onfocus="this.style.borderColor='var(--primary)'" 
             onblur="this.style.borderColor='var(--border-card)'">
-            <option value="grid">Layout: ⊞ Grid</option>
-            <option value="list">Layout: ☰ List</option>
-            <option value="compact">Layout: ▤ Compact</option>
+            <option value="grid">Layout: Grid</option>
+            <option value="list">Layout: List</option>
+            <option value="compact">Layout: Compact</option>
           </select>
         </div>
 
@@ -842,7 +842,7 @@
                 style="background:rgba(124,58,237,0.08);color:#7c3aed;border:2px dashed rgba(124,58,237,0.3);border-radius:14px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;"
                 onmouseenter="this.style.background='rgba(124,58,237,0.12)';this.style.borderColor='rgba(124,58,237,0.5)';"
                 onmouseleave="this.style.background='rgba(124,58,237,0.08)';this.style.borderColor='rgba(124,58,237,0.3)';">
-                <span>➕ Create New Folder...</span>
+                <span>Create New Folder...</span>
               </button>
               
               <button onclick="window.closePlayerSaveToFolderModal()"
@@ -886,7 +886,7 @@
       </div>
 
       <div id="discoverEmpty" style="display:none;text-align:center;padding:4rem 2rem;">
-        <div style="font-size:3rem;margin-bottom:1rem;">🍽️</div>
+        <div style="font-size:3rem;margin-bottom:1rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="chef-hat" style="width:48px;height:48px;"></i></div>
         <h3 style="color:var(--text-heading);margin-bottom:0.5rem;">No public recipes yet</h3>
         <p style="color:var(--text-muted);font-weight:600;">Be the first to share one!</p>
       </div>
@@ -928,7 +928,7 @@
           <div class="channel-details">
             <h1 id="pubName" class="channel-title">Loading…</h1>
             <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
-            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator 🍳</div>
+            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator</div>
             <div class="channel-actions">
               <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe">
                 Subscribe
@@ -964,7 +964,7 @@
             <!-- Recent Uploads grid -->
             <div id="pubHomeRecentSection" style="margin-top:1.5rem;">
               <h3 style="font-size:1.1rem;font-weight:800;color:var(--text-heading);margin-bottom:1.2rem;display:flex;align-items:center;gap:6px;">
-                <span>📂</span> Recent Recipes
+                Recent Recipes
               </h3>
               <div id="pubHomeRecentGrid" class="yt-video-grid"></div>
             </div>
@@ -974,7 +974,7 @@
           <div id="pubTabRecipesContent" style="display:none;">
             <div id="pubRecipesGrid" class="yt-video-grid"></div>
             <div id="pubNoRecipesMsg" style="display:none;text-align:center;padding:5rem 1rem;color:var(--text-muted);">
-              <div style="font-size:3rem;margin-bottom:0.75rem;">🍽️</div>
+              <div style="font-size:3rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="chef-hat" style="width:48px;height:48px;"></i></div>
               <div style="font-size:1.1rem;font-weight:700;color:var(--text-heading);margin-bottom:6px;">No recipes shared yet</div>
               <div>When this creator shares recipes, they'll appear here.</div>
             </div>
@@ -985,24 +985,24 @@
             <div class="yt-about-section">
               <div class="yt-about-bio-col">
                 <h3 class="yt-about-title">Description</h3>
-                <div id="pubAboutBio" class="yt-about-text">Cooking creator 🍳</div>
+                <div id="pubAboutBio" class="yt-about-text">Cooking creator</div>
               </div>
               <div class="yt-about-stats-col">
                 <h3 class="yt-about-title">Stats</h3>
                 <div id="pubAboutStatsJoined" class="yt-about-stat-item">
-                  <span class="yt-about-stat-icon">📅</span>
+                  <span class="yt-about-stat-icon"><i data-lucide="calendar" style="width: 14px; height: 14px;"></i></span>
                   <span>Joined --</span>
                 </div>
                 <div id="pubAboutStatsRecipes" class="yt-about-stat-item">
-                  <span class="yt-about-stat-icon">🍲</span>
+                  <span class="yt-about-stat-icon"><i data-lucide="chef-hat" style="width: 14px; height: 14px;"></i></span>
                   <span>-- public recipes</span>
                 </div>
                 <div id="pubAboutStatsSubs" class="yt-about-stat-item">
-                  <span class="yt-about-stat-icon">👥</span>
+                  <span class="yt-about-stat-icon"><i data-lucide="users" style="width: 14px; height: 14px;"></i></span>
                   <span>-- subscribers</span>
                 </div>
                 <div id="pubAboutStatsViews" class="yt-about-stat-item">
-                  <span class="yt-about-stat-icon">📈</span>
+                  <span class="yt-about-stat-icon"><i data-lucide="trending-up" style="width: 14px; height: 14px;"></i></span>
                   <span>-- total views</span>
                 </div>
               </div>
@@ -1020,7 +1020,7 @@
           style="background:#fff;border-radius:18px;display:flex;max-width:900px;width:95%;max-height:90vh;overflow:hidden;box-shadow:var(--shadow-lg);border:2px solid var(--border);">
           <div id="pubLightboxThumb"
             style="flex:1.2;min-width:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:350px;">
-            <span style="font-size:4rem;">🍳</span>
+            <span style="font-size:4rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="chef-hat" style="width:64px;height:64px;"></i></span>
           </div>
           <div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;border-left:1.5px solid var(--border-card);background:var(--bg-card);">
             <div style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1.5px solid var(--border-card);">
@@ -1040,14 +1040,14 @@
                 style="width:100%;background:var(--primary);border:none;border-radius:12px;padding:12px;color:#fff;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;box-shadow:var(--shadow-xs);transition:all 0.2s;"
                 onmouseenter="this.style.background='var(--primary-dark)'"
                 onmouseleave="this.style.background='var(--primary)'">
-                ▶ Watch Guide
+                Watch Guide
               </button>
               <button id="pubLightboxGroceryBtn" onclick="pubLightboxAddToGrocery()"
                 style="width:100%;background:var(--primary-soft);border:none;border-radius:12px;padding:12px;color:var(--primary-dark);font-family:var(--font);font-weight:800;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;border:1.5px solid var(--border-card);"
                 onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
                 onmouseleave="this.style.background='var(--primary-soft)'; this.style.color='var(--primary-dark)';"
                 >
-                🛒 Add to Shopping List
+                Add to Shopping List
               </button>
             </div>
           </div>
@@ -1065,14 +1065,14 @@
       <div style="max-width:1100px; margin:1.5rem auto 0; padding:0 1.25rem; display:flex; justify-content:space-between; align-items:center;">
         <h2 style="font-size:1.4rem; font-weight:900; color:var(--text-heading); margin:0;">Dashboard Workspace</h2>
         <button onclick="toggleDashboardEditMode()" id="dashboardEditBtn" style="background:rgba(74,144,217,0.1); border:none; border-radius:12px; padding:8px 16px; color:var(--primary); font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow:var(--shadow-sm);" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Customize your space dashboard">
-          ⚙️ Customize Layout
+          Customize Layout
         </button>
       </div>
 
       <!-- Manage Widgets Panel (Visible in Customize Layout mode) -->
       <div id="addWidgetsPanel" style="display:none; max-width:1100px; margin:1rem auto 0; padding:12px 20px; background:rgba(74,144,217,0.05); border:1.5px dashed rgba(74,144,217,0.25); border-radius:18px; align-items:center; gap:12px; box-sizing:border-box;">
         <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:4px;">
-          ⚙️ Manage Widgets:
+          Manage Widgets:
         </span>
         <div id="addWidgetsButtonsContainer" style="display:flex; gap:8px; flex-wrap:wrap;">
           <!-- Dynamically populated buttons -->
@@ -1085,9 +1085,9 @@
         <!-- Widget 2: Stats Counter Widget (Span 1) -->
         <div class="bento-widget" id="bentoStatsWidget">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">📊 Culinary Records</div>
+            <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Culinary Records</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button onclick="toggleWidgetSize('bentoStatsWidget')" id="resizeBtn_bentoStatsWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change stats widget layout size">↔ Size: Small</button>
+              <button onclick="toggleWidgetSize('bentoStatsWidget')" id="resizeBtn_bentoStatsWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change stats widget layout size">Size: Small</button>
               <button onclick="hideBentoWidget('bentoStatsWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1120,7 +1120,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span id="calendarMonthName" style="font-size:0.75rem; font-weight:800; color:var(--primary);">June 2026</span>
-              <button onclick="toggleWidgetSize('bentoCalendarWidget')" id="resizeBtn_bentoCalendarWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">↔ Size: Medium</button>
+              <button onclick="toggleWidgetSize('bentoCalendarWidget')" id="resizeBtn_bentoCalendarWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.7rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change calendar layout size">Size: Medium</button>
               <button onclick="hideBentoWidget('bentoCalendarWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1137,7 +1137,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button onclick="clearCompletedGroceryItems()" style="background:none; border:none; color:var(--primary); font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer;" title="Clear checked items">Clear Done</button>
-              <button onclick="toggleWidgetSize('bentoGroceryWidget')" id="resizeBtn_bentoGroceryWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change grocery widget layout size">↔ Size: Small</button>
+              <button onclick="toggleWidgetSize('bentoGroceryWidget')" id="resizeBtn_bentoGroceryWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change grocery widget layout size">Size: Small</button>
               <button onclick="hideBentoWidget('bentoGroceryWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1156,7 +1156,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Quick Timer</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button onclick="toggleWidgetSize('bentoTimerWidget')" id="resizeBtn_bentoTimerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change timer widget layout size">↔ Size: Small</button>
+              <button onclick="toggleWidgetSize('bentoTimerWidget')" id="resizeBtn_bentoTimerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change timer widget layout size">Size: Small</button>
               <button onclick="hideBentoWidget('bentoTimerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1180,7 +1180,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Daily Water Tracker</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button onclick="toggleWidgetSize('bentoWaterWidget')" id="resizeBtn_bentoWaterWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change water widget layout size">↔ Size: Small</button>
+              <button onclick="toggleWidgetSize('bentoWaterWidget')" id="resizeBtn_bentoWaterWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change water widget layout size">Size: Small</button>
               <button onclick="hideBentoWidget('bentoWaterWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1198,7 +1198,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em;">Today's Menu</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button onclick="toggleWidgetSize('bentoMealPlannerWidget')" id="resizeBtn_bentoMealPlannerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change meal planner widget layout size">↔ Size: Small</button>
+              <button onclick="toggleWidgetSize('bentoMealPlannerWidget')" id="resizeBtn_bentoMealPlannerWidget" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Change meal planner widget layout size">Size: Small</button>
               <button onclick="hideBentoWidget('bentoMealPlannerWidget')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
             </div>
           </div>
@@ -1290,7 +1290,7 @@
             "
             onmouseenter="this.style.borderColor='var(--primary)';"
             onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
-            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🔗</div>
+            <div style="font-size:4.5rem;margin-bottom:1rem;user-select:none;color:var(--primary);opacity:0.8;display:flex;align-items:center;justify-content:center;"><i data-lucide="link" style="width:64px;height:64px;"></i></div>
             <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Embed a Video</h3>
             <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
               Load online videos via URL.<br>Supports YouTube, Shorts, TikTok & Reels.
@@ -1324,7 +1324,7 @@
             "
             onmouseenter="this.style.borderColor='var(--primary)';"
             onmouseleave="this.style.borderColor='rgba(74,144,217,0.3)';">
-            <div style="font-size:4rem;margin-bottom:1rem;user-select:none;">🎬</div>
+            <div style="font-size:4.5rem;margin-bottom:1rem;user-select:none;color:var(--primary);opacity:0.8;display:flex;align-items:center;justify-content:center;"><i data-lucide="video" style="width:64px;height:64px;"></i></div>
             <h3 style="font-size:1.2rem;font-weight:900;color:var(--text-heading);margin-bottom:0.5rem;">Upload Video File</h3>
             <p style="color:var(--text-muted);font-weight:600;margin-bottom:1.5rem;font-size:0.82rem;line-height:1.45;height:40px;">
               Select a video file from your device.<br>Fully analyzes visuals with Gemini AI.
@@ -1392,7 +1392,7 @@
         <!-- Video Overlay Controls (Sibling of player wrapper, fixes iOS touch swallowing) -->
         <div id="videoOverlayControls" style="background:#1e2235; border-top:1.5px solid var(--border-card); display:flex; align-items:center; gap:8px; padding:5px 10px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; touch-action:pan-x; flex-shrink:0;">
           <button onclick="toggleVideoPlay()" id="videoPlayBtn"
-            style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:1rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;">▶</button>
+            style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:1rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;"><i id="videoPlayIconOverlayMobile" data-lucide="play" style="width: 14px; height: 14px;"></i></button>
           <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlayMobile"
             style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:0.9rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;"
             title="Mute/Unmute">
@@ -1408,12 +1408,12 @@
             <span id="createCurrentTime" style="font-size:0.65rem; color:rgba(255,255,255,0.8); font-weight:700; font-variant-numeric:tabular-nums;">0:00</span>
             <span style="font-size:0.65rem; color:rgba(255,255,255,0.4); font-weight:600;"> / </span>
             <span id="timelineDuration" style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:600; font-variant-numeric:tabular-nums;">0:00</span>
-            <span id="previewingLabel" style="margin-left:8px; font-size:0.62rem; font-weight:700; color:#a78bfa; display:none;">▶ Looping…</span>
+            <span id="previewingLabel" style="margin-left:8px; font-size:0.62rem; font-weight:700; color:#a78bfa; display:none;">Looping…</span>
           </div>
           <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn"
-            style="background:rgba(255,255,255,0.25); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0;">▶ Loop</button>
+            style="background:rgba(255,255,255,0.25); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0;">Loop</button>
           <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
-            style="display:none; background:#f0f4ff; border:none; border-radius:8px; padding:6px 11px; color:var(--primary); cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(240,244,255,0.4);">⏹ Stop</button>
+            style="display:none; background:#f0f4ff; border:none; border-radius:8px; padding:6px 11px; color:var(--primary); cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(240,244,255,0.4);">Stop</button>
         </div>
 
         <!-- Chapter Scrubber -->
@@ -1497,8 +1497,8 @@
               <!-- Add Stop Button (44px Circle) -->
               <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
                 style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
-                title="Add Stop at Current Time (📍)">
-                <span>📍</span>
+                title="Add Stop at Current Time ()">
+                <span></span>
               </button>
               <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
               <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
@@ -1516,7 +1516,7 @@
                   <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
                     style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
                     <span>AI Ingredients</span>
-                    <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;">✓</span>
+                    <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;"></span>
                   </button>
                   
                   <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1591,7 +1591,7 @@
                     <button id="aiLoopBtn" onclick="doItAll()"
                       style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
                       <span>AI: Create Steps from Analyzing Video</span>
-                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">✓</span>
+                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;"></span>
                     </button>
                     <span onclick="event.stopPropagation(); window.toggleAiInfo('speech');" title="View details"
                       style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
@@ -1622,7 +1622,7 @@
                     <button id="transcribeBtnMobile" onclick="window.transcribeVideo()" class="btn"
                       style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(16,185,129,0.2);white-space:nowrap;margin-bottom:0;">
                       <span>AI: Generate Transcript</span>
-                      <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;">✓</span>
+                      <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;"></span>
                     </button>
                     <span onclick="event.stopPropagation(); window.toggleAiInfo('transcript');" title="View details"
                       style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
@@ -1897,7 +1897,7 @@
       </p>
 
       <!-- Close -->
-      <button onclick="closeAuthModal()" style="position:absolute;top:1.25rem;right:1.25rem;background:rgba(74,144,217,0.08);border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a9ab8;">✕</button>
+      <button onclick="closeAuthModal()" style="position:absolute;top:1.25rem;right:1.25rem;background:rgba(74,144,217,0.08);border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a9ab8;"></button>
     </div>
   </div>
 

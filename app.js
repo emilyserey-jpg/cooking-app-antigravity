@@ -353,14 +353,14 @@ async function initializeApp() {
       }
 
       if (src.startsWith('blob:')) {
-        showTip('⚠️ This video was saved locally in your browser and has expired. Please re-upload it.');
+        showTip('This video was saved locally in your browser and has expired. Please re-upload it.');
       } else if (src) {
-        showTip('⚠️ Video file could not be loaded. Please ensure it has uploaded fully.');
+        showTip('Video file could not be loaded. Please ensure it has uploaded fully.');
       }
     });
   }
 
-  // 🔌 Connect to Supabase
+  // Connect to Supabase
   await initSupabase();
 
   let startView = window.location.hash.replace('#', '') || '';
@@ -626,9 +626,9 @@ function drawSimulatedVideo() {
   ctx.fill();
 
   // Step label at top
-  const stepEmojis = ['🥒','🍳','🧄','🥫','🍽️'];
+  const stepEmojis = ['', '', '', '', ''];
   const stepColors = ['#2a7a5a','#c45a2a','#b07a10','#4a60c0','#2a7a5a'];
-  const emoji = stepEmojis[activeStepIndex] || '🍳';
+  const emoji = stepEmojis[activeStepIndex] || '';
   ctx.font = "bold 13px 'Nunito', sans-serif";
   ctx.textAlign = 'center';
   ctx.fillStyle = stepColors[activeStepIndex] || '#1a3a5c';
@@ -679,7 +679,7 @@ function drawSimulatedVideo() {
       ctx.lineWidth = 1;
       // Label
       ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
-      ctx.fillText('🥒  Prep & Chop', dw/2, dh/2 - 30);
+      ctx.fillText('Prep & Chop', dw/2, dh/2 - 30);
       break;
     }
     case 1: { // Sear Chicken
@@ -698,7 +698,7 @@ function drawSimulatedVideo() {
       ctx.fillStyle = '#e8a040';
       roundRect(ctx, dw/2 - 12, dh/2 + 4, 24, 14, 4);
       ctx.fillStyle = '#c45a2a'; ctx.font = "700 12px 'Nunito',sans-serif";
-      ctx.fillText('🍳  Sear the Chicken', dw/2, dh/2 - 30);
+      ctx.fillText('Sear the Chicken', dw/2, dh/2 - 30);
       break;
     }
     case 2: { // Stir Fry
@@ -720,7 +720,7 @@ function drawSimulatedVideo() {
         ctx.fill();
       });
       ctx.fillStyle = '#b07a10'; ctx.font = "700 12px 'Nunito',sans-serif";
-      ctx.fillText('🧄  Stir Fry Aromatics', dw/2, dh/2 - 30);
+      ctx.fillText('Stir Fry Aromatics', dw/2, dh/2 - 30);
       break;
     }
     case 3: { // Toss in Sauce
@@ -732,7 +732,7 @@ function drawSimulatedVideo() {
       ctx.fillStyle = 'rgba(200,140,60,0.3)';
       ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 24 + boil*0.5, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#4a60c0'; ctx.font = "700 12px 'Nunito',sans-serif";
-      ctx.fillText('🥫  Toss in Sauce', dw/2, dh/2 - 30);
+      ctx.fillText('Toss in Sauce', dw/2, dh/2 - 30);
       break;
     }
     case 4: { // Plate & Garnish
@@ -750,7 +750,7 @@ function drawSimulatedVideo() {
       ctx.beginPath(); ctx.ellipse(dw/2 - 8, dh/2 + 8, 10, 5, Math.PI/5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(dw/2 + 12, dh/2 + 16, 9, 4, -Math.PI/6, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
-      ctx.fillText('🍽️  Plate & Garnish', dw/2, dh/2 - 30);
+      ctx.fillText('Plate & Garnish', dw/2, dh/2 - 30);
       break;
     }
   }
@@ -865,7 +865,7 @@ function updateControlsUI() {
   // Desktop player play btn
   const dPlayPauseBtn = document.getElementById('desktopPlayPauseBtn');
   if (dPlayPauseBtn) {
-    dPlayPauseBtn.innerHTML = isPlaying ? '⏸ Pause' : '▶ Play';
+    dPlayPauseBtn.innerHTML = isPlaying ? 'Pause' : 'Play';
   }
 
   // Unified controls strip play/pause btn
@@ -1298,7 +1298,7 @@ function renderStepChipsMobile() {
       <span class="step-chip-num">${idx + 1}</span>
       <span style="flex:1; text-align:left;">${step.title}</span>
       <span class="step-chip-checkbox" onclick="event.stopPropagation(); window.togglePlayerStepDone(${idx})">
-        ${isDone ? '✓' : ''}
+        ${isDone ? '' : ''}
       </span>
     `;
     container.appendChild(chip);
@@ -1938,15 +1938,15 @@ function switchView(viewId) {
       const badge = document.getElementById('aiStatusBadge');
       if (!badge) return;
       if (s.gemini) {
-        badge.textContent = '✅ Gemini ready';
+        badge.textContent = 'Gemini ready';
         badge.style.background = '#dcfce7';
         badge.style.color = '#16a34a';
       } else if (s.whisper) {
-        badge.textContent = '⚠️ Whisper only (≤25MB)';
+        badge.textContent = 'Whisper only (≤25MB)';
         badge.style.background = '#fef9c3';
         badge.style.color = '#a16207';
       } else {
-        badge.textContent = '❌ No AI key set';
+        badge.textContent = 'No AI key set';
         badge.style.background = '#fee2e2';
         badge.style.color = '#dc2626';
       }
@@ -2157,7 +2157,7 @@ function renderBentoGrocery() {
   if (list.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'grocery-empty-state';
-    empty.textContent = '🛒 Your shopping list is empty.';
+    empty.textContent = 'Your shopping list is empty.';
     container.appendChild(empty);
     return;
   }
@@ -2172,7 +2172,7 @@ function renderBentoGrocery() {
     
     const cb = document.createElement('div');
     cb.className = 'grocery-item-checkbox';
-    if (item.checked) cb.textContent = '✓';
+    if (item.checked) cb.textContent = '';
     
     const textSpan = document.createElement('span');
     textSpan.className = 'grocery-item-text';
@@ -2183,7 +2183,7 @@ function renderBentoGrocery() {
     
     const del = document.createElement('button');
     del.className = 'grocery-delete-btn';
-    del.innerHTML = '✕';
+    del.innerHTML = '';
     del.onclick = (e) => {
       e.stopPropagation();
       deleteGroceryItem(item.id);
@@ -2345,7 +2345,7 @@ function renderPlayerIngredients() {
         itemDiv.style.borderRadius = '6px';
         checkbox.style.background = 'var(--primary)';
         checkbox.style.borderColor = 'var(--primary)';
-        checkbox.textContent = '✓';
+        checkbox.textContent = '';
         textSpan.style.textDecoration = 'line-through';
         textSpan.style.color = 'var(--text-muted)';
       }
@@ -2358,7 +2358,7 @@ function renderPlayerIngredients() {
           itemDiv.style.borderRadius = '6px';
           checkbox.style.background = 'var(--primary)';
           checkbox.style.borderColor = 'var(--primary)';
-          checkbox.textContent = '✓';
+          checkbox.textContent = '';
           textSpan.style.textDecoration = 'line-through';
           textSpan.style.color = 'var(--text-muted)';
         } else {
@@ -2392,7 +2392,7 @@ function renderPlayerIngredients() {
       const btn = document.createElement('button');
       btn.id = `playerTab_${tabId}`;
       btn.className = 'player-tab-btn player-custom-tab-btn';
-      btn.innerHTML = `${page.icon || '📝'}${page.name}`;
+      btn.innerHTML = `${page.name}`;
       btn.onclick = () => window.switchPlayerMainTab(tabId);
       
       const commentsBtn = document.getElementById('playerTabCommentsBtn');
@@ -2453,7 +2453,7 @@ function addRecipeIngredientsToGrocery() {
   }
   
   if (!cleanIngredientsStr || !cleanIngredientsStr.trim()) {
-    showTip('No ingredients found to add 🛒');
+    showTip('No ingredients found to add');
     return;
   }
   
@@ -2474,7 +2474,7 @@ function addRecipeIngredientsToGrocery() {
       !ingredients.some(ing => ing.toLowerCase() === item.text.toLowerCase())
     );
     saveGroceryList(updatedList);
-    showTip('Removed ingredients from Shopping List! 🛒');
+    showTip('Removed ingredients from Shopping List!');
     renderBentoGrocery();
     return;
   }
@@ -2493,10 +2493,10 @@ function addRecipeIngredientsToGrocery() {
   
   if (addedCount > 0) {
     saveGroceryList(list);
-    showTip(`Added ${addedCount} ingredients to Shopping List! 🛒`);
+    showTip(`Added ${addedCount} ingredients to Shopping List!`);
     renderBentoGrocery();
   } else {
-    showTip('Ingredients already in Shopping List! 🛒');
+    showTip('Ingredients already in Shopping List!');
     if (typeof window.updateGroceryButtonState === 'function') {
       window.updateGroceryButtonState();
     }
@@ -2533,7 +2533,7 @@ window.updateGroceryButtonState = function() {
   btns.forEach(btn => {
     btn.style.display = '';
     if (allAdded) {
-      btn.innerHTML = '✓ Added';
+      btn.innerHTML = ' Added';
       btn.className = 'btn';
       btn.style.background = 'rgba(92, 184, 92, 0.08)';
       btn.style.color = 'var(--green)';
@@ -2543,20 +2543,20 @@ window.updateGroceryButtonState = function() {
       btn.title = 'Click to undo and remove from shopping list';
       
       btn.onmouseenter = () => {
-        btn.innerHTML = '✕ Undo Add';
+        btn.innerHTML = ' Undo Add';
         btn.style.background = 'rgba(239, 68, 68, 0.08)';
         btn.style.color = 'var(--red)';
         btn.style.borderColor = 'rgba(239, 68, 68, 0.2)';
       };
       
       btn.onmouseleave = () => {
-        btn.innerHTML = '✓ Added';
+        btn.innerHTML = ' Added';
         btn.style.background = 'rgba(92, 184, 92, 0.08)';
         btn.style.color = 'var(--green)';
         btn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
       };
     } else {
-      btn.innerHTML = '🛒 Add to Grocery';
+      btn.innerHTML = 'Add to Grocery';
       btn.className = 'btn btn-primary';
       btn.style.background = '';
       btn.style.color = '';
@@ -2612,12 +2612,12 @@ function mySpaceInit() {
 }
 
 const ALL_BENTO_WIDGETS = [
-  { id: 'bentoStatsWidget', name: '📊 Culinary Records', defaultHidden: false, defaultSize: 'span-1' },
-  { id: 'bentoCalendarWidget', name: '📅 Cooked Meal History', defaultHidden: false, defaultSize: 'span-2' },
-  { id: 'bentoGroceryWidget', name: '🛒 Shopping List', defaultHidden: false, defaultSize: 'span-1' },
-  { id: 'bentoTimerWidget', name: '⏱️ Quick Timer', defaultHidden: true, defaultSize: 'span-1' },
-  { id: 'bentoWaterWidget', name: '💧 Daily Water Tracker', defaultHidden: true, defaultSize: 'span-1' },
-  { id: 'bentoMealPlannerWidget', name: '🍳 Today\'s Menu', defaultHidden: true, defaultSize: 'span-1' }
+  { id: 'bentoStatsWidget', name: 'Culinary Records', defaultHidden: false, defaultSize: 'span-1' },
+  { id: 'bentoCalendarWidget', name: 'Cooked Meal History', defaultHidden: false, defaultSize: 'span-2' },
+  { id: 'bentoGroceryWidget', name: 'Shopping List', defaultHidden: false, defaultSize: 'span-1' },
+  { id: 'bentoTimerWidget', name: 'Quick Timer', defaultHidden: true, defaultSize: 'span-1' },
+  { id: 'bentoWaterWidget', name: 'Daily Water Tracker', defaultHidden: true, defaultSize: 'span-1' },
+  { id: 'bentoMealPlannerWidget', name: ' Today\'s Menu', defaultHidden: true, defaultSize: 'span-1' }
 ];
 
 function toggleDashboardEditMode() {
@@ -2632,7 +2632,7 @@ function toggleDashboardEditMode() {
     bGrid.classList.remove('dashboard-editing');
     if (profileView) profileView.classList.remove('dashboard-editing');
     if (btn) {
-      btn.innerHTML = '⚙️ Customize Layout';
+      btn.innerHTML = 'Customize Layout';
       btn.style.background = 'rgba(74,144,217,0.1)';
       btn.style.color = 'var(--primary)';
     }
@@ -2641,7 +2641,7 @@ function toggleDashboardEditMode() {
     bGrid.classList.add('dashboard-editing');
     if (profileView) profileView.classList.add('dashboard-editing');
     if (btn) {
-      btn.innerHTML = '✅ Save Layout';
+      btn.innerHTML = 'Save Layout';
       btn.style.background = 'var(--green)';
       btn.style.color = '#fff';
     }
@@ -2692,7 +2692,7 @@ function toggleWidgetSize(widgetId) {
   // Update button text
   const btn = document.getElementById(`resizeBtn_${widgetId}`);
   if (btn) {
-    btn.innerHTML = `↔ Size: ${sizeLabel}`;
+    btn.innerHTML = `Size: ${sizeLabel}`;
   }
   
   // If calendar widget was resized, re-render it to fit properly
@@ -2725,7 +2725,7 @@ function initAllWidgetSizes() {
     
     const btn = document.getElementById(`resizeBtn_${w.id}`);
     if (btn) {
-      btn.innerHTML = `↔ Size: ${sizeLabel}`;
+      btn.innerHTML = `Size: ${sizeLabel}`;
     }
   });
 }
@@ -2808,11 +2808,11 @@ window.refreshWidgetsVisibility = function() {
     widgetEl.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; width:100%; flex-shrink:0;">
         <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.05em; display:flex; align-items:center; gap:4px;">
-          🔀 <span id="shuffleWidgetTitleSpan_${w.id}">${escapeHTML(w.name)}</span>
+           <span id="shuffleWidgetTitleSpan_${w.id}">${escapeHTML(w.name)}</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-          <button onclick="window.configureShuffleWidget('${w.id}')" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Configure widget settings">⚙️ settings</button>
-          <button onclick="toggleWidgetSize('${w.id}')" id="resizeBtn_${w.id}" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Change layout size">↔ Size: ${sizeLabel}</button>
+          <button onclick="window.configureShuffleWidget('${w.id}')" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Configure widget settings">Settings</button>
+          <button onclick="toggleWidgetSize('${w.id}')" id="resizeBtn_${w.id}" class="bento-widget-resize-btn" style="background:rgba(74,144,217,0.1); border:none; border-radius:8px; padding:4px 8px; color:var(--primary); font-family:var(--font); font-size:0.65rem; font-weight:800; cursor:pointer;" title="Change layout size">Size: ${sizeLabel}</button>
           <button onclick="window.deleteShuffleWidget('${w.id}')" class="bento-widget-delete-btn" title="Remove Widget">×</button>
         </div>
       </div>
@@ -2836,9 +2836,9 @@ window.refreshWidgetsVisibility = function() {
       <div class="shuffle-widget-content" style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:10px; width:100%;">
         <!-- Picked Recipe Card Display -->
         <div id="shufflePicked_${w.id}" style="display:none; width:100%; text-align:center; background:rgba(74,144,217,0.04); border:1px solid rgba(74,144,217,0.15); border-radius:12px; padding:10px; box-sizing:border-box;">
-          <div style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Chef's Suggestion 🍽️</div>
+          <div style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Chef's Suggestion</div>
           <div id="shufflePickedTitle_${w.id}" style="font-size:0.85rem; font-weight:800; color:var(--text-heading); margin-bottom:8px; line-height:1.3;">Recipe Title</div>
-          <button id="shuffleCookBtn_${w.id}" class="btn btn-primary" style="padding:6px 12px; font-size:0.7rem; font-weight:800; border-radius:8px; width:100%;">Cook Now 🍳</button>
+          <button id="shuffleCookBtn_${w.id}" class="btn btn-primary" style="padding:6px 12px; font-size:0.7rem; font-weight:800; border-radius:8px; width:100%;">Cook Now</button>
         </div>
         
         <!-- Shuffle action button -->
@@ -2868,7 +2868,7 @@ window.refreshWidgetsVisibility = function() {
       if (hiddenWidgets.length > 0) {
         html += hiddenWidgets.map(w => `
           <button onclick="window.showBentoWidget('${w.id}')" style="background:#fff; border:1.5px solid rgba(74,144,217,0.25); border-radius:10px; padding:6px 12px; font-family:var(--font); font-size:0.72rem; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='#fff'; this.style.color='var(--primary)';">
-            ➕ Add ${w.name.split(' ').slice(1).join(' ') || w.name}
+            Add ${w.name.split(' ').slice(1).join(' ') || w.name}
           </button>
         `).join('');
       }
@@ -2876,7 +2876,7 @@ window.refreshWidgetsVisibility = function() {
       // Add custom shuffle widget creator button
       html += `
         <button onclick="window.createNewShuffleWidget()" style="background:#fff; border:1.5px solid rgba(124,58,237,0.25); border-radius:10px; padding:6px 12px; font-family:var(--font); font-size:0.72rem; font-weight:800; color:#7c3aed; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s;" onmouseenter="this.style.background='#7c3aed'; this.style.color='#fff';" onmouseleave="this.style.background='#fff'; this.style.color='#7c3aed';">
-          ➕ Create Shuffle Widget
+          Create Shuffle Widget
         </button>
       `;
       
@@ -2903,7 +2903,7 @@ window.createNewShuffleWidget = function() {
   const id = 'bentoShuffleWidget_' + Date.now();
   const newWidget = {
     id,
-    name: '🍽️ Meal Decider',
+    name: 'Meal Decider',
     source: 'all',
     size: 'span-1',
     hidden: false
@@ -3046,7 +3046,7 @@ window.triggerShuffleWidget = function(widgetId, e) {
         };
         
         if (shuffleBtn) shuffleBtn.disabled = false;
-        showTip(`Decided! How about: ${finalRecipe.title}? 😋`);
+        showTip(`Decided! How about: ${finalRecipe.title}?`);
       }
     }, intervalTime);
   }
@@ -3201,7 +3201,7 @@ function playBentoTimerAlert() {
 /* ── Meal Planner Logic ── */
 window.saveBentoMealPlan = function(meal, val) {
   localStorage.setItem(`cooking_gps_meal_plan_${meal}`, val);
-  showTip(`Saved ${meal.charAt(0).toUpperCase() + meal.slice(1)} plan! 🍳`);
+  showTip(`Saved ${meal.charAt(0).toUpperCase() + meal.slice(1)} plan!`);
 };
 
 function initBentoMealPlan() {
@@ -3533,7 +3533,7 @@ function renderProfileGrid(recipes) {
   const grid = document.getElementById('profileGrid');
   if (!grid) return;
   if (!recipes || recipes.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">No recipes yet — go create your first one! 🍳</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-weight:700;">No recipes yet — go create your first one!</div>';
     return;
   }
   grid.innerHTML = recipes.map(r => renderRecipeCard(r, true)).join('');
@@ -3556,7 +3556,7 @@ function renderDiscoverGrid(recipes) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 📸 PUBLIC CREATOR PROFILE — Instagram-style
+// PUBLIC CREATOR PROFILE — Instagram-style
 // ══════════════════════════════════════════════════════════════════════════════
 
 let pubCurrentCreator = null;
@@ -3630,7 +3630,7 @@ window.togglePubSubscribe = function() {
     showTip('Unsubscribed from creator');
   } else {
     subs[email] = true;
-    showTip('Subscribed to creator! 🔔');
+    showTip('Subscribed to creator!');
   }
   
   localStorage.setItem('cooking_gps_subscriptions', JSON.stringify(subs));
@@ -3670,7 +3670,7 @@ function updateSubscribeUI(email) {
   
   const aboutSubsEl = document.getElementById('pubAboutStatsSubs');
   if (aboutSubsEl) {
-    aboutSubsEl.innerHTML = `<span class="yt-about-stat-icon">👥</span><span>${totalSubs.toLocaleString()} subscribers</span>`;
+    aboutSubsEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="users" style="width: 14px; height: 14px;"></i></span><span>${totalSubs.toLocaleString()} subscribers</span>`;
   }
 }
 
@@ -3743,7 +3743,7 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
 
     // Load Bio
     const msData = (pubFromTab && currentUser && typeof mySpaceLoadData === 'function') ? mySpaceLoadData() : null;
-    const bioText = (msData && msData.bio) ? msData.bio : 'Cooking creator 🍳';
+    const bioText = (msData && msData.bio) ? msData.bio : 'Cooking creator';
     
     const bioTextEl = document.getElementById('pubBioTextSnippet');
     if (bioTextEl) bioTextEl.textContent = bioText;
@@ -3773,14 +3773,14 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     // Update About stats
     const stats = getCreatorStats(creatorEmail);
     const joinedEl = document.getElementById('pubAboutStatsJoined');
-    if (joinedEl) joinedEl.innerHTML = `<span class="yt-about-stat-icon">📅</span><span>Joined ${stats.joined}</span>`;
+    if (joinedEl) joinedEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="calendar" style="width: 14px; height: 14px;"></i></span><span>Joined ${stats.joined}</span>`;
     
     const countEl = document.getElementById('pubAboutStatsRecipes');
-    if (countEl) countEl.innerHTML = `<span class="yt-about-stat-icon">🍲</span><span>${list.length} public recipes</span>`;
+    if (countEl) countEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="chef-hat" style="width: 14px; height: 14px;"></i></span><span>${list.length} public recipes</span>`;
     
     const viewsEl = document.getElementById('pubAboutStatsViews');
     const mockViewsTotal = stats.views + (list.length * 148);
-    if (viewsEl) viewsEl.innerHTML = `<span class="yt-about-stat-icon">📈</span><span>${mockViewsTotal.toLocaleString()} total views</span>`;
+    if (viewsEl) viewsEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="trending-up" style="width: 14px; height: 14px;"></i></span><span>${mockViewsTotal.toLocaleString()} total views</span>`;
 
     // Render Home and Recipes contents
     pubRenderYTHome(list);
@@ -3927,10 +3927,10 @@ function pubRenderYTHome(recipes) {
         <p class="yt-trailer-desc">${escapeHTML(trailer.description || 'No description provided.')}</p>
         <div class="yt-trailer-actions">
           <button onclick="pubHomeWatchTrailer()" class="btn-subscribe" style="padding:8px 18px; font-size:0.82rem;">
-            ▶ Watch Guide
+            Watch Guide
           </button>
           <button onclick="pubHomeAddTrailerToGrocery()" class="btn-channel-secondary">
-            🛒 Add to List
+            Add to List
           </button>
         </div>
       </div>
@@ -4076,10 +4076,10 @@ function addIngredientsListToGrocery(title, ingredientsStr) {
   
   if (addedCount > 0) {
     saveGroceryList(list);
-    showTip(`Added ${addedCount} ingredients from "${title}" to Shopping List! 🛒`);
+    showTip(`Added ${addedCount} ingredients from "${title}" to Shopping List!`);
     if (typeof renderBentoGrocery === 'function') renderBentoGrocery();
   } else {
-    showTip('All ingredients are already in your Shopping List! 🛒');
+    showTip('All ingredients are already in your Shopping List!');
   }
 }
 
@@ -4121,7 +4121,7 @@ function pubRenderVideoGrid() {}
 function pubRenderHero()      {}
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 🌟 MY SPACE — Bio, folder strip, stat badges
+// MY SPACE — Bio, folder strip, stat badges
 // ══════════════════════════════════════════════════════════════════════════════
 
 const MY_SPACE_KEY = 'cookingGPS_myspace_v1';
@@ -4198,12 +4198,12 @@ function mySpaceRenderFolderStrip() {
   // Update toggle button text if it exists
   const heightToggleBtn = document.getElementById('foldersHeightToggleBtn');
   if (heightToggleBtn) {
-    heightToggleBtn.textContent = `↕ Height: ${currentHeight === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`;
+    heightToggleBtn.textContent = `Height: ${currentHeight === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`;
   }
 
   const addBtn = `
     <div class="bento-widget span-1" style="background:rgba(255,255,255,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:2px dashed var(--border-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;height:100%;box-sizing:border-box;" onclick="libCreateFolder()">
-      <div style="font-size:1.8rem;">➕</div>
+      <div style="font-size:1.8rem;"><i data-lucide="plus" style="width: 24px; height: 24px;"></i></div>
       <div style="font-size:0.85rem;font-weight:800;color:var(--text-muted);">New Folder</div>
     </div>
   `;
@@ -4253,11 +4253,11 @@ function mySpaceRenderFolderStrip() {
           <button onclick="event.stopPropagation(); toggleFolderSize('${f.id}')" title="Change size (${sizeLabel})"
             style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.15)">↔</button>
           <button onclick="event.stopPropagation(); toggleFolderColor('${f.id}')" title="Change color"
-            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">🎨</button>
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"></button>
           <button onclick="event.stopPropagation(); mySpaceRenameFolder('${f.id}')" title="Rename folder"
-            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">✏️</button>
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">️</button>
           <button onclick="event.stopPropagation(); mySpaceDeleteFolder('${f.id}')" title="Delete folder"
-            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">🗑️</button>
+            style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:22px;height:22px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">Delete</button>
         </div>
       `;
     }
@@ -4275,7 +4275,7 @@ function mySpaceRenderFolderStrip() {
           const hash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
           const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
           const grad = gradients[hash % gradients.length];
-          miniThumb = `<div style="width:100%;height:100%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;">🎬</div>`;
+          miniThumb = `<div style="width:100%;height:100%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;"><i data-lucide="video" style="width:24px;height:24px;"></i></div>`;
         }
         return `
           <div onclick="event.stopPropagation(); loadRecipeById('${r.id}')"
@@ -4507,11 +4507,11 @@ function renderRecipeCard(r, isOwner) {
   // Status badge (will be absolute positioned over the thumbnail)
   let badge = '';
   if (isDraft) {
-    badge = `<span style="background:#fff8e1;color:#b45309;border:1.5px solid #fde68a;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">📝 Draft</span>`;
+    badge = `<span style="background:#fff8e1;color:#b45309;border:1.5px solid #fde68a;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">Draft</span>`;
   } else if (isPublic) {
-    badge = `<span style="background:#dcfce7;color:#15803d;border:1.5px solid #bbf7d0;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">🌎 Public</span>`;
+    badge = `<span style="background:#dcfce7;color:#15803d;border:1.5px solid #bbf7d0;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">Public</span>`;
   } else {
-    badge = `<span style="background:#e0f2fe;color:#0369a1;border:1.5px solid #bae6fd;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">🔒 Private</span>`;
+    badge = `<span style="background:#e0f2fe;color:#0369a1;border:1.5px solid #bae6fd;padding:3px 10px;border-radius:6px;font-size:0.65rem;font-weight:800;">Private</span>`;
   }
 
   // Thumbnail markup
@@ -4525,11 +4525,11 @@ function renderRecipeCard(r, isOwner) {
         <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();publishDraft('${r.id}')"
             style="flex:1;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
-            🚀 Publish
+            Publish
           </button>
           <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
             style="background:#fff0f0;color:#e55;border:1.5px solid #fcc;border-radius:10px;padding:9px 12px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-            🗑️
+            Delete
           </button>
         </div>`;
     } else if (isPublic) {
@@ -4537,7 +4537,7 @@ function renderRecipeCard(r, isOwner) {
         <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', true)"
             style="flex:1;background:#fff0f0;color:#c00;border:1.5px solid #fcc;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
-            🔒 Make Private
+            Make Private
           </button>
         </div>`;
     } else {
@@ -4545,11 +4545,11 @@ function renderRecipeCard(r, isOwner) {
         <div style="display:flex;gap:6px;margin-top:10px;border-top:1.5px solid var(--border-card);padding-top:10px;">
           <button onclick="event.stopPropagation();toggleRecipePublish('${r.id}', false)"
             style="flex:1;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;">
-            🌎 Make Public
+            Make Public
           </button>
           <button onclick="event.stopPropagation();deleteRecipeById('${r.id}')"
             style="background:#fff0f0;color:#e55;border:1.5px solid #fcc;border-radius:10px;padding:9px 12px;font-family:var(--font);font-size:0.78rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-            🗑️
+            Delete
           </button>
         </div>`;
     }
@@ -4558,8 +4558,8 @@ function renderRecipeCard(r, isOwner) {
   // Duration & steps badge at bottom right of thumbnail
   const durationBadge = `
     <div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.78);color:#fff;font-size:0.65rem;font-weight:800;padding:3px 8px;border-radius:6px;display:flex;gap:6px;align-items:center;backdrop-filter:blur(4px);">
-      ${stepCount ? `<span>📋 ${stepCount} steps</span>` : ''}
-      ${mins ? `<span>⏱ ${mins} min</span>` : ''}
+      ${stepCount ? `<span>${stepCount} steps</span>` : ''}
+      ${mins ? `<span>${mins} min</span>` : ''}
     </div>`;
 
   return `
@@ -4590,7 +4590,7 @@ function renderRecipeCard(r, isOwner) {
               ? `<span onclick="event.stopPropagation();openPublicProfile('${r.creator}','discover')"
                    style="color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none;"
                    onmouseenter="this.style.textDecoration='underline'" onmouseleave="this.style.textDecoration='none'">
-                   📺 ${r.creator.split('@')[0]}
+                    ${r.creator.split('@')[0]}
                  </span>`
               : `by ${r.creator || 'Chef'}`
             }
@@ -4601,7 +4601,7 @@ function renderRecipeCard(r, isOwner) {
               onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';"
               onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';"
               title="Add ingredients to Shopping List">
-              🛒 Add List
+              Add List
             </button>
           ` : ''}
         </p>
@@ -4619,7 +4619,7 @@ window.toggleRecipePublish = async function(id, currentlyPublic) {
     if (currentlyPublic) {
       // Make private
       await updateRecipe(id, { is_published: false, private_recipe: true, shared_on_profile: false });
-      showTip('Recipe is now private 🔒');
+      showTip('Recipe is now private');
     } else {
       // Pre-publish check
       const recipe = allMyRecipes.find(r => r.id === id);
@@ -4628,7 +4628,7 @@ window.toggleRecipePublish = async function(id, currentlyPublic) {
         return;
       }
       await updateRecipe(id, { is_published: true, private_recipe: false, is_draft: false, shared_on_profile: true });
-      showTip('Recipe is now public 🌎');
+      showTip('Recipe is now public');
     }
     await loadProfileRecipes();
   } catch (err) {
@@ -4650,7 +4650,7 @@ window.publishDraft = async function(id) {
       return;
     }
     await updateRecipe(id, { is_published: true, private_recipe: false, is_draft: false, shared_on_profile: true });
-    showTip('Recipe published! 🌎');
+    showTip('Recipe published!');
     await loadProfileRecipes();
   } catch (err) {
     showTip('Could not publish: ' + err.message);
@@ -4696,7 +4696,7 @@ window.saveDraft = async function() {
         }
       } catch (upErr) {
         console.error('Supabase video upload failed:', upErr);
-        showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
+        showTip('Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
         throw new Error('Supabase video upload failed: ' + upErr.message);
       }
     } else if (editingRecipeId && playerCurrentRecipe) {
@@ -4792,9 +4792,9 @@ window.saveDraft = async function() {
     if (btn) {
       btn.disabled = false;
       if (btn.querySelector('span')) {
-        btn.innerHTML = '<span>💾</span><span>Save</span>';
+        btn.innerHTML = '<span>Save</span>';
       } else {
-        btn.textContent = '💾 Save';
+        btn.textContent = 'Save';
       }
     }
   } catch (err) {
@@ -4802,9 +4802,9 @@ window.saveDraft = async function() {
     if (btn) {
       btn.disabled = false;
       if (btn.querySelector('span')) {
-        btn.innerHTML = '<span>💾</span><span>Save</span>';
+        btn.innerHTML = '<span>Save</span>';
       } else {
-        btn.textContent = '💾 Save';
+        btn.textContent = 'Save';
       }
     }
   }
@@ -4952,7 +4952,7 @@ window.playerSkipTime = function(amount) {
   currentTime = newTime;
   updateStepFromTime(currentTime);
   updateTimelineUI();
-  showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s ⏱️`);
+  showTip(`Skipped ${amount > 0 ? '+' : ''}${amount}s`);
 };
 
 window.playerTimelineClick = function(e) {
@@ -5022,7 +5022,7 @@ window.togglePlayerTimer = function() {
     playerTimerInterval = null;
     playerTimerRunning = false;
     playPauseBtn.textContent = 'Resume';
-    showTip('Timer paused ⏸️');
+    showTip('Timer paused');
   } else {
     if (playerTimerSecondsLeft <= 0) {
       playerTimerSecondsLeft = playerTimerInitialSeconds;
@@ -5030,7 +5030,7 @@ window.togglePlayerTimer = function() {
     
     playerTimerRunning = true;
     playPauseBtn.textContent = 'Pause';
-    showTip('Timer started ⏱️');
+    showTip('Timer started');
     
     playerTimerInterval = setInterval(() => {
       playerTimerSecondsLeft--;
@@ -5040,7 +5040,7 @@ window.togglePlayerTimer = function() {
         playerTimerRunning = false;
         playPauseBtn.textContent = 'Start';
         display.textContent = '00:00';
-        showTip('🔔 Timer finished! Step complete!');
+        showTip('Timer finished! Step complete!');
         if (typeof speakFeedback === 'function') {
           speakFeedback('Timer finished. Step complete.');
         }
@@ -5069,7 +5069,7 @@ window.resetPlayerTimer = function() {
   const mins = Math.floor(playerTimerSecondsLeft / 60);
   const secs = playerTimerSecondsLeft % 60;
   display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  showTip('Timer reset 🔄');
+  showTip('Timer reset');
 };
 
 function getPlayerProgressKey(recipeId) {
@@ -5115,7 +5115,7 @@ window.togglePlayerStepDone = function(stepIndex) {
     if (typeof addDateToCookedHistory === 'function') {
       addDateToCookedHistory(new Date());
     }
-    setTimeout(() => showTip('🎉 Recipe complete! Every step done! Excellent cooking! 🍽️'), 300);
+    setTimeout(() => showTip('Recipe complete! Every step done! Excellent cooking!'), 300);
   }
 };
 
@@ -5126,7 +5126,7 @@ window.resetPlayerProgress = function() {
   updatePlayerProgressBar();
   renderStepChipsMobile();
   updatePlayerMarkDoneButton();
-  showTip('Progress reset 🔄');
+  showTip('Progress reset');
 };
 
 function updatePlayerProgressBar() {
@@ -5324,7 +5324,7 @@ window.loadRecipeToEditor = function(recipe) {
   renderCreateSteps();
   renderTimeline();
   switchView('create');
-  showTip(`Editing recipe: ${recipe.title} ✏️`);
+  showTip(`Editing recipe: ${recipe.title}`);
   if (typeof window.setupResponsiveDrawers === 'function') {
     window.setupResponsiveDrawers();
   }
@@ -5537,7 +5537,7 @@ window.loadPlayerRecipe = async function(recipeId) {
     }
 
     if (typeof renderPlayerIngredients === 'function') renderPlayerIngredients();
-    showTip(`Loaded: ${recipeData.title} 🎬`);
+    showTip(`Loaded: ${recipeData.title}`);
   } catch (err) {
     console.error('[Player] Load error:', err);
     showTip('Could not load recipe to player: ' + err.message);
@@ -5560,9 +5560,9 @@ window.updatePlayerFolderSelect = function() {
   const span = btnEl.querySelector('span');
   if (span) {
     if (currentFolderId === '__loose__') {
-      span.textContent = '📂 Save to Library';
+      span.textContent = 'Save to Library';
     } else if (currentFolder) {
-      span.textContent = `📁 ${currentFolder.name}`;
+      span.textContent = `${currentFolder.name}`;
     }
   }
 };
@@ -5613,8 +5613,8 @@ window.openPlayerSaveToFolderModal = function() {
     transition: all 0.2s;
   `;
   looseItem.innerHTML = `
-    <span>📂 Save to Library</span>
-    ${currentFolderId === '__loose__' ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+    <span>Save to Library</span>
+    ${currentFolderId === '__loose__' ? '<span style="font-weight:800;color:var(--primary);"></span>' : ''}
   `;
   looseItem.onclick = () => {
     window.handlePlayerFolderChange('__loose__');
@@ -5646,8 +5646,8 @@ window.openPlayerSaveToFolderModal = function() {
       transition: all 0.2s;
     `;
     item.innerHTML = `
-      <span>📁 ${escapeHTML(f.name)}</span>
-      ${isSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+      <span>${escapeHTML(f.name)}</span>
+      ${isSelected ? '<span style="font-weight:800;color:var(--primary);"></span>' : ''}
     `;
     item.onclick = () => {
       window.handlePlayerFolderChange(f.id);
@@ -5737,7 +5737,7 @@ window.copyEmbedCode = function() {
   function showCopyFeedback() {
     if (btn) {
       const origText = btn.innerHTML;
-      btn.innerHTML = '<span>✓ Copied to Clipboard!</span>';
+      btn.innerHTML = '<span> Copied to Clipboard!</span>';
       const origBg = btn.style.background;
       const origShadow = btn.style.boxShadow;
       btn.style.background = '#16a34a';
@@ -5892,8 +5892,8 @@ window.openPlayerSaveToFolderModal = function() {
       transition: all 0.2s;
     `;
     looseItem.innerHTML = `
-      <span>📂 Save to Library</span>
-      ${isLooseSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+      <span>Save to Library</span>
+      ${isLooseSelected ? '<span style="font-weight:800;color:var(--primary);"></span>' : ''}
     `;
     looseItem.onclick = () => {
       if (window.playerFolderModalSelectedIds.has('__loose__')) {
@@ -5930,8 +5930,8 @@ window.openPlayerSaveToFolderModal = function() {
         transition: all 0.2s;
       `;
       item.innerHTML = `
-        <span>📁 ${escapeHTML(f.name)}</span>
-        ${isSelected ? '<span style="font-weight:800;color:var(--primary);">✓</span>' : ''}
+        <span>${escapeHTML(f.name)}</span>
+        ${isSelected ? '<span style="font-weight:800;color:var(--primary);"></span>' : ''}
       `;
       item.onclick = () => {
         if (window.playerFolderModalSelectedIds.has(f.id)) {
@@ -6011,7 +6011,7 @@ window.confirmPlayerFolderChange = async function() {
   }
   
   window.closePlayerSaveToFolderModal();
-  showTip("Video folder updated 📁");
+  showTip("Video folder updated");
 };
 
 window.closePlayerSaveToFolderModal = function() {
@@ -6096,7 +6096,7 @@ window.copyEmbedCode = function() {
   function showCopyFeedback() {
     if (btn) {
       const origText = btn.innerHTML;
-      btn.innerHTML = '<span>✓ Copied to Clipboard!</span>';
+      btn.innerHTML = '<span> Copied to Clipboard!</span>';
       const origBg = btn.style.background;
       const origShadow = btn.style.boxShadow;
       btn.style.background = '#16a34a';
@@ -6204,7 +6204,7 @@ function getRecipeCardThumbnail(r) {
       'linear-gradient(135deg, #84fab0, #8fd3f4)'  // Mint Splash
     ];
     const gradient = gradients[hash % gradients.length];
-    const emojis = ['🍳', '🥗', '🍲', '🍰', '🍜', '🍣', '🍕', '🥞', '🥐', '🍔'];
+    const emojis = ['', '', '', '', '', '', '', '', '', ''];
     const emoji = emojis[hash % emojis.length];
 
     return `
@@ -6221,7 +6221,7 @@ function getRecipeCardThumbnail(r) {
       </div>
     `;
   }
-  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">🎬</div>`;
+  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e3a,#1e3a5f);display:flex;align-items:center;justify-content:center;font-size:1.8rem;"></div>`;
 }
 
 function getCompactRecipeThumbnail(r) {
@@ -6239,11 +6239,11 @@ function getCompactRecipeThumbnail(r) {
       'linear-gradient(135deg, #f093fb, #f5576c)'
     ];
     const gradient = gradients[hash % gradients.length];
-    const emojis = ['🍳', '🥗', '🍲', '🍰', '🍜', '🍣', '🍕', '🥞', '🥐', '🍔'];
+    const emojis = ['', '', '', '', '', '', '', '', '', ''];
     const emoji = emojis[hash % emojis.length];
     return `<div style="width:100%;height:100%;background:${gradient};display:flex;align-items:center;justify-content:center;font-size:1.1rem;position:relative;"><div style="position:absolute;inset:0;background:rgba(0,0,0,0.1);z-index:1;"></div><span style="z-index:2;">${emoji}</span></div>`;
   }
-  return `<div style="font-size:1rem;">🎬</div>`;
+  return `<div style="font-size:1rem;"></div>`;
 }
 
 function timeAgo(dateString) {
@@ -6355,7 +6355,7 @@ async function loadPlayerComments(recipeId) {
     if (badgeTab) badgeTab.textContent = comments.length;
 
     if (!comments.length) {
-      listEl.innerHTML = '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:15px;font-weight:600;">No comments yet. Be the first! 💬</div>';
+      listEl.innerHTML = '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:15px;font-weight:600;">No comments yet. Be the first!</div>';
       return;
     }
 
@@ -6397,7 +6397,7 @@ function renderCommentForm(recipeId) {
       <div style="background:rgba(0,0,0,0.02);border:1.5px dashed var(--border-card);padding:8px 10px;border-radius:8px;text-align:center;">
         <p style="font-size:0.68rem;color:var(--text-muted);margin:0 0 6px 0;font-weight:600;">You must be signed in to post comments.</p>
         <button onclick="openAuthModal()" class="btn" style="padding:4px 10px;font-size:0.65rem;font-weight:800;border-radius:6px;cursor:pointer;background:var(--bg-card-soft);border:1.5px solid var(--border-card);font-family:var(--font);">
-          🔑 Sign In
+          Sign In
         </button>
       </div>
     `;
@@ -6430,7 +6430,7 @@ window.submitPlayerComment = async function() {
     const { createRecipeComment } = await import('./supabase-client.js');
     await createRecipeComment(activePlayerRecipeId, body, currentUser.email);
     input.value = '';
-    showTip('Comment posted! 💬');
+    showTip('Comment posted!');
     await loadPlayerComments(activePlayerRecipeId);
   } catch (err) {
     console.error('[Comments] Post failed:', err);
@@ -6483,7 +6483,7 @@ function renderGridTiles(recipe) {
   if (parsedLoops.length === 0) {
     container.innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--text-muted);">
-        <div style="font-size:2rem;margin-bottom:0.75rem;">⚠️</div>
+        <div style="font-size:2rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="alert-triangle" style="width:36px;height:36px;"></i></div>
         <div style="font-weight:800;margin-bottom:0.5rem;">No steps found</div>
         <div style="font-size:0.85rem;font-weight:600;">This recipe has no loop points set. Add steps in the Create view first.</div>
       </div>`;
@@ -6518,7 +6518,7 @@ function renderGridTiles(recipe) {
             preload="metadata">
           </video>
           <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;" id="gridVideoOverlay_${i}">
-            <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">▶</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="play" style="width:16px;height:16px;"></i></div>
           </div>
           <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:800;color:#fff;">
             ⤢ expand
@@ -6531,7 +6531,7 @@ function renderGridTiles(recipe) {
         <!-- Step info -->
         <div style="padding:12px 14px;background:${color}22;">
           <div data-step-label style="font-weight:900;font-size:0.9rem;color:var(--text-heading);margin-bottom:2px;">${label}</div>
-          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">🔁 ${timeLabel}${hasEnd ? ' <span style="color:#22c55e;">✓ AI</span>' : ''}</div>
+          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);">${timeLabel}${hasEnd ? ' <span style="color:#22c55e;"> AI</span>' : ''}</div>
           <!-- Phase 8d: Timer button -->
           ${timerSecs ? '<button onclick="event.stopPropagation();startStepTimer(' + i + ',\'' + label.replace(/'/g, '\\\'') + '\')" style="margin-top:6px;background:#fef3c7;border:none;border-radius:8px;padding:4px 10px;font-family:var(--font);font-size:0.68rem;font-weight:800;cursor:pointer;color:#92400e;">⏱ Start ' + Math.floor(timerSecs/60) + 'min timer</button>' : ''}
         </div>
@@ -6641,7 +6641,7 @@ window.expandGridTile = function(i) {
   const expandedVid = document.getElementById('gridExpandedVideo');
 
   if (titleEl) titleEl.textContent = `Step ${i + 1} — ${label}`;
-  if (timeEl)  timeEl.textContent  = `🔁 ${timeStr}`;
+  if (timeEl)  timeEl.textContent  = `${timeStr}`;
 
   if (expandedVid && gridCurrentRecipe.video_url) {
     const videoUrl = gridCurrentRecipe.video_url;
@@ -6717,15 +6717,15 @@ window.switchLoopVersion = function(version) {
 
   if (version === 'creator') {
     renderGridTiles(gridCurrentRecipe);
-    showTip('Showing creator\'s original loop points 🎬');
+    showTip('Showing creator\'s original loop points ');
   } else {
     if (!userSavedLoops) {
-      showTip('No saved loops yet — edit the timeline in Create view, then tap 💾 Save My Loops');
+      showTip('No saved loops yet — edit the timeline in Create view, then tap Save My Loops');
       return;
     }
     const customRecipe = { ...gridCurrentRecipe, loops: userSavedLoops };
     renderGridTiles(customRecipe);
-    showTip('Showing your custom loop points ✏️');
+    showTip('Showing your custom loop points');
   }
 };
 
@@ -6748,12 +6748,12 @@ window.saveUserLoops = async function() {
       }, { onConflict: 'user_id,recipe_id' });
     if (error) throw error;
     userSavedLoops = loops;
-    showTip('Your loops saved! Switch to "My Loops" to use them 💾');
+    showTip('Your loops saved! Switch to "My Loops" to use them');
   } catch (err) {
     // Table might not exist yet — save to localStorage as fallback
     userSavedLoops = parseLoops(gridCurrentRecipe.loops);
     localStorage.setItem(`user_loops_${gridCurrentRecipe.id}`, JSON.stringify(userSavedLoops));
-    showTip('Loops saved locally 💾 (run the Phase 7 SQL in Supabase to sync across devices)');
+    showTip('Loops saved locally (run the Phase 7 SQL in Supabase to sync across devices)');
   }
 };
 
@@ -6783,7 +6783,7 @@ async function loadUserLoops(recipeId) {
   const tM = document.getElementById('loopTabMine');
   if (tM) {
     tM.style.opacity = userSavedLoops ? '1' : '0.5';
-    tM.title = userSavedLoops ? 'Your saved loops' : 'No saved loops yet — tap 💾 Save My Loops first';
+    tM.title = userSavedLoops ? 'Your saved loops' : 'No saved loops yet — tap Save My Loops first';
   }
 }
 
@@ -6818,7 +6818,7 @@ window.translateGridRecipe = async function(lang) {
     return;
   }
 
-  showTip('🌐 Translating...');
+  showTip('Translating...');
 
   try {
     // 1. Check cache in Supabase
@@ -6833,7 +6833,7 @@ window.translateGridRecipe = async function(lang) {
     if (cached) {
       gridTranslatedSteps = cached.steps;
       applyTranslationToGrid(cached.steps);
-      showTip(`✅ Loaded cached ${lang} translation (free!)`);
+      showTip(` Loaded cached ${lang} translation (free!)`);
       return;
     }
   } catch {} // table might not exist yet
@@ -6858,7 +6858,7 @@ window.translateGridRecipe = async function(lang) {
 
     gridTranslatedSteps = data.steps;
     applyTranslationToGrid(data.steps);
-    showTip(`✅ Translated to ${lang}! Cached for free next time.`);
+    showTip(` Translated to ${lang}! Cached for free next time.`);
   } catch (err) {
     showTip('Translation failed: ' + err.message);
   }
@@ -6911,12 +6911,12 @@ window.startStepTimer = function(stepIndex, label) {
   function tick() {
     const m = Math.floor(remaining / 60).toString().padStart(2,'0');
     const s = (remaining % 60).toString().padStart(2,'0');
-    if (text) text.textContent = `⏱ Step ${stepIndex + 1}: ${label} — ${m}:${s} remaining`;
+    if (text) text.textContent = `Step ${stepIndex + 1}: ${label} — ${m}:${s} remaining`;
     if (remaining <= 0) {
       stopActiveTimer();
-      if (text) text.textContent = `✅ Step ${stepIndex + 1} timer done!`;
+      if (text) text.textContent = `Step ${stepIndex + 1} timer done!`;
       if (Notification.permission === 'granted') {
-        new Notification('⏱ SIMR Timer Done!', {
+        new Notification('SIMR Timer Done!', {
           body: `Step ${stepIndex + 1}: ${label} is ready!`,
           icon: '/favicon.ico',
         });
@@ -6941,7 +6941,7 @@ window.stopActiveTimer = function() {
 window.toggleExpandedTimer = function() {
   expandedTimerRunning = !expandedTimerRunning;
   const btn = document.getElementById('gridExpandedTimerBtn');
-  if (btn) btn.textContent = expandedTimerRunning ? '⏸ Pause' : '▶ Resume';
+  if (btn) btn.textContent = expandedTimerRunning ? 'Pause' : '▶ Resume';
 
   if (expandedTimerRunning) {
     const labelEl = document.getElementById('gridExpandedTimerLabel');
@@ -6949,9 +6949,9 @@ window.toggleExpandedTimer = function() {
       if (expandedTimerSecs <= 0) {
         clearInterval(activeTimerInterval);
         expandedTimerRunning = false;
-        if (btn) btn.textContent = '✅ Done!';
+        if (btn) btn.textContent = 'Done!';
         if (Notification.permission === 'granted') {
-          new Notification('⏱ Timer Done!', { body: 'Your cooking step is ready!' });
+          new Notification('Timer Done!', { body: 'Your cooking step is ready!' });
         }
         return;
       }
@@ -7014,7 +7014,7 @@ window.toggleStepDone = function(stepIndex) {
 
   const total = gridCurrentRecipe.loops?.length || 0;
   if (gridCompletedSteps.size === total && total > 0) {
-    setTimeout(() => showTip('🎉 Recipe complete! Every step done!'), 300);
+    setTimeout(() => showTip('Recipe complete! Every step done!'), 300);
   }
 };
 
@@ -7025,7 +7025,7 @@ function refreshTileDoneState(i) {
   tile.style.opacity  = done ? '0.6' : '1';
   const doneBtn = document.getElementById(`gridDoneBtn_${i}`);
   if (doneBtn) {
-    doneBtn.textContent = done ? '✅ Done' : '○ Done';
+    doneBtn.textContent = done ? 'Done' : '○ Done';
     doneBtn.style.background = done ? '#22c55e' : 'rgba(255,255,255,0.85)';
     doneBtn.style.color      = done ? '#fff' : '#333';
   }
@@ -7038,7 +7038,7 @@ window.markExpandedStepDone = function() {
   const btn = document.getElementById('gridExpandedDoneBtn');
   if (btn) {
     const done = gridCompletedSteps.has(gridExpandedIndex);
-    btn.textContent = done ? '✅ Done!' : '○ Mark Done';
+    btn.textContent = done ? 'Done!' : '○ Mark Done';
     btn.style.background = done ? '#16a34a' : '#22c55e';
   }
 };
@@ -7050,11 +7050,11 @@ window.resetGridProgress = function() {
   updateProgressBar(gridCurrentRecipe.id);
   const loops = gridCurrentRecipe.loops || [];
   loops.forEach((_, i) => refreshTileDoneState(i));
-  showTip('Progress reset 🔄');
+  showTip('Progress reset');
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// 📁 LIBRARY — Folders, search, sort, drag-and-drop
+//  LIBRARY — Folders, search, sort, drag-and-drop
 // ══════════════════════════════════════════════════════════════════════════════
 
 const LIB_KEY          = 'cookingGPS_library_v1';
@@ -7300,7 +7300,7 @@ async function renderLibrary() {
 
     // Show loading spinner while fetching
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
-      <div style="font-size:2rem;margin-bottom:0.75rem;">⏳</div>
+      <div style="font-size:2rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="loader" style="width:36px;height:36px;animation:spin 2s linear infinite;"></i></div>
       <div style="font-weight:700;font-size:0.9rem;">Loading your library…</div>
     </div>`;
 
@@ -7326,7 +7326,7 @@ async function renderLibrary() {
   } catch (err) {
     console.error('renderLibrary error:', err);
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:#ef4444;font-family:var(--font);">
-      <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="alert-triangle" style="width:40px;height:40px;"></i></div>
       <div style="font-weight:800;font-size:1.1rem;margin-bottom:0.5rem;">Library Rendering Error</div>
       <div style="font-size:0.85rem;margin-bottom:1rem;opacity:0.8;">${err.message}</div>
       <button onclick="localStorage.removeItem('${LIB_KEY}'); location.reload();" 
@@ -7381,7 +7381,7 @@ function libRenderContent() {
     if (folders.length) {
       html += `<div style="margin-bottom:1.5rem;">
         <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
-          📁 Folders (${folders.length})
+          Folders (${folders.length})
         </div>
         <div class="bento-dashboard-grid" style="margin: 0; padding: 0; max-width: 100%;" id="libFolderGrid">`;
       folders.forEach(f => { if (f) html += libFolderCardHTML(f); });
@@ -7392,7 +7392,7 @@ function libRenderContent() {
     const looseLabel = q ? `Results (${loose.length})` : `Loose Videos (${loose.length})`;
     html += `<div>
       <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
-        🎬 ${looseLabel}
+         ${looseLabel}
       </div>`;
 
     if (!loose.length && !folders.length) {
@@ -7422,7 +7422,7 @@ function libRenderContent() {
   } catch (err) {
     console.error('libRenderContent error:', err);
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:#ef4444;font-family:var(--font);">
-      <div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="alert-triangle" style="width:40px;height:40px;"></i></div>
       <div style="font-weight:800;font-size:1.1rem;margin-bottom:0.5rem;">Library Content Render Error</div>
       <div style="font-size:0.85rem;margin-bottom:1rem;opacity:0.8;">${err.message}</div>
     </div>`;
@@ -7445,11 +7445,11 @@ function libFolderCardHTML(f) {
       <!-- Actions menu -->
       <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
-          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
+          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
-          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑️</button>
+          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">Delete</button>
       </div>
-      <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;">📁</div>
+      <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;color:var(--primary);display:flex;align-items:center;justify-content:center;"><i data-lucide="folder" style="width:48px;height:48px;"></i></div>
       <div>
         <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
         <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
@@ -7475,7 +7475,7 @@ function libRecipeCardHTML(r, folderId) {
       <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', null)" 
               class="lib-folder-select-trigger"
               style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
-        📁 Save to folder
+        Save to folder
       </button>
     `;
   } else {
@@ -7484,22 +7484,22 @@ function libRecipeCardHTML(r, folderId) {
       <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', '${folderId}')" 
               class="lib-folder-select-trigger"
               style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
-        📁 Move to...
+        Move to...
       </button>
     `;
   }
 
   const deleteBtn = !folderId
     ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete video"
-         style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">🗑️ Delete</button>`
+         style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">Delete Delete</button>`
     : '';
 
   // Thumbnail markup
   let thumbHtml = getRecipeCardThumbnail(r);
 
   const privBadge = r.private_recipe
-    ? `<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">🔒 Private</span>`
-    : `<span style="font-size:0.6rem;font-weight:800;color:#22c55e;background:#dcfce7;border-radius:5px;padding:2px 6px;">🌎 Public</span>`;
+    ? `<span style="font-size:0.6rem;font-weight:800;color:#4a90d9;background:#e8f0fb;border-radius:5px;padding:2px 6px;">Private</span>`
+    : `<span style="font-size:0.6rem;font-weight:800;color:#22c55e;background:#dcfce7;border-radius:5px;padding:2px 6px;">Public</span>`;
 
   const dragAttr = isDrag && !folderId
     ? `draggable="true" ondragstart="libOnDragStart(event,'recipe','${r.id}')"`
@@ -7525,7 +7525,7 @@ function libRecipeCardHTML(r, folderId) {
           ` : ''}
           ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;z-index:3;">${mins}</div>` : ''}
           <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;z-index:3;">
-            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);">▶</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);color:var(--primary);"><i data-lucide="play" style="width:16px;height:16px;"></i></div>
           </div>
         </div>
 
@@ -7562,7 +7562,7 @@ function libRecipeCardHTML(r, folderId) {
           ${thumbHtml}
           ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;">${mins}</div>` : ''}
           <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;">
-            <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;font-size:1rem;">▶</div>
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;color:var(--primary);"><i data-lucide="play" style="width:14px;height:14px;"></i></div>
           </div>
         </div>
 
@@ -7623,7 +7623,7 @@ window.libDeleteRecipe = async function(id) {
   try {
     const { deleteRecipeById } = await import('./supabase-client.js');
     await deleteRecipeById(id);
-    showTip('Video deleted 🗑️');
+    showTip('Video deleted Delete');
     renderLibrary();
   } catch (err) {
     showTip('Could not delete video: ' + err.message);
@@ -7632,16 +7632,16 @@ window.libDeleteRecipe = async function(id) {
 
 function libEmptyState(q) {
   if (q) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
-    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔍</div>
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="search" style="width:40px;height:40px;"></i></div>
     <div style="font-weight:800;font-size:1rem;">No results for "${q}"</div>
   </div>`;
   if (!currentUser) return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
-    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="lock" style="width:40px;height:40px;"></i></div>
     <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">Sign in to see your library</div>
     <button onclick="openAuthModal()" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;margin-top:0.5rem;">Sign In</button>
   </div>`;
   return `<div style="text-align:center;padding:4rem;color:var(--text-muted);">
-    <div style="font-size:2.5rem;margin-bottom:0.75rem;">📭</div>
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="inbox" style="width:40px;height:40px;"></i></div>
     <div style="font-weight:800;font-size:1rem;margin-bottom:0.5rem;">No videos yet</div>
     <div style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;">Create your first video to see it here</div>
     <button onclick="switchView('create')" style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:var(--font);font-weight:900;font-size:0.88rem;cursor:pointer;">+ Create Video</button>
@@ -7672,7 +7672,7 @@ function libRenderFolderView(content) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
       <button onclick="libCloseFolder()"
         style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:9px;padding:7px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">← Back</button>
-      <div style="width:36px;height:36px;border-radius:10px;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">📁</div>
+      <div style="width:36px;height:36px;border-radius:10px;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;"><i data-lucide="folder" style="width:16px;height:16px;"></i></div>
       <div>
         <div style="font-weight:900;font-size:1.1rem;color:var(--text-heading);">${f.name}</div>
         <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;">${recipes.length} video${recipes.length!==1?'s':''}</div>
@@ -7695,7 +7695,7 @@ function libRenderFolderView(content) {
   // Recipes list
   if (!filtered.length) {
     html += `<div style="text-align:center;padding:3rem;color:var(--text-muted);">
-      <div style="font-size:2rem;margin-bottom:0.5rem;">📂</div>
+      <div style="font-size:2rem;margin-bottom:0.5rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;"><i data-lucide="folder" style="width:36px;height:36px;"></i></div>
       <div style="font-weight:700;font-size:0.88rem;">${q ? 'No matching videos' : 'This folder is empty — add videos above'}</div>
     </div>`;
   } else {
@@ -7789,7 +7789,7 @@ window.libMoveRecipeToFolder = async function(recipeId, currentFolderId, targetF
   if (typeof window.updatePlayerFolderSelect === 'function') {
     window.updatePlayerFolderSelect();
   }
-  showTip("Video folder updated 📁");
+  showTip("Video folder updated");
 };
 
 window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
@@ -7838,14 +7838,14 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
   // Header / Title
   html += `
     <div style="padding: 8px 16px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 800; border-bottom: 1px solid rgba(0,0,0,0.03);">
-      📁 ${currentFolderId ? 'Move to...' : 'Save to folder'}
+       ${currentFolderId ? 'Move to...' : 'Save to folder'}
     </div>
   `;
 
   // Search input bar
   html += `
     <div style="padding: 6px 12px; border-bottom: 1px solid rgba(0,0,0,0.03); display: flex; align-items: center; gap: 6px; background: #fafafa;">
-      <span style="font-size: 0.7rem; color: var(--text-muted);">🔍</span>
+      <span style="font-size: 0.7rem; color: var(--text-muted);"></span>
       <input type="text" placeholder="Search folders..." id="libFolderSearchInput"
              oninput="window.filterLibFoldersDropdown(this.value)"
              style="width: 100%; border: none; background: transparent; padding: 2px 0; font-family: var(--font); font-size: 0.72rem; font-weight: 700; outline: none; box-sizing: border-box; color: var(--text-heading);"
@@ -7864,7 +7864,7 @@ window.toggleLibFolderDropdown = function(event, recipeId, currentFolderId) {
               style="width: 100%; background: transparent; border: none; padding: 10px 16px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; color: var(--text-heading); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.12s, color 0.12s;"
               onmouseenter="this.style.background='#f5f0ff'; this.style.color='var(--primary)';" 
               onmouseleave="this.style.background='transparent'; this.style.color='var(--text-heading)';">
-        <span>🎬</span> Loose Videos
+        <span></span> Loose Videos
       </button>
     `;
   }
@@ -7992,7 +7992,7 @@ window.libCreateFolder = function(pendingRecipeId = null) {
   libSelectedColor = FOLDER_COLORS[libState.folders.length % FOLDER_COLORS.length];
   const title = document.getElementById('libModalTitle');
   const input = document.getElementById('libFolderNameInput');
-  if (title) title.textContent = '📁 New Folder';
+  if (title) title.textContent = 'New Folder';
   if (input) input.value = '';
   libRenderSwatches();
   const modal = document.getElementById('libFolderModal');
@@ -8006,7 +8006,7 @@ window.libRenameFolder = function(id) {
   libSelectedColor = f.color;
   const title = document.getElementById('libModalTitle');
   const input = document.getElementById('libFolderNameInput');
-  if (title) title.textContent = '✏️ Rename Folder';
+  if (title) title.textContent = 'Rename Folder';
   if (input) input.value = f.name;
   libRenderSwatches();
   const modal = document.getElementById('libFolderModal');
@@ -8213,7 +8213,7 @@ window.togglePanel = function(bodyId, chevronId) {
 window.switchView            = switchView;
 window.changeDefaultLandingView = function(view) {
   localStorage.setItem('cooking_gps_landing_view', view);
-  showTip(`Default landing view set to: ${view === 'create' ? 'Create' : 'My Space'} 🏡`);
+  showTip(`Default landing view set to: ${view === 'create' ? 'Create' : 'My Space'}`);
 };
 window.switchSidebarTab      = switchSidebarTab;
 window.toggleVideoPlayback   = toggleVideoPlayback;
@@ -8325,7 +8325,7 @@ window.togglePlayerMultigridMode = function() {
     if (container) container.style.display = 'block';
     
     renderPlayerMultigrid();
-    showTip("Entered Multigrid Mode 🖥️");
+    showTip("Entered Multigrid Mode");
   } else {
     // Stop grid loops
     stopAllPlayerMultigridLoops();
@@ -8341,7 +8341,7 @@ window.togglePlayerMultigridMode = function() {
     }
     
     updateMultigridLayoutClass();
-    showTip("Returned to Single Player 🎬");
+    showTip("Returned to Single Player ");
   }
 };
 
@@ -8486,10 +8486,10 @@ window.toggleMultigridTilePlayback = function(event, idx) {
   if (video) {
     if (video.paused) {
       video.play().catch(() => {});
-      showTip(`Step ${idx + 1} playing ▶`);
+      showTip(`Step ${idx + 1} playing`);
     } else {
       video.pause();
-      showTip(`Step ${idx + 1} paused ⏸`);
+      showTip(`Step ${idx + 1} paused`);
     }
     return;
   }
@@ -8513,14 +8513,14 @@ window.toggleMultigridTilePlayback = function(event, idx) {
         ctx.fillStyle = '#fff';
         ctx.font = "bold 13px 'Nunito', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("⏸ Paused", dw / 2, dh / 2 + 4);
+        ctx.fillText("Paused", dw / 2, dh / 2 + 4);
         ctx.restore();
       }
-      showTip(`Step ${idx + 1} simulation paused ⏸`);
+      showTip(`Step ${idx + 1} simulation paused`);
     } else {
       // Resume simulation
       setupMultigridTileSimulation(idx, canvas);
-      showTip(`Step ${idx + 1} simulation playing ▶`);
+      showTip(`Step ${idx + 1} simulation playing`);
     }
   }
 };
@@ -8750,7 +8750,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         ctx.lineWidth = 1;
         ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🥒 Prep & Chop', dw/2, dh/2 - 30);
+        ctx.fillText('Prep & Chop', dw/2, dh/2 - 30);
         break;
       }
       case 1: { // Sear Chicken
@@ -8767,7 +8767,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         roundRect(ctx, dw/2 - 12, dh/2 + 4, 24, 14, 4);
         ctx.fillStyle = '#c45a2a'; ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🍳 Sear the Chicken', dw/2, dh/2 - 30);
+        ctx.fillText('Sear the Chicken', dw/2, dh/2 - 30);
         break;
       }
       case 2: { // Stir Fry
@@ -8788,7 +8788,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         });
         ctx.fillStyle = '#b07a10'; ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🧄 Stir Fry Aromatics', dw/2, dh/2 - 30);
+        ctx.fillText('Stir Fry Aromatics', dw/2, dh/2 - 30);
         break;
       }
       case 3: { // Toss in Sauce
@@ -8801,7 +8801,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         ctx.beginPath(); ctx.arc(dw/2, dh/2 + 12, 24 + boil*0.5, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#4a60c0'; ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🥫 Toss in Sauce', dw/2, dh/2 - 30);
+        ctx.fillText('Toss in Sauce', dw/2, dh/2 - 30);
         break;
       }
       case 4: { // Plate & Garnish
@@ -8817,7 +8817,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         ctx.beginPath(); ctx.ellipse(dw/2 + 12, dh/2 + 16, 9, 4, -Math.PI/6, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#2a7a5a'; ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🍽️ Plate & Garnish', dw/2, dh/2 - 30);
+        ctx.fillText('Plate & Garnish', dw/2, dh/2 - 30);
         break;
       }
       default: {
@@ -8842,7 +8842,7 @@ function setupMultigridTileSimulation(idx, canvas) {
         ctx.fillStyle = '#1e3a8a';
         ctx.font = "700 12px 'Nunito',sans-serif";
         ctx.textAlign = 'center';
-        ctx.fillText('🍳 Cooking Step', dw/2, dh/2 - 30);
+        ctx.fillText('Cooking Step', dw/2, dh/2 - 30);
         break;
       }
     }
@@ -8966,7 +8966,7 @@ async function uploadToCFStream(file) {
           uploadedVideoUID = uid;
           if (progressBar) progressBar.style.width = '100%';
           if (progressPct) progressPct.textContent  = '100%';
-          if (statusMsg)  statusMsg.textContent = '✅ Uploaded! Starting AI analysis...';
+          if (statusMsg)  statusMsg.textContent = ' Uploaded! Starting AI analysis...';
           if (saveBtn)    saveBtn.textContent   = '⏳ Analyzing...';
           showTip('Upload done! AI is now analyzing your video...');
           resolve();
@@ -8982,9 +8982,9 @@ async function uploadToCFStream(file) {
 
   } catch (err) {
     console.error('CF upload error:', err);
-    if (statusMsg)  statusMsg.textContent = '❌ Upload failed: ' + (err.message || 'Unknown error');
+    if (statusMsg)  statusMsg.textContent = ' Upload failed: ' + (err.message || 'Unknown error');
     if (progressBar) progressBar.style.background = '#f87171';
-    if (saveBtn)     saveBtn.textContent = '✅ Save Recipe (local preview only)';
+    if (saveBtn)     saveBtn.textContent = ' Save Recipe (local preview only)';
     showTip('CF upload failed — video will save in preview mode.');
     // Still allow saving with localVideoURL as fallback
     uploadedVideoUID = null;
@@ -8999,16 +8999,16 @@ async function autoAnalyzeWithAI() {
   const saveBtn   = document.getElementById('saveRecipeBtn');
 
   if (uploadedFile.size > 25 * 1024 * 1024) {
-    if (statusMsg) statusMsg.textContent = '✅ Uploaded! (File >25MB — use 🤖 AI Tools to analyze)';
-    if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
-    showTip('Video uploaded! Use the 🤖 AI Tools section to analyze it manually.');
+    if (statusMsg) statusMsg.textContent = ' Uploaded! (File >25MB — use  AI Tools to analyze)';
+    if (saveBtn)   saveBtn.textContent   = ' Save Recipe';
+    showTip('Video uploaded! Use the  AI Tools section to analyze it manually.');
     return;
   }
 
   try {
     // ── Step 1: Transcribe ──────────────────────────────────────────────
-    setAIStatus('🎤 Transcribing your video...', true);
-    if (statusMsg) statusMsg.textContent = '🤖 Step 1/2: Transcribing audio...';
+    setAIStatus(' Transcribing your video...', true);
+    if (statusMsg) statusMsg.textContent = ' Step 1/2: Transcribing audio...';
 
     const formData = new FormData();
     formData.append('video', uploadedFile, uploadedFile.name);
@@ -9025,13 +9025,13 @@ async function autoAnalyzeWithAI() {
     if (preview) preview.style.display = 'block';
     if (textEl)  textEl.textContent    = cachedTranscript;
     const tBtn = document.getElementById('transcribeBtn');
-    if (tBtn) tBtn.textContent = '✅ Transcribed';
+    if (tBtn) tBtn.textContent = ' Transcribed';
     const aiActions = document.getElementById('aiActions');
     if (aiActions) aiActions.style.display = 'block';
 
     // ── Step 2: Detect loop start + stop points ─────────────────────────
-    setAIStatus('🔁 Detecting loop start & stop points...', true);
-    if (statusMsg) statusMsg.textContent = '🤖 Step 2/2: Placing loop stops...';
+    setAIStatus(' Detecting loop start & stop points...', true);
+    if (statusMsg) statusMsg.textContent = ' Step 2/2: Placing loop stops...';
 
     const lRes  = await fetch('/api/ai/loops', {
       method: 'POST',
@@ -9054,21 +9054,21 @@ async function autoAnalyzeWithAI() {
       renderCreateSteps();
       renderTimeline();
 
-      setAIStatus(`✅ ${loops.length} loop stops placed! Review and edit below.`, true);
-      if (statusMsg) statusMsg.textContent = `✅ AI placed ${loops.length} loop stops`;
-      if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
-      showTip(`🤖 AI placed ${loops.length} loop stops — review the timeline!`);
+      setAIStatus(` ${loops.length} loop stops placed! Review and edit below.`, true);
+      if (statusMsg) statusMsg.textContent = ` AI placed ${loops.length} loop stops`;
+      if (saveBtn)   saveBtn.textContent   = ' Save Recipe';
+      showTip(` AI placed ${loops.length} loop stops — review the timeline!`);
     } else {
-      setAIStatus('⚠️ No steps detected — add them manually below.', true);
-      if (statusMsg) statusMsg.textContent = '✅ Uploaded (no steps detected — add manually)';
-      if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
+      setAIStatus('️ No steps detected — add them manually below.', true);
+      if (statusMsg) statusMsg.textContent = ' Uploaded (no steps detected — add manually)';
+      if (saveBtn)   saveBtn.textContent   = ' Save Recipe';
     }
 
   } catch (err) {
     console.error('[AutoAI]', err);
-    setAIStatus('⚠️ Auto-analysis failed — use 🤖 AI Tools to retry.', true);
-    if (statusMsg) statusMsg.textContent = '✅ Uploaded (AI failed — retry in AI Tools)';
-    if (saveBtn)   saveBtn.textContent   = '✅ Save Recipe';
+    setAIStatus('️ Auto-analysis failed — use  AI Tools to retry.', true);
+    if (statusMsg) statusMsg.textContent = ' Uploaded (AI failed — retry in AI Tools)';
+    if (saveBtn)   saveBtn.textContent   = ' Save Recipe';
   }
 }
 
@@ -9285,7 +9285,7 @@ window.onVideoLoaded = function() {
 
     // Sync play/pause button icon
     videoEl.addEventListener('play',  () => { 
-      const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '⏸'; 
+      const b = document.getElementById('videoPlayBtn'); if (b) { b.innerHTML = '<i id="videoPlayIconOverlay" data-lucide="pause" style="width: 14px; height: 14px;"></i>'; if (window.lucide) lucide.createIcons(); } 
       const tb = document.getElementById('toolbarPlayBtn');
       if (tb) {
         tb.classList.add('playing');
@@ -9298,7 +9298,7 @@ window.onVideoLoaded = function() {
       }
     });
     videoEl.addEventListener('pause', () => { 
-      const b = document.getElementById('videoPlayBtn'); if (b) b.textContent = '▶'; 
+      const b = document.getElementById('videoPlayBtn'); if (b) { b.innerHTML = '<i id="videoPlayIconOverlay" data-lucide="play" style="width: 14px; height: 14px;"></i>'; if (window.lucide) lucide.createIcons(); } 
       const tb = document.getElementById('toolbarPlayBtn');
       if (tb) {
         tb.classList.remove('playing');
@@ -9316,7 +9316,7 @@ window.onVideoLoaded = function() {
     renderTimeline();
     renderCreateSteps();
   }
-  showTip('Video ready! Play it and tap "📍 Add Step" to mark steps.');
+  showTip('Video ready! Play it and tap " Add Step" to mark steps.');
 };
 
 window.addStepAtCurrentTime = function() {
@@ -9347,7 +9347,7 @@ window.addStepAtCurrentTime = function() {
   createStepsArr.sort((a, b) => a.time - b.time);
   renderCreateSteps();
   renderTimeline();
-  showTip(`Step marked at ${m}:${s} — play to the loop end then tap ✂️ Set End`);
+  showTip(`Step marked at ${m}:${s} — play to the loop end then tap Set End`);
 };
 
 // Set the loop end point for a step to the current video time
@@ -9386,7 +9386,7 @@ window.toggleVideoPlay = function() {
         vid.play().catch(e => console.error("Muted editor video playback also blocked:", e));
       });
     }
-    if (btn) btn.textContent = '⏸';
+    if (btn) { btn.innerHTML = '<i id="videoPlayIconOverlay" data-lucide="pause" style="width: 14px; height: 14px;"></i>'; if (window.lucide) lucide.createIcons(); }
     if (tbPlayBtn) {
       tbPlayBtn.classList.add('playing');
       updateLucideIcon('toolbarPlayIcon', 'pause', '16px', '16px');
@@ -9397,7 +9397,7 @@ window.toggleVideoPlay = function() {
     }
   } else {
     vid.pause();
-    if (btn) btn.textContent = '▶';
+    if (btn) { btn.innerHTML = '<i id="videoPlayIconOverlay" data-lucide="play" style="width: 14px; height: 14px;"></i>'; if (window.lucide) lucide.createIcons(); }
     if (tbPlayBtn) {
       tbPlayBtn.classList.remove('playing');
       updateLucideIcon('toolbarPlayIcon', 'play', '16px', '16px');
@@ -9759,7 +9759,7 @@ window.setPlayerKeyboardMode = function(mode) {
   const isMobilePage = window.innerWidth <= 768 || !!document.getElementById('mobileEditorCarousel');
   const seekSelect = document.getElementById('seekStepSelect');
   const seekAmount = isMobilePage ? 1 : (seekSelect ? parseInt(seekSelect.value) || 1 : 1);
-  showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'} ⌨️`);
+  showTip(`Arrow keys behavior: ${mode === 'steps' ? 'Jump Steps' : 'Seek ' + seekAmount + 's'}`);
 };
 
 window.playerPrevAction = function() {
@@ -9824,7 +9824,7 @@ window.cyclePlaybackMode = function() {
   const modes = ['loop', 'wait', 'continuous'];
   const nextIdx = (modes.indexOf(playbackMode) + 1) % modes.length;
   setPlaybackMode(modes[nextIdx]);
-  showTip(`Playback Mode: ${modes[nextIdx].toUpperCase()} 🔁`);
+  showTip(`Playback Mode: ${modes[nextIdx].toUpperCase()} `);
 };
 
 window.togglePlayerKeyboardMode = function() {
@@ -9884,13 +9884,13 @@ window.toggleLayoutDropdown = function(e) {
 
     menu.innerHTML = `
       <button onclick="window.switchWorkbenchLayout('standard')" id="optLayoutStandard" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        🖥️ Standard Layout
+        ️ Standard Layout
       </button>
       <button onclick="window.switchWorkbenchLayout('bottom-controls')" id="optLayoutControls" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         ↔️ Bottom Playback Controls
       </button>
       <button onclick="window.switchWorkbenchLayout('bottom-recipe')" id="optLayoutRecipe" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        📋 Bottom Editor / Timeline
+         Bottom Editor / Timeline
       </button>
     `;
     document.body.appendChild(menu);
@@ -10597,11 +10597,11 @@ window.updateTranscriptButtonUI = function() {
     if (isShow) {
       optTranscripts.style.background = 'var(--primary-light)';
       optTranscripts.style.color = 'var(--primary)';
-      optTranscripts.innerHTML = '💬 Hide Transcripts';
+      optTranscripts.innerHTML = ' Hide Transcripts';
     } else {
       optTranscripts.style.background = 'transparent';
       optTranscripts.style.color = 'var(--text-body)';
-      optTranscripts.innerHTML = '💬 View Transcripts';
+      optTranscripts.innerHTML = ' View Transcripts';
     }
   }
 
@@ -10679,13 +10679,13 @@ window.toggleStepTranscripts = function() {
       btn.style.color = '#fff';
       btn.style.borderColor = 'transparent';
       btn.style.boxShadow = '0 4px 12px var(--primary-glow)';
-      btn.innerHTML = '💬 Hide Transcripts';
+      btn.innerHTML = ' Hide Transcripts';
     } else {
       btn.style.background = 'var(--bg-card-soft)';
       btn.style.color = 'var(--text-body)';
       btn.style.borderColor = 'var(--border-card)';
       btn.style.boxShadow = 'var(--shadow-xs)';
-      btn.innerHTML = '💬 View Transcripts';
+      btn.innerHTML = ' View Transcripts';
     }
   }
   
@@ -10798,7 +10798,7 @@ function renderCreateSteps() {
             <button id="regenVoiceoverBtn-${i}" onclick="window.generateSingleVoiceover(${i})" 
               style="background:#fff; color:#ec4899; border:1.5px solid rgba(236,72,153,0.25); border-radius:6px; padding:3px 8px; font-family:var(--font); font-weight:800; font-size:0.65rem; cursor:pointer; transition:all 0.15s; white-space:nowrap;"
               onmouseenter="this.style.background='#fff1f2';" onmouseleave="this.style.background='#fff';">
-              ${hasAudio ? 'Re-generate' : '🎙️ Generate'}
+              ${hasAudio ? 'Re-generate' : '️ Generate'}
             </button>
           </div>
           <div style="font-size:0.7rem; color:var(--text-muted); font-style:italic; line-height:1.3; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
@@ -10808,7 +10808,7 @@ function renderCreateSteps() {
             <audio src="${step.audioUrl}" controls style="width:100%; height:28px; margin-top:2px; border-radius:6px; outline:none; background:#f1f5f9;"></audio>
           ` : `
             <div style="font-size:0.62rem; color:#f43f5e; font-weight:700; display:flex; align-items:center; gap:3px; margin-top:2px;">
-              <span>⚠️</span> No voiceover generated yet.
+              <span>️</span> No voiceover generated yet.
             </div>
           `}
         </div>
@@ -10843,7 +10843,7 @@ function renderCreateSteps() {
       tabsContainer.innerHTML = '';
       tabsContainer.style.display = 'none';
     }
-    list.innerHTML = `<div style="color:var(--text-muted);font-weight:600;font-size:0.8rem;padding:8px 0;">No loop stops yet — run AI or tap 📍 Add Stop while playing</div>`;
+    list.innerHTML = `<div style="color:var(--text-muted);font-weight:600;font-size:0.8rem;padding:8px 0;">No loop stops yet — run AI or tap  Add Stop while playing</div>`;
     list.style.flexDirection = 'column';
     const wrapper = document.getElementById('transcriptSidebarWrapper');
     if (wrapper) wrapper.style.display = 'none';
@@ -10887,7 +10887,7 @@ function renderCreateSteps() {
   list.style.webkitOverflowScrolling = 'touch';
   list.style.maxHeight               = 'none';
   list.style.height                  = 'calc(100% - 6px)';
-  list.style.minHeight               = '400px';
+  list.style.minHeight               = '470px';
   list.style.flexShrink              = '0';
   list.style.touchAction             = 'pan-x pan-y';
 
@@ -10916,7 +10916,7 @@ function renderCreateSteps() {
         if (fixedText) {
           fixedText.innerHTML = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; gap:12px; padding:10px; box-sizing:border-box;">
-              <span style="font-size:1.5rem;">🎤</span>
+              <span style="display:flex; align-items:center; justify-content:center; color:var(--text-muted); opacity:0.8;"><i data-lucide="mic" style="width:28px; height:28px;"></i></span>
               <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); line-height:1.4;">No transcript available yet.</div>
               <button onclick="window.transcribeVideo()" id="fixedTranscribeBtn" class="btn" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25); margin:0 auto;">
                 Generate Transcript
@@ -10983,7 +10983,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:380px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:450px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -10995,19 +10995,19 @@ function renderCreateSteps() {
           ${i < createStepsArr.length - 1 ? `
             <button onclick="event.stopPropagation(); window.mergeCreateStep(${i})" title="Merge with next step" tabindex="-1"
                style="background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:6px;cursor:pointer;color:#16a34a;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
-              onmouseenter="this.style.background='rgba(22,163,74,0.18)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(22,163,74,0.08)';this.style.transform='none';">🔗</button>
+              onmouseenter="this.style.background='rgba(22,163,74,0.18)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(22,163,74,0.08)';this.style.transform='none';"><i data-lucide="link" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i></button>
           ` : ''}
           <button onclick="event.stopPropagation(); removeCreateStep(${i})" title="Delete this stop" tabindex="-1"
             style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:6px;cursor:pointer;color:#dc2626;font-size:0.85rem;padding:3px 6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;"
             onmouseenter="this.style.background='rgba(220,38,38,0.15)';this.style.transform='scale(1.05)';" onmouseleave="this.style.background='rgba(220,38,38,0.06)';this.style.transform='none';">×</button>
         </div>
         <div style="font-size:0.68rem;font-weight:800;color:var(--primary);background:rgba(74,144,217,0.08);padding:4px 8px;border-radius:6px;width:fit-content;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;flex-shrink:0;">
-          <span>⏱️</span> <span>${step.displayTime} → ${em}:${es}</span>
+          <span>${step.displayTime} → ${em}:${es}</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:4px;background:rgba(124,58,237,0.03);border:1px solid rgba(124,58,237,0.12);padding:6px;border-radius:8px;flex-shrink:0;box-sizing:border-box;width:100%;">
           <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:2px;">
-            <span style="font-size:0.65rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:3px;white-space:nowrap;">⏳ Timers (${(step.timers || []).length}):</span>
+            <span style="font-size:0.65rem;font-weight:800;color:#7c3aed;display:flex;align-items:center;gap:3px;white-space:nowrap;">Timers (${(step.timers || []).length}):</span>
             <button onclick="event.stopPropagation(); window.addStepTimer(${i})" style="border:none;background:rgba(124,58,237,0.1);color:#7c3aed;font-family:var(--font);font-size:0.62rem;font-weight:800;border-radius:4px;padding:2px 6px;cursor:pointer;">＋ Add</button>
           </div>
           <div id="step-timers-list-${i}">
@@ -11038,13 +11038,13 @@ function renderCreateSteps() {
           <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
             style="position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(124,58,237,0.25);font-size:0.75rem;transition:all 0.15s;z-index:10;padding:0;"
             onmouseenter="this.style.transform='scale(1.1)';" onmouseleave="this.style.transform='none';">
-            ✨
+            <i data-lucide="sparkles" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle; stroke-width: 2.5px;"></i>
           </button>
         </div>
         
         <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
           <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;margin-top:2px;line-height:1.2;">Step Ingredients (one per line)</label>
-          <textarea placeholder="e.g. 1 onion&#10;2 cloves garlic" style="height:52px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:4px 8px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);outline:none;line-height:1.3;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);resize:none;"
+          <textarea placeholder="e.g. 1 onion&#10;2 cloves garlic" style="height:85px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:4px 8px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);outline:none;line-height:1.3;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);resize:none;"
             onchange="window.updateStepIngredientsText(${i},this.value)">${stepIngsText}</textarea>
         </div>
 
@@ -11052,7 +11052,7 @@ function renderCreateSteps() {
           <button onclick="window.toggleCardDropdown(event, ${i})" class="card-options-dropdown-btn" tabindex="-1"
             style="width:100%;background:#f5f0ff;border:1.5px solid rgba(124,58,237,0.25);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:0.72rem;font-weight:800;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.15s;"
             onmouseenter="this.style.background='#ede9ff';" onmouseleave="this.style.background='#f5f0ff';">
-            ⚙️ Edit Options ▾
+            Edit Options ▾
           </button>
         </div>
       </div>`;
@@ -11061,6 +11061,7 @@ function renderCreateSteps() {
   if (typeof window.updateAIChecklists === 'function') {
     window.updateAIChecklists();
   }
+  if (window.lucide) lucide.createIcons();
 
   // Set up drag scroll & horizontal scroll buttons
   window.enableDragScroll(list);
@@ -11101,14 +11102,14 @@ window.toggleCardDropdown = function(event, i) {
   
   menu.innerHTML = `
     <button onclick="previewStepLoop(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-bottom:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
-      <span>▶</span> Loop Stop
+      Loop Stop
     </button>
     <button onclick="navToStep(${i}); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
-      <span>⏩</span> Go to Stop
+      Go to Stop
     </button>
     ${step.audio_url || step.audioUrl ? `
       <button onclick="window.playVoiceoverAudio('${step.audio_url || step.audioUrl}'); window.closeCardDropdown();" style="width:100%;background:transparent;border:none;border-top:1px solid rgba(0,0,0,0.03);padding:8px 12px;font-family:var(--font);font-size:0.72rem;font-weight:700;color:var(--text-heading);text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s;" onmouseenter="this.style.background='#f5f0ff';" onmouseleave="this.style.background='transparent';">
-        <span>🔊</span> Play Voiceover Audio
+        Play Voiceover Audio
       </button>
     ` : ''}
   `;
@@ -11231,14 +11232,14 @@ window.redoStepDescription = async function(i, tweakPrompt = '') {
         step.ingredients = parsedIngs;
       }
       delete step.timers; // force auto-detection of new timers!
-      showTip(`✅ Regenerated description for step ${i + 1}!`);
+      showTip(` Regenerated description for step ${i + 1}!`);
     } else {
       step.description = originalText;
-      showTip('⚠️ AI returned no description.');
+      showTip('️ AI returned no description.');
     }
   } catch (err) {
     step.description = originalText;
-    showTip('❌ ' + (err.message || 'Failed to regenerate.'));
+    showTip(' ' + (err.message || 'Failed to regenerate.'));
   } finally {
     renderCreateSteps();
   }
@@ -11546,8 +11547,8 @@ window.toggleCreatePrivacy = function() {
   if (toggle) toggle.style.background = createIsPublic ? 'var(--green)' : '#e0eaf4';
   if (thumb)  thumb.style.left        = createIsPublic ? '26px' : '2px';
   if (label)  label.textContent       = createIsPublic
-    ? '🌎 Public — visible on Discover and your profile'
-    : '🔒 Private — only you can see this';
+    ? 'Public — visible on Discover and your profile'
+    : 'Private — only you can see this';
 };
 
 // ── Folder Save Modal (shown when clicking Save Recipe) ────────────────────────────
@@ -11755,8 +11756,8 @@ window.handleCoverFileSelect = async function(file) {
     }
     
     window.updateCoverPreviewFromUrl(publicUrl);
-    if (statusEl) statusEl.textContent = 'Cover uploaded successfully! ✅';
-    showTip('Cover image uploaded! 🖼️');
+    if (statusEl) statusEl.textContent = 'Cover uploaded successfully! ';
+    showTip('Cover image uploaded! ️');
   } catch (err) {
     console.error('Cover upload failed:', err);
     if (statusEl) statusEl.textContent = 'Upload failed: ' + err.message;
@@ -11858,7 +11859,7 @@ window.saveNewRecipe = async function(targetFolderId) {
         }
       } catch (upErr) {
         console.error('Supabase video upload failed:', upErr);
-        showTip('⚠️ Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
+        showTip('Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
         throw new Error('Supabase video upload failed: ' + upErr.message);
       }
     } else if (editingRecipeId && playerCurrentRecipe) {
@@ -11929,7 +11930,7 @@ window.saveNewRecipe = async function(targetFolderId) {
           renderPlayerTimelineMarkers();
         }
       }
-      showTip('Changes saved successfully! 💾');
+      showTip('Changes saved successfully! ');
     } else {
       savedRecipe = await createRecipe({
         title,
@@ -11969,7 +11970,7 @@ window.saveNewRecipe = async function(targetFolderId) {
   } catch (err) {
     console.error('Save error:', err);
     showTip('Could not save: ' + (err.message || 'Unknown error'));
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Save Recipe'; }
+    if (btn) { btn.disabled = false; btn.textContent = ' Save Recipe'; }
   }
 };
 
@@ -12062,12 +12063,12 @@ window.resetCreateView = function() {
   const tBtn = document.getElementById('transcribeBtn');
   if (tBtn) {
     tBtn.disabled = false;
-    tBtn.innerHTML = '<span>🎤 AI: Generate Transcript</span>';
+    tBtn.innerHTML = '<span> AI: Generate Transcript</span>';
   }
   const tBtnMob = document.getElementById('transcribeBtnMobile');
   if (tBtnMob) {
     tBtnMob.disabled = false;
-    tBtnMob.innerHTML = '<span>🎤 AI: Generate Transcript</span>';
+    tBtnMob.innerHTML = '<span> AI: Generate Transcript</span>';
   }
 
   if (typeof window.updateAIChecklists === 'function') {
@@ -12079,7 +12080,7 @@ window.resetCreateView = function() {
   const label  = document.getElementById('privacyLabel');
   if (toggle) toggle.style.background = '#e0eaf4';
   if (thumb)  thumb.style.left        = '2px';
-  if (label)  label.textContent       = '🔒 Private — only you can see this';
+  if (label)  label.textContent       = 'Private — only you can see this';
 
   const fi = document.getElementById('videoFileInput');
   if (fi) fi.value = '';
@@ -12237,7 +12238,7 @@ window.setChatboxLoading = function(isLoading, isSuccess) {
     <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
   </svg>`;
 
-  const successCheck = `<span style="color: #ffffff; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; line-height: 1;">✓</span>`;
+  const successCheck = `<span style="color: #ffffff; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; line-height: 1;"></span>`;
 
   buttons.forEach(btn => {
     if (isLoading) {
@@ -12298,22 +12299,22 @@ window.showChatboxActionMenu = function(triggerEl) {
   // Option list
   const options = [
     {
-      label: '🔁 Create Steps from Analyzing Video',
+      label: ' Create Steps from Analyzing Video',
       desc: 'Starts full video analysis using Gemini (slow: 30-50s)',
       action: 'loops'
     },
     {
-      label: '📋 Edit Step Instructions with AI',
+      label: ' Edit Step Instructions with AI',
       desc: 'Refine steps text using your guidelines (fast: 1-3s)',
       action: 'steps'
     },
     {
-      label: '🍳 Edit Ingredients List with AI',
+      label: ' Edit Ingredients List with AI',
       desc: 'Refine ingredients using your guidelines (fast: 1-3s)',
       action: 'ingredients'
     },
     {
-      label: '🎤 Edit Video Transcript with AI',
+      label: ' Edit Video Transcript with AI',
       desc: 'Refine raw transcript text using your guidelines (fast: 1-3s)',
       action: 'transcript'
     }
@@ -12636,7 +12637,7 @@ window.transcribeVideo = async function() {
   if (!uploadedFile) {
     if (videoUrl && !videoUrl.startsWith('blob:') && (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
       setButtonsState(true, '⏳ Transcribing (Replicate)...');
-      setAIStatus('🤖 Running Whisper on Replicate...', true);
+      setAIStatus(' Running Whisper on Replicate...', true);
       showTip('Transcribing video via Whisper on Replicate...');
       
       try {
@@ -12661,8 +12662,8 @@ window.transcribeVideo = async function() {
         const actions = document.getElementById('aiActions');
         if (actions) actions.style.display = 'block';
     
-        setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
-        setButtonsState(false, '✅ Transcribed');
+        setAIStatus(' Transcription done via Replicate Whisper! Play video to view subtitles.', true);
+        setButtonsState(false, ' Transcribed');
         showTip('Transcription complete! Play video to view subtitles.');
         if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
         if (typeof renderCreateSteps === 'function') renderCreateSteps();
@@ -12694,7 +12695,7 @@ window.transcribeVideo = async function() {
       b.disabled = disabled;
       if (text) {
         if (b.id === 'fixedTranscribeBtn') {
-          b.textContent = text.replace('🎤 AI: ', '').replace('🎤 ', '');
+          b.textContent = text.replace(' AI: ', '').replace(' ', '');
         } else {
           b.textContent = text;
         }
@@ -12704,8 +12705,8 @@ window.transcribeVideo = async function() {
 
   async function transcribeWithGeminiFallback(reason) {
     console.log('[AI] Running Gemini transcription fallback due to:', reason);
-    showTip('Using Gemini to analyze video and extract subtitles... 🚀');
-    setAIStatus('🤖 Video analyze/transcribe via Gemini...', true);
+    showTip('Using Gemini to analyze video and extract subtitles... ');
+    setAIStatus(' Video analyze/transcribe via Gemini...', true);
     setButtonsState(true, '⏳ Transcribing (Gemini)...');
     try {
       const gem = await tryGeminiFor('transcribe');
@@ -12755,8 +12756,8 @@ window.transcribeVideo = async function() {
         const actions = document.getElementById('aiActions');
         if (actions) actions.style.display = 'block';
 
-        setAIStatus('✅ Subtitles transcribed by Gemini! Play video to view.', true);
-        setButtonsState(false, '✅ Transcribed (Gemini)');
+        setAIStatus(' Subtitles transcribed by Gemini! Play video to view.', true);
+        setButtonsState(false, ' Transcribed (Gemini)');
         showTip('Transcription complete!');
         if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
         if (typeof renderCreateSteps === 'function') renderCreateSteps();
@@ -12765,8 +12766,8 @@ window.transcribeVideo = async function() {
       }
     } catch (gemErr) {
       console.error('[AI] Gemini fallback failed:', gemErr);
-      setAIStatus('❌ Transcription failed: ' + gemErr.message);
-      setButtonsState(false, '🎤 Transcribe audio only');
+      setAIStatus(' Transcription failed: ' + gemErr.message);
+      setButtonsState(false, ' Transcribe audio only');
       showTip('Transcription failed: ' + gemErr.message);
       throw gemErr;
     }
@@ -12774,15 +12775,15 @@ window.transcribeVideo = async function() {
 
   if (uploadedFile.size > 25 * 1024 * 1024) {
     setButtonsState(true, '⏳ Uploading large video...');
-    setAIStatus('📤 Uploading large video to Supabase Storage for transcription...', true);
-    showTip('Uploading large video (>25MB) to Supabase Storage so Replicate can transcribe it... 🚀');
+    setAIStatus(' Uploading large video to Supabase Storage for transcription...', true);
+    showTip('Uploading large video (>25MB) to Supabase Storage so Replicate can transcribe it... ');
     
     try {
       const { uploadVideo } = await import('./supabase-client.js');
       const supabaseUrl = await uploadVideo(uploadedFile, currentUser?.email || 'anon');
       
       setButtonsState(true, '⏳ Transcribing (Replicate)...');
-      setAIStatus('🤖 Running Whisper on Replicate...', true);
+      setAIStatus(' Running Whisper on Replicate...', true);
       showTip('Transcribing video via Whisper on Replicate...');
       
       const repRes = await fetch('/api/ai/replicate-transcribe', {
@@ -12806,8 +12807,8 @@ window.transcribeVideo = async function() {
       const actions = document.getElementById('aiActions');
       if (actions) actions.style.display = 'block';
   
-      setAIStatus('✅ Transcription done via Replicate Whisper! Play video to view subtitles.', true);
-      setButtonsState(false, '✅ Transcribed');
+      setAIStatus(' Transcription done via Replicate Whisper! Play video to view subtitles.', true);
+      setButtonsState(false, ' Transcribed');
       showTip('Transcription complete! Play video to view subtitles.');
       if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
       if (typeof renderCreateSteps === 'function') renderCreateSteps();
@@ -12819,7 +12820,7 @@ window.transcribeVideo = async function() {
   }
 
   setButtonsState(true, '⏳ Transcribing...');
-  setAIStatus('🎤 Sending to OpenAI Whisper...');
+  setAIStatus(' Sending to OpenAI Whisper...');
 
   try {
     const formData = new FormData();
@@ -12843,8 +12844,8 @@ window.transcribeVideo = async function() {
     const actions = document.getElementById('aiActions');
     if (actions) actions.style.display = 'block';
 
-    setAIStatus('✅ Transcription done! Play video to view subtitles.');
-    setButtonsState(false, '✅ Transcribed');
+    setAIStatus(' Transcription done! Play video to view subtitles.');
+    setButtonsState(false, ' Transcribed');
     showTip('Transcription complete! Play video to view subtitles.');
     if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
     if (typeof renderCreateSteps === 'function') renderCreateSteps();
@@ -12858,13 +12859,13 @@ window.transcribeVideo = async function() {
 window.editTranscriptWithAI = async function() {
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
   if (!tweak) {
-    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    showTip('Type your edit instructions in the guidelines box first! ️');
     return;
   }
   
   const currentText = document.getElementById('transcriptText')?.textContent?.trim() || cachedTranscript;
   if (!currentText) {
-    showTip('Please transcribe the video first! 🎤');
+    showTip('Please transcribe the video first! ');
     return;
   }
 
@@ -12890,11 +12891,11 @@ window.editTranscriptWithAI = async function() {
     window.cachedTranscript = data.transcript;
     
     showTip('🪄 Transcript updated successfully!');
-    setAIStatus('✅ Transcript refined by AI!');
+    setAIStatus(' Transcript refined by AI!');
     window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Transcript edit failed:', err);
-    setAIStatus('❌ Edit failed: ' + err.message);
+    setAIStatus(' Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
     window.setChatboxLoading(false, false);
   } finally {
@@ -12909,14 +12910,14 @@ window.editTranscriptWithAI = async function() {
 window.editStepsWithAI = async function() {
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
   if (!tweak) {
-    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    showTip('Type your edit instructions in the guidelines box first! ️');
     return;
   }
   
   const stepsBox = document.getElementById('stepsText');
   const currentText = stepsBox?.value?.trim();
   if (!currentText) {
-    showTip('Generate or write step instructions first! 📋');
+    showTip('Generate or write step instructions first! ');
     return;
   }
 
@@ -12943,11 +12944,11 @@ window.editStepsWithAI = async function() {
     window._aiStepsText = data.steps;
     
     showTip('🪄 Steps updated successfully!');
-    setAIStatus('✅ Steps refined by AI!');
+    setAIStatus(' Steps refined by AI!');
     window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Steps edit failed:', err);
-    setAIStatus('❌ Edit failed: ' + err.message);
+    setAIStatus(' Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
     window.setChatboxLoading(false, false);
   } finally {
@@ -12962,14 +12963,14 @@ window.editStepsWithAI = async function() {
 window.editIngredientsWithAI = async function() {
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim();
   if (!tweak) {
-    showTip('Type your edit instructions in the guidelines box first! ✏️');
+    showTip('Type your edit instructions in the guidelines box first! ️');
     return;
   }
   
   const ingBox = document.getElementById('ingredientsText');
   const currentText = ingBox?.value?.trim();
   if (!currentText) {
-    showTip('Generate or write ingredients first! 🍳');
+    showTip('Generate or write ingredients first! ');
     return;
   }
 
@@ -12995,12 +12996,12 @@ window.editIngredientsWithAI = async function() {
     if (ingBox) ingBox.value = data.ingredients;
     
     showTip('🪄 Ingredients updated successfully!');
-    setAIStatus('✅ Ingredients refined by AI!');
+    setAIStatus(' Ingredients refined by AI!');
     if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
     window.setChatboxLoading(false, true);
   } catch (err) {
     console.error('[AI] Ingredients edit failed:', err);
-    setAIStatus('❌ Edit failed: ' + err.message);
+    setAIStatus(' Edit failed: ' + err.message);
     showTip('Edit failed: ' + err.message);
     window.setChatboxLoading(false, false);
   } finally {
@@ -13014,7 +13015,7 @@ window.editIngredientsWithAI = async function() {
 // ── Generate ingredients ───────────────────────────────────────────────────
 window.generateIngredients = async function() {
   if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
-  setAIStatus('✍️ Writing ingredients...');
+  setAIStatus('Writing ingredients...');
 
   try {
     const res  = await fetch('/api/ai/ingredients', {
@@ -13030,10 +13031,10 @@ window.generateIngredients = async function() {
     if (result) result.style.display = 'block';
     if (text)   text.value           = data.ingredients;
 
-    setAIStatus('✅ Ingredients written — edit them above!');
+    setAIStatus(' Ingredients written — edit them above!');
     showTip('Ingredients generated! Edit them if needed.');
   } catch (err) {
-    setAIStatus('❌ ' + err.message);
+    setAIStatus(' ' + err.message);
     showTip('Failed: ' + err.message);
   }
 };
@@ -13041,7 +13042,7 @@ window.generateIngredients = async function() {
 // ── Generate written steps ─────────────────────────────────────────────────
 window.generateSteps = async function() {
   if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
-  setAIStatus('📋 Writing step instructions...');
+  setAIStatus('Writing step instructions...');
 
   try {
     const res  = await fetch('/api/ai/steps', {
@@ -13057,10 +13058,10 @@ window.generateSteps = async function() {
     if (result) result.style.display = 'block';
     if (text)   text.value           = data.steps;
 
-    setAIStatus('✅ Step instructions written — edit them above!');
+    setAIStatus(' Step instructions written — edit them above!');
     showTip('Step instructions generated! Edit them if needed.');
   } catch (err) {
-    setAIStatus('❌ ' + err.message);
+    setAIStatus(' ' + err.message);
     showTip('Failed: ' + err.message);
   }
 };
@@ -13068,7 +13069,7 @@ window.generateSteps = async function() {
 // ── Auto-add loop markers from AI ──────────────────────────────────────────
 window.generateLoops = async function() {
   if (!cachedTranscript) { showTip('Transcribe the video first!'); return; }
-  setAIStatus('🔁 Detecting step timestamps...');
+  setAIStatus(' Detecting step timestamps...');
 
   const tweak = document.getElementById('aiTweakPrompt')?.value?.trim() || null;
 
@@ -13083,7 +13084,7 @@ window.generateLoops = async function() {
 
     const loops = data.loops || [];
     if (!loops.length) {
-      setAIStatus('⚠️ No steps detected — try adding them manually.');
+      setAIStatus('️ No steps detected — try adding them manually.');
       return;
     }
 
@@ -13118,10 +13119,10 @@ window.generateLoops = async function() {
     renderCreateSteps();
     renderTimeline();
 
-    setAIStatus(`✅ ${loops.length} steps placed on your timeline!`);
+    setAIStatus(` ${loops.length} steps placed on your timeline!`);
     showTip(`AI placed ${loops.length} loop markers — check your timeline!`);
   } catch (err) {
-    setAIStatus('❌ ' + err.message);
+    setAIStatus(' ' + err.message);
     showTip('Failed: ' + err.message);
   }
 };
@@ -13171,7 +13172,7 @@ async function tryGeminiFor(task, videoOnly = false) {
     }
   }
 
-  setAIStatus('🤖 Uploading to Gemini…', true);
+  setAIStatus('Uploading to Gemini...', true);
   const formData = new FormData();
   if (uploadedFile) {
     formData.append('video', uploadedFile, uploadedFile.name);
@@ -13206,7 +13207,7 @@ window.aiWriteIngredients = async function() {
   if (typeof checkForceFreshAI === 'function') {
     checkForceFreshAI();
   }
-  setAIStatus('✍️ Writing ingredients...', true);
+  setAIStatus('Writing ingredients...', true);
   let gem = null;
   try {
     // Try Gemini first
@@ -13222,19 +13223,19 @@ window.aiWriteIngredients = async function() {
       window._aiIngredients = gem.ingredients.join('\n');
       const r = document.getElementById('ingredientsResult');
       if (r) r.style.display = 'block';
-      setAIStatus('✅ Ingredients written by Gemini!', true);
-      showTip('✍️ Ingredients filled in — edit as needed.');
+      setAIStatus('Ingredients written by Gemini!', true);
+      showTip('Ingredients filled in — edit as needed.');
       if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
       return;
     }
     // Fallback: Whisper → GPT
     if (!cachedTranscript) await window.transcribeVideo();
-    if (!cachedTranscript) { setAIStatus('❌ Need transcript first — video may be over 25MB.', true); return; }
+    if (!cachedTranscript) { setAIStatus('Need transcript first — video may be over 25MB.', true); return; }
     await window.generateIngredients();
-    setAIStatus('✅ Ingredients written!', true);
+    setAIStatus('Ingredients written!', true);
     if (typeof window.updateAIChecklists === 'function') window.updateAIChecklists();
   } catch (err) {
-    setAIStatus('❌ ' + (err.message || 'Failed to write ingredients.'), true);
+    setAIStatus(' ' + (err.message || 'Failed to write ingredients.'), true);
   }
 };
 
@@ -13243,7 +13244,7 @@ window.aiWriteSteps = async function() {
   if (typeof checkForceFreshAI === 'function') {
     checkForceFreshAI();
   }
-  setAIStatus('📋 Writing step instructions...', true);
+  setAIStatus('Writing step instructions...', true);
   let gem = null;
   try {
     // Try Gemini first
@@ -13259,17 +13260,17 @@ window.aiWriteSteps = async function() {
       window._aiStepsText = gem.steps.join('\n');
       const r = document.getElementById('stepsTextResult');
       if (r) r.style.display = 'block';
-      setAIStatus('✅ Steps written by Gemini!', true);
-      showTip('📋 Steps filled in — edit as needed.');
+      setAIStatus('Steps written by Gemini!', true);
+      showTip('Steps filled in — edit as needed.');
       return;
     }
     // Fallback: Whisper → GPT
     if (!cachedTranscript) await window.transcribeVideo();
-    if (!cachedTranscript) { setAIStatus('❌ Need transcript first — video may be over 25MB.', true); return; }
+    if (!cachedTranscript) { setAIStatus('Need transcript first — video may be over 25MB.', true); return; }
     await window.generateSteps();
-    setAIStatus('✅ Steps written!', true);
+    setAIStatus('Steps written!', true);
   } catch (err) {
-    setAIStatus('❌ ' + (err.message || 'Failed to write steps.'), true);
+    setAIStatus(' ' + (err.message || 'Failed to write steps.'), true);
   }
 };
 
@@ -13279,7 +13280,7 @@ window.aiWriteStepDescriptions = async function() {
     showTip('Add loop stops first, then tap Generate Steps.');
     return;
   }
-  showTip('✍️ AI is writing descriptions for each loop stop…');
+  showTip('AI is writing descriptions for each loop stop...');
 
   const hasDescriptions = createStepsArr.some(s => s.description && s.description.trim().length > 0);
   const btnIds = ['aiGenerateStepsBtn', 'aiGenerateStepsBtnMobile'];
@@ -13289,7 +13290,7 @@ window.aiWriteStepDescriptions = async function() {
     if (el) {
       originalHtmls[id] = el.innerHTML;
       el.disabled = true;
-      el.innerHTML = hasDescriptions ? '<span>⏳ Re-generating Steps...</span>' : '<span>⏳ Generating Steps...</span>';
+      el.innerHTML = hasDescriptions ? '<span>Re-generating Steps...</span>' : '<span>Generating Steps...</span>';
     }
   });
 
@@ -13337,9 +13338,9 @@ window.aiWriteStepDescriptions = async function() {
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
-    showTip('✅ Steps generated! Edit any card to customize.');
+    showTip('Steps generated! Edit any card to customize.');
   } catch (err) {
-    showTip('❌ ' + (err.message || 'Could not generate steps.'));
+    showTip(' ' + (err.message || 'Could not generate steps.'));
   } finally {
     btnIds.forEach(id => {
       const el = document.getElementById(id);
@@ -13357,7 +13358,7 @@ window.aiDoEverything = async function() {
   if (typeof checkForceFreshAI === 'function') {
     checkForceFreshAI();
   }
-  setAIStatus('⚡ Running all AI features...', true);
+  setAIStatus('Running all AI features...', true);
   const btn = document.getElementById('aiLoopBtn');
   let gem = null;
   try {
@@ -13409,8 +13410,8 @@ window.aiDoEverything = async function() {
         };
       }).sort((a, b) => a.time - b.time);
       renderCreateSteps(); renderTimeline();
-      setAIStatus(`✅ Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
-      showTip(`⚡ All done! ${gem.loops.length} loop stops placed.`);
+      setAIStatus(`Done! Gemini placed ${gem.loops.length} loops + wrote everything.`, true);
+      showTip(`All done! ${gem.loops.length} loop stops placed.`);
       if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
       return;
     }
@@ -13420,14 +13421,14 @@ window.aiDoEverything = async function() {
       await window.generateIngredients();
       await window.generateSteps();
       await window.generateLoops();
-      setAIStatus('✅ Done! Review the timeline.', true);
-      showTip('⚡ AI completed all tasks!');
+      setAIStatus('Done! Review the timeline.', true);
+      showTip('AI completed all tasks!');
       if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
     } else {
-      setAIStatus('❌ Video too large for Whisper. Add your Gemini key to unlock large video support.', true);
+      setAIStatus('Video too large for Whisper. Add your Gemini key to unlock large video support.', true);
     }
   } catch (err) {
-    setAIStatus('❌ ' + (err.message || 'Error.'), true);
+    setAIStatus(' ' + (err.message || 'Error.'), true);
   }
 };
 
@@ -13443,24 +13444,24 @@ window.doItAll = async function() {
     if (btn) {
       btn.disabled = disabled;
       if (text) {
-        btn.innerHTML = `<span>⏳</span><span>${text}</span>`;
+        btn.innerHTML = `<span>${text}</span>`;
       }
     }
     if (overlayBtn) {
       overlayBtn.disabled = disabled;
       if (disabled) {
         overlayBtn.style.opacity = '0.7';
-        if (text) overlayBtn.innerHTML = `🤖 ${text}`;
+        if (text) overlayBtn.innerHTML = `${text}`;
       } else {
         overlayBtn.style.opacity = '1';
-        overlayBtn.innerHTML = '⚡ AI Stops';
+        overlayBtn.innerHTML = 'AI Stops';
       }
     }
   };
 
   // Check if video is loaded first
   if (!uploadedFile) {
-    setAIStatus('⚠️ Upload a video first.', true);
+    setAIStatus('Upload a video first.', true);
     showTip('Upload your video first, then tap the button.');
     setButtonsState(false);
     window.setChatboxLoading(false, false);
@@ -13489,8 +13490,8 @@ window.doItAll = async function() {
 
     // 2. Detect loop stops from transcript
     setButtonsState(true, '2/3: Detecting loops...');
-    setAIStatus('🔁 Step 2/3: Detecting precise loop stops...', true);
-    showTip('🔁 Identifying step timestamps from speech...');
+    setAIStatus('Step 2/3: Detecting precise loop stops...', true);
+    showTip('Identifying step timestamps from speech...');
     await window.generateLoops();
     
     if (!createStepsArr.length) {
@@ -13499,39 +13500,39 @@ window.doItAll = async function() {
 
     // 3. Write descriptions & ingredients for these loop stops
     setButtonsState(true, '3/3: Writing steps...');
-    setAIStatus('✍️ Step 3/3: Generating detailed instructions & ingredients...', true);
-    showTip('✍️ Writing detailed instructions...');
+    setAIStatus('Step 3/3: Generating detailed instructions & ingredients...', true);
+    showTip('Writing detailed instructions...');
     await window.aiWriteStepDescriptions();
 
     // Reset buttons and finalize
     if (btn) {
       btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-      btn.innerHTML = '<span>✅</span><span>Steps Created!</span>';
+      btn.innerHTML = '<span>Steps Created!</span>';
     }
     if (overlayBtn) {
       overlayBtn.disabled = false;
       overlayBtn.style.opacity = '1';
-      overlayBtn.innerHTML = '⚡ AI Stops';
+      overlayBtn.innerHTML = 'AI Stops';
     }
-    setAIStatus('✅ AI successfully created precisely-timed steps!', true);
-    showTip('⚡ AI completed all tasks precisely aligned with audio!');
+    setAIStatus('AI successfully created precisely-timed steps!', true);
+    showTip('AI completed all tasks precisely aligned with audio!');
     window.setChatboxLoading(false, true);
 
   } catch (err) {
     console.error('doItAll error:', err);
-    setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
-    showTip('❌ AI Analysis failed: ' + (err.message || 'Connection error.'));
+    setAIStatus(' ' + (err.message || 'Connection error — try again.'), true);
+    showTip(' AI Analysis failed: ' + (err.message || 'Connection error.'));
     
     if (btn) {
       btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#7c3aed,#6366f1)';
-      btn.innerHTML = '<span>🔁 AI: Create Steps from Analyzing Video</span>';
+      btn.innerHTML = '<span>AI: Create Steps from Analyzing Video</span>';
     }
     if (overlayBtn) {
       overlayBtn.disabled = false;
       overlayBtn.style.opacity = '1';
-      overlayBtn.innerHTML = '⚡ AI Stops';
+      overlayBtn.innerHTML = 'AI Stops';
     }
     window.setChatboxLoading(false, false);
   }
@@ -13550,10 +13551,10 @@ window.aiDoVideoOnly = async function() {
     if (btn) {
       btn.disabled = disabled;
       if (disabled && text) {
-        btn.innerHTML = `<span>⏳</span><span>${text}</span>`;
+        btn.innerHTML = `<span>${text}</span>`;
       } else if (!disabled) {
         btn.style.background = 'linear-gradient(135deg,#ec4899,#f43f5e)';
-        btn.innerHTML = `<span>🎥 AI: Analyze Video Only (No Audio)</span>`;
+        btn.innerHTML = `<span>AI: Analyze Video Only (No Audio)</span>`;
       }
     }
     if (loopBtn) loopBtn.disabled = disabled;
@@ -13564,10 +13565,10 @@ window.aiDoVideoOnly = async function() {
       overlayBtn.disabled = disabled;
       if (disabled) {
         overlayBtn.style.opacity = '0.7';
-        if (text) overlayBtn.innerHTML = `🤖 ${text}`;
+        if (text) overlayBtn.innerHTML = `${text}`;
       } else {
         overlayBtn.style.opacity = '1';
-        overlayBtn.innerHTML = '⚡ AI Stops';
+        overlayBtn.innerHTML = 'AI Stops';
       }
     }
   };
@@ -13590,7 +13591,7 @@ window.aiDoVideoOnly = async function() {
 
     if (!uploadedFile && !hasNetworkUrl) {
       console.warn('[AI] Early exit in aiDoVideoOnly: uploadedFile is null and no networkUrl.');
-      setAIStatus('⚠️ Upload a video first.', true);
+      setAIStatus('Upload a video first.', true);
       showTip('Upload your video first, then tap the button.');
       setButtonsState(false);
       return;
@@ -13598,8 +13599,8 @@ window.aiDoVideoOnly = async function() {
 
     window.setChatboxLoading(true);
     setButtonsState(true, 'Analyzing Video (No Audio)...');
-    setAIStatus('🤖 Analyzing video visually (ignoring audio)...', true);
-    showTip('🎥 Sending video to Gemini for visual-only analysis...');
+    setAIStatus(' Analyzing video visually (ignoring audio)...', true);
+    showTip('Sending video to Gemini for visual-only analysis...');
     
     // Call Gemini with videoOnly=true
     const gem = await tryGeminiFor('all', true);
@@ -13659,23 +13660,23 @@ window.aiDoVideoOnly = async function() {
     if (btn) {
       btn.disabled = false;
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
-      btn.innerHTML = '<span>✅</span><span>Video Steps Created!</span>';
+      btn.innerHTML = '<span>Video Steps Created!</span>';
     }
     if (overlayBtn) {
       overlayBtn.disabled = false;
       overlayBtn.style.opacity = '1';
-      overlayBtn.innerHTML = '⚡ AI Stops';
+      overlayBtn.innerHTML = 'AI Stops';
     }
 
-    setAIStatus('✅ AI successfully created steps from visual analysis!', true);
-    showTip('⚡ AI completed video-only analysis!');
+    setAIStatus('AI successfully created steps from visual analysis!', true);
+    showTip('AI completed video-only analysis!');
     window.setChatboxLoading(false, true);
     if (typeof window.collapseAiTools === 'function') window.collapseAiTools();
 
   } catch (err) {
     console.error('aiDoVideoOnly error:', err);
-    setAIStatus('❌ ' + (err.message || 'Connection error — try again.'), true);
-    showTip('❌ AI Analysis failed: ' + (err.message || 'Connection error.'));
+    setAIStatus(' ' + (err.message || 'Connection error — try again.'), true);
+    showTip(' AI Analysis failed: ' + (err.message || 'Connection error.'));
     
     setButtonsState(false);
     window.setChatboxLoading(false, false);
@@ -13689,7 +13690,7 @@ window.createStepsFromTranscript = async function() {
   const btn = document.getElementById('aiStepsFromTranscriptBtn');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '⏳ 1/3: Transcript...';
+    btn.textContent = '1/3: Transcript...';
   }
 
   try {
@@ -13791,8 +13792,8 @@ window.createStepsFromTranscript = async function() {
     setAIStatus(`Successfully created ${createStepsArr.length} steps from transcript!`, true);
     showTip(`Steps successfully created based off transcript!`);
   } catch (err) {
-    setAIStatus('❌ ' + (err.message || 'Error.'), true);
-    showTip('❌ Failed: ' + (err.message || 'Error.'));
+    setAIStatus(' ' + (err.message || 'Error.'), true);
+    showTip('Failed: ' + (err.message || 'Error.'));
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -14397,7 +14398,7 @@ window.handleShareAction = function(action) {
     copyToClipboardHelper(shareUrl);
     window.closePlayerShareModal();
   } else if (action === 'instagram') {
-    copyToClipboardHelper(shareUrl, 'Link copied! Opening Instagram to paste... 📸');
+    copyToClipboardHelper(shareUrl, 'Link copied! Opening Instagram to paste...');
     window.closePlayerShareModal();
     setTimeout(() => {
       window.open('instagram://', '_blank');
@@ -14408,7 +14409,7 @@ window.handleShareAction = function(action) {
       }, 500);
     }, 400);
   } else if (action === 'tiktok') {
-    copyToClipboardHelper(shareUrl, 'Link copied! Opening TikTok to paste... 🎵');
+    copyToClipboardHelper(shareUrl, 'Link copied! Opening TikTok to paste...');
     window.closePlayerShareModal();
     setTimeout(() => {
       window.open('snssdk1180://', '_blank');
@@ -14576,13 +14577,13 @@ window.generateAICover = async function() {
         coverInput.value = data.imageUrl;
       }
       window.updateCoverPreviewFromUrl(data.imageUrl);
-      showTip('✅ Gourmet Cover generated and saved to Supabase!');
+      showTip('Gourmet Cover generated and saved to Supabase!');
     } else {
       throw new Error('No imageUrl returned');
     }
   } catch (err) {
     console.error('[Generate Cover Error]:', err);
-    showTip('❌ Cover generation failed: ' + err.message);
+    showTip(' Cover generation failed: ' + err.message);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -14638,10 +14639,10 @@ window.generateAllVoiceovers = async function() {
     }
 
     renderCreateSteps();
-    showTip('✅ All AI Voiceovers generated and synced to steps!');
+    showTip(' All AI Voiceovers generated and synced to steps!');
   } catch (err) {
     console.error('[Generate Voiceovers Error]:', err);
-    showTip('❌ Voiceover generation failed: ' + err.message);
+    showTip(' Voiceover generation failed: ' + err.message);
   } finally {
     updateButtons(originalText, false);
     if (mBtn) mBtn.innerHTML = originalMText;
@@ -14663,7 +14664,7 @@ window.generateSingleVoiceover = async function(i) {
   };
 
   updateButtons('⏳...', true);
-  showTip(`🎙️ Generating voiceover for step ${i + 1}...`);
+  showTip(`Generating voiceover for step ${i + 1}...`);
 
   try {
     const recipeId = editingRecipeId || 'new_recipe_' + Date.now();
@@ -14687,10 +14688,10 @@ window.generateSingleVoiceover = async function(i) {
     }
 
     renderCreateSteps();
-    showTip(`✅ Generated voiceover for step ${i + 1}!`);
+    showTip(`Generated voiceover for step ${i + 1}!`);
   } catch (err) {
     console.error(err);
-    showTip('❌ Single voiceover failed: ' + err.message);
+    showTip(' Single voiceover failed: ' + err.message);
   } finally {
     updateButtons(originalText, false);
     if (btnMobile) btnMobile.innerHTML = originalMText;
@@ -15729,15 +15730,15 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
   contentInput.disabled = true;
 
   // Initialize status inside card
-  window.setCustomPageAiStatus(tabId, '📡 Sending request to AI...', 'loading');
+  window.setCustomPageAiStatus(tabId, 'Sending request to AI...', 'loading');
 
   try {
     let contextText = '';
     
     // We check cachedTranscript first, if missing try to transcribe
     if (!cachedTranscript) {
-      window.setCustomPageAiStatus(tabId, '🎤 Transcribing video...', 'loading');
-      if (typeof setAIStatus === 'function') setAIStatus('🎤 Transcribing video...', true);
+      window.setCustomPageAiStatus(tabId, 'Transcribing video...', 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus('Transcribing video...', true);
       try {
         await window.transcribeVideo();
       } catch (e) {
@@ -15761,12 +15762,12 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
       if (visualContext) {
         contextText += `\n\nVideo Visual Steps & Ingredients:\n${visualContext}`;
       }
-      window.setCustomPageAiStatus(tabId, `🧠 AI is generating "${pageName}" content...`, 'loading');
-      if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${pageName}...`, true);
+      window.setCustomPageAiStatus(tabId, `AI is generating "${pageName}" content...`, 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus(`Generating ${pageName}...`, true);
     } else if (visualContext) {
       contextText = visualContext;
-      window.setCustomPageAiStatus(tabId, '⚠️ Using visual video analysis (no audio)...', 'loading');
-      if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${pageName} from visual analysis...`, true);
+      window.setCustomPageAiStatus(tabId, 'Using visual video analysis (no audio)...', 'loading');
+      if (typeof setAIStatus === 'function') setAIStatus(`Generating ${pageName} from visual analysis...`, true);
     } else {
       throw new Error('No recipe video is loaded. Please load a YouTube video or upload a local video first so the AI has audio content to transcribe and write the page details!');
     }
@@ -15794,14 +15795,14 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
     contentInput.value = data.content || '';
     contentInput.disabled = false;
     
-    window.setCustomPageAiStatus(tabId, `✅ Done generating "${pageName}"!`, 'success');
-    if (typeof setAIStatus === 'function') setAIStatus(`✅ Done generating "${pageName}"!`, false);
+    window.setCustomPageAiStatus(tabId, `Done generating "${pageName}"!`, 'success');
+    if (typeof setAIStatus === 'function') setAIStatus(`Done generating "${pageName}"!`, false);
   } catch (err) {
     console.error(err);
     contentInput.value = '';
     contentInput.disabled = false;
-    window.setCustomPageAiStatus(tabId, '❌ Failed: ' + err.message, 'error');
-    if (typeof setAIStatus === 'function') setAIStatus('❌ Failed: ' + err.message, false);
+    window.setCustomPageAiStatus(tabId, 'Failed: ' + err.message, 'error');
+    if (typeof setAIStatus === 'function') setAIStatus('Failed: ' + err.message, false);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -15851,7 +15852,7 @@ window.saveInlineCustomPageChanges = function(tabId) {
     const nextText = 'Update';
     
     btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
-    btn.innerHTML = '<span>✓ Saved!</span>';
+    btn.innerHTML = '<span> Saved!</span>';
     btn.disabled = true;
     
     if (typeof window.saveActiveRecipeState === 'function') {
@@ -15935,7 +15936,7 @@ window.generateCustomPageContent = async function(tabId) {
   if (btn) {
     origText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span>🤖 AI: Generating...</span>';
+    btn.innerHTML = '<span>AI: Generating...</span>';
   }
   if (btnRow) {
     origRowText = btnRow.innerHTML;
@@ -15945,14 +15946,14 @@ window.generateCustomPageContent = async function(tabId) {
 
   try {
     if (!cachedTranscript) {
-      if (typeof setAIStatus === 'function') setAIStatus('🎤 Transcribing video first...', true);
+      if (typeof setAIStatus === 'function') setAIStatus('Transcribing video first...', true);
       await window.transcribeVideo();
     }
     if (!cachedTranscript) {
       throw new Error('Could not transcribe video. Please make sure a video is loaded.');
     }
 
-    if (typeof setAIStatus === 'function') setAIStatus(`🤖 Generating ${page.name}...`, true);
+    if (typeof setAIStatus === 'function') setAIStatus(`Generating ${page.name}...`, true);
 
     const res = await fetch('/api/ai/custom-page', {
       method: 'POST',
@@ -15974,20 +15975,20 @@ window.generateCustomPageContent = async function(tabId) {
     }
 
     if (btn) {
-      btn.innerHTML = '<span>✅ AI: Generated!</span>';
+      btn.innerHTML = '<span>AI: Generated!</span>';
       setTimeout(() => {
         btn.disabled = false;
         btn.innerHTML = origText;
       }, 2000);
     }
     if (btnRow) {
-      btnRow.innerHTML = '<span>✅ Generated!</span>';
+      btnRow.innerHTML = '<span>Generated!</span>';
       setTimeout(() => {
         btnRow.disabled = false;
         btnRow.innerHTML = origRowText;
       }, 2000);
     }
-    if (typeof setAIStatus === 'function') setAIStatus(`✅ Generated ${page.name}!`, true);
+    if (typeof setAIStatus === 'function') setAIStatus(`Generated ${page.name}!`, true);
   } catch (err) {
     console.error(err);
     alert('Failed to generate: ' + err.message);
@@ -15999,7 +16000,7 @@ window.generateCustomPageContent = async function(tabId) {
       btnRow.disabled = false;
       btnRow.innerHTML = origRowText;
     }
-    if (typeof setAIStatus === 'function') setAIStatus('❌ Generation failed.', true);
+    if (typeof setAIStatus === 'function') setAIStatus('Generation failed.', true);
   }
 };
 
