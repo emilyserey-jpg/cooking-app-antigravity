@@ -6262,15 +6262,15 @@ window.switchPlayerMainTab = function(tabName) {
   const ingBtn = document.getElementById('playerTabIngredientsBtn');
   const comBtn = document.getElementById('playerTabCommentsBtn');
   
-  if (!stepsBtn || !ingBtn || !comBtn) return;
-  
   // Helper to activate button styling
   const activateBtn = (btn) => {
+    if (!btn) return;
     btn.style.background = 'var(--primary)';
     btn.style.color = '#fff';
     btn.style.boxShadow = '0 4px 12px rgba(74, 144, 217, 0.25)';
   };
   const deactivateBtn = (btn) => {
+    if (!btn) return;
     btn.style.background = 'rgba(0, 0, 0, 0.05)';
     btn.style.color = 'var(--text-muted)';
     btn.style.boxShadow = 'none';
@@ -6284,12 +6284,16 @@ window.switchPlayerMainTab = function(tabName) {
   if (mgControls) mgControls.style.display = 'none';
   if (mgDesc) mgDesc.style.display = 'none';
   
-  deactivateBtn(stepsBtn);
-  deactivateBtn(ingBtn);
-  deactivateBtn(comBtn);
+  // Hide all custom panels and deactivate custom tab buttons
+  document.querySelectorAll('.player-custom-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.player-custom-tab-btn').forEach(b => deactivateBtn(b));
+  
+  if (stepsBtn) deactivateBtn(stepsBtn);
+  if (ingBtn) deactivateBtn(ingBtn);
+  if (comBtn) deactivateBtn(comBtn);
   
   if (tabName === 'steps') {
-    activateBtn(stepsBtn);
+    if (stepsBtn) activateBtn(stepsBtn);
     if (isPlayerMultigridActive) {
       if (mgControls) mgControls.style.display = 'flex';
       if (mgDesc) mgDesc.style.display = 'flex';
@@ -6305,11 +6309,19 @@ window.switchPlayerMainTab = function(tabName) {
     }
     if (stepsTimeline) stepsTimeline.style.display = 'block';
   } else if (tabName === 'ingredients') {
-    activateBtn(ingBtn);
+    if (ingBtn) activateBtn(ingBtn);
     if (ingPanel) ingPanel.style.display = 'flex';
   } else if (tabName === 'comments') {
-    activateBtn(comBtn);
+    if (comBtn) activateBtn(comBtn);
     if (comSec) comSec.style.display = 'flex';
+  } else {
+    // Check for custom tab
+    const customPanel = document.getElementById(`playerPanel_${tabName}`);
+    const customBtn = document.getElementById(`playerTab_${tabName}`);
+    if (customPanel && customBtn) {
+      activateBtn(customBtn);
+      customPanel.style.display = 'flex';
+    }
   }
   
   if (window.lucide) lucide.createIcons();
