@@ -1609,24 +1609,23 @@
             <!-- Col 4.5: Transcripts Panel -->
             <div id="rightColTranscripts" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
               <div class="glass-card" id="editorTranscriptsCard" style="padding:14px 16px;min-height:450px;flex:1;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;">
-                <!-- Header with title and mode toggles -->
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-bottom:1.5px solid rgba(0,0,0,0.05); padding-bottom:10px; margin-bottom:4px;">
+                <!-- Header with title and Generate button -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-bottom:1.5px solid rgba(0,0,0,0.05); padding-bottom:10px;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:1.1rem;">💬</span>
                     <h3 style="margin:0; font-size:0.85rem; font-weight:900; color:var(--text-heading); font-family:var(--font);">Video Transcript</h3>
                   </div>
                   
-                  <!-- Mode Selectors: Viewing, Generating, Editing -->
-                  <div style="display:flex; gap:4px; background:rgba(0,0,0,0.04); padding:3px; border-radius:8px;">
-                    <button onclick="window.switchTranscriptMode('view')" id="modeBtn_view" style="border:none; padding:4px 10px; font-family:var(--font); font-size:0.65rem; font-weight:800; border-radius:6px; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.15s;">👁️ View</button>
-                    <button onclick="window.switchTranscriptMode('generate')" id="modeBtn_generate" style="border:none; padding:4px 10px; font-family:var(--font); font-size:0.65rem; font-weight:800; border-radius:6px; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.15s;">⚡ Generate</button>
-                    <button onclick="window.switchTranscriptMode('edit')" id="modeBtn_edit" style="border:none; padding:4px 10px; font-family:var(--font); font-size:0.65rem; font-weight:800; border-radius:6px; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.15s;">✏️ Edit</button>
-                  </div>
+                  <button onclick="window.transcribeVideo()" id="fixedTranscribeBtn" class="btn" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25);">
+                    🎤 Generate Transcript
+                  </button>
                 </div>
                 
-                <!-- Content area based on selected mode -->
-                <div id="transcriptModeContainer" style="flex:1; display:flex; flex-direction:column; min-height:0; overflow-y:auto; gap:10px;">
-                  <!-- Dynamically populated -->
+                <!-- Textarea for viewing and editing -->
+                <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                  <textarea id="transcriptText" oninput="window.saveTranscriptTextareaEdits(this.value)"
+                    placeholder="No transcript generated yet. Click 'Generate Transcript' above to begin, or type/paste your transcript here manually..."
+                    style="width:100%; flex:1; min-height:300px; background:var(--bg-card-soft); border:2px solid var(--border-card); border-radius:10px; padding:10px; font-family:var(--font); font-size:0.82rem; font-weight:600; color:var(--text-body); resize:none; outline:none; line-height:1.5; box-sizing:border-box;"></textarea>
                 </div>
               </div>
             </div>
