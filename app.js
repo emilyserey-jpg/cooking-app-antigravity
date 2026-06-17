@@ -15413,19 +15413,19 @@ window.toggleEditorTabDropdown = function(e) {
       <button onclick="window.switchEditorTab('stops')" id="optTabStops" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         Loop Stops
       </button>
-      ${customPagesTabHtml}
       
+      <button onclick="window.addNewCustomPageCard()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; font-size:0.95rem; font-weight:800; color:inherit;">+</span> Add Custom Page
+      </button>
+      ${customPagesTabHtml}
       <div id="dynamicCustomPageOptions" style="display:flex; flex-direction:column; gap:4px;">
         ${customOptionsHtml}
       </div>
 
-      <button onclick="window.switchEditorTab('save')" id="optTabSave" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        Preview & Save
-      </button>
       ${transcriptOptionHtml}
 
-      <button onclick="window.addNewCustomPageCard()" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; font-size:0.95rem; font-weight:800; color:inherit;">+</span> Add Custom Page
+      <button onclick="window.switchEditorTab('save')" id="optTabSave" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+        Preview & Save
       </button>
     `;
 
