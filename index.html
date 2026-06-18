@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css">
+  <link rel="stylesheet" href="styles_v853.css?v=9.46">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -491,24 +491,68 @@
               style="width:100%;box-sizing:border-box;padding:10px 14px 10px 36px;border-radius:12px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.88rem;font-weight:600;color:var(--text-heading);outline:none;transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
           </div>
-          <!-- Sort pills -->
-          <select id="libSortSelect" onchange="libSetSort(this.value)"
-            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 140px;"
-            onfocus="this.style.borderColor='var(--primary)'" 
-            onblur="this.style.borderColor='var(--border-card)'">
-            <option value="az">Sort: A → Z</option>
-            <option value="za">Sort: Z → A</option>
-            <option value="custom">Sort: Custom</option>
-          </select>
-          <!-- Layout pills -->
-          <select id="libLayoutSelect" onchange="libSetLayout(this.value)"
-            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 145px;"
-            onfocus="this.style.borderColor='var(--primary)'" 
-            onblur="this.style.borderColor='var(--border-card)'">
-            <option value="grid">Layout: Grid</option>
-            <option value="list">Layout: List</option>
-            <option value="compact">Layout: Compact</option>
-          </select>
+          <!-- Combined Sort & Layout Options Dropdown -->
+          <div class="lib-options-dropdown-wrapper" style="position: relative; display: inline-block;">
+            <button id="libOptionsDropdownBtn" onclick="window.toggleLibOptionsDropdown(event)" 
+              style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 8px;"
+              onfocus="this.style.borderColor='var(--primary)'" 
+              onblur="this.style.borderColor='var(--border-card)'">
+              <i data-lucide="sliders-horizontal" style="width: 14px; height: 14px; stroke-width: 2.5;"></i>
+              <span id="libOptionsActiveLabel">View Options</span>
+              <i data-lucide="chevron-down" style="width: 12px; height: 12px; stroke-width: 2.5; transition: transform 0.2s;" id="libOptionsChevron"></i>
+            </button>
+            <div id="libOptionsDropdownMenu" class="lib-options-dropdown-menu" 
+              style="display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 2px solid var(--border-card); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1000; padding: 12px; min-width: 210px; flex-direction: column; gap: 10px; box-sizing: border-box;">
+              
+              <!-- Sort Section -->
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Sort By</span>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <button onclick="window.libSetSort('az')" class="lib-option-item" id="libOptSort_az" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>A → Z</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetSort('za')" class="lib-option-item" id="libOptSort_za" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>Z → A</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetSort('custom')" class="lib-option-item" id="libOptSort_custom" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>Custom Drag</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Separator -->
+              <div style="height: 1px; background: var(--border-card); margin: 2px 0;"></div>
+
+              <!-- Layout Section -->
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Layout</span>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <button onclick="window.libSetLayout('grid')" class="lib-option-item" id="libOptLayout_grid" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="grid" style="width: 13px; height: 13px;"></i> Grid
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetLayout('list')" class="lib-option-item" id="libOptLayout_list" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="list" style="width: 13px; height: 13px;"></i> List
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetLayout('compact')" class="lib-option-item" id="libOptLayout_compact" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="align-justify" style="width: 13px; height: 13px;"></i> Compact
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
 
         <!-- ── Main library content ── -->
@@ -1400,105 +1444,121 @@
               </div>
             </div>
 
-            <!-- ── Chapter scrubber (OUTSIDE video, fully visible) ── -->
-            <div id="editorScrubberCard" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:8px 12px;flex-shrink:0;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-                <span style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);">Loop Stops — drag to adjust</span>
-                <span style="font-size:0.6rem;color:var(--text-muted);font-weight:600;" id="chapterDurationLabel">0:00</span>
-              </div>
-              <!-- Scrubber track — clean thin grey timeline rail -->
-              <div id="videoScrubber" onclick="videoScrubberSeek(event)"
-                onmousemove="videoScrubberHover(event)" onmouseleave="document.getElementById('videoChapterLabel').style.display='none'"
-                style="height:10px;background:#cbd5e1;border-radius:999px;position:relative;cursor:pointer;overflow:visible;user-select:none;border:1px solid rgba(0,0,0,0.05);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);margin:12px 0 8px;">
-                <!-- Loop chapter bands + labels rendered by JS (overflow visible so labels aren't clipped) -->
-                <div id="videoMarkers" style="position:absolute;inset:0;border-radius:999px;overflow:visible;z-index:10;"></div>
-                <!-- Playback progress line -->
-                <div id="videoProgressFill" style="position:absolute;top:0;bottom:0;left:0;height:100%;background:linear-gradient(90deg, var(--primary), var(--primary-light));border-radius:999px;width:0%;pointer-events:none;transition:width 0.06s;z-index:25;"></div>
-                <!-- Playhead — round white playhead knob -->
-                <div id="videoThumb" style="position:absolute;top:50%;left:0%;width:16px;height:16px;background:#fff;border:2px solid var(--primary);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:40;box-shadow:0 2px 5px rgba(0,0,0,0.25);transition:left 0.06s;"></div>
-                <!-- Hover chapter label -->
-                <div id="videoChapterLabel" style="position:absolute;top:-28px;background:rgba(30,27,75,0.92);color:#fff;font-size:0.6rem;font-weight:700;padding:3px 7px;border-radius:5px;pointer-events:none;display:none;white-space:nowrap;font-family:var(--font);transform:translateX(-50%);z-index:30;"></div>
-              </div>
-            </div>
-
-            <!-- ── Nav controls bar ── -->
-            <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:9px 12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-              <!-- Collapsible Section Header -->
-              <div class="collapsible-section-header">
-                <span class="collapsible-section-title">
-                  <i data-lucide="sliders" style="width: 12px; height: 12px; color: var(--primary);"></i>
-                  Playback & Edit Controls
-                </span>
-                <button type="button" onclick="window.togglePlaybackControlsLayout()" id="playbackControlsLayoutBtn" class="collapsible-section-toggle-btn" title="Toggle full-width bottom layout">
+            <!-- ── Scrubber Wrapper (to keep controls and scrubber card together when swapping panels) ── -->
+            <div id="editorScrubberWrapper" style="display:flex; flex-direction:column; flex-shrink:0;">
+              <!-- Layout controls row (above scrubber card) -->
+              <div id="scrubberLayoutControls" style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-bottom:4px; flex-shrink:0;">
+                <!-- Switch Spots Toggle Button -->
+                <button type="button" onclick="window.toggleSwapPanels()" id="swapPanelsBtn2" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:4px 8px; border:1.5px solid var(--border-card); border-radius:8px; background:var(--bg-card-soft); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Switch spots for playback and edit controls">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
+                  <span>Switch Spots</span>
+                </button>
+                <button type="button" onclick="window.togglePlaybackControlsLayout()" id="playbackControlsLayoutBtn" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:4px 8px; border:1.5px solid rgba(74,144,217,0.25); border-radius:8px; background:rgba(74,144,217,0.04); display:flex; align-items:center; gap:3px;" title="Toggle full-width bottom layout">
                   <span>Full Width</span>
                 </button>
               </div>
 
-              <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                <!-- Row 1: step navigator & info -->
-                <div style="display:none;flex-direction:column;text-align:left;min-width:0;width:100%;margin-bottom:2px;border-bottom:1px solid rgba(0,0,0,0.04);padding-bottom:6px;">
-                  <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
-                  <div id="stepNavCount" style="font-size:0.65rem;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Add stops or run AI</div>
-                </div>
-
-                <!-- Unified Editor Controls Strip (All-in-One Row) -->
-                <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
-                  <!-- Left Group (aligned to the right inside its flex area) -->
-                  <div style="flex: 1; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
-                    <!-- Loop/Repeat Toggle -->
-                    <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
-                      <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
-                    </button>
-
-                    <!-- Previous Button -->
-                    <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
-                      <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
-                      <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-                    </button>
-
-                    <!-- Add Stop Button (44px Circle) -->
-                    <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                      style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
-                      title="Add Stop at Current Time">
-                      <i data-lucide="map-pin" style="width: 20px; height: 20px;"></i>
-                    </button>
+              <!-- ── Chapter scrubber (OUTSIDE video, fully visible) ── -->
+              <div id="editorScrubberCard" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:8px 12px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;">
+                <div style="min-width:460px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1.5px solid rgba(0,0,0,0.06);padding-bottom:6px;">
+                    <span style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);">Loop Stops — drag to adjust</span>
+                    <span style="font-size:0.6rem;color:var(--text-muted);font-weight:600;margin-left:4px;" id="chapterDurationLabel">0:00</span>
                   </div>
-
-                  <!-- Center Group (containing the 44px Play/Pause button) -->
-                  <div style="display: flex; justify-content: center; margin: 0 8px; flex-shrink: 0;">
-                    <!-- Play/Pause -->
-                    <button id="toolbarPlayBtn" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
-                      <i id="toolbarPlayIcon" data-lucide="play" style="width: 16px; height: 16px;"></i>
-                    </button>
-                  </div>
-
-                  <!-- Right Group (aligned to the left inside its flex area) -->
-                  <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
-                    <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
-                    <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
-                      <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
-                    </button>
-
-                    <!-- Next Button -->
-                    <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
-                      <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
-                      <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
-                    </button>
-
-                    <!-- Mute/Unmute -->
-                    <button id="editorMuteBtnToolbar" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
-                      <i id="editorMuteIconToolbar" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
-                    </button>
-
-                    <!-- Speed Control -->
-                    <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px; height: 38px;">
-                      <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
-                    </button>
+                  <!-- Scrubber track — clean thin grey timeline rail -->
+                  <div id="videoScrubber" onclick="videoScrubberSeek(event)"
+                    onmousemove="videoScrubberHover(event)" onmouseleave="document.getElementById('videoChapterLabel').style.display='none'"
+                    style="height:10px;background:#cbd5e1;border-radius:999px;position:relative;cursor:pointer;overflow:visible;user-select:none;border:1px solid rgba(0,0,0,0.05);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);margin:12px 0 8px;">
+                    <!-- Loop chapter bands + labels rendered by JS (overflow visible so labels aren't clipped) -->
+                    <div id="videoMarkers" style="position:absolute;inset:0;border-radius:999px;overflow:visible;z-index:10;"></div>
+                    <!-- Playback progress line -->
+                    <div id="videoProgressFill" style="position:absolute;top:0;bottom:0;left:0;height:100%;background:linear-gradient(90deg, var(--primary), var(--primary-light));border-radius:999px;width:0%;pointer-events:none;transition:width 0.06s;z-index:25;"></div>
+                    <!-- Playhead — round white playhead knob -->
+                    <div id="videoThumb" style="position:absolute;top:50%;left:0%;width:16px;height:16px;background:#fff;border:2px solid var(--primary);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:40;box-shadow:0 2px 5px rgba(0,0,0,0.25);transition:left 0.06s;"></div>
+                    <!-- Hover chapter label -->
+                    <div id="videoChapterLabel" style="position:absolute;top:-28px;background:rgba(30,27,75,0.92);color:#fff;font-size:0.6rem;font-weight:700;padding:3px 7px;border-radius:5px;pointer-events:none;display:none;white-space:nowrap;font-family:var(--font);transform:translateX(-50%);z-index:30;"></div>
                   </div>
                 </div>
-                
-                <!-- Hidden compatibility elements -->
-                <div id="stopPreviewBtn" style="display:none;"></div>
+              </div>
+            </div>
+
+            <!-- ── Nav controls bar ── -->
+            <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:9px 12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;">
+              <div style="min-width:460px;display:flex;flex-direction:column;gap:8px;">
+                <!-- Collapsible Section Header -->
+                <div class="collapsible-section-header">
+                  <span class="collapsible-section-title">
+                    <i data-lucide="sliders" style="width: 12px; height: 12px; color: var(--primary);"></i>
+                    Playback & Edit Controls
+                  </span>
+                </div>
+
+                <div id="stepNavControlsContent" style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                  <!-- Row 1: step navigator & info -->
+                  <div style="display:none;flex-direction:column;text-align:left;min-width:0;width:100%;margin-bottom:2px;border-bottom:1px solid rgba(0,0,0,0.04);padding-bottom:6px;">
+                    <div id="stepNavLabel" style="font-weight:900;color:var(--text-heading);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">No stops yet</div>
+                    <div id="stepNavCount" style="font-size:0.65rem;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Add stops or run AI</div>
+                  </div>
+
+                  <!-- Unified Editor Controls Strip (All-in-One Row) -->
+                  <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                    <!-- Left Group (aligned to the right inside its flex area) -->
+                    <div style="flex: 1; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
+                      <!-- Loop/Repeat Toggle -->
+                      <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
+                        <i id="previewLoopIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+                      </button>
+
+                      <!-- Previous Button -->
+                      <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
+                        <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
+                        <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+                      </button>
+
+                      <!-- Add Stop Button (44px Circle) -->
+                      <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
+                        style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
+                        title="Add Stop at Current Time">
+                        <i data-lucide="map-pin" style="width: 20px; height: 20px;"></i>
+                      </button>
+                    </div>
+
+                    <!-- Center Group (containing the 44px Play/Pause button) -->
+                    <div style="display: flex; justify-content: center; margin: 0 8px; flex-shrink: 0;">
+                      <!-- Play/Pause -->
+                      <button id="toolbarPlayBtn" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
+                        <i id="toolbarPlayIcon" data-lucide="play" style="width: 16px; height: 16px;"></i>
+                      </button>
+                    </div>
+
+                    <!-- Right Group (aligned to the left inside its flex area) -->
+                    <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
+                      <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
+                      <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
+                        <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
+                      </button>
+
+                      <!-- Next Button -->
+                      <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
+                        <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
+                        <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
+                      </button>
+
+                      <!-- Mute/Unmute -->
+                      <button id="editorMuteBtnToolbar" onclick="window.toggleEditorMute()" class="control-btn" tabindex="-1" title="Mute/Unmute">
+                        <i id="editorMuteIconToolbar" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+                      </button>
+
+                      <!-- Speed Control -->
+                      <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px; height: 38px;">
+                        <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font);">1.0x</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Hidden compatibility elements -->
+                  <div id="stopPreviewBtn" style="display:none;"></div>
+                </div>
               </div>
             </div>
 
@@ -1525,9 +1585,22 @@
                     <span id="editorTabSelectorLabel">Loop Stops</span>
                     <span style="font-size:0.55rem; margin-left:1px; color:inherit; opacity:0.7;">▼</span>
                   </button>
+
+                  <!-- Layout Selector Dropdown -->
+                  <button id="layoutSelectorBtn" onclick="window.toggleLayoutDropdown(event)" title="Change layout"
+                    style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:4.5px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);white-space:nowrap;flex-shrink:0;">
+                    <span>Layout: Standard</span>
+                    <span style="font-size:0.55rem; margin-left:1px; color:inherit; opacity:0.7;">▼</span>
+                  </button>
                 
+                <!-- Switch Spots Toggle Button -->
+                <button type="button" onclick="window.toggleSwapPanels()" id="swapPanelsBtn" class="collapsible-section-toggle-btn" style="margin-left:auto; font-size:0.72rem; padding:4px 8px; border:1.5px solid var(--border-card); border-radius:8px; background:var(--bg-card-soft); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Switch spots for playback and edit controls">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
+                  <span>Switch Spots</span>
+                </button>
+
                 <!-- Full Width Toggle Button for Description/Recipe Panel -->
-                <button type="button" onclick="window.toggleRecipePanelLayout()" id="editorFullWidthBtn" class="collapsible-section-toggle-btn" style="margin-left:auto; font-size:0.72rem; padding:4px 8px; border:1.5px solid rgba(74,144,217,0.25); border-radius:8px; background:rgba(74,144,217,0.04); display:flex; align-items:center; gap:3px;" title="Toggle full-width bottom layout">
+                <button type="button" onclick="window.toggleRecipePanelLayout()" id="editorFullWidthBtn" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:4px 8px; border:1.5px solid rgba(74,144,217,0.25); border-radius:8px; background:rgba(74,144,217,0.04); display:flex; align-items:center; gap:3px;" title="Toggle full-width bottom layout">
                   <span>Full Width</span>
                 </button>
               </div>            <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
@@ -1704,7 +1777,7 @@
               <div class="glass-card" id="editorSaveButtonsCard" style="padding:12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;box-sizing:border-box;">
                 <button id="saveRecipeBtn" onclick="openFolderSaveModal()"
                   style="width:100%;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:12px;padding:12px;font-family:var(--font);font-weight:900;font-size:0.92rem;cursor:pointer;box-shadow:0 4px 12px rgba(22,163,74,0.35);display:flex;align-items:center;justify-content:center;gap:6px;">
-                  <span>Save Recipe (local preview only)</span>
+                  <span>Save to Folder...</span>
                 </button>
                 <button onclick="saveDraft()" id="saveDraftBtn"
                   style="width:100%;background:#fff;border:2px solid var(--border-card);color:var(--text-body);border-radius:12px;padding:12px;font-family:var(--font);font-weight:800;font-size:0.88rem;cursor:pointer;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -2326,6 +2399,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.40"></script>
+  <script type="module" src="app.js?v=9.46"></script>
 </body>
 </html>

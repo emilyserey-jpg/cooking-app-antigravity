@@ -316,6 +316,15 @@ async function initializeApp() {
       
       const errorOverlay = document.getElementById('videoErrorOverlay');
       const errorOverlayMsg = document.getElementById('videoErrorOverlayMsg');
+      
+      // Do not trigger error overlay if there is no active video URL or if it was cleared/empty
+      const activeRecipe = playerCurrentRecipe || (typeof recipeData === 'object' && recipeData);
+      const recipeVideoUrl = activeRecipe ? activeRecipe.video_url : null;
+      if (!recipeVideoUrl || !src || src === window.location.href) {
+        if (errorOverlay) errorOverlay.style.display = 'none';
+        return;
+      }
+
       if (errorOverlay) {
         errorOverlay.style.display = 'flex';
         if (errorOverlayMsg) {
@@ -417,6 +426,9 @@ async function initializeApp() {
   window.updateAIChecklists();
   window.syncCustomPageUI();
   window.setKeyboardMode(keyboardMode);
+  if (typeof window.updateEditorSaveButtonsUI === 'function') {
+    window.updateEditorSaveButtonsUI();
+  }
 }
 
 // App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
@@ -2261,7 +2273,7 @@ function renderPlayerIngredients() {
   }
   
   const recipeData = getActiveRecipeData();
-  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
+  const rawIngredientsStr = (recipeData && typeof recipeData.ingredients === 'string') ? recipeData.ingredients : '';
   
   if (!rawIngredientsStr || !rawIngredientsStr.trim()) {
     panel.style.display = 'none';
@@ -2458,7 +2470,7 @@ function getActiveRecipeData() {
 
 function addRecipeIngredientsToGrocery() {
   const recipeData = getActiveRecipeData();
-  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
+  const rawIngredientsStr = (recipeData && typeof recipeData.ingredients === 'string') ? recipeData.ingredients : '';
   let cleanIngredientsStr = rawIngredientsStr || '';
   if (cleanIngredientsStr.includes('---CUSTOM_PAGES---')) {
     const parts = cleanIngredientsStr.split('---INGREDIENTS---');
@@ -2518,7 +2530,7 @@ function addRecipeIngredientsToGrocery() {
 
 window.updateGroceryButtonState = function() {
   const recipeData = getActiveRecipeData();
-  const rawIngredientsStr = recipeData ? recipeData.ingredients : '';
+  const rawIngredientsStr = (recipeData && typeof recipeData.ingredients === 'string') ? recipeData.ingredients : '';
   let cleanIngredientsStr = rawIngredientsStr || '';
   if (cleanIngredientsStr.includes('---CUSTOM_PAGES---')) {
     const parts = cleanIngredientsStr.split('---INGREDIENTS---');
@@ -4802,23 +4814,15 @@ window.saveDraft = async function() {
     }
 
     showTip(`"${title}" saved!`);
-    if (btn) {
-      btn.disabled = false;
-      if (btn.querySelector('span')) {
-        btn.innerHTML = '<span>Save</span>';
-      } else {
-        btn.textContent = 'Save';
-      }
+    if (btn) btn.disabled = false;
+    if (typeof window.updateEditorSaveButtonsUI === 'function') {
+      window.updateEditorSaveButtonsUI();
     }
   } catch (err) {
     showTip('Could not save: ' + err.message);
-    if (btn) {
-      btn.disabled = false;
-      if (btn.querySelector('span')) {
-        btn.innerHTML = '<span>Save</span>';
-      } else {
-        btn.textContent = 'Save';
-      }
+    if (btn) btn.disabled = false;
+    if (typeof window.updateEditorSaveButtonsUI === 'function') {
+      window.updateEditorSaveButtonsUI();
     }
   }
 };
@@ -5257,6 +5261,30 @@ function renderPlayerTimelineMarkers() {
   });
 }
 
+window.updateEditorSaveButtonsUI = function() {
+  const saveBtn = document.getElementById('saveRecipeBtn');
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
+  const isEdit = !!editingRecipeId;
+
+  if (saveBtn) {
+    const label = isEdit ? 'Update Folder...' : 'Save to Folder...';
+    if (saveBtn.querySelector('span')) {
+      saveBtn.querySelector('span').textContent = label;
+    } else {
+      saveBtn.textContent = label;
+    }
+  }
+
+  if (saveDraftBtn) {
+    const label = isEdit ? 'Update' : 'Save';
+    if (saveDraftBtn.querySelector('span')) {
+      saveDraftBtn.querySelector('span').textContent = label;
+    } else {
+      saveDraftBtn.textContent = label;
+    }
+  }
+};
+
 window.loadRecipeToEditor = function(recipe) {
   if (!recipe) return;
 
@@ -5270,6 +5298,9 @@ window.loadRecipeToEditor = function(recipe) {
   }
   
   editingRecipeId = recipe.id;
+  if (typeof window.updateEditorSaveButtonsUI === 'function') {
+    window.updateEditorSaveButtonsUI();
+  }
 
   // Load saved subtitles / transcription
   cachedSegments = recipe.text_overlays || [];
@@ -7444,6 +7475,7 @@ function libRenderContent() {
 
     // Attach drag events after render
     libAttachDragEvents();
+    if (window.lucide) window.lucide.createIcons();
   } catch (err) {
     console.error('libRenderContent error:', err);
     content.innerHTML = `<div style="text-align:center;padding:4rem;color:#ef4444;font-family:var(--font);">
@@ -7472,7 +7504,7 @@ function libFolderCardHTML(f) {
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
           style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
-          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">Delete</button>
+          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
       </div>
       <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;color:var(--primary);display:flex;align-items:center;justify-content:center;"><i data-lucide="folder" style="width:48px;height:48px;"></i></div>
       <div>
@@ -7504,19 +7536,19 @@ function libRecipeCardHTML(r, folderId) {
       </button>
     `;
   } else {
-    // In-folder video
+    // In-folder video: simple grey Remove button
     folderSelectHtml = `
-      <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', '${folderId}')" 
-              class="lib-folder-select-trigger"
-              style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
-        Move to...
+      <button onclick="event.stopPropagation(); libRemoveFromFolder('${r.id}', '${folderId}')" 
+              title="Remove from folder"
+              style="display:inline-flex; align-items:center; gap:4px; border:none; border-radius:8px; padding:5px 10px; font-family:var(--font); font-weight:800; font-size:0.65rem; outline:none; background:rgba(0,0,0,0.06); color:var(--text-muted); cursor:pointer; white-space:nowrap; transition: background 0.2s;">
+        Remove
       </button>
     `;
   }
 
   const deleteBtn = !folderId
     ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete video"
-         style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">Delete Delete</button>`
+         style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">Delete</button>`
     : '';
 
   // Thumbnail markup
@@ -7648,7 +7680,7 @@ window.libDeleteRecipe = async function(id) {
   try {
     const { deleteRecipeById } = await import('./supabase-client.js');
     await deleteRecipeById(id);
-    showTip('Video deleted Delete');
+    showTip('Video deleted');
     renderLibrary();
   } catch (err) {
     showTip('Could not delete video: ' + err.message);
@@ -7737,6 +7769,7 @@ function libRenderFolderView(content) {
   }
 
   content.innerHTML = html;
+  if (window.lucide) window.lucide.createIcons();
 }
 
 window.libCloseFolder = function() {
@@ -7985,6 +8018,7 @@ function libUpdateSortBtns() {
   if (select) {
     select.value = mode;
   }
+  libUpdateOptionsDropdownHighlighting();
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────
@@ -8002,6 +8036,70 @@ function libUpdateLayoutBtns() {
   if (select) {
     select.value = mode;
   }
+  libUpdateOptionsDropdownHighlighting();
+}
+
+// ── Combined Options Dropdown ─────────────────────────────────────────────
+window.toggleLibOptionsDropdown = function(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('libOptionsDropdownMenu');
+  const chevron = document.getElementById('libOptionsChevron');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || menu.style.display === '';
+  if (isHidden) {
+    menu.style.display = 'flex';
+    if (chevron) chevron.style.transform = 'rotate(180deg)';
+    libUpdateOptionsDropdownHighlighting();
+  } else {
+    menu.style.display = 'none';
+    if (chevron) chevron.style.transform = '';
+  }
+};
+
+function libUpdateOptionsDropdownHighlighting() {
+  const currentSort = libState?.sort || 'az';
+  const currentLayout = libState?.layout || 'grid';
+  
+  ['az', 'za', 'custom'].forEach(mode => {
+    const btn = document.getElementById('libOptSort_' + mode);
+    if (btn) {
+      const checkIcon = btn.querySelector('.lib-check-icon');
+      if (mode === currentSort) {
+        btn.style.background = 'var(--bg-card-soft)';
+        btn.style.color = 'var(--primary)';
+        if (checkIcon) checkIcon.style.display = 'block';
+      } else {
+        btn.style.background = 'none';
+        btn.style.color = 'var(--text-heading)';
+        if (checkIcon) checkIcon.style.display = 'none';
+      }
+    }
+  });
+
+  ['grid', 'list', 'compact'].forEach(mode => {
+    const btn = document.getElementById('libOptLayout_' + mode);
+    if (btn) {
+      const checkIcon = btn.querySelector('.lib-check-icon');
+      if (mode === currentLayout) {
+        btn.style.background = 'var(--bg-card-soft)';
+        btn.style.color = 'var(--primary)';
+        if (checkIcon) checkIcon.style.display = 'block';
+      } else {
+        btn.style.background = 'none';
+        btn.style.color = 'var(--text-heading)';
+        if (checkIcon) checkIcon.style.display = 'none';
+      }
+    }
+  });
+  
+  const label = document.getElementById('libOptionsActiveLabel');
+  if (label) {
+    const sortLabel = currentSort === 'az' ? 'A-Z' : currentSort === 'za' ? 'Z-A' : 'Custom';
+    const layoutLabel = currentLayout.charAt(0).toUpperCase() + currentLayout.slice(1);
+    label.textContent = `View: ${sortLabel} • ${layoutLabel}`;
+  }
+  
+  if (window.lucide) window.lucide.createIcons();
 }
 
 // ── Search ────────────────────────────────────────────────────────────────
@@ -8489,42 +8587,53 @@ function updateMultigridLayoutClass() {
         const isPortrait = aspect < 1;
         const isDesktop = window.innerWidth >= 768;
         
-        let h;
-        if (isPortrait) {
-          if (isDesktop) {
-            // On desktop, portrait video should be tall and prominent, matching Editor View height bounds
-            const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82);
-            h = Math.max(440, Math.min(maxAllowedHeight, 780));
-          } else {
-            // On mobile, portrait video matches Editor View: min(460px, 60vh)
-            h = Math.min(460, Math.round(window.innerHeight * 0.6));
-          }
-        } else {
-          h = Math.round(w * 9 / 16);
-        }
-        
-        videoContainer.style.setProperty('height', `${h}px`, 'important');
-        videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
-        
-        if (isPortrait) {
-          if (isDesktop) {
-            // Calculate container width based on aspect ratio
-            let containerWidth = Math.round(h * aspect);
-            if (containerWidth > w) {
-              containerWidth = w;
-              h = Math.round(containerWidth / aspect);
-              videoContainer.style.setProperty('height', `${h}px`, 'important');
+        if (isDesktop) {
+          const leftColWidth = leftCol ? (leftCol.getBoundingClientRect().width - 12) : 600;
+          const scale = window.editorVideoScale || 1.0;
+          
+          let targetHeight, targetWidth;
+          if (aspect >= 1) {
+            // Landscape
+            targetHeight = leftColWidth / aspect;
+            const minH = 320 * scale;
+            const maxH = 650 * scale;
+            targetHeight = Math.max(minH, Math.min(maxH, targetHeight));
+            targetWidth = targetHeight * aspect;
+            if (targetWidth > leftColWidth) {
+              targetWidth = leftColWidth;
+              targetHeight = targetWidth / aspect;
             }
-            videoContainer.style.setProperty('width', `${containerWidth}px`, 'important');
-            videoContainer.style.setProperty('margin', '0 auto', 'important');
           } else {
-            // On mobile, let the video container be full width (100%) and match Editor View sizing
+            // Portrait
+            const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82) * scale;
+            const minH = 440 * scale;
+            targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 780 * scale));
+            targetWidth = targetHeight * aspect;
+            if (targetWidth > leftColWidth) {
+              targetWidth = leftColWidth;
+              targetHeight = targetWidth / aspect;
+            }
+          }
+          
+          videoContainer.style.setProperty('height', `${targetHeight}px`, 'important');
+          videoContainer.style.setProperty('width', `${targetWidth}px`, 'important');
+          videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+          videoContainer.style.setProperty('margin', '0 auto', 'important');
+          videoContainer.style.setProperty('align-self', 'center', 'important');
+        } else {
+          let h;
+          if (isPortrait) {
+            h = Math.min(460, Math.round(window.innerHeight * 0.6));
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
+          } else {
+            h = Math.round(w * 9 / 16);
+            videoContainer.style.setProperty('width', '100%', 'important');
+            videoContainer.style.removeProperty('margin');
           }
-        } else {
-          videoContainer.style.setProperty('width', '100%', 'important');
-          videoContainer.style.removeProperty('margin');
+          videoContainer.style.setProperty('height', `${h}px`, 'important');
+          videoContainer.style.setProperty('aspect-ratio', `${aspect}`, 'important');
+          videoContainer.style.removeProperty('align-self');
         }
         
         if (placeholder) {
@@ -9074,7 +9183,9 @@ async function uploadToCFStream(file) {
     console.error('CF upload error:', err);
     if (statusMsg)  statusMsg.textContent = ' Upload failed: ' + (err.message || 'Unknown error');
     if (progressBar) progressBar.style.background = '#f87171';
-    if (saveBtn)     saveBtn.textContent = ' Save Recipe (local preview only)';
+    if (saveBtn && typeof window.updateEditorSaveButtonsUI === 'function') {
+      window.updateEditorSaveButtonsUI();
+    }
     showTip('CF upload failed — video will save in preview mode.');
     // Still allow saving with localVideoURL as fallback
     uploadedVideoUID = null;
@@ -9946,6 +10057,7 @@ window.navOrScrub = function(dir) {
 };
 
 window.currentWorkbenchLayout = 'standard';
+window.swapWorkbenchPanels = false;
 window.isControlsFullWidth = false;
 window.resizedRecipeHeight = 380;
 window.resizedControlsHeight = 220;
@@ -9974,13 +10086,16 @@ window.toggleLayoutDropdown = function(e) {
 
     menu.innerHTML = `
       <button onclick="window.switchWorkbenchLayout('standard')" id="optLayoutStandard" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        ️ Standard Layout
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></svg>
+        Standard Layout
       </button>
       <button onclick="window.switchWorkbenchLayout('bottom-controls')" id="optLayoutControls" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        ↔️ Bottom Playback Controls
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><rect width="18" height="7" x="3" y="3" rx="1"/><rect width="7" height="9" x="3" y="14" rx="1"/><rect width="7" height="9" x="14" y="14" rx="1"/></svg>
+        Bottom Playback Controls
       </button>
       <button onclick="window.switchWorkbenchLayout('bottom-recipe')" id="optLayoutRecipe" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-         Bottom Editor / Timeline
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 12h18"/></svg>
+        Bottom Editor / Timeline
       </button>
     `;
     document.body.appendChild(menu);
@@ -10037,7 +10152,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
 
   // Get key elements
   const controls = document.getElementById('stepNavControlsRow');
-  const scrubber = document.getElementById('editorScrubberCard');
+  const scrubber = document.getElementById('editorScrubberWrapper') || document.getElementById('editorScrubberCard');
   const leftCol = document.getElementById('workbenchLeft');
   const rightCol = document.getElementById('workbenchRight');
   const resizer = document.getElementById('workbenchResizer');
@@ -10278,7 +10393,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       layoutBtn.style.display = 'inline-flex';
       const span = layoutBtn.querySelector('span');
       if (span) {
-        span.textContent = (layoutMode === 'bottom-controls') ? '↔️ Column Layout' : '↔️ Full Width';
+        span.textContent = (layoutMode === 'bottom-controls') ? 'Column Layout' : 'Full Width';
       }
     }
   }
@@ -10292,7 +10407,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       recipeLayoutBtn.style.display = 'inline-flex';
       const span = recipeLayoutBtn.querySelector('span');
       if (span) {
-        span.textContent = (layoutMode === 'bottom-recipe') ? '↔️ Column Layout' : '↔️ Full Width';
+        span.textContent = (layoutMode === 'bottom-recipe') ? 'Column Layout' : 'Full Width';
       }
     }
   }
@@ -10301,17 +10416,20 @@ window.switchWorkbenchLayout = function(layoutMode) {
 
   // Sync the "Switch Spots" button styling
   const swapBtn = document.getElementById('swapPanelsBtn');
-  if (swapBtn) {
-    if (window.swapWorkbenchPanels) {
-      swapBtn.style.background = 'var(--primary-light)';
-      swapBtn.style.color = 'var(--primary)';
-      swapBtn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
-    } else {
-      swapBtn.style.background = 'var(--bg-card-soft)';
-      swapBtn.style.color = 'var(--text-body)';
-      swapBtn.style.borderColor = 'var(--border-card)';
+  const swapBtn2 = document.getElementById('swapPanelsBtn2');
+  [swapBtn, swapBtn2].forEach(btn => {
+    if (btn) {
+      if (window.swapWorkbenchPanels) {
+        btn.style.background = 'var(--primary-light)';
+        btn.style.color = 'var(--primary)';
+        btn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+      } else {
+        btn.style.background = 'var(--bg-card-soft)';
+        btn.style.color = 'var(--text-body)';
+        btn.style.borderColor = 'var(--border-card)';
+      }
     }
-  }
+  });
 
   // Sync the "Full Width" button styling
   const fullWidthBtn = document.getElementById('editorFullWidthBtn');
@@ -11937,6 +12055,7 @@ window.saveNewRecipe = async function(targetFolderId) {
 
     // Build video_url: prefer CF Stream, upload to Supabase if CF is not configured, fall back to local blob
     let videoUrl = null;
+    const currentVideoSrc = videoEl?.src || '';
     if (uploadedVideoUID) {
       videoUrl = `https://videodelivery.net/${uploadedVideoUID}/manifest/video.m3u8`;
     } else if (uploadedFile) {
@@ -11952,6 +12071,8 @@ window.saveNewRecipe = async function(targetFolderId) {
         showTip('Supabase Video upload failed. Please ensure you have created a public bucket named "videos" in your Supabase dashboard.');
         throw new Error('Supabase video upload failed: ' + upErr.message);
       }
+    } else if (currentVideoSrc && !currentVideoSrc.startsWith('blob:') && currentVideoSrc.startsWith('http')) {
+      videoUrl = currentVideoSrc;
     } else if (editingRecipeId && playerCurrentRecipe) {
       // Preserve existing video URL
       videoUrl = playerCurrentRecipe.video_url || null;
@@ -12060,7 +12181,10 @@ window.saveNewRecipe = async function(targetFolderId) {
   } catch (err) {
     console.error('Save error:', err);
     showTip('Could not save: ' + (err.message || 'Unknown error'));
-    if (btn) { btn.disabled = false; btn.textContent = ' Save Recipe'; }
+    if (btn) btn.disabled = false;
+    if (typeof window.updateEditorSaveButtonsUI === 'function') {
+      window.updateEditorSaveButtonsUI();
+    }
   }
 };
 
@@ -12107,6 +12231,9 @@ window.resetCreateView = function() {
     window.closeAllMobileDrawers();
   }
   editingRecipeId  = null;
+  if (typeof window.updateEditorSaveButtonsUI === 'function') {
+    window.updateEditorSaveButtonsUI();
+  }
   uploadedVideoUID = null;
   localVideoURL    = null;
   uploadedFile     = null;
@@ -15943,7 +16070,7 @@ window.generateCustomPageContent = async function(tabId) {
   }
 };
 
-// Global click listener to auto-dismiss editor tab dropdown and speed dropdown
+// Global click listener to auto-dismiss editor tab dropdown, speed dropdown, and library options dropdown
 document.addEventListener('click', (e) => {
   const menu = document.getElementById('editorTabDropdownContent');
   if (menu && menu.style.display === 'flex') {
@@ -15955,6 +16082,14 @@ document.addEventListener('click', (e) => {
   if (speedMenu && speedMenu.style.display === 'flex') {
     if (!e.target.closest('#playerSpeedDropdownMenu') && !e.target.closest('#playerSpeedBtn')) {
       speedMenu.style.display = 'none';
+    }
+  }
+  const libOptsMenu = document.getElementById('libOptionsDropdownMenu');
+  if (libOptsMenu && libOptsMenu.style.display === 'flex') {
+    if (!e.target.closest('#libOptionsDropdownMenu') && !e.target.closest('#libOptionsDropdownBtn')) {
+      libOptsMenu.style.display = 'none';
+      const chevron = document.getElementById('libOptionsChevron');
+      if (chevron) chevron.style.transform = '';
     }
   }
 });

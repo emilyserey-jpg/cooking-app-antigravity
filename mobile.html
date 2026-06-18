@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css">
+  <link rel="stylesheet" href="mobile_v853.css?v=9.46">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -520,24 +520,68 @@
               style="width:100%;box-sizing:border-box;padding:10px 14px 10px 36px;border-radius:12px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.88rem;font-weight:600;color:var(--text-heading);outline:none;transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
           </div>
-          <!-- Sort pills -->
-          <select id="libSortSelect" onchange="libSetSort(this.value)"
-            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 140px;"
-            onfocus="this.style.borderColor='var(--primary)'" 
-            onblur="this.style.borderColor='var(--border-card)'">
-            <option value="az">Sort: A → Z</option>
-            <option value="za">Sort: Z → A</option>
-            <option value="custom">Sort: Custom</option>
-          </select>
-          <!-- Layout pills -->
-          <select id="libLayoutSelect" onchange="libSetLayout(this.value)"
-            style="padding: 10px 36px 10px 14px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23718096%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9l6 6 6-6%22/%3E%3C/svg%3E') no-repeat right 12px center; background-size: 14px; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; min-width: 145px;"
-            onfocus="this.style.borderColor='var(--primary)'" 
-            onblur="this.style.borderColor='var(--border-card)'">
-            <option value="grid">Layout: Grid</option>
-            <option value="list">Layout: List</option>
-            <option value="compact">Layout: Compact</option>
-          </select>
+          <!-- Combined Sort & Layout Options Dropdown -->
+          <div class="lib-options-dropdown-wrapper" style="position: relative; display: inline-block;">
+            <button id="libOptionsDropdownBtn" onclick="window.toggleLibOptionsDropdown(event)" 
+              style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 8px;"
+              onfocus="this.style.borderColor='var(--primary)'" 
+              onblur="this.style.borderColor='var(--border-card)'">
+              <i data-lucide="sliders-horizontal" style="width: 14px; height: 14px; stroke-width: 2.5;"></i>
+              <span id="libOptionsActiveLabel">View Options</span>
+              <i data-lucide="chevron-down" style="width: 12px; height: 12px; stroke-width: 2.5; transition: transform 0.2s;" id="libOptionsChevron"></i>
+            </button>
+            <div id="libOptionsDropdownMenu" class="lib-options-dropdown-menu" 
+              style="display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 2px solid var(--border-card); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1000; padding: 12px; min-width: 210px; flex-direction: column; gap: 10px; box-sizing: border-box;">
+              
+              <!-- Sort Section -->
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Sort By</span>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <button onclick="window.libSetSort('az')" class="lib-option-item" id="libOptSort_az" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>A → Z</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetSort('za')" class="lib-option-item" id="libOptSort_za" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>Z → A</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetSort('custom')" class="lib-option-item" id="libOptSort_custom" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span>Custom Drag</span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Separator -->
+              <div style="height: 1px; background: var(--border-card); margin: 2px 0;"></div>
+
+              <!-- Layout Section -->
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Layout</span>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <button onclick="window.libSetLayout('grid')" class="lib-option-item" id="libOptLayout_grid" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="grid" style="width: 13px; height: 13px;"></i> Grid
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetLayout('list')" class="lib-option-item" id="libOptLayout_list" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="list" style="width: 13px; height: 13px;"></i> List
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                  <button onclick="window.libSetLayout('compact')" class="lib-option-item" id="libOptLayout_compact" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <i data-lucide="align-justify" style="width: 13px; height: 13px;"></i> Compact
+                    </span>
+                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
 
         <!-- ── Main library content ── -->
@@ -1712,7 +1756,7 @@
             </div>
             <button id="saveRecipeBtn" onclick="openFolderSaveModal()"
               style="width:100%; background:var(--green); color:#fff; border:none; border-radius:999px; padding:12px; font-family:var(--font); font-size:0.88rem; font-weight:900; cursor:pointer; box-shadow:0 6px 18px rgba(92,184,92,0.3); flex-shrink:0;">
-              &#x2705; Save Recipe
+              Save to Folder...
             </button>
             <button onclick="saveDraft()" id="saveDraftBtn"
               style="width:100%; background:#fff; color:var(--text-muted); border:2px solid var(--border-card); border-radius:999px; padding:9px; font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; flex-shrink:0; margin-bottom:8px;">
@@ -2384,6 +2428,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=9.40"></script>
+  <script type="module" src="app.js?v=9.46"></script>
 </body>
 </html>

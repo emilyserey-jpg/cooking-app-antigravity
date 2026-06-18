@@ -3589,9 +3589,11 @@ a:focus-visible {
 
 /* Panel-wide scroll rules for narrow desktop views */
 #videoResizerBar,
+#editorScrubberWrapper,
 #editorScrubberCard,
 #stepNavControlsRow {
-  min-width: 430px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   box-sizing: border-box;
 }
 

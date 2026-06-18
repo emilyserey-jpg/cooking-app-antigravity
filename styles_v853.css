@@ -1584,7 +1584,7 @@ h1, h2, h3, h4, h5 {
     padding-top: 0 !important;
     background: transparent !important;
     display: grid !important;
-    grid-template-columns: 1.25fr 1fr !important;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) !important;
     gap: 24px !important;
     overflow: visible !important;
     height: auto !important;
@@ -3330,9 +3330,11 @@ a:focus-visible {
 
 /* Panel-wide scroll rules for narrow desktop views */
 #videoResizerBar,
+#editorScrubberWrapper,
 #editorScrubberCard,
 #stepNavControlsRow {
-  min-width: 430px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   box-sizing: border-box;
 }
 
@@ -3484,4 +3486,9 @@ a:focus-visible {
     font-size: 0.95rem !important;
     line-height: 1.6 !important;
   }
+}
+
+/* Library Options Dropdown Item Hover */
+.lib-option-item:hover {
+  background-color: var(--bg-card-soft) !important;
 }

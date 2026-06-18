@@ -52,5 +52,5 @@
 - [x] Remove leading "+" sign from the "Add Custom Page" option in the editor tab dropdown menu
 - [x] Move the purple and pink AI buttons above the step tabs in Loop Stops
 - [x] Move the Add Stop and Keyboard Toggle buttons into the main playback controls row (symmetrically around the Play/Pause button)
-
+- [x] Relocate "Switch Spots" and "Full Width" layout option buttons to a dedicated control row above the loop stops scrubber card, resolve the horizontal timeline scroll clipping issue by replacing min-width constraints with max-width responsive rules, and bump script cache-busting version parameter to v=9.45
 
