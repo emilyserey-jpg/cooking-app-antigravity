@@ -10167,8 +10167,8 @@ window.switchWorkbenchLayout = function(layoutMode) {
   // Restore controls strip default layout offset style
   const controlsStrip = controls.querySelector('.player-controls-strip');
   if (controlsStrip) {
-    controlsStrip.style.position = 'relative';
-    controlsStrip.style.left = '-35px';
+    controlsStrip.style.position = 'static';
+    controlsStrip.style.left = '0';
   }
 
   // Reset parents and default styles first
@@ -10211,7 +10211,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
   grid.style.height = 'auto';
   grid.style.minHeight = '0';
     leftCol.style.overflowY = 'auto';
-  leftCol.style.overflowX = 'auto';
+  leftCol.style.overflowX = 'hidden';
 
   if (layoutMode === 'standard') {
     window.isControlsFullWidth = false;
