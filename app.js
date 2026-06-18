@@ -10191,10 +10191,21 @@ window.switchWorkbenchLayout = function(layoutMode) {
   }
 
   // Restore default left/right flex widths
-  leftCol.style.width = 'calc(100% - 420px)';
-  leftCol.style.flex = 'none';
-  rightCol.style.width = '420px';
-  rightCol.style.flex = 'none';
+  if (window.swapWorkbenchPanels) {
+    leftCol.style.width = '420px';
+    leftCol.style.flex = '0 1 420px';
+    leftCol.style.minWidth = '320px';
+    rightCol.style.width = 'calc(100% - 420px)';
+    rightCol.style.flex = '1 1 auto';
+    rightCol.style.minWidth = '320px';
+  } else {
+    leftCol.style.width = 'calc(100% - 420px)';
+    leftCol.style.flex = '1 1 auto';
+    leftCol.style.minWidth = '320px';
+    rightCol.style.width = '420px';
+    rightCol.style.flex = '0 1 420px';
+    rightCol.style.minWidth = '320px';
+  }
   controls.style.flex = 'none';
   controls.style.width = '100%';
   if (scrubber) {
@@ -10298,9 +10309,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.display = 'flex';
       
       leftCol.style.width = 'calc(100% - 420px)';
-      leftCol.style.flex = 'none';
+      leftCol.style.flex = '1 1 auto';
+      leftCol.style.minWidth = '320px';
       rightCol.style.width = '420px';
-      rightCol.style.flex = 'none';
+      rightCol.style.flex = '0 1 420px';
+      rightCol.style.minWidth = '320px';
     }
   } else if (layoutMode === 'bottom-recipe') {
     window.isControlsFullWidth = false;
@@ -10365,9 +10378,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
       
       // Restore default widths for columns in the top grid
       leftCol.style.width = 'calc(100% - 420px)';
-      leftCol.style.flex = 'none';
+      leftCol.style.flex = '1 1 auto';
+      leftCol.style.minWidth = '320px';
       rightCol.style.width = '420px';
-      rightCol.style.flex = 'none';
+      rightCol.style.flex = '0 1 420px';
+      rightCol.style.minWidth = '320px';
     } else {
       // Normal: Video player, scrubber and controls in leftCol. Recipe panel at bottomCol.
       // Stretch leftCol to 100% width
