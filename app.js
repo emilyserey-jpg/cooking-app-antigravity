@@ -10191,19 +10191,20 @@ window.switchWorkbenchLayout = function(layoutMode) {
   }
 
   // Restore default left/right flex widths
+  const fixedW = window.workbenchFixedColumnWidth || 420;
   if (window.swapWorkbenchPanels) {
-    leftCol.style.width = '420px';
-    leftCol.style.flex = '0 1 420px';
+    leftCol.style.width = fixedW + 'px';
+    leftCol.style.flex = `0 1 ${fixedW}px`;
     leftCol.style.minWidth = '320px';
-    rightCol.style.width = 'calc(100% - 420px)';
+    rightCol.style.width = `calc(100% - ${fixedW}px)`;
     rightCol.style.flex = '1 1 auto';
     rightCol.style.minWidth = '320px';
   } else {
-    leftCol.style.width = 'calc(100% - 420px)';
+    leftCol.style.width = `calc(100% - ${fixedW}px)`;
     leftCol.style.flex = '1 1 auto';
     leftCol.style.minWidth = '320px';
-    rightCol.style.width = '420px';
-    rightCol.style.flex = '0 1 420px';
+    rightCol.style.width = fixedW + 'px';
+    rightCol.style.flex = `0 1 ${fixedW}px`;
     rightCol.style.minWidth = '320px';
   }
   controls.style.flex = 'none';
@@ -10308,11 +10309,12 @@ window.switchWorkbenchLayout = function(layoutMode) {
       resizer.style.display = 'flex';
       rightCol.style.display = 'flex';
       
-      leftCol.style.width = 'calc(100% - 420px)';
+      const fixedW = window.workbenchFixedColumnWidth || 420;
+      leftCol.style.width = `calc(100% - ${fixedW}px)`;
       leftCol.style.flex = '1 1 auto';
       leftCol.style.minWidth = '320px';
-      rightCol.style.width = '420px';
-      rightCol.style.flex = '0 1 420px';
+      rightCol.style.width = fixedW + 'px';
+      rightCol.style.flex = `0 1 ${fixedW}px`;
       rightCol.style.minWidth = '320px';
     }
   } else if (layoutMode === 'bottom-recipe') {
@@ -10377,11 +10379,12 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.display = 'flex';
       
       // Restore default widths for columns in the top grid
-      leftCol.style.width = 'calc(100% - 420px)';
+      const fixedW = window.workbenchFixedColumnWidth || 420;
+      leftCol.style.width = `calc(100% - ${fixedW}px)`;
       leftCol.style.flex = '1 1 auto';
       leftCol.style.minWidth = '320px';
-      rightCol.style.width = '420px';
-      rightCol.style.flex = '0 1 420px';
+      rightCol.style.width = fixedW + 'px';
+      rightCol.style.flex = `0 1 ${fixedW}px`;
       rightCol.style.minWidth = '320px';
     } else {
       // Normal: Video player, scrubber and controls in leftCol. Recipe panel at bottomCol.
@@ -15017,13 +15020,7 @@ function setupWorkbenchResizer() {
     }
   });
 
-  let startX = 0;
-  let startWidth = 0;
-
   function onMouseDown(e) {
-    startX = e.clientX;
-    startWidth = parseInt(document.defaultView.getComputedStyle(leftSide).width, 10);
-    
     // Add event listeners for dragging
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
@@ -15038,15 +15035,49 @@ function setupWorkbenchResizer() {
   }
 
   function onMouseMove(e) {
-    const deltaX = e.clientX - startX;
-    // Calculate new width, constrained between 320px and 1100px (or 80% of window size)
-    const minW = 320;
-    const maxW = Math.min(1100, window.innerWidth * 0.8);
-    let newWidth = startWidth + deltaX;
-    if (newWidth < minW) newWidth = minW;
-    if (newWidth > maxW) newWidth = maxW;
+    const gridRect = grid.getBoundingClientRect();
+    const layoutMode = window.currentWorkbenchLayout || 'standard';
+    
+    // Determine which column is fixed and calculate its new width based on mouse pointer position
+    let newFixedW;
+    if (window.swapWorkbenchPanels && layoutMode === 'standard') {
+      // Swapped standard layout: leftCol is fixed, rightCol is flex
+      newFixedW = e.clientX - gridRect.left;
+    } else {
+      // Normal layouts or bottom layouts: leftCol is flex, rightCol is fixed
+      newFixedW = gridRect.right - e.clientX;
+    }
 
-    leftSide.style.width = newWidth + 'px';
+    // Apply constraints to the fixed column width: min 320px, max 80% of window/grid width
+    const minW = 320;
+    const maxW = Math.min(gridRect.width - 320, window.innerWidth * 0.8);
+    if (newFixedW < minW) newFixedW = minW;
+    if (newFixedW > maxW) newFixedW = maxW;
+
+    window.workbenchFixedColumnWidth = newFixedW;
+
+    // Apply the new widths inline to both columns to avoid any flex constraints override
+    const rightCol = document.getElementById('workbenchRight');
+    if (window.swapWorkbenchPanels && layoutMode === 'standard') {
+      leftSide.style.width = newFixedW + 'px';
+      leftSide.style.flex = `0 1 ${newFixedW}px`;
+      leftSide.style.minWidth = '320px';
+      if (rightCol) {
+        rightCol.style.width = `calc(100% - ${newFixedW}px)`;
+        rightCol.style.flex = '1 1 auto';
+        rightCol.style.minWidth = '320px';
+      }
+    } else {
+      leftSide.style.width = `calc(100% - ${newFixedW}px)`;
+      leftSide.style.flex = '1 1 auto';
+      leftSide.style.minWidth = '320px';
+      if (rightCol) {
+        rightCol.style.width = newFixedW + 'px';
+        rightCol.style.flex = `0 1 ${newFixedW}px`;
+        rightCol.style.minWidth = '320px';
+      }
+    }
+
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -15256,8 +15287,15 @@ window.toggleEditorSidebar = function() {
     rightPanel.style.display = 'flex';
     if (resizer) resizer.style.display = 'flex';
     if (leftCol) {
-      leftCol.style.width = 'calc(100% - 420px)';
-      leftCol.style.flex = 'none';
+      const fixedW = window.workbenchFixedColumnWidth || 420;
+      const layoutMode = window.currentWorkbenchLayout || 'standard';
+      if (window.swapWorkbenchPanels && layoutMode === 'standard') {
+        leftCol.style.width = fixedW + 'px';
+        leftCol.style.flex = `0 1 ${fixedW}px`;
+      } else {
+        leftCol.style.width = `calc(100% - ${fixedW}px)`;
+        leftCol.style.flex = '1 1 auto';
+      }
     }
   } else {
     rightPanel.style.display = 'none';
