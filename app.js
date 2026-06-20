@@ -4259,12 +4259,43 @@ function mySpaceRenderFolderStrip() {
 
     const colorVal = f.color || '#4a90d9';
 
-    // Premium glowing folder SVG icon using Lucide style folder shape
-    const folderIconSvg = `
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom:auto; flex-shrink:0;">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-      </svg>
-    `;
+    const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+    const folderRecipes = (f.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
+
+    const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
+    const hasPreviews = previewRecipes.length > 0;
+
+    let folderIconHtml = '';
+    if (hasPreviews) {
+      folderIconHtml = `
+        <div class="folder-preview-container" style="position:relative; width:40px; height:40px; margin-bottom:auto; flex-shrink:0;">
+          <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; top:0; left:0; width:100%; height:100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: opacity 0.25s;">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transition: opacity 0.25s; overflow:hidden; pointer-events:none;">
+            <svg width="40" height="40" viewBox="0 0 24 24">
+              <defs>
+                <mask id="folderMask-${f.id}">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="#ffffff"></path>
+                </mask>
+              </defs>
+              <g mask="url(#folderMask-${f.id})">
+                <foreignObject x="0" y="0" width="24" height="24">
+                  <div class="folder-preview-content" style="width:24px; height:24px; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                  </div>
+                </foreignObject>
+              </g>
+            </svg>
+          </div>
+        </div>
+      `;
+    } else {
+      folderIconHtml = `
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom:auto; flex-shrink:0;">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      `;
+    }
 
     let clickHandler = `window.libOpenFolderId='${f.id}'; switchView('grid-view')`;
     let editOverlay = '';
@@ -4288,10 +4319,6 @@ function mySpaceRenderFolderStrip() {
     }
 
     if (size === 'row') {
-      const folderRecipes = (f.recipeIds || []).map(rid => {
-        return (typeof allMyRecipes !== 'undefined' && allMyRecipes) ? allMyRecipes.find(r => r.id === rid) : null;
-      }).filter(Boolean);
-
       const recipesHtml = folderRecipes.map(r => {
         let miniThumb = '';
         if (r.thumbnail_url) {
@@ -4326,10 +4353,11 @@ function mySpaceRenderFolderStrip() {
       return `
         <div onclick="${clickHandler}" class="bento-widget ${spanClass} ${editClass}"
           style="height:100%;display:flex;flex-direction:row;gap:20px;position:relative;cursor:pointer;text-align:left;box-sizing:border-box;"
-          onmouseenter="if(!${isEditing}) this.style.transform='translateY(-2px)'" onmouseleave="if(!${isEditing}) this.style.transform=''">
+          onmouseenter="if(!${isEditing}) { this.style.transform='translateY(-2px)'; window.startFolderSlideshow(this, '${f.id}'); }" 
+          onmouseleave="if(!${isEditing}) { this.style.transform=''; window.stopFolderSlideshow(this, '${f.id}'); }">
           ${editOverlay}
           <div style="width:130px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;min-width:0;">
-            ${folderIconSvg}
+            ${folderIconHtml}
             <div style="margin-top:auto;">
               <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${f.name}</div>
               <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:2px;">${count} recipe${count!==1?'s':''}</div>
@@ -4343,9 +4371,10 @@ function mySpaceRenderFolderStrip() {
     return `
       <div onclick="${clickHandler}" class="bento-widget ${spanClass} ${editClass}"
         style="height:100%;display:flex;flex-direction:column;position:relative;cursor:pointer;text-align:left;box-sizing:border-box;"
-        onmouseenter="if(!${isEditing}) this.style.transform='translateY(-4px)'" onmouseleave="if(!${isEditing}) this.style.transform=''">
+        onmouseenter="if(!${isEditing}) { this.style.transform='translateY(-4px)'; window.startFolderSlideshow(this, '${f.id}'); }" 
+        onmouseleave="if(!${isEditing}) { this.style.transform=''; window.stopFolderSlideshow(this, '${f.id}'); }">
         ${editOverlay}
-        ${folderIconSvg}
+        ${folderIconHtml}
         <div style="margin-top:auto;">
           <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${f.name}</div>
           <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:2px;">${count} recipe${count!==1?'s':''}</div>
@@ -4354,6 +4383,96 @@ function mySpaceRenderFolderStrip() {
     `;
   }).join('') + addBtn;
 }
+
+window.startFolderSlideshow = function(cardEl, folderId) {
+  window.stopFolderSlideshow(cardEl, folderId);
+
+  const container = cardEl.querySelector('.folder-preview-container');
+  if (!container) return;
+
+  const baseSvg = container.querySelector('.folder-base-svg');
+  const previewDiv = container.querySelector('.folder-masked-preview');
+  const contentDiv = container.querySelector('.folder-preview-content');
+  if (!previewDiv || !contentDiv) return;
+
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch(e) {}
+  const folder = (libData.folders || []).find(f => f.id === folderId);
+  if (!folder) return;
+
+  const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+  const folderRecipes = (folder.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
+
+  const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
+  if (previewRecipes.length === 0) return;
+
+  let currentIndex = 0;
+
+  function renderCurrent() {
+    const recipe = previewRecipes[currentIndex];
+    contentDiv.innerHTML = '';
+
+    if (recipe.video_url) {
+      const video = document.createElement('video');
+      video.src = recipe.video_url;
+      video.muted = true;
+      video.autoplay = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.style.display = 'block';
+      contentDiv.appendChild(video);
+      video.play().catch(err => console.log('Autoplay blocked:', err));
+    } else if (recipe.thumbnail_url) {
+      const img = document.createElement('img');
+      img.src = recipe.thumbnail_url;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.display = 'block';
+      contentDiv.appendChild(img);
+    }
+  }
+
+  renderCurrent();
+
+  if (baseSvg) baseSvg.style.opacity = '0';
+  previewDiv.style.opacity = '1';
+
+  if (previewRecipes.length > 1) {
+    const intervalId = setInterval(() => {
+      currentIndex = (currentIndex + 1) % previewRecipes.length;
+      renderCurrent();
+    }, 2500);
+
+    window.activeFolderSlideshows = window.activeFolderSlideshows || new Map();
+    window.activeFolderSlideshows.set(cardEl, intervalId);
+  }
+};
+
+window.stopFolderSlideshow = function(cardEl, folderId) {
+  if (window.activeFolderSlideshows && window.activeFolderSlideshows.has(cardEl)) {
+    clearInterval(window.activeFolderSlideshows.get(cardEl));
+    window.activeFolderSlideshows.delete(cardEl);
+  }
+
+  const container = cardEl.querySelector('.folder-preview-container');
+  if (!container) return;
+
+  const baseSvg = container.querySelector('.folder-base-svg');
+  const previewDiv = container.querySelector('.folder-masked-preview');
+  const contentDiv = container.querySelector('.folder-preview-content');
+
+  if (baseSvg) baseSvg.style.opacity = '1';
+  if (previewDiv) previewDiv.style.opacity = '0';
+  if (contentDiv) contentDiv.innerHTML = '';
+};
 
 window.toggleFolderSize = function(folderId) {
   let libData = { folders: [] };
