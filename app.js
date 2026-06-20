@@ -10306,6 +10306,8 @@ window.swapWorkbenchPanels = false;
 window.isControlsFullWidth = false;
 window.resizedRecipeHeight = 380;
 window.resizedControlsHeight = 220;
+window.isSidebarCollapsed = false;
+window.isTimelineCollapsed = false;
 
 window.toggleLayoutDropdown = function(e) {
   if (e) e.stopPropagation();
@@ -10682,6 +10684,74 @@ window.switchWorkbenchLayout = function(layoutMode) {
       fullWidthBtn.style.background = 'var(--bg-card-soft)';
       fullWidthBtn.style.color = 'var(--text-body)';
       fullWidthBtn.style.borderColor = 'var(--border-card)';
+    }
+  }
+
+  // Sync Collapsible panel elements
+  const sidebarBtn = document.getElementById('sidebarCollapseBtn');
+  const sidebarIcon = document.getElementById('sidebarCollapseIcon');
+  const timelineBtn = document.getElementById('timelineCollapseBtn');
+  const timelineIcon = document.getElementById('timelineCollapseIcon');
+
+  const isSidebarCollapsed = window.isSidebarCollapsed;
+  const isTimelineCollapsed = window.isTimelineCollapsed;
+
+  // 1. Sidebar collapse state sync
+  if (isSidebarCollapsed) {
+    rightCol.style.display = 'none';
+    resizer.style.display = 'none';
+    leftCol.style.width = '100%';
+    leftCol.style.flex = '1';
+    if (sidebarBtn) {
+      if (window.swapWorkbenchPanels) {
+        sidebarBtn.style.left = '0px';
+        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.borderRadius = '0 8px 8px 0';
+        if (sidebarIcon) sidebarIcon.textContent = '›';
+      } else {
+        sidebarBtn.style.right = '0px';
+        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.borderRadius = '8px 0 0 8px';
+        if (sidebarIcon) sidebarIcon.textContent = '‹';
+      }
+    }
+  } else {
+    if (sidebarBtn) {
+      if (window.swapWorkbenchPanels) {
+        sidebarBtn.style.left = `${fixedW - 12}px`;
+        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.borderRadius = '0 8px 8px 0';
+        if (sidebarIcon) sidebarIcon.textContent = '‹';
+      } else {
+        sidebarBtn.style.right = `${fixedW - 12}px`;
+        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.borderRadius = '8px 0 0 8px';
+        if (sidebarIcon) sidebarIcon.textContent = '›';
+      }
+    }
+  }
+
+  // 2. Timeline/controls collapse state sync
+  if (isTimelineCollapsed) {
+    if (layoutMode === 'standard') {
+      if (scrubber) scrubber.style.display = 'none';
+      if (controls) controls.style.display = 'none';
+    } else {
+      if (bottomCol) bottomCol.style.display = 'none';
+      if (hResizer) hResizer.style.display = 'none';
+    }
+    if (timelineBtn) {
+      timelineBtn.style.bottom = '12px';
+      if (timelineIcon) timelineIcon.textContent = '∧';
+    }
+  } else {
+    if (timelineBtn) {
+      if (layoutMode === 'standard') {
+        timelineBtn.style.bottom = '190px';
+      } else {
+        timelineBtn.style.bottom = '12px';
+      }
+      if (timelineIcon) timelineIcon.textContent = '∨';
     }
   }
 
@@ -15519,25 +15589,114 @@ window.toggleEditorSidebar = function() {
   const rightPanel = document.getElementById('workbenchRight');
   const resizer = document.getElementById('workbenchResizer');
   const leftCol = document.getElementById('workbenchLeft');
+  const collapseBtn = document.getElementById('sidebarCollapseBtn');
+  const collapseIcon = document.getElementById('sidebarCollapseIcon');
   if (!rightPanel) return;
-  
-  if (rightPanel.style.display === 'none') {
+
+  const isCollapsed = rightPanel.style.display === 'none';
+  const fixedW = window.workbenchFixedColumnWidth || 420;
+
+  if (isCollapsed) {
+    window.isSidebarCollapsed = false;
     rightPanel.style.display = 'flex';
     if (resizer) resizer.style.display = 'flex';
     if (leftCol) {
-      const fixedW = window.workbenchFixedColumnWidth || 420;
       leftCol.style.width = `calc(100% - ${fixedW}px)`;
       leftCol.style.flex = '1 1 auto';
     }
+    // Update button position and icon
+    if (collapseBtn) {
+      if (window.swapWorkbenchPanels) {
+        collapseBtn.style.left = `${fixedW - 12}px`;
+        collapseBtn.style.right = 'auto';
+        collapseBtn.style.borderRadius = '0 8px 8px 0';
+        if (collapseIcon) collapseIcon.textContent = '‹';
+      } else {
+        collapseBtn.style.right = `${fixedW - 12}px`;
+        collapseBtn.style.left = 'auto';
+        collapseBtn.style.borderRadius = '8px 0 0 8px';
+        if (collapseIcon) collapseIcon.textContent = '›';
+      }
+    }
   } else {
+    window.isSidebarCollapsed = true;
     rightPanel.style.display = 'none';
     if (resizer) resizer.style.display = 'none';
     if (leftCol) {
       leftCol.style.width = '100%';
       leftCol.style.flex = '1';
     }
+    // Update button position and icon
+    if (collapseBtn) {
+      if (window.swapWorkbenchPanels) {
+        collapseBtn.style.left = '0px';
+        collapseBtn.style.right = 'auto';
+        collapseBtn.style.borderRadius = '0 8px 8px 0';
+        if (collapseIcon) collapseIcon.textContent = '›';
+      } else {
+        collapseBtn.style.right = '0px';
+        collapseBtn.style.left = 'auto';
+        collapseBtn.style.borderRadius = '8px 0 0 8px';
+        if (collapseIcon) collapseIcon.textContent = '‹';
+      }
+    }
   }
   
+  // Re-adjust video sizes to expand/shrink based on space
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
+};
+
+window.toggleHorizontalPanel = function() {
+  const layout = window.currentWorkbenchLayout || 'standard';
+  const scrubber = document.getElementById('editorScrubberWrapper');
+  const controls = document.getElementById('stepNavControlsRow');
+  const bottomCol = document.getElementById('workbenchBottom');
+  const hResizer = document.getElementById('workbenchHorizontalResizer');
+  const collapseBtn = document.getElementById('timelineCollapseBtn');
+  const collapseIcon = document.getElementById('timelineCollapseIcon');
+
+  const isCollapsed = window.isTimelineCollapsed;
+
+  if (isCollapsed) {
+    window.isTimelineCollapsed = false;
+    // Show panels
+    if (layout === 'standard') {
+      if (scrubber) scrubber.style.display = 'flex';
+      if (controls) controls.style.display = 'flex';
+      if (collapseBtn) {
+        collapseBtn.style.bottom = '190px';
+        if (collapseIcon) collapseIcon.textContent = '∨';
+      }
+    } else {
+      if (bottomCol) bottomCol.style.display = 'flex';
+      if (hResizer) hResizer.style.display = 'flex';
+      if (collapseBtn) {
+        collapseBtn.style.bottom = '12px';
+        if (collapseIcon) collapseIcon.textContent = '∨';
+      }
+    }
+  } else {
+    window.isTimelineCollapsed = true;
+    // Hide panels
+    if (layout === 'standard') {
+      if (scrubber) scrubber.style.display = 'none';
+      if (controls) controls.style.display = 'none';
+      if (collapseBtn) {
+        collapseBtn.style.bottom = '12px';
+        if (collapseIcon) collapseIcon.textContent = '∧';
+      }
+    } else {
+      if (bottomCol) bottomCol.style.display = 'none';
+      if (hResizer) hResizer.style.display = 'none';
+      if (collapseBtn) {
+        collapseBtn.style.bottom = '12px';
+        if (collapseIcon) collapseIcon.textContent = '∧';
+      }
+    }
+  }
+
   // Re-adjust video sizes to expand/shrink based on space
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();

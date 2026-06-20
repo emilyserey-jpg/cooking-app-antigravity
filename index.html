@@ -1356,10 +1356,20 @@
         </div>
 
         <!-- Main 2-col workbench -->
-        <div id="workbenchGrid" style="display:flex;flex-direction:row;gap:0;flex:1;min-height:0;overflow:hidden;">
+        <div id="workbenchGrid" style="display:flex;flex-direction:row;gap:0;flex:1;min-height:0;overflow:hidden;position:relative;">
+
+          <!-- Side Panel Collapse Toggle Button -->
+          <button id="sidebarCollapseBtn" class="collapse-handle-btn collapse-handle-vertical" onclick="window.toggleEditorSidebar()" title="Collapse side editor panel" style="right:408px;">
+            <span id="sidebarCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">›</span>
+          </button>
 
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
-          <div id="workbenchLeft" style="width:calc(100% - 420px);min-width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding-right:6px;">
+          <div id="workbenchLeft" style="width:calc(100% - 420px);min-width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding-right:6px;position:relative;">
+
+            <!-- Horizontal Panel Collapse Toggle Button -->
+            <button id="timelineCollapseBtn" class="collapse-handle-btn collapse-handle-horizontal" onclick="window.toggleHorizontalPanel()" title="Collapse timeline panel" style="bottom:190px;">
+              <span id="timelineCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">∨</span>
+            </button>
 
             <!-- Video Display Resizer Controls -->
             <div id="videoResizerBar" style="display:none;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:12px;border:2px solid var(--border-card);flex-shrink:0;gap:12px;">
