@@ -1,56 +1,12 @@
-# Tasks - Custom Recipe Pages Feature
+# Tasks - Restore Panel Swapping and Layout Control Options
 
-- [x] Define serialization/deserialization logic in `app.js`
-- [x] Add "+ Add Custom Page" UI triggers and creation modal in `index.html` and `mobile.html`
-- [x] Implement page creation, DOM element generation, and dynamic tab switching in `app.js`
-- [x] Hook up the custom page AI generation API handlers and prompts in `app.js`
-- [x] Update the recipe player view to dynamically show custom tabs
-- [x] Verify saving, loading, and dynamic AI generation end-to-end
-- [x] Redesign custom page layout to match Loop Stops with collapsible AI Generator card, info buttons, and distinct cards
-- [x] Add a manual Page Content textarea in the "➕ Add Custom Page" view (both index.html and mobile.html)
-- [x] Update creation logic in `app.js` to skip AI generation when manual content is provided
-- [x] Implement dynamic button text updates based on textarea contents (Empty: Create & Generate, Filled: Create Manual Page)
-- [x] Move Quick Page Presets row to the top of the card (above Page Name) in both index.html and mobile.html
-- [x] Implement inline AI generation to autofill Page Name and Page Content boxes in the setup card
-- [x] Run automated test verification and reload browser (v9.23)
-- [x] Move "➕ Add Page" dashed button from header toolbar into the "Page Details" card header (`index.html`)
-- [x] Move "➕ Add Page" dashed button from mobile header toolbar into the mobile "Page Details" card header (`mobile.html`)
-- [x] Style the "+" character to be a bold text character instead of an emoji
-- [x] Bump layout and script versions to `9.34`
-- [x] Run automated verification script (`test_card_header_add_page.js`)
-- [x] Create synchronous direct custom page creation function `window.createCustomPageFromInlineDirect`
-- [x] Hook `#cardHeaderAddPageBtn` to direct creation function in both `index.html` and `mobile.html`
-- [x] Run automated verification script (`test_direct_add_page.js`) verifying blank-friendly synchronous creation
-- [x] Refactor workspace tab layout to single dedicated `📝 Custom Pages` tab
-- [x] Implement dynamic inline custom page card list setup system rendering to `#rightColAddCustom`
-- [x] Add inline card list controls (`addNewCustomPageCard`, `removeCustomPageCard`)
-- [x] Update serialization and player side rendering to support inline card state structure
-- [x] Run automated integration test verifying inline card list creation, AI generation, and tab preview rendering
-- [x] Transition vertical card layout to horizontal flex carousel track (`.custom-page-carousel-track`)
-- [x] Hide Webkit and Mozilla scrollbars and configure snapping
-- [x] Add dynamic stretched page indicator dots (`.carousel-dot`) with live scroll event bindings
-- [x] Configure click-to-scroll navigation on page indicator dots
-- [x] Add auto-scroll behavior to smoothly scroll track to new cards when added
-- [x] Validate horizontal carousel track layout in integration test suite
-- [x] Replace `❌ Delete Page` text button with modern translucent red pill outline layout
-- [x] Integrate SVG Lucide trash-2 vector icon and wire script compiler execution hook
-- [x] Add tactile active click scale-down styling and smooth transitions
-- [x] Assert dynamic Lucide SVG trash-2 icon renders successfully inside integration test suite
-- [x] Replace blue dashed outline `+ Add Page` button with solid outline pill layout matching the delete button style
-- [x] Integrate SVG Lucide plus vector icon and wire script compilation hook
-- [x] Assert dynamic Lucide SVG plus icon renders successfully inside integration test suite
-- [x] Remove emojis from all AI status update notifications inside `setCustomPageAiStatus` and `setAIStatus`
-- [x] Convert bottom action button into a dedicated, single full-width Save Page Changes button
-- [x] Add "Save & Update" button next to "Generate Transcript" on simplified Video Transcript page and implement `window.saveTranscriptManualEdits` to persist edits to cachedTranscript and active recipe state
-- [x] Remove all emojis from the application UI elements (buttons, headers, labels, placeholders) in index.html, mobile.html, and app.js
-- [x] Restore "AI: Create Steps (With Audio)" and "AI: Analyze Video Only (No Audio)" buttons inside the Loop Stops tab header on desktop and verify they work
-
-
-
-- [x] Integrate Lucide check SVG vector icon into the Save Page Changes button
-- [x] Assert Save Page Changes button renders successfully inside integration test suite
-- [x] Remove leading "+" sign from the "Add Custom Page" option in the editor tab dropdown menu
-- [x] Move the purple and pink AI buttons above the step tabs in Loop Stops
-- [x] Move the Add Stop and Keyboard Toggle buttons into the main playback controls row (symmetrically around the Play/Pause button)
-- [x] Relocate "Switch Spots" and "Full Width" layout option buttons to a dedicated control row above the loop stops scrubber card, resolve the horizontal timeline scroll clipping issue by replacing min-width constraints with max-width responsive rules, and bump script cache-busting version parameter to v=9.45
-
+- [x] Restore layout selector dropdown and panel swapping buttons in `index.html`
+- [x] Initialize `window.swapWorkbenchPanels` state in `app.js`
+- [x] Update `toggleLayoutDropdown` to use premium emoji-free icons in `app.js`
+- [x] Clean up layout update labels in `app.js` to remove emojis
+- [x] Increment script caching query versions in `index.html` and `mobile.html`
+- [x] Verify functionality via layout tests and screenshot captures
+- [x] Fix vertical workbench divider resizer dragging behavior and resolve flex-basis conflicts
+- [x] Implement folder video/thumbnail slideshow preview on hover using SVG clipping masks
+- [x] Implement symmetrical column swapping for standard, bottom-controls, and bottom-editor layouts
+- [x] Create automated verification script for symmetrical swapping and execute successfully
