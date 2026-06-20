@@ -137,5 +137,60 @@ Provide a premium, logical column swapping experience in the Recipe Editor workb
 4. **Resizer Dragging**: Updated `setupWorkbenchResizer` so that dragging constraints adapt dynamically to the swapped state. In all layout modes, if panels are swapped, the Left column becomes the fixed-width column and the Right column becomes the flex-width column, ensuring smooth dragging regardless of screen layout.
 5. **Toggle Logic**: Simplified `window.toggleSwapPanels` to swap columns within the *current* layout mode rather than toggling/altering the selected layout mode.
 
+---
 
+## 🛠️ Step Description Card Border-Radius Adjustment
+
+- **Goal**: Make the recipe step card on the player view look less round.
+- **Solution**: Changed the border-radius of the `.step-slider-card` element from `var(--radius-lg)` (and the overridden `24px !important` values) to `var(--radius-sm)` (10px) in all active stylesheets (`styles_v853.css`, `mobile_v853.css`, `styles.css`, `mobile.css`).
+- **Result**: Provides a clean, modern, and structured look for the active step cards.
+- **Cache Refresh**: Bumped the application version and stylesheet link version parameters to `v=9.60` in `index.html` and `mobile.html` to load the changes immediately.
+
+---
+
+## 🎨 Step Card Visual Alignment (Player vs Editor)
+
+### The Goal
+Align the styling of the step description card in the player view (`.step-slider-card`) with the editor's step card (`.loop-stop-card`), sharing the Wii-inspired frosted glass aesthetic, custom pastel border colors, and color-matched glowing shadows.
+
+### The Solution
+1. **Dynamic Custom Properties**: Updated `renderStepCardsMobile()` in `app.js` to retrieve each step's pastel color (`STEP_COLORS`) and calculate a matching custom `rgba` glow color. These are applied directly to the `.step-slider-card` wrapper element as CSS custom variables (`--step-color` and `--step-glow-color`).
+2. **Frosted Glass Styling**: Redesigned `.step-slider-card` inside all four stylesheet files (`styles_v853.css`, `mobile_v853.css`, `styles.css`, `mobile.css`):
+   - **Background**: Semi-transparent frosted glass (`rgba(255, 255, 255, 0.7)`).
+   - **Blur**: `backdrop-filter: blur(8px)`.
+   - **Border**: Set to the step's specific pastel color `var(--step-color)`.
+   - **Shadow**: Subtle card shadow (`rgba(0, 0, 0, 0.03)`).
+3. **Active Highlights**: Updated `.step-slider-card.active`:
+   - Thicker border (`3.5px solid var(--step-color)`).
+   - Glow shadow set to match the editor's signature purple glow (`rgba(124, 58, 237, 0.3) !important`) for clear separation on light backgrounds.
+   - Scale-up transform and transition alignment.
+4. **Indicator Colors**: Set `.step-indicator-text` to use `var(--step-color)` for consistent visual labeling.
+5. **Cache Refresh**: Bumped version query parameters to `?v=9.62` in `index.html` and `mobile.html` for both stylesheets and application scripts.
+
+---
+
+## 🍲 Step-Specific Ingredients Overlay Modal
+
+### The Goal
+Make step-specific ingredients visible on the published recipe player page via a toggleable overlay/modal on the step card.
+
+### The Solution
+1. **Toggle Ingredients Button**: Added a clean "Ingredients" button next to the time badge inside the card's metadata row if the step has ingredients.
+2. **Ingredients Modal**: Added a premium modal structure (`#playerStepIngredientsModal`) in both `index.html` and `mobile.html` with a semi-transparent frosted glass backdrop blur.
+3. **Dynamic Loading**: Implemented `openStepIngredientsModal()` to dynamically format and populate the list of ingredients for the active step when the button is clicked.
+4. **Database Load Fix**: Fixed a bug inside `window.loadPlayerRecipe` where the `ingredients` array inside loop structures from the database was not being mapped to `recipeData.steps`, leaving the player card's step ingredients array empty. Now they are correctly loaded as `ingredients: l.ingredients || []` on start.
+
+---
+
+## 📸 Screenshots
+
+### Redesigned Player Active Card Glow & Ingredients Button
+Below is the player view showing the new purple active glow, matching step borders, and the "Ingredients" button:
+
+![Player Active Glow](/Users/emilyserey/.gemini/antigravity/brain/c17a7a00-6a4f-49be-8952-7228cb907909/screenshot_player_view_new.png)
+
+### Step-Specific Ingredients Overlay Modal
+Below is the screenshot showing the toggleable modal displayed when clicking "Ingredients":
+
+![Step Ingredients Modal](/Users/emilyserey/.gemini/antigravity/brain/c17a7a00-6a4f-49be-8952-7228cb907909/screenshot_step_ingredients_modal.png)
 

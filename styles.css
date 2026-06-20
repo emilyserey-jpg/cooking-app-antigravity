@@ -533,26 +533,28 @@ h1, h2, h3, h4, h5 {
   width: calc(100vw - 64px) !important;
   max-width: 320px !important;
   scroll-snap-align: center;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: var(--radius-lg);
-  border: 2px solid rgba(74, 144, 217, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--step-color, rgba(74, 144, 217, 0.12));
   padding: 16px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none !important;
   box-sizing: border-box;
   transition: all var(--ease);
   cursor: pointer;
 }
 
 .step-slider-card.active {
-  border: 2px solid var(--primary) !important;
+  border: 3.5px solid var(--step-color, var(--primary)) !important;
   background: #fff !important;
-  box-shadow: 0 0 0 3.5px rgba(74, 144, 217, 0.25), 0 8px 20px rgba(74, 144, 217, 0.15) !important;
-  transform: translateY(-2px);
+  box-shadow: none !important;
+  transform: translateY(-2px) scale(1.01);
 }
 
 .step-meta-row {
@@ -565,7 +567,7 @@ h1, h2, h3, h4, h5 {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--primary);
+  color: var(--step-color, var(--primary));
   font-weight: 900;
 }
 

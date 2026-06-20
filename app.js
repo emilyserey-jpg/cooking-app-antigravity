@@ -1232,9 +1232,28 @@ function renderStepCardsMobile() {
     const secEnd = Math.floor(endVal % 60);
     const timeStr = `${minStart}:${secStart.toString().padStart(2,'0')} – ${minEnd}:${secEnd.toString().padStart(2,'0')}`;
     
+    const color = STEP_COLORS[idx % STEP_COLORS.length];
+    let glowColor = 'rgba(124, 58, 237, 0.3)';
+    if (color && color.startsWith('#')) {
+      const hex = color.slice(1);
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      glowColor = `rgba(${r}, ${g}, ${b}, 0.3)`;
+    }
+
+    let ingredientsArray = [];
+    if (Array.isArray(step.ingredients)) {
+      ingredientsArray = step.ingredients.filter(ing => ing && ing.trim() !== '');
+    } else if (typeof step.ingredients === 'string') {
+      ingredientsArray = step.ingredients.split('\n').map(ing => ing.trim()).filter(ing => ing !== '');
+    }
+
     const card = document.createElement('div');
     card.className = `step-slider-card ${idx === activeStepIndex ? 'active' : ''}`;
     card.id = `stepSliderCard-${idx}`;
+    card.style.setProperty('--step-color', color);
+    card.style.setProperty('--step-glow-color', glowColor);
     card.tabIndex = -1;
     card.onclick = () => {
       seekToStep(idx);
@@ -1249,6 +1268,13 @@ function renderStepCardsMobile() {
         </div>
         <h3 class="step-card-title" id="mobileStepTitle-${idx}">${step.title}</h3>
         <p class="step-instructions" id="mobileStepInstructions-${idx}">${step.instruction}</p>
+        
+        ${ingredientsArray.length > 0 ? `
+          <div style="margin-top:8px; display:flex; flex-direction:column; gap:2px; font-size:0.75rem; color:var(--text-body); font-weight:600; line-height:1.4;">
+            <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px;">Ingredients:</div>
+            ${ingredientsArray.map(ing => `<div>${ing}</div>`).join('')}
+          </div>
+        ` : ''}
         
         <!-- Placeholder for active timer -->
         <div class="timer-placeholder" id="timerPlaceholder-${idx}" style="margin-top:8px;"></div>
@@ -1341,11 +1367,11 @@ function toggleBentoEditMode() {
   if (isBentoEditing) {
     btn.innerHTML = `<i data-lucide="check"></i> Save Layout`;
     widgets.forEach(w => w.classList.add('editing'));
-    showTip("Bento Grid Edit Mode active. Drag widgets to rearrange.");
+    // showTip("Bento Grid Edit Mode active. Drag widgets to rearrange."); // Disabled per user request
   } else {
     btn.innerHTML = `<i data-lucide="edit-3"></i> Edit Board`;
     widgets.forEach(w => w.classList.remove('editing'));
-    showTip("Bento Dashboard layout saved.");
+    // showTip("Bento Dashboard layout saved."); // Disabled per user request
   }
   lucide.createIcons();
 }
@@ -1356,7 +1382,7 @@ function matchBentoSizes() {
   widgets.forEach(w => {
     w.className = 'glass-card bento-widget widget-2x1';
   });
-  showTip("Snapping widget board sizes uniformly.");
+  // showTip("Snapping widget board sizes uniformly."); // Disabled per user request
 }
 
 function setupDashboardTimer() {
@@ -1427,7 +1453,7 @@ function renderTimelineMarkersDesktop() {
       function onMouseUp() {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
-        showTip(`Marker [${recipeData.steps[idx].title}] set to boundary.`);
+        // showTip(`Marker [${recipeData.steps[idx].title}] set to boundary.`); // Disabled per user request
       }
       
       document.addEventListener('mousemove', onMouseMove);
@@ -1495,7 +1521,7 @@ function renderStepListDesktop() {
       renderTimelineMarkersDesktop();
       updateTimelineUI();
       updateStepDetailsUI();
-      showTip("Steps reordered.");
+      // showTip("Steps reordered."); // Disabled per user request
     });
     row.addEventListener('dragend', () => {
       row.classList.remove('dragging');
@@ -1564,7 +1590,7 @@ function nudgeActiveBoundary(seconds) {
     recipeData.loops[targetIdx] = newTime;
     renderTimelineMarkersDesktop();
     updateStepListTimings();
-    showTip(`End boundary of [${recipeData.steps[activeStepIndex].title}] nudged.`);
+    // showTip(`End boundary of [${recipeData.steps[activeStepIndex].title}] nudged.`); // Disabled per user request
   }
 }
 
@@ -1861,7 +1887,7 @@ function parseVoiceCommand(text) {
 
 // Speech confirmation back to user
 function speakFeedback(phrase) {
-  showTip(phrase);
+  // showTip(phrase); // Disabled frequent step navigation and playback status toasts per user request
   
   // Audio SpeechSynthesis disabled per user request to prevent vocalizing every action
   /*
@@ -2661,7 +2687,7 @@ function toggleDashboardEditMode() {
       btn.style.background = 'rgba(74,144,217,0.1)';
       btn.style.color = 'var(--primary)';
     }
-    showTip("Dashboard layout saved.");
+    // showTip("Dashboard layout saved."); // Disabled per user request
   } else {
     bGrid.classList.add('dashboard-editing');
     if (profileView) profileView.classList.add('dashboard-editing');
@@ -2670,7 +2696,7 @@ function toggleDashboardEditMode() {
       btn.style.background = 'var(--green)';
       btn.style.color = '#fff';
     }
-    showTip("Edit Mode active. Customize sizes and add/delete widgets.");
+    // showTip("Edit Mode active. Customize sizes and add/delete widgets."); // Disabled per user request
   }
   
   // Refresh widget visibility and the manage widgets panel state
@@ -2767,7 +2793,7 @@ function initCalendarSize() {
 window.hideBentoWidget = function(widgetId) {
   localStorage.setItem(`cooking_gps_widget_hidden_${widgetId}`, 'true');
   window.refreshWidgetsVisibility();
-  showTip("Widget hidden. Click 'Customize Layout' to bring it back!");
+  // showTip("Widget hidden. Click 'Customize Layout' to bring it back!"); // Disabled per user request
 };
 
 window.showBentoWidget = function(widgetId) {
@@ -2778,7 +2804,7 @@ window.showBentoWidget = function(widgetId) {
   if (widgetId === 'bentoWaterWidget') renderBentoWater();
   if (widgetId === 'bentoMealPlannerWidget') initBentoMealPlan();
   
-  showTip("Widget restored to dashboard!");
+  // showTip("Widget restored to dashboard!"); // Disabled per user request
 };
 
 window.refreshWidgetsVisibility = function() {
@@ -2940,7 +2966,7 @@ window.createNewShuffleWidget = function() {
   setTimeout(() => {
     window.configureShuffleWidget(id);
   }, 50);
-  showTip("Custom Cook Decider widget created!");
+  // showTip("Custom Cook Decider widget created!"); // Disabled per user request
 };
 
 window.configureShuffleWidget = function(widgetId) {
@@ -2984,7 +3010,7 @@ window.saveShuffleWidgetSettings = function(widgetId) {
     const settingsDiv = document.getElementById(`shuffleSettings_${widgetId}`);
     if (settingsDiv) settingsDiv.style.display = 'none';
     
-    showTip("Shuffle Widget settings saved.");
+    // showTip("Shuffle Widget settings saved."); // Disabled per user request
   }
 };
 
@@ -3005,7 +3031,7 @@ window.deleteShuffleWidget = function(widgetId) {
   localStorage.removeItem(`cooking_gps_widget_size_${widgetId}`);
   
   window.refreshWidgetsVisibility();
-  showTip("Custom Shuffle Widget removed.");
+  // showTip("Custom Shuffle Widget removed."); // Disabled per user request
 };
 
 window.triggerShuffleWidget = function(widgetId, e) {
@@ -3265,6 +3291,8 @@ window.mySpaceInit = mySpaceInit;
 
 // Quick UI notification toast (Wii-style light theme)
 function showTip(message) {
+  return; // Disabled all notification toasts per user request
+  
   const existing = document.getElementById('uiToastNotify');
   if (existing) existing.remove();
   
@@ -4554,7 +4582,7 @@ window.toggleFolderSize = function(folderId) {
   }
   
   mySpaceRenderFolderStrip();
-  showTip(`Folder size changed to ${folder.size.charAt(0).toUpperCase() + folder.size.slice(1)}`);
+  // showTip(`Folder size changed to ${folder.size.charAt(0).toUpperCase() + folder.size.slice(1)}`); // Disabled per user request
 };
 
 window.toggleFoldersGlobalHeight = function() {
@@ -4562,7 +4590,7 @@ window.toggleFoldersGlobalHeight = function() {
   const next = current === 'bento' ? 'standard' : 'bento';
   localStorage.setItem('cookingGPS_folders_height', next);
   mySpaceRenderFolderStrip();
-  showTip(`Folders height layout toggled to ${next === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`);
+  // showTip(`Folders height layout toggled to ${next === 'bento' ? 'Bento (240px)' : 'Standard (160px)'}`); // Disabled per user request
 };
 
 window.toggleFolderColor = function(folderId) {
@@ -4595,7 +4623,7 @@ window.toggleFolderColor = function(folderId) {
   }
   
   mySpaceRenderFolderStrip();
-  showTip(`Folder color customized.`);
+  // showTip(`Folder color customized.`); // Disabled per user request
 };
 
 window.mySpaceRenameFolder = function(folderId) {
@@ -4635,7 +4663,7 @@ window.mySpaceRenameFolder = function(folderId) {
   }
   
   mySpaceRenderFolderStrip();
-  showTip("Folder renamed.");
+  // showTip("Folder renamed."); // Disabled per user request
 };
 
 window.mySpaceDeleteFolder = function(folderId) {
@@ -4666,7 +4694,7 @@ window.mySpaceDeleteFolder = function(folderId) {
   }
   
   mySpaceRenderFolderStrip();
-  showTip("Folder deleted.");
+  // showTip("Folder deleted."); // Disabled per user request
 };
 
 
@@ -4946,6 +4974,7 @@ window.saveDraft = async function() {
           recipeData.steps = parsed.map((l, idx) => ({
             title: l.label || (savedRecipe.steps && savedRecipe.steps[idx]) || `Step ${idx + 1}`,
             instruction: l.description || '',
+            ingredients: l.ingredients || [],
             audio_url: l.audio_url || l.audioUrl || '',
             timer: l.timer,
             timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
@@ -5610,6 +5639,7 @@ window.loadPlayerRecipe = async function(recipeId) {
       recipeData.steps = parsed.map((l, idx) => ({
         title: l.label || (recipe.steps && recipe.steps[idx]) || `Step ${idx + 1}`,
         instruction: l.description || '',
+        ingredients: l.ingredients || [],
         audio_url: l.audio_url || l.audioUrl || '',
         timer: l.timer,
         timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
@@ -9732,7 +9762,7 @@ window.onVideoLoaded = function() {
     renderTimeline();
     renderCreateSteps();
   }
-  showTip('Video ready! Play it and tap " Add Step" to mark steps.');
+  // showTip('Video ready! Play it and tap " Add Step" to mark steps.'); // Disabled per user request
 };
 
 window.addStepAtCurrentTime = function() {
@@ -12361,6 +12391,7 @@ window.saveNewRecipe = async function(targetFolderId) {
           recipeData.steps = parsed.map((l, idx) => ({
             title: l.label || (savedRecipe.steps && savedRecipe.steps[idx]) || `Step ${idx + 1}`,
             instruction: l.description || '',
+            ingredients: l.ingredients || [],
             audio_url: l.audio_url || l.audioUrl || '',
             timer: l.timer,
             timers: l.timers || (l.timer ? [{ duration: Number(l.timer), label: 'Timer 1' }] : [])
