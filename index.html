@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.53';
+      const CURRENT_VERSION = '9.58';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -1626,7 +1626,7 @@
                   <!-- Collapsible Transcript Sidebar Wrapper -->
                   <div id="transcriptSidebarWrapper" style="display: flex; flex-direction: row; height: 100%; flex-shrink: 0; align-items: stretch; transition: all 0.3s ease;">
                     <!-- Fixed Transcript Panel (left) -->
-                    <div id="fixedTranscriptPanel" style="width:0px;height:100%;flex-shrink:0;display:flex;flex-direction:column;gap:5px;min-height:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(8px);border-radius:12px;border:0px solid rgba(124,58,237,0.15);padding:0px;box-sizing:border-box;transition: all 0.3s ease;overflow:hidden;">
+                    <div id="fixedTranscriptPanel" style="width:0px;height:auto;max-height:100%;align-self:flex-start;flex-shrink:0;display:flex;flex-direction:column;gap:5px;min-height:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(8px);border-radius:12px;border:0px solid rgba(124,58,237,0.15);padding:0px;box-sizing:border-box;transition: all 0.3s ease;overflow:hidden;">
                       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-shrink:0;margin-bottom:2px;">
                         <label style="font-size:0.6rem;font-weight:800;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.04em;line-height:1.2;">Active Step Transcript</label>
                         <!-- Extend/Shrink Button -->
@@ -2399,6 +2399,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.53"></script>
+  <script type="module" src="app.js?v=9.58"></script>
 </body>
 </html>

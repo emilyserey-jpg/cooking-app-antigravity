@@ -1,12 +1,23 @@
 # Tasks - Restore Panel Swapping and Layout Control Options
 
-- [x] Restore layout selector dropdown and panel swapping buttons in `index.html`
-- [x] Initialize `window.swapWorkbenchPanels` state in `app.js`
-- [x] Update `toggleLayoutDropdown` to use premium emoji-free icons in `app.js`
-- [x] Clean up layout update labels in `app.js` to remove emojis
-- [x] Increment script caching query versions in `index.html` and `mobile.html`
-- [x] Verify functionality via layout tests and screenshot captures
-- [x] Fix vertical workbench divider resizer dragging behavior and resolve flex-basis conflicts
-- [x] Implement folder video/thumbnail slideshow preview on hover using SVG clipping masks
-- [x] Implement symmetrical column swapping for standard, bottom-controls, and bottom-editor layouts
-- [x] Create automated verification script for symmetrical swapping and execute successfully
+- [x] Restore layout selector- [x] Implement anchored Video Player layout swapping in `app.js`
+  - [x] Update `switchWorkbenchLayout` for standard layout (video anchored left)
+  - [x] Update `switchWorkbenchLayout` for bottom-controls layout (video anchored left, swap controls and editor between bottom and right)
+  - [x] Update `switchWorkbenchLayout` for bottom-recipe layout (video anchored left, swap controls and editor between bottom and right)
+  - [x] Simplify `setupWorkbenchResizer` vertical dragging since columns do not swap horizontally
+  - [x] Update `setupWorkbenchHorizontalResizer` constraints and properties based on bottom content type (Controls vs Editor)
+  - [x] Update `window.toggleEditorSidebar` to always treat left column as flex and right column as fixed
+- [x] Implement Auto-Resizing Notes Textareas in step cards in `app.js`
+  - [x] Add global helper `window.autoResizeTextarea`
+  - [x] Update card textarea HTML in `renderCreateSteps()` to use `oninput` with auto-resize and state update, and keep `onchange` for blur
+  - [x] Add `setTimeout` loop in `renderCreateSteps()` to initialize textarea heights
+- [x] Implement dynamic vertical sizing for active step transcript panel
+  - [x] Update `fixedTranscriptPanel` default style in `index.html` to `height: auto` and `align-self: flex-start`
+  - [x] Update `window.updateTranscriptButtonUI` in `app.js` to use `height: auto` and `align-self: flex-start` in standard split view, and `height: 100%` / `align-self: stretch` in extended view
+- [x] Update page cache versioning to `v=9.58` in `index.html` and `mobile.html`
+- [x] Update and run automated verification tests
+  - [x] Update `test_symmetrical_swapping.js`
+  - [x] Update `test_layout_swapping.js`
+  - [x] Update `test_resizer_dragging.js`
+  - [x] Execute all test scripts and assert success
+- [x] Finalize walkthrough documentation

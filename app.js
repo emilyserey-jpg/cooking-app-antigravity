@@ -10350,6 +10350,12 @@ window.toggleLayoutDropdown = function(e) {
   }
 };
 
+window.autoResizeTextarea = function(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+};
+
 window.switchWorkbenchLayout = function(layoutMode) {
   window.currentWorkbenchLayout = layoutMode;
   
@@ -10407,21 +10413,12 @@ window.switchWorkbenchLayout = function(layoutMode) {
 
   // Restore default left/right flex widths
   const fixedW = window.workbenchFixedColumnWidth || 420;
-  if (window.swapWorkbenchPanels) {
-    leftCol.style.width = fixedW + 'px';
-    leftCol.style.flex = `0 1 ${fixedW}px`;
-    leftCol.style.minWidth = '320px';
-    rightCol.style.width = `calc(100% - ${fixedW}px)`;
-    rightCol.style.flex = '1 1 auto';
-    rightCol.style.minWidth = '320px';
-  } else {
-    leftCol.style.width = `calc(100% - ${fixedW}px)`;
-    leftCol.style.flex = '1 1 auto';
-    leftCol.style.minWidth = '320px';
-    rightCol.style.width = fixedW + 'px';
-    rightCol.style.flex = `0 1 ${fixedW}px`;
-    rightCol.style.minWidth = '320px';
-  }
+  leftCol.style.width = `calc(100% - ${fixedW}px)`;
+  leftCol.style.flex = '1 1 auto';
+  leftCol.style.minWidth = '320px';
+  rightCol.style.width = fixedW + 'px';
+  rightCol.style.flex = `0 1 ${fixedW}px`;
+  rightCol.style.minWidth = '320px';
   controls.style.flex = 'none';
   controls.style.width = '100%';
   if (scrubber) {
@@ -10437,7 +10434,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
   grid.style.flex = '1';
   grid.style.height = 'auto';
   grid.style.minHeight = '0';
-    leftCol.style.overflowY = 'auto';
+  leftCol.style.overflowY = 'auto';
   leftCol.style.overflowX = 'hidden';
 
   if (layoutMode === 'standard') {
@@ -10452,14 +10449,17 @@ window.switchWorkbenchLayout = function(layoutMode) {
     const videoWrapper = document.getElementById('workbenchVideoWrapper');
     const videoResizer = document.getElementById('videoResizerBar');
 
+    // Video is always in leftCol
+    if (videoResizer) leftCol.appendChild(videoResizer);
+    if (videoWrapper) leftCol.appendChild(videoWrapper);
+
     if (window.swapWorkbenchPanels) {
+      // Swapped standard: Video + Editor on Left, Controls on Right
       if (recipePanel) {
         leftCol.appendChild(recipePanel);
-        recipePanel.style.height = '100%';
-        recipePanel.style.flex = '1';
+        recipePanel.style.height = 'auto';
+        recipePanel.style.flex = 'none';
       }
-      if (videoResizer) rightCol.appendChild(videoResizer);
-      if (videoWrapper) rightCol.appendChild(videoWrapper);
       if (scrubber) {
         rightCol.appendChild(scrubber);
         scrubber.style.width = '100%';
@@ -10474,13 +10474,12 @@ window.switchWorkbenchLayout = function(layoutMode) {
       
       panels.forEach(p => {
         if (p) {
-          p.style.maxHeight = '100%';
-          p.style.overflowY = 'auto';
+          p.style.maxHeight = 'none';
+          p.style.overflowY = 'visible';
         }
       });
     } else {
-      if (videoResizer) leftCol.appendChild(videoResizer);
-      if (videoWrapper) leftCol.appendChild(videoWrapper);
+      // Normal standard: Video + Controls on Left, Editor on Right
       if (scrubber) {
         leftCol.appendChild(scrubber);
         scrubber.style.width = '100%';
@@ -10500,49 +10499,22 @@ window.switchWorkbenchLayout = function(layoutMode) {
         }
       });
     }
-  } else if (layoutMode === 'bottom-controls') {
-    window.isControlsFullWidth = true;
-    if (scrubber) {
-      bottomCol.appendChild(scrubber);
-      scrubber.style.width = '100%';
-    }
-    bottomCol.appendChild(controls);
-    bottomCol.style.display = 'flex';
-    bottomCol.style.flexDirection = 'column';
-    bottomCol.style.gap = '8px';
-    bottomCol.style.overflowY = 'auto';
-    bottomCol.style.scrollbarWidth = 'thin';
+  } else {
+    // Bottom layouts (bottom-controls or bottom-recipe)
+    const videoWrapper = document.getElementById('workbenchVideoWrapper');
+    const videoResizer = document.getElementById('videoResizerBar');
     
-    const h = window.resizedControlsHeight || 220;
-    bottomCol.style.height = h + 'px';
-    if (hResizer) {
-      hResizer.style.display = 'flex';
-    }
+    // Video is always in leftCol
+    if (videoResizer) leftCol.appendChild(videoResizer);
+    if (videoWrapper) leftCol.appendChild(videoWrapper);
+
+    const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+    const isControlsAtBottom = (layoutMode === 'bottom-controls' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-recipe' && window.swapWorkbenchPanels);
 
     resizer.style.display = 'flex';
     rightCol.style.display = 'flex';
-
-    const videoWrapper = document.getElementById('workbenchVideoWrapper');
-    const videoResizer = document.getElementById('videoResizerBar');
-
-    if (window.swapWorkbenchPanels) {
-      // Swapped: Left is Editor, Right is Video
-      if (recipePanel) {
-        leftCol.appendChild(recipePanel);
-        recipePanel.style.height = '100%';
-        recipePanel.style.flex = '1';
-      }
-      if (videoResizer) rightCol.appendChild(videoResizer);
-      if (videoWrapper) rightCol.appendChild(videoWrapper);
-    } else {
-      // Normal: Left is Video, Right is Editor
-      if (videoResizer) leftCol.appendChild(videoResizer);
-      if (videoWrapper) leftCol.appendChild(videoWrapper);
-      if (recipePanel) {
-        rightCol.appendChild(recipePanel);
-        recipePanel.style.height = '100%';
-        recipePanel.style.flex = '1';
-      }
+    if (hResizer) {
+      hResizer.style.display = 'flex';
     }
 
     const panels = [
@@ -10550,64 +10522,34 @@ window.switchWorkbenchLayout = function(layoutMode) {
       document.getElementById('rightColIngredients'),
       document.getElementById('rightColSave')
     ];
-    panels.forEach(p => {
-      if (p) {
-        p.style.maxHeight = '100%';
-        p.style.overflowY = 'auto';
+
+    if (isRecipeAtBottom) {
+      window.isControlsFullWidth = false;
+      
+      if (stage2) {
+        stage2.style.overflowY = 'hidden';
+        stage2.style.height = 'calc(100vh - 80px)';
       }
-    });
-  } else if (layoutMode === 'bottom-recipe') {
-    window.isControlsFullWidth = false;
-    
-    // Keep stage2 fixed height and hidden overflow so resizer works
-    if (stage2) {
-      stage2.style.overflowY = 'hidden';
-      stage2.style.height = 'calc(100vh - 80px)';
-    }
-    grid.style.flex = '1';
-    grid.style.height = 'auto';
-    grid.style.minHeight = '0';
-    leftCol.style.overflowY = 'auto';
+      grid.style.flex = '1';
+      grid.style.height = 'auto';
+      grid.style.minHeight = '0';
+      leftCol.style.overflowY = 'auto';
 
-    // 1. Move recipePanel to bottomCol
-    if (recipePanel) {
-      bottomCol.appendChild(recipePanel);
-      recipePanel.style.width = '100%';
-      recipePanel.style.height = '100%';
-      recipePanel.style.flex = '1';
-    }
-    
-    // Limit initial height to leave enough space for video player on small screen
-    const maxH = Math.max(150, (window.innerHeight - 80) - 300); // leave at least 300px for video
-    const h = Math.min(window.resizedRecipeHeight || 380, maxH);
-    bottomCol.style.height = h + 'px';
-    
-    bottomCol.style.display = 'flex';
-    bottomCol.style.flexDirection = 'column';
-    bottomCol.style.flexShrink = '0';
-    bottomCol.style.overflowY = 'hidden';
-
-    resizer.style.display = 'flex';
-    rightCol.style.display = 'flex';
-
-    const videoWrapper = document.getElementById('workbenchVideoWrapper');
-    const videoResizer = document.getElementById('videoResizerBar');
-
-    if (window.swapWorkbenchPanels) {
-      // Swapped: Left is Controls, Right is Video
-      if (scrubber) {
-        leftCol.appendChild(scrubber);
-        scrubber.style.width = '100%';
+      if (recipePanel) {
+        bottomCol.appendChild(recipePanel);
+        recipePanel.style.width = '100%';
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
       }
-      leftCol.appendChild(controls);
-      controls.style.width = '100%';
-
-      if (videoResizer) rightCol.appendChild(videoResizer);
-      if (videoWrapper) rightCol.appendChild(videoWrapper);
-    } else {
-      // Normal: Left is Video, Right is Controls
-      if (videoResizer) leftCol.appendChild(videoResizer);
-      if (videoWrapper) leftCol.appendChild(videoWrapper);
+      
+      const maxH = Math.max(150, (window.innerHeight - 80) - 300);
+      const h = Math.min(window.resizedRecipeHeight || 380, maxH);
+      bottomCol.style.height = h + 'px';
+      
+      bottomCol.style.display = 'flex';
+      bottomCol.style.flexDirection = 'column';
+      bottomCol.style.flexShrink = '0';
+      bottomCol.style.overflowY = 'hidden';
 
       if (scrubber) {
         rightCol.appendChild(scrubber);
@@ -10615,15 +10557,40 @@ window.switchWorkbenchLayout = function(layoutMode) {
       }
       rightCol.appendChild(controls);
       controls.style.width = '100%';
-    }
 
-    if (controlsStrip) {
-      controlsStrip.style.position = 'static';
-      controlsStrip.style.left = '0';
-    }
+      if (controlsStrip) {
+        controlsStrip.style.position = 'static';
+        controlsStrip.style.left = '0';
+      }
+    } else if (isControlsAtBottom) {
+      window.isControlsFullWidth = true;
 
-    if (hResizer) {
-      hResizer.style.display = 'flex';
+      if (scrubber) {
+        bottomCol.appendChild(scrubber);
+        scrubber.style.width = '100%';
+      }
+      bottomCol.appendChild(controls);
+      bottomCol.style.display = 'flex';
+      bottomCol.style.flexDirection = 'column';
+      bottomCol.style.gap = '8px';
+      bottomCol.style.overflowY = 'auto';
+      bottomCol.style.scrollbarWidth = 'thin';
+      
+      const h = window.resizedControlsHeight || 220;
+      bottomCol.style.height = h + 'px';
+
+      if (recipePanel) {
+        rightCol.appendChild(recipePanel);
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
+      }
+
+      panels.forEach(p => {
+        if (p) {
+          p.style.maxHeight = '100%';
+          p.style.overflowY = 'auto';
+        }
+      });
     }
   }
 
@@ -11063,6 +11030,8 @@ window.updateTranscriptButtonUI = function() {
       if (isExtended) {
         // Extended / Full Row view
         panel.style.width = '100%';
+        panel.style.height = '100%';
+        panel.style.alignSelf = 'stretch';
         panel.style.padding = '10px';
         panel.style.borderWidth = '1.5px';
         btn.style.borderRadius = '0 12px 12px 0';
@@ -11077,6 +11046,9 @@ window.updateTranscriptButtonUI = function() {
       } else {
         // Standard split view (230px wide sidebar)
         panel.style.width = '230px';
+        panel.style.height = 'auto';
+        panel.style.maxHeight = '100%';
+        panel.style.alignSelf = 'flex-start';
         panel.style.padding = '10px';
         panel.style.borderWidth = '1.5px';
         btn.style.borderRadius = '0 12px 12px 0';
@@ -11324,6 +11296,7 @@ function renderCreateSteps() {
 
   list.style.display                 = 'flex';
   list.style.flexDirection           = 'row';
+  list.style.alignItems              = 'flex-start';
   list.style.gap                     = '12px';
   list.style.paddingBottom           = isDesktop ? '6px' : '4px';
   list.style.flexWrap                = 'nowrap';
@@ -11428,7 +11401,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:calc(100% - 8px);min-height:550px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:auto;min-height:auto;overflow-y:visible;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -11477,8 +11450,9 @@ function renderCreateSteps() {
           </div>
         </div>
         
-        <div style="position:relative;width:100%;flex:1;min-height:60px;display:flex;flex-direction:column;min-width:0;">
-          <textarea placeholder="Add notes for this step…" style="flex:1;min-height:60px;width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);"
+        <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;">
+          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);overflow-y:hidden;height:auto;"
+            oninput="window.autoResizeTextarea(this); if(createStepsArr[${i}]){createStepsArr[${i}].description=this.value;}"
             onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
           <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
             style="position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(124,58,237,0.25);font-size:0.75rem;transition:all 0.15s;z-index:10;padding:0;"
@@ -11493,7 +11467,7 @@ function renderCreateSteps() {
             onchange="window.updateStepIngredientsText(${i},this.value)">${stepIngsText}</textarea>
         </div>
 
-        <div class="card-options-dropdown" style="margin-top:auto;padding-top:4px;flex-shrink:0;position:relative;">
+        <div class="card-options-dropdown" style="margin-top:6px;padding-top:4px;flex-shrink:0;position:relative;">
           <button onclick="window.toggleCardDropdown(event, ${i})" class="card-options-dropdown-btn" tabindex="-1"
             style="width:100%;background:#f5f0ff;border:1.5px solid rgba(124,58,237,0.25);border-radius:8px;padding:6px 12px;font-family:var(--font);font-size:0.72rem;font-weight:800;color:#7c3aed;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:var(--shadow-xs);transition:all 0.15s;"
             onmouseenter="this.style.background='#ede9ff';" onmouseleave="this.style.background='#f5f0ff';">
@@ -11507,6 +11481,16 @@ function renderCreateSteps() {
     window.updateAIChecklists();
   }
   if (window.lucide) lucide.createIcons();
+
+  // Auto-resize notes textareas to their initial scrollHeight
+  setTimeout(() => {
+    if (list) {
+      list.querySelectorAll('textarea[placeholder^="Add notes"]').forEach(ta => {
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+      });
+    }
+  }, 0);
 
   // Set up drag scroll & horizontal scroll buttons
   window.enableDragScroll(list);
@@ -15255,17 +15239,9 @@ function setupWorkbenchResizer() {
 
   function onMouseMove(e) {
     const gridRect = grid.getBoundingClientRect();
-    const layoutMode = window.currentWorkbenchLayout || 'standard';
     
-    // Determine which column is fixed and calculate its new width based on mouse pointer position
-    let newFixedW;
-    if (window.swapWorkbenchPanels) {
-      // Swapped layouts: leftCol is fixed, rightCol is flex
-      newFixedW = e.clientX - gridRect.left;
-    } else {
-      // Normal layouts: leftCol is flex, rightCol is fixed
-      newFixedW = gridRect.right - e.clientX;
-    }
+    // workbenchRight is always the fixed column and workbenchLeft (leftSide) is always the flex column.
+    let newFixedW = gridRect.right - e.clientX;
 
     // Apply constraints to the fixed column width: min 320px, max 80% of window/grid width
     const minW = 320;
@@ -15277,24 +15253,13 @@ function setupWorkbenchResizer() {
 
     // Apply the new widths inline to both columns to avoid any flex constraints override
     const rightCol = document.getElementById('workbenchRight');
-    if (window.swapWorkbenchPanels) {
-      leftSide.style.width = newFixedW + 'px';
-      leftSide.style.flex = `0 1 ${newFixedW}px`;
-      leftSide.style.minWidth = '320px';
-      if (rightCol) {
-        rightCol.style.width = `calc(100% - ${newFixedW}px)`;
-        rightCol.style.flex = '1 1 auto';
-        rightCol.style.minWidth = '320px';
-      }
-    } else {
-      leftSide.style.width = `calc(100% - ${newFixedW}px)`;
-      leftSide.style.flex = '1 1 auto';
-      leftSide.style.minWidth = '320px';
-      if (rightCol) {
-        rightCol.style.width = newFixedW + 'px';
-        rightCol.style.flex = `0 1 ${newFixedW}px`;
-        rightCol.style.minWidth = '320px';
-      }
+    leftSide.style.width = `calc(100% - ${newFixedW}px)`;
+    leftSide.style.flex = '1 1 auto';
+    leftSide.style.minWidth = '320px';
+    if (rightCol) {
+      rightCol.style.width = newFixedW + 'px';
+      rightCol.style.flex = `0 1 ${newFixedW}px`;
+      rightCol.style.minWidth = '320px';
     }
 
     window.dispatchEvent(new Event('resize'));
@@ -15345,22 +15310,26 @@ function setupWorkbenchHorizontalResizer() {
     const deltaY = e.clientY - startY;
     let newHeight = startHeight - deltaY;
 
-    // Constrain height based on current layout mode
+    const layoutMode = window.currentWorkbenchLayout || 'standard';
+    const isControlsAtBottom = (layoutMode === 'bottom-controls' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-recipe' && window.swapWorkbenchPanels);
+    const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+
+    // Constrain height based on what content is currently at the bottom
     let minH = 150;
     let maxH = window.innerHeight * 0.8;
-    if (window.currentWorkbenchLayout === 'bottom-controls') {
+    if (isControlsAtBottom) {
       minH = 140;
       maxH = 400;
-    } else if (window.currentWorkbenchLayout === 'bottom-recipe') {
+    } else if (isRecipeAtBottom) {
       maxH = Math.max(200, (window.innerHeight - 80) - 300); // leave at least 300px for video
     }
 
     if (newHeight < minH) newHeight = minH;
     if (newHeight > maxH) newHeight = maxH;
 
-    if (window.currentWorkbenchLayout === 'bottom-recipe') {
+    if (isRecipeAtBottom) {
       window.resizedRecipeHeight = newHeight;
-    } else if (window.currentWorkbenchLayout === 'bottom-controls') {
+    } else if (isControlsAtBottom) {
       window.resizedControlsHeight = newHeight;
     }
 
@@ -15507,14 +15476,8 @@ window.toggleEditorSidebar = function() {
     if (resizer) resizer.style.display = 'flex';
     if (leftCol) {
       const fixedW = window.workbenchFixedColumnWidth || 420;
-      const layoutMode = window.currentWorkbenchLayout || 'standard';
-      if (window.swapWorkbenchPanels && layoutMode === 'standard') {
-        leftCol.style.width = fixedW + 'px';
-        leftCol.style.flex = `0 1 ${fixedW}px`;
-      } else {
-        leftCol.style.width = `calc(100% - ${fixedW}px)`;
-        leftCol.style.flex = '1 1 auto';
-      }
+      leftCol.style.width = `calc(100% - ${fixedW}px)`;
+      leftCol.style.flex = '1 1 auto';
     }
   } else {
     rightPanel.style.display = 'none';
