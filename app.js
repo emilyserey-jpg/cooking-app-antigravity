@@ -4191,6 +4191,24 @@ window.mySpaceSaveBio = function() {
   if (display) display.style.display = '';
 };
 
+window.getFolderRecipesSource = function() {
+  const sources = [];
+  if (typeof allMyRecipes !== 'undefined' && Array.isArray(allMyRecipes)) sources.push(...allMyRecipes);
+  if (typeof window.allMyRecipes !== 'undefined' && Array.isArray(window.allMyRecipes)) sources.push(...window.allMyRecipes);
+  if (typeof libAllRecipes !== 'undefined' && Array.isArray(libAllRecipes)) sources.push(...libAllRecipes);
+  if (typeof window.libAllRecipes !== 'undefined' && Array.isArray(window.libAllRecipes)) sources.push(...window.libAllRecipes);
+  
+  const seen = new Set();
+  const res = [];
+  for (const r of sources) {
+    if (r && r.id && !seen.has(r.id)) {
+      seen.add(r.id);
+      res.push(r);
+    }
+  }
+  return res;
+};
+
 // ── Folder strip ─────────────────────────────────────────────────────────
 function mySpaceRenderFolderStrip() {
   const strip = document.getElementById('mySpaceFolderStrip');
@@ -4259,7 +4277,7 @@ function mySpaceRenderFolderStrip() {
 
     const colorVal = f.color || '#4a90d9';
 
-    const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+    const recipesSource = window.getFolderRecipesSource();
     const folderRecipes = (f.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
 
     const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
@@ -4409,7 +4427,7 @@ window.startFolderSlideshow = function(cardEl, folderId) {
   const folder = (libData.folders || []).find(f => f.id === folderId);
   if (!folder) return;
 
-  const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+  const recipesSource = window.getFolderRecipesSource();
   const folderRecipes = (folder.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
 
   const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
@@ -4486,7 +4504,7 @@ window.stopFolderSlideshow = function(cardEl, folderId) {
   const folder = (libData.folders || []).find(f => f.id === folderId);
   if (!folder) return;
 
-  const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+  const recipesSource = window.getFolderRecipesSource();
   const folderRecipes = (folder.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
   const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
 
@@ -7640,29 +7658,75 @@ function libRenderContent() {
 function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
   const isDrag = libState.sort === 'custom';
+
+  const recipesSource = window.getFolderRecipesSource();
+  const folderRecipes = (f.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
+  const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
+  const hasPreviews = previewRecipes.length > 0;
+
+  let folderIconHtml = '';
+  const colorVal = f.color || '#4a90d9';
+  if (hasPreviews) {
+    const firstRecipe = previewRecipes[0];
+    let defaultPreviewHtml = '';
+    if (firstRecipe.thumbnail_url) {
+      defaultPreviewHtml = `<img src="${encodeURI(firstRecipe.thumbnail_url)}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">`;
+    } else {
+      const hash = firstRecipe.id ? firstRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+      const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
+      const grad = gradients[hash % gradients.length];
+      defaultPreviewHtml = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
+    }
+
+    folderIconHtml = `
+      <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:24px; border-top-right-radius:24px; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02); transition: background 0.25s;">
+        <div class="folder-badge" style="position:absolute; top:12px; left:12px; width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index: 3;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.2" stroke="${colorVal}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:1; transition: opacity 0.25s; overflow:hidden; pointer-events:none; z-index: 2;">
+          <div class="folder-preview-content" style="width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${defaultPreviewHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    folderIconHtml = `
+      <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:24px; border-top-right-radius:24px; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02);">
+        <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+    `;
+  }
+
   return `
     <div class="lib-folder-card bento-widget" id="libF_${f.id}"
-      style="background:${f.color}; border-radius:24px; padding:1.5rem; cursor:pointer;
+      style="background:${f.color || '#4a90d9'}; border-radius:24px; cursor:pointer;
              position:relative; transition:transform 0.15s, box-shadow 0.15s;
-             box-shadow:var(--shadow-sm); height:100%; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box;"
+             box-shadow:var(--shadow-sm); height:100%; display:flex; flex-direction:column; box-sizing:border-box; padding:1.5rem;"
       onclick="libOpenFolder('${f.id}')"
+      onmouseenter="window.startFolderSlideshow(this, '${f.id}')"
+      onmouseleave="window.stopFolderSlideshow(this, '${f.id}')"
       ${isDrag ? `draggable="true" ondragstart="libOnDragStart(event,'folder','${f.id}')"` : ''}
       ondragover="libOnDragOver(event,'${f.id}')"
       ondrop="libOnDrop(event,'folder','${f.id}')"
       ondragleave="libOnDragLeave(event)">
       <!-- Actions menu -->
-      <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:10;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
-          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
+          style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
-          style="background:rgba(255,255,255,0.5);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+          style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
       </div>
-      <div style="font-size:2.8rem;line-height:1;margin-bottom:8px;color:var(--primary);display:flex;align-items:center;justify-content:center;"><i data-lucide="folder" style="width:48px;height:48px;"></i></div>
-      <div>
+      ${folderIconHtml}
+      <div style="margin-top:auto;">
         <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
         <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
       </div>
-      ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;">⠿ drag</div>' : ''}
+      ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;z-index:3;">⠿ drag</div>' : ''}
     </div>`;
 }
 
