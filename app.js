@@ -10449,12 +10449,17 @@ window.switchWorkbenchLayout = function(layoutMode) {
       document.getElementById('rightColSave')
     ];
 
+    const videoWrapper = document.getElementById('workbenchVideoWrapper');
+    const videoResizer = document.getElementById('videoResizerBar');
+
     if (window.swapWorkbenchPanels) {
       if (recipePanel) {
         leftCol.appendChild(recipePanel);
-        recipePanel.style.height = 'auto';
-        recipePanel.style.flex = 'none';
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
       }
+      if (videoResizer) rightCol.appendChild(videoResizer);
+      if (videoWrapper) rightCol.appendChild(videoWrapper);
       if (scrubber) {
         rightCol.appendChild(scrubber);
         scrubber.style.width = '100%';
@@ -10469,12 +10474,22 @@ window.switchWorkbenchLayout = function(layoutMode) {
       
       panels.forEach(p => {
         if (p) {
-          p.style.maxHeight = 'none';
-          p.style.overflowY = 'visible';
+          p.style.maxHeight = '100%';
+          p.style.overflowY = 'auto';
         }
       });
     } else {
+      if (videoResizer) leftCol.appendChild(videoResizer);
+      if (videoWrapper) leftCol.appendChild(videoWrapper);
+      if (scrubber) {
+        leftCol.appendChild(scrubber);
+        scrubber.style.width = '100%';
+      }
+      leftCol.appendChild(controls);
+      controls.style.width = '100%';
+
       if (recipePanel) {
+        rightCol.appendChild(recipePanel);
         recipePanel.style.height = '100%';
         recipePanel.style.flex = '1';
       }
@@ -10504,34 +10519,43 @@ window.switchWorkbenchLayout = function(layoutMode) {
       hResizer.style.display = 'flex';
     }
 
+    resizer.style.display = 'flex';
+    rightCol.style.display = 'flex';
+
+    const videoWrapper = document.getElementById('workbenchVideoWrapper');
+    const videoResizer = document.getElementById('videoResizerBar');
+
     if (window.swapWorkbenchPanels) {
-      // Swapped: Video player and recipePanel in leftCol. Scrubber/controls in bottomCol.
+      // Swapped: Left is Editor, Right is Video
       if (recipePanel) {
         leftCol.appendChild(recipePanel);
-        recipePanel.style.height = 'auto';
-        recipePanel.style.flex = 'none';
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
       }
-      
-      // Hide rightCol and resizer since recipe is in leftCol
-      rightCol.style.display = 'none';
-      resizer.style.display = 'none';
-      
-      leftCol.style.width = '100%';
-      leftCol.style.flex = '1';
+      if (videoResizer) rightCol.appendChild(videoResizer);
+      if (videoWrapper) rightCol.appendChild(videoWrapper);
     } else {
-      // Normal: Video player in leftCol, recipePanel in rightCol.
-      // Show resizer and right column
-      resizer.style.display = 'flex';
-      rightCol.style.display = 'flex';
-      
-      const fixedW = window.workbenchFixedColumnWidth || 420;
-      leftCol.style.width = `calc(100% - ${fixedW}px)`;
-      leftCol.style.flex = '1 1 auto';
-      leftCol.style.minWidth = '320px';
-      rightCol.style.width = fixedW + 'px';
-      rightCol.style.flex = `0 1 ${fixedW}px`;
-      rightCol.style.minWidth = '320px';
+      // Normal: Left is Video, Right is Editor
+      if (videoResizer) leftCol.appendChild(videoResizer);
+      if (videoWrapper) leftCol.appendChild(videoWrapper);
+      if (recipePanel) {
+        rightCol.appendChild(recipePanel);
+        recipePanel.style.height = '100%';
+        recipePanel.style.flex = '1';
+      }
     }
+
+    const panels = [
+      document.getElementById('rightColStops'),
+      document.getElementById('rightColIngredients'),
+      document.getElementById('rightColSave')
+    ];
+    panels.forEach(p => {
+      if (p) {
+        p.style.maxHeight = '100%';
+        p.style.overflowY = 'auto';
+      }
+    });
   } else if (layoutMode === 'bottom-recipe') {
     window.isControlsFullWidth = false;
     
@@ -10563,53 +10587,39 @@ window.switchWorkbenchLayout = function(layoutMode) {
     bottomCol.style.flexShrink = '0';
     bottomCol.style.overflowY = 'hidden';
 
-    const panels = [
-      document.getElementById('rightColStops'),
-      document.getElementById('rightColIngredients'),
-      document.getElementById('rightColSave')
-    ];
-    panels.forEach(p => {
-      if (p) {
-        p.style.maxHeight = '100%';
-        p.style.overflowY = 'auto';
-      }
-    });
+    resizer.style.display = 'flex';
+    rightCol.style.display = 'flex';
+
+    const videoWrapper = document.getElementById('workbenchVideoWrapper');
+    const videoResizer = document.getElementById('videoResizerBar');
 
     if (window.swapWorkbenchPanels) {
-      // Swapped: Video player in leftCol, scrubber/controls in rightCol. Recipe panel at bottomCol.
+      // Swapped: Left is Controls, Right is Video
+      if (scrubber) {
+        leftCol.appendChild(scrubber);
+        scrubber.style.width = '100%';
+      }
+      leftCol.appendChild(controls);
+      controls.style.width = '100%';
+
+      if (videoResizer) rightCol.appendChild(videoResizer);
+      if (videoWrapper) rightCol.appendChild(videoWrapper);
+    } else {
+      // Normal: Left is Video, Right is Controls
+      if (videoResizer) leftCol.appendChild(videoResizer);
+      if (videoWrapper) leftCol.appendChild(videoWrapper);
+
       if (scrubber) {
         rightCol.appendChild(scrubber);
         scrubber.style.width = '100%';
       }
       rightCol.appendChild(controls);
       controls.style.width = '100%';
+    }
 
-      if (controlsStrip) {
-        controlsStrip.style.position = 'static';
-        controlsStrip.style.left = '0';
-      }
-
-      // Show resizer and right column
-      resizer.style.display = 'flex';
-      rightCol.style.display = 'flex';
-      
-      // Restore default widths for columns in the top grid
-      const fixedW = window.workbenchFixedColumnWidth || 420;
-      leftCol.style.width = `calc(100% - ${fixedW}px)`;
-      leftCol.style.flex = '1 1 auto';
-      leftCol.style.minWidth = '320px';
-      rightCol.style.width = fixedW + 'px';
-      rightCol.style.flex = `0 1 ${fixedW}px`;
-      rightCol.style.minWidth = '320px';
-    } else {
-      // Normal: Video player, scrubber and controls in leftCol. Recipe panel at bottomCol.
-      // Stretch leftCol to 100% width
-      leftCol.style.width = '100%';
-      leftCol.style.flex = '1';
-      
-      // Hide rightCol and resizer since recipe is at the bottom
-      rightCol.style.display = 'none';
-      resizer.style.display = 'none';
+    if (controlsStrip) {
+      controlsStrip.style.position = 'static';
+      controlsStrip.style.left = '0';
     }
 
     if (hResizer) {
@@ -10697,14 +10707,8 @@ window.toggleRecipePanelLayout = function() {
 window.toggleSwapPanels = function() {
   window.swapWorkbenchPanels = !window.swapWorkbenchPanels;
   
-  let nextLayout = window.currentWorkbenchLayout || 'standard';
-  if (nextLayout === 'bottom-recipe') {
-    nextLayout = 'bottom-controls';
-  } else if (nextLayout === 'bottom-controls') {
-    nextLayout = 'bottom-recipe';
-  }
-
-  window.switchWorkbenchLayout(nextLayout);
+  const currentLayout = window.currentWorkbenchLayout || 'standard';
+  window.switchWorkbenchLayout(currentLayout);
 };
 
 // No click-outside dropdown handling needed
@@ -15255,11 +15259,11 @@ function setupWorkbenchResizer() {
     
     // Determine which column is fixed and calculate its new width based on mouse pointer position
     let newFixedW;
-    if (window.swapWorkbenchPanels && layoutMode === 'standard') {
-      // Swapped standard layout: leftCol is fixed, rightCol is flex
+    if (window.swapWorkbenchPanels) {
+      // Swapped layouts: leftCol is fixed, rightCol is flex
       newFixedW = e.clientX - gridRect.left;
     } else {
-      // Normal layouts or bottom layouts: leftCol is flex, rightCol is fixed
+      // Normal layouts: leftCol is flex, rightCol is fixed
       newFixedW = gridRect.right - e.clientX;
     }
 
@@ -15273,7 +15277,7 @@ function setupWorkbenchResizer() {
 
     // Apply the new widths inline to both columns to avoid any flex constraints override
     const rightCol = document.getElementById('workbenchRight');
-    if (window.swapWorkbenchPanels && layoutMode === 'standard') {
+    if (window.swapWorkbenchPanels) {
       leftSide.style.width = newFixedW + 'px';
       leftSide.style.flex = `0 1 ${newFixedW}px`;
       leftSide.style.minWidth = '320px';
