@@ -111,7 +111,7 @@ All tests run in the Chrome DevTools browser session passed successfully:
 ## 📂 Folder Video Slideshow Preview on Hover
 
 ### The Goal
-Provide a premium, active preview inside the folder cards (`.bento-widget`) on the Library/Profile tab that showcases a slideshow of the recipes and videos stored inside that folder.
+Provide a premium, active preview inside the folder cards (`.bento-widget`) on both the Library tab ("Folders & Videos" via `libFolderCardHTML`) and Profile tab ("My Space" via `mySpaceRenderFolderStrip`) that showcases a slideshow of the recipes and videos stored inside that folder.
 
 ### The Solution
 1. **Default Video Thumbnail Banner**: Instead of showing the plain folder SVG icon by default, the card renders the **thumbnail image of the first video/recipe** inside the folder as a full-bleed banner covering the top 70% of the card.
