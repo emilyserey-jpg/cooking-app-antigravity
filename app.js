@@ -10697,34 +10697,57 @@ window.switchWorkbenchLayout = function(layoutMode) {
   const isTimelineCollapsed = window.isTimelineCollapsed;
 
   // 1. Sidebar collapse state sync
-  if (isSidebarCollapsed) {
-    rightCol.style.display = 'none';
-    resizer.style.display = 'none';
-    leftCol.style.width = '100%';
-    leftCol.style.flex = '1';
-    if (sidebarBtn) {
+  if (sidebarBtn && rightCol) {
+    if (sidebarBtn.parentElement !== rightCol) {
+      rightCol.insertBefore(sidebarBtn, rightCol.firstChild);
+    }
+    if (isSidebarCollapsed) {
+      rightCol.style.width = '0px';
+      rightCol.style.flex = 'none';
+      rightCol.style.minWidth = '0px';
+      rightCol.style.padding = '0px';
+      rightCol.style.margin = '0px';
+      if (resizer) resizer.style.display = 'none';
+      if (recipePanel) recipePanel.style.display = 'none';
+      if (leftCol) {
+        leftCol.style.width = '100%';
+        leftCol.style.flex = '1';
+      }
       if (window.swapWorkbenchPanels) {
-        sidebarBtn.style.left = '0px';
-        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.right = '0';
+        sidebarBtn.style.transform = 'translate(50%, -50%)';
         sidebarBtn.style.borderRadius = '0 8px 8px 0';
         if (sidebarIcon) sidebarIcon.textContent = '›';
       } else {
-        sidebarBtn.style.right = '0px';
-        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.left = '0';
+        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.transform = 'translate(-50%, -50%)';
         sidebarBtn.style.borderRadius = '8px 0 0 8px';
         if (sidebarIcon) sidebarIcon.textContent = '‹';
       }
-    }
-  } else {
-    if (sidebarBtn) {
+    } else {
+      rightCol.style.width = fixedW + 'px';
+      rightCol.style.flex = `0 1 ${fixedW}px`;
+      rightCol.style.minWidth = '320px';
+      rightCol.style.paddingLeft = '8px';
+      rightCol.style.paddingBottom = '10px';
+      if (resizer) resizer.style.display = 'flex';
+      if (recipePanel) recipePanel.style.display = 'flex';
+      if (leftCol) {
+        leftCol.style.width = `calc(100% - ${fixedW}px)`;
+        leftCol.style.flex = '1 1 auto';
+      }
       if (window.swapWorkbenchPanels) {
-        sidebarBtn.style.left = `${fixedW - 12}px`;
-        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.right = '0';
+        sidebarBtn.style.transform = 'translate(50%, -50%)';
         sidebarBtn.style.borderRadius = '0 8px 8px 0';
         if (sidebarIcon) sidebarIcon.textContent = '‹';
       } else {
-        sidebarBtn.style.right = `${fixedW - 12}px`;
-        sidebarBtn.style.left = 'auto';
+        sidebarBtn.style.left = '0';
+        sidebarBtn.style.right = 'auto';
+        sidebarBtn.style.transform = 'translate(-50%, -50%)';
         sidebarBtn.style.borderRadius = '8px 0 0 8px';
         if (sidebarIcon) sidebarIcon.textContent = '›';
       }
@@ -10732,26 +10755,71 @@ window.switchWorkbenchLayout = function(layoutMode) {
   }
 
   // 2. Timeline/controls collapse state sync
-  if (isTimelineCollapsed) {
-    if (layoutMode === 'standard') {
-      if (scrubber) scrubber.style.display = 'none';
-      if (controls) controls.style.display = 'none';
-    } else {
-      if (bottomCol) bottomCol.style.display = 'none';
-      if (hResizer) hResizer.style.display = 'none';
-    }
-    if (timelineBtn) {
-      timelineBtn.style.bottom = '12px';
-      if (timelineIcon) timelineIcon.textContent = '∧';
-    }
-  } else {
-    if (timelineBtn) {
-      if (layoutMode === 'standard') {
-        timelineBtn.style.bottom = '190px';
-      } else {
-        timelineBtn.style.bottom = '12px';
+  if (timelineBtn) {
+    const activeBottomContainer = (layoutMode === 'standard') ? scrubber : bottomCol;
+    if (activeBottomContainer) {
+      if (timelineBtn.parentElement !== activeBottomContainer) {
+        activeBottomContainer.appendChild(timelineBtn);
       }
-      if (timelineIcon) timelineIcon.textContent = '∨';
+      activeBottomContainer.style.position = 'relative';
+      activeBottomContainer.style.overflow = 'visible';
+      timelineBtn.style.top = '0';
+      timelineBtn.style.bottom = 'auto';
+      timelineBtn.style.transform = 'translate(-50%, -50%)';
+      timelineBtn.style.borderRadius = '8px 8px 0 0';
+
+      if (isTimelineCollapsed) {
+        if (layoutMode === 'standard') {
+          if (scrubber) {
+            scrubber.style.height = '0px';
+            scrubber.style.minHeight = '0px';
+            scrubber.style.margin = '0px';
+            scrubber.style.padding = '0px';
+            Array.from(scrubber.children).forEach(child => {
+              if (child !== timelineBtn) child.style.display = 'none';
+            });
+          }
+          if (controls) controls.style.display = 'none';
+        } else {
+          if (bottomCol) {
+            bottomCol.style.height = '0px';
+            bottomCol.style.minHeight = '0px';
+            bottomCol.style.margin = '0px';
+            bottomCol.style.padding = '0px';
+            Array.from(bottomCol.children).forEach(child => {
+              if (child !== timelineBtn) child.style.display = 'none';
+            });
+          }
+          if (hResizer) hResizer.style.display = 'none';
+        }
+        if (timelineIcon) timelineIcon.textContent = '∧';
+      } else {
+        if (layoutMode === 'standard') {
+          if (scrubber) {
+            scrubber.style.height = '';
+            scrubber.style.minHeight = '';
+            scrubber.style.margin = '';
+            scrubber.style.padding = '';
+            Array.from(scrubber.children).forEach(child => {
+              if (child !== timelineBtn) child.style.display = '';
+            });
+          }
+          if (controls) controls.style.display = '';
+        } else {
+          if (bottomCol) {
+            const h = (layoutMode === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220));
+            bottomCol.style.height = h + 'px';
+            bottomCol.style.minHeight = '';
+            bottomCol.style.margin = '';
+            bottomCol.style.padding = '';
+            Array.from(bottomCol.children).forEach(child => {
+              if (child !== timelineBtn) child.style.display = '';
+            });
+          }
+          if (hResizer) hResizer.style.display = 'flex';
+        }
+        if (timelineIcon) timelineIcon.textContent = '∨';
+      }
     }
   }
 
@@ -15593,56 +15661,75 @@ window.toggleEditorSidebar = function() {
   const collapseIcon = document.getElementById('sidebarCollapseIcon');
   if (!rightPanel) return;
 
-  const isCollapsed = rightPanel.style.display === 'none';
+  const isCollapsed = window.isSidebarCollapsed;
   const fixedW = window.workbenchFixedColumnWidth || 420;
 
   if (isCollapsed) {
     window.isSidebarCollapsed = false;
-    rightPanel.style.display = 'flex';
+    rightPanel.style.width = fixedW + 'px';
+    rightPanel.style.flex = `0 1 ${fixedW}px`;
+    rightPanel.style.minWidth = '320px';
+    rightPanel.style.paddingLeft = '8px';
+    rightPanel.style.paddingBottom = '10px';
+    
     if (resizer) resizer.style.display = 'flex';
+    const recipeWrapper = document.getElementById('recipePanelWrapper');
+    if (recipeWrapper) recipeWrapper.style.display = 'flex';
+
     if (leftCol) {
       leftCol.style.width = `calc(100% - ${fixedW}px)`;
       leftCol.style.flex = '1 1 auto';
     }
-    // Update button position and icon
+
     if (collapseBtn) {
       if (window.swapWorkbenchPanels) {
-        collapseBtn.style.left = `${fixedW - 12}px`;
-        collapseBtn.style.right = 'auto';
+        collapseBtn.style.left = 'auto';
+        collapseBtn.style.right = '0';
+        collapseBtn.style.transform = 'translate(50%, -50%)';
         collapseBtn.style.borderRadius = '0 8px 8px 0';
         if (collapseIcon) collapseIcon.textContent = '‹';
       } else {
-        collapseBtn.style.right = `${fixedW - 12}px`;
-        collapseBtn.style.left = 'auto';
+        collapseBtn.style.left = '0';
+        collapseBtn.style.right = 'auto';
+        collapseBtn.style.transform = 'translate(-50%, -50%)';
         collapseBtn.style.borderRadius = '8px 0 0 8px';
         if (collapseIcon) collapseIcon.textContent = '›';
       }
     }
   } else {
     window.isSidebarCollapsed = true;
-    rightPanel.style.display = 'none';
+    rightPanel.style.width = '0px';
+    rightPanel.style.flex = 'none';
+    rightPanel.style.minWidth = '0px';
+    rightPanel.style.padding = '0px';
+    rightPanel.style.margin = '0px';
+    
     if (resizer) resizer.style.display = 'none';
+    const recipeWrapper = document.getElementById('recipePanelWrapper');
+    if (recipeWrapper) recipeWrapper.style.display = 'none';
+
     if (leftCol) {
       leftCol.style.width = '100%';
       leftCol.style.flex = '1';
     }
-    // Update button position and icon
+
     if (collapseBtn) {
       if (window.swapWorkbenchPanels) {
-        collapseBtn.style.left = '0px';
-        collapseBtn.style.right = 'auto';
+        collapseBtn.style.left = 'auto';
+        collapseBtn.style.right = '0';
+        collapseBtn.style.transform = 'translate(50%, -50%)';
         collapseBtn.style.borderRadius = '0 8px 8px 0';
         if (collapseIcon) collapseIcon.textContent = '›';
       } else {
-        collapseBtn.style.right = '0px';
-        collapseBtn.style.left = 'auto';
+        collapseBtn.style.left = '0';
+        collapseBtn.style.right = 'auto';
+        collapseBtn.style.transform = 'translate(-50%, -50%)';
         collapseBtn.style.borderRadius = '8px 0 0 8px';
         if (collapseIcon) collapseIcon.textContent = '‹';
       }
     }
   }
   
-  // Re-adjust video sizes to expand/shrink based on space
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();
   }
@@ -15661,43 +15748,62 @@ window.toggleHorizontalPanel = function() {
 
   if (isCollapsed) {
     window.isTimelineCollapsed = false;
-    // Show panels
     if (layout === 'standard') {
-      if (scrubber) scrubber.style.display = 'flex';
-      if (controls) controls.style.display = 'flex';
-      if (collapseBtn) {
-        collapseBtn.style.bottom = '190px';
-        if (collapseIcon) collapseIcon.textContent = '∨';
+      if (scrubber) {
+        scrubber.style.height = '';
+        scrubber.style.minHeight = '';
+        scrubber.style.margin = '';
+        scrubber.style.padding = '';
+        scrubber.style.overflow = 'visible';
+        Array.from(scrubber.children).forEach(child => {
+          if (child !== collapseBtn) child.style.display = '';
+        });
       }
+      if (controls) controls.style.display = '';
     } else {
-      if (bottomCol) bottomCol.style.display = 'flex';
-      if (hResizer) hResizer.style.display = 'flex';
-      if (collapseBtn) {
-        collapseBtn.style.bottom = '12px';
-        if (collapseIcon) collapseIcon.textContent = '∨';
+      if (bottomCol) {
+        bottomCol.style.height = (layout === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220)) + 'px';
+        bottomCol.style.minHeight = '';
+        bottomCol.style.margin = '';
+        bottomCol.style.padding = '';
+        bottomCol.style.overflow = 'visible';
+        Array.from(bottomCol.children).forEach(child => {
+          if (child !== collapseBtn) child.style.display = '';
+        });
       }
+      if (hResizer) hResizer.style.display = 'flex';
     }
+    if (collapseIcon) collapseIcon.textContent = '∨';
   } else {
     window.isTimelineCollapsed = true;
-    // Hide panels
     if (layout === 'standard') {
-      if (scrubber) scrubber.style.display = 'none';
+      if (scrubber) {
+        scrubber.style.height = '0px';
+        scrubber.style.minHeight = '0px';
+        scrubber.style.margin = '0px';
+        scrubber.style.padding = '0px';
+        scrubber.style.overflow = 'visible';
+        Array.from(scrubber.children).forEach(child => {
+          if (child !== collapseBtn) child.style.display = 'none';
+        });
+      }
       if (controls) controls.style.display = 'none';
-      if (collapseBtn) {
-        collapseBtn.style.bottom = '12px';
-        if (collapseIcon) collapseIcon.textContent = '∧';
-      }
     } else {
-      if (bottomCol) bottomCol.style.display = 'none';
-      if (hResizer) hResizer.style.display = 'none';
-      if (collapseBtn) {
-        collapseBtn.style.bottom = '12px';
-        if (collapseIcon) collapseIcon.textContent = '∧';
+      if (bottomCol) {
+        bottomCol.style.height = '0px';
+        bottomCol.style.minHeight = '0px';
+        bottomCol.style.margin = '0px';
+        bottomCol.style.padding = '0px';
+        bottomCol.style.overflow = 'visible';
+        Array.from(bottomCol.children).forEach(child => {
+          if (child !== collapseBtn) child.style.display = 'none';
+        });
       }
+      if (hResizer) hResizer.style.display = 'none';
     }
+    if (collapseIcon) collapseIcon.textContent = '∧';
   }
 
-  // Re-adjust video sizes to expand/shrink based on space
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();
   }

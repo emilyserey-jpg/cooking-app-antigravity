@@ -1358,18 +1358,8 @@
         <!-- Main 2-col workbench -->
         <div id="workbenchGrid" style="display:flex;flex-direction:row;gap:0;flex:1;min-height:0;overflow:hidden;position:relative;">
 
-          <!-- Side Panel Collapse Toggle Button -->
-          <button id="sidebarCollapseBtn" class="collapse-handle-btn collapse-handle-vertical" onclick="window.toggleEditorSidebar()" title="Collapse side editor panel" style="right:408px;">
-            <span id="sidebarCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">›</span>
-          </button>
-
           <!-- ══ LEFT: Video + standalone chapter scrubber ══ -->
           <div id="workbenchLeft" style="width:calc(100% - 420px);min-width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:0.5rem;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding-right:6px;position:relative;">
-
-            <!-- Horizontal Panel Collapse Toggle Button -->
-            <button id="timelineCollapseBtn" class="collapse-handle-btn collapse-handle-horizontal" onclick="window.toggleHorizontalPanel()" title="Collapse timeline panel" style="bottom:190px;">
-              <span id="timelineCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">∨</span>
-            </button>
 
             <!-- Video Display Resizer Controls -->
             <div id="videoResizerBar" style="display:none;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:12px;border:2px solid var(--border-card);flex-shrink:0;gap:12px;">
@@ -1455,7 +1445,11 @@
             </div>
 
             <!-- ── Scrubber Wrapper (to keep controls and scrubber card together when swapping panels) ── -->
-            <div id="editorScrubberWrapper" style="display:flex; flex-direction:column; flex-shrink:0;">
+            <div id="editorScrubberWrapper" style="display:flex; flex-direction:column; flex-shrink:0; position:relative; overflow:visible;">
+              <!-- Horizontal Panel Collapse Toggle Button -->
+              <button id="timelineCollapseBtn" class="collapse-handle-btn collapse-handle-horizontal" onclick="window.toggleHorizontalPanel()" title="Collapse timeline panel" style="top:0; transform:translate(-50%, -50%); z-index:1000;">
+                <span id="timelineCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">∨</span>
+              </button>
               <!-- Layout controls row (above scrubber card) -->
               <div id="scrubberLayoutControls" style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-bottom:4px; flex-shrink:0;">
                 <!-- Switch Spots Toggle Button -->
@@ -1585,7 +1579,11 @@
           </div>
 
           <!-- ══ RIGHT: Scrollable recipe panel (tabbed flow on desktop) ══ -->
-          <div id="workbenchRight" style="overflow:hidden;display:flex;flex-direction:column;gap:0.75rem;flex:1;padding-left:8px;padding-bottom:10px;">
+          <div id="workbenchRight" style="overflow:visible;display:flex;flex-direction:column;gap:0.75rem;flex:1;padding-left:8px;padding-bottom:10px;position:relative;">
+            <!-- Side Panel Collapse Toggle Button -->
+            <button id="sidebarCollapseBtn" class="collapse-handle-btn collapse-handle-vertical" onclick="window.toggleEditorSidebar()" title="Collapse side editor panel" style="left:0; transform:translate(-50%, -50%); top:50%;">
+              <span id="sidebarCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">›</span>
+            </button>
             <div id="recipePanelWrapper" style="display:flex;flex-direction:column;gap:0.75rem;flex:1;overflow:hidden;min-height:0;width:100%;">
               <!-- Desktop Editor Tab Bar -->
             <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
@@ -1811,7 +1809,7 @@
         </div>
 
         <!-- ══ BOTTOM: Full width row container for controls ══ -->
-        <div id="workbenchBottom" style="display:none; width:100%; margin-top:8px; flex-shrink:0; box-sizing:border-box;"></div>
+        <div id="workbenchBottom" style="display:none; width:100%; margin-top:8px; flex-shrink:0; box-sizing:border-box; position:relative; overflow:visible;"></div>
 
       </div>
 

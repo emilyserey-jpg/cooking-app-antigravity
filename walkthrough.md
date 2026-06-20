@@ -194,3 +194,34 @@ Below is the screenshot showing the toggleable modal displayed when clicking "In
 
 ![Step Ingredients Modal](/Users/emilyserey/.gemini/antigravity/brain/c17a7a00-6a4f-49be-8952-7228cb907909/screenshot_step_ingredients_modal.png)
 
+---
+
+## ↕️ Border-Anchored Collapsible Panels Handle Positioning Fix
+
+### The Problem
+The collapse/expand panel toggle handles (`#sidebarCollapseBtn` and `#timelineCollapseBtn`) were positioned using absolute pixel offsets relative to the main workbench container (`#workbenchGrid` and `#workbenchLeft`). 
+- When screen resolutions changed or column layouts were swapped, these handles would float disconnectedly in the middle of screen graphics, overlapping video elements or action buttons.
+- In standard layout, if the left column content was long, scrolling the left column would scroll the timeline collapse button away, floating it in the middle of the screen.
+
+### The Solution
+1. **Direct DOM Parenting**:
+   - Relocated `#sidebarCollapseBtn` to be a child of the right-hand column itself (`#workbenchRight`).
+   - Relocated `#timelineCollapseBtn` to be a child of `#editorScrubberWrapper` (in standard layout) or `#workbenchBottom` (in bottom layout modes), dynamically updated in JS when layout modes change.
+2. **Dynamic Border Centering**:
+   - Used CSS absolute coordinates relative to the panel container itself:
+     - **Sidebar Button**: Placed at `left: 0` (standard layout, centering on left border) or `right: 0` (swapped layout, centering on right border) with `transform: translate(±50%, -50%)`.
+     - **Timeline Button**: Placed at `top: 0` (centering on top border) with `transform: translate(-50%, -50%)`.
+   - Set the container elements to `position: relative; overflow: visible;`.
+3. **Robust Height & Width Collapsing**:
+   - Refactored `toggleEditorSidebar()` to collapse the right column by setting `width: 0px`, `minWidth: 0px`, `padding: 0px`, `margin: 0px` and hiding its inner content wrapper (`#recipePanelWrapper`) instead of setting `display: none` on the column. This keeps the border-anchored button visible at the exact screen edge when collapsed.
+   - Refactored `toggleHorizontalPanel()` to collapse the bottom panel by setting `height: 0px`, `minHeight: 0px`, `padding: 0px`, `margin: 0px` and hiding children, keeping the button visible at the bottom edge.
+
+### 🧪 Verification Results
+Running the automated test suites verified that all panel collapse interactions, layout switching, column swapping, and scale transitions function perfectly:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Asserts that side panel collapses/expands correctly, timeline collapses/expands correctly, handles stick to screen borders dynamically, and takes screenshots of all collapsed states. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies presence of layout dropdown, clicks Switch Spots, asserts symmetrical panel relocation, and cycles through bottom layouts. |
+| `test_symmetrical_swapping.js` | **PASSED** ✅ | Verifies that clicking Switch Spots in standard, bottom-controls, and bottom-editor layouts swaps column panels symmetrically while maintaining column visibility. |
+
