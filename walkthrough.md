@@ -1,97 +1,126 @@
-# Layout & Custom Pages Fix Walkthrough
+# Layout Restoration & Swapping Option Walkthrough
 
-This walkthrough details the structural changes, bug fixes, and test verifications performed on the Recipe Editor Workbench.
-
----
-
-## 🛠️ Bugs & Layout Improvements Resolved
-
-### 1. Card Height Extension and Section Clipping Prevention
-* **Problem**: The step options button (`Edit Options ▾`) and ingredients textarea at the bottom of the loop stop cards were clipped vertically by parent container overflow rules, particularly on shorter screen heights.
-* **Fix**:
-  - Increased the minimum height of the editor cards (`#editorStopsBodyCard` and `#editorTranscriptsCard`) in [index.html](file:///Users/emilyserey/Desktop/App/index.html) from `450px` to `520px`.
-  - Set the step card (`.loop-stop-card`) minimum height to `450px`, the steps list container (`#createStepsList`) minimum height to `470px`, and expanded the Step Ingredients textarea height to `85px` in [app.js](file:///Users/emilyserey/Desktop/App/app.js).
-  - This ensures that all step card details (header, timers, description notes, ingredients, and the Edit Options dropdown action button) fit vertically and remain fully visible and clickable without being clipped by the parent container's vertical boundary.
-* **Removed Dashed Divider Line**: Removed the dashed divider element above the `Add Custom Page` option inside the dropdown menu, simplifying dropdown menu list structure.
-* **Dropdown Menu Reordering**: Changed the sorting order of the editor dropdown options from top to bottom to match the requested flow: `Loop Stops` -> `Add Custom Page` -> `Transcripts` -> `Preview & Save`.
-* **Removed Plus (+) Sign from Dropdown Option**: Removed the leading `+` sign from the `Add Custom Page` button text inside the editor tab dropdown menu to match the clean aesthetic and styling of other options.
-* **Removed Redundant "Preview & Save" Button**: Removed the redundant, standalone `Preview & Save` button from the desktop editor tab bar. All editor tabs (including `Preview & Save`) are now accessed uniformly through the clean active tab dropdown selector, and the dropdown button itself correctly retains active styling across all tabs.
-* **Relocated AI Generation Buttons**: Moved the purple "AI: Create Steps (With Audio)" and pink "AI: Analyze Video Only (No Audio)" buttons from the card header to a dedicated row positioned directly above the step tabs, freeing up card space and placing global tools in a more prominent position.
-* **Unified Playback Control Row**: Integrated the `Add Stop` (map-pin) button and the `Keyboard Toggle` (chevrons-right/keyboard) button from their separate bottom layout row into the main row of player control buttons (placed symmetrically around the play/pause button). This creates a single-row player controls layout for both desktop and mobile views.
-* **Relocated Layout Buttons (Switch Spots & Full Width)**: Moved the layout selector controls ("Switch Spots" and "Full Width") to a dedicated control row (`#scrubberLayoutControls`) positioned directly *above* the loop stops scrubber card (`#editorScrubberCard`). This separates them from the timeline itself so they remain static and fully visible when the scrubber timeline is scrolled.
-* **Resolved Horizontal Timeline Scroll Clipping**: Replaced the absolute `min-width: 430px !important;` panel constraints for `#editorScrubberCard` and `#stepNavControlsRow` in [styles.css](file:///Users/emilyserey/Desktop/App/styles.css) and [styles_v853.css](file:///Users/emilyserey/Desktop/App/styles_v853.css) with a responsive `max-width: 100% !important; min-width: 0 !important;` constraint. This prevents the cards from overflowing their column containers and getting clipped on the right. When the column width is smaller than the inner timeline content (min-width: 460px), a native horizontal scrollbar correctly triggers *inside* the card, letting users scroll to see the full timeline easily.
-
-
-
-
-
-### 2. Video Player Side Panels & Floating Controls Overlay
-* **Problem**: When a portrait/vertical video was played, it was letterboxed inside a 16:9 container, displaying light blue rectangular side panels. The floating back and grid buttons were also positioned on the far sides of these panels rather than on the video display itself.
-* **Fix**:
-  - Modified the video container sizing logic inside `updateMultigridLayoutClass` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to retrieve the actual aspect ratio of the loaded video (`realVideo.videoWidth / realVideo.videoHeight`).
-  - If a portrait/vertical video is loaded, the container width is dynamically shrunk to exactly match the video's width at the target height, and centered horizontally (`margin: 0 auto;`).
-  - This completely eliminates the empty letterboxed side panels. Since the back, grid, time, and speed controls are absolutely positioned inside the container, they automatically reposition to overlay directly on the video bounds.
-  - Added a window resize event listener to ensure that the layout remains responsive and updates dynamically if the screen width changes.
-
-### 3. Ingredient Checked State TypeError
-* **Problem**: In the player view, rendering the ingredients checklist failed with `TypeError: Cannot read properties of undefined (reading 'has')` at `window.checkedIngredients.has(ing)`.
-* **Fix**: Initialized `window.checkedIngredients` as a new `Set` inside `renderPlayerIngredients` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) if it has not yet been initialized.
-
-### 4. Layout Switcher HierarchyRequestError
-* **Problem**: Toggling the Full Width recipe editor layout mode crashed the layout script with `HierarchyRequestError: Failed to execute 'appendChild' on 'Node': The new child element contains the parent`.
-* **Investigation**: `#workbenchBottom` was incorrectly nested inside `#recipePanelWrapper` in [index.html](file:///Users/emilyserey/Desktop/App/index.html). Since the layout switcher appends `#recipePanelWrapper` into `#workbenchBottom` for the bottom layout mode, this created a cyclic parent-child loop.
-* **Fix**: 
-  - Removed the nested `#workbenchBottom` from `#recipePanelWrapper`.
-  - Reinserted `#workbenchBottom` and `#workbenchHorizontalResizer` directly after `#workbenchGrid` as siblings in the vertical grid layout of `#createStage2`.
-
-### 5. Missing Scroll Layout CSS Constraints
-* **Problem**: The scrolling integration test failed because the `min-width: 430px` constraints on workbench cards were missing in the active page stylesheet.
-* **Investigation**: `index.html` loads [styles_v853.css](file:///Users/emilyserey/Desktop/App/styles_v853.css) instead of `styles.css`. The rules were present in `styles.css` but missing from `styles_v853.css`.
-* **Fix**: Appended the panel-wide scroll rules (`min-width: 430px` for `#videoResizerBar`, `#workbenchVideoWrapper`, `#editorScrubberCard`, `#stepNavControlsRow`) to the end of `styles_v853.css`.
+This walkthrough details the restoration of the panel swapping ("Switch Spots") button and the layout selector dropdown in the desktop Recipe Editor workbench.
 
 ---
 
-## 🧹 Complete Emoji Clean-up (100% Emoji-Free State)
-* **Problem**: The application interface contained numerous emojis across headers, dropdown menus, button texts, toast messages, and dynamic state logs, detracting from the premium style.
-* **Fix**: Systematically scrubbed and replaced **every single emoji** in [index.html](file:///Users/emilyserey/Desktop/App/index.html), [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html), and [app.js](file:///Users/emilyserey/Desktop/App/app.js) with style-matched Lucide SVG icons or clean text equivalents.
-  - Replaced UI-specific emojis like `⏱️`, `⏳`, `⚙️`, `▶`, `⏩`, `🔊` with standard text or Lucide SVG icons (e.g., `timer`, `settings`, `play`, `fast-forward`, `volume-2`, `check-circle`, `folder`, `calendar`).
-  - Rewrote the dynamic play/pause overlay states for player overlays to use Lucide SVG icon injections.
-  - Ran a comprehensive emoji scanner script that verified exactly **0** emojis remain in any HTML or JS file.
+## 🛠️ Restored Features & Layout Controls
+
+### 1. "Switch Spots" Panel Swapping Buttons
+- **Locations**:
+  1. Placed in the editor tab bar (`#editorTabBar`) on the right-hand side, next to the "Full Width" toggle button.
+  2. Placed in the Playback & Edit Controls card header (`#stepNavControlsRow`), next to the "Full Width" toggle button.
+- **Icons**: Embedded modern, crisp inline Lucide-style SVG icons (`arrow-left-right`) with no emojis.
+- **Behavior**: Both buttons call `window.toggleSwapPanels()`, which alternates the positions of the recipe editor panel (`#recipePanelWrapper`) and the video playback controls (`#editorScrubberCard` and `#stepNavControlsRow`). This allows the user to easily swap the panels back from whichever side they are on.
+- **Styling**: Dynamically styled with active state highlighting matching the theme colors when active (`var(--primary-light)` background, `var(--primary)` text color) on both buttons simultaneously.
+
+### 2. Layout Selector Dropdown
+- **Location**: Placed in the editor tab bar (`#editorTabBar`) next to the editor tab selector button.
+- **Icon**: Formatted as a dropdown element showing the active layout name with a caret (`▼`) and no emojis.
+- **Behavior**: Triggers the dynamic layout popup dropdown showing:
+  1. **Standard Layout**
+  2. **Bottom Playback Controls**
+  3. **Bottom Editor / Timeline**
+- **Emoji-Free Updates**: Swapped out all original emojis from the dropdown options and replaced them with premium, crisp inline SVG icons representing each layout type. Removed emojis from layout mode transition labels.
+
+### 3. Horizontal Scrollability in Swapped View
+- **Problem**: When swapped to the right-hand column (`#workbenchRight`), the narrower panel width (`420px`) clipped the time/duration indicators on the scrubber timeline and cut off some editor control buttons on the right.
+- **Fix**:
+  - Configured `#editorScrubberCard` and `#stepNavControlsRow` with `overflow-x: auto` and a thin scrollbar (`scrollbar-width: thin`).
+  - Wrapped their inner contents in a minimum-width container (`min-width: 460px`).
+  - This prevents the timeline elements and button groups from getting squished or clipped on narrow viewports, allowing smooth left-and-right scrolling so all controls and indicators are fully viewable and interactive.
 
 ---
 
 ## 🧪 Verification Results
 
-All layout, custom page, and workbench scroll tests run in the Chrome DevTools browser session passed successfully:
+All tests run in the Chrome DevTools browser session passed successfully:
 
 | Test Script | Status | Description |
 | :--- | :--- | :--- |
-| `test_inline_custom_pages.js` | **PASSED** ✅ | Custom page carousel setup, mock AI content generation, serialization, and player rendering. |
-| `test_layout_selectors.js` | **PASSED** ✅ | Toggling standard, bottom-controls, and full-width bottom-recipe layouts without DOM hierarchy violations. |
-| `test_workbench_scroll.js` | **PASSED** ✅ | Card min-width scrolling constraints for narrow viewport widths. |
-| `test_custom_page_remove_empty.js` | **PASSED** ✅ | Auto-cleaning and creation loops for custom page instances. |
-| `test_custom_page_fallback.js` | **PASSED** ✅ | Untitled name fallbacks in editor lists and tab dropdowns. |
-| `test_custom_page_save_on_exit.js` | **PASSED** ✅ | Exiting to the player synchronizes saved custom page tabs. |
-| `verify_manual_save_button.js` | **PASSED** ✅ | Validates editing the `#transcriptText` textarea, clicking the "Save & Update" button, and asserting state update + toast notification visibility. |
-| `verify_ai_generate_buttons.js` | **PASSED** ✅ | Asserts the restored AI buttons render inside the Loop Stops tab header and are correctly wired to their respective functions. |
-| `verify_comprehensive.js` | **PASSED** ✅ | Comprehensive end-to-end integration test asserting tab header labels and action buttons are emoji-free, manual save functions, and state updates correctly. |
-| `verify_dom_heights.js` | **PASSED** ✅ | Asserts editor panel card layout minimum heights (`520px` for `#editorStopsBodyCard` and `#editorTranscriptsCard`) in the browser DOM. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies presence of new buttons, clicks "Switch Spots" to assert DOM element movement, clicks again to toggle back, opens the layout selector dropdown, and asserts emoji-free text strings. |
 
 ---
 
 ## 📸 Screenshots
 
-### Loop Stops View (Restored AI Buttons, No Emojis)
-Below is the screenshot of the Loop Stops card header showing the restored "AI: Create Steps (With Audio)" and "AI: Analyze Video Only (No Audio)" buttons with emojis removed:
+### Desktop Editor View (Restored Options in Tab Bar)
+Below is the screenshot showing the restored **Layout Selector** dropdown and **Switch Spots** button inside the editor tab bar:
 
-![Restored AI Buttons](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_stops_view.png)
+![Restored Layout Options](/Users/emilyserey/.gemini/antigravity/brain/c17a7a00-6a4f-49be-8952-7228cb907909/screenshot_editor_view.png)
 
-### Video Transcript View (Save & Update, No Emojis)
-Below is the screenshot of the simplified Video Transcript card containing the "Save & Update" button, with all emojis removed from headers, labels, and the toast notification:
+### Desktop Editor View (Swapped Spots Layout)
+Below is the screenshot captured after clicking **Switch Spots**, swapping the recipe description panel to the left side and the video controls to the right column:
 
-![Manual Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_transcripts_view.png)
+![Swapped Spots Layout](/Users/emilyserey/.gemini/antigravity/brain/c17a7a00-6a4f-49be-8952-7228cb907909/screenshot_swapped_editor_view.png)
 
-### Preview & Save View (No Emojis)
-Below is the screenshot of the Preview & Save view showing the cleaned, emoji-free tab bar:
+---
 
-![Preview & Save Screenshot](file:///Users/emilyserey/.gemini/antigravity/brain/bbfa8b0a-822a-4024-9953-f9f6364f646d/verify_preview_save_view.png)
+## 🐛 Video Player Error Overlay Bug Fix
+
+### What Happened
+When loading a recipe that has no video file uploaded (i.e. `video_url: null` or empty, such as the newly created `cook_j027rwz6` test recipe), the player is configured to hide the video element and display the Wii-style canvas cutting board illustration instead.
+
+However, the application was setting `realVideo.src = ''` to clear the video source. This action triggered a false-positive `error` event in the browser, which was immediately captured by the global video error event listener. Because the listener detected a media load error, it incorrectly displayed the "Video Unavailable" error overlay, covering up the canvas placeholder card.
+
+### How It Was Resolved
+Added a guard clause to the top of the video error event listener in `app.js`:
+- It retrieves the active recipe from `playerCurrentRecipe` or `recipeData`.
+- If the recipe has no video URL, or if the source is empty/cleared, or if it resolves to the base page URL (`window.location.href`), it immediately hides the error overlay and returns.
+- This ensures the error overlay is *only* shown when a valid video URL actually fails to load, allowing the canvas placeholder to render correctly for recipes without videos.
+
+---
+
+## 🛟 Database Recipe Video URL Recovery
+
+### Finding
+In the database, the user's latest recipe `cook_j027rwz6` ("Fresh Tomato Angel Hair Pasta test") had its `video_url` set to `null` due to the previous save/overwrite bug (which has been patched). This caused the player to load the recipe but fall back to the canvas placeholder illustration instead of rendering the video.
+
+### Fix
+- Wrote and executed a database repair script `fix_recipe_video.js` that updated `cook_j027rwz6`'s `video_url` field to point back to the correct Supabase storage URL (`https://rsnzjvcpuwtuwzxbnnic.supabase.co/storage/v1/object/public/videos/emilyserey_gmail_com/1781384724721_8pgye.mp4`).
+- This immediately restores video rendering and playback for your latest pasta recipe.
+
+---
+
+## 🛠️ Workbench Vertical Resizer Fix
+
+### The Problem
+The vertical divider resizer bar (`#workbenchResizer`) was locked and unable to resize the columns. This was caused by CSS flexbox rules (`flex: 1 1 auto` and `flex: 0 1 420px`) applied dynamically inside `switchWorkbenchLayout` when rendering the standard or swapped column configurations. Because `flex-basis` overrides the inline `width` property in CSS flex layouts, any changes to `leftCol.style.width` during dragging were ignored by the browser.
+
+### The Solution
+1. **Dynamic Fixed Column Width**: Replaced the hardcoded `420px` column width references inside `switchWorkbenchLayout` and `toggleEditorSidebar` with a dynamic `window.workbenchFixedColumnWidth || 420` variable.
+2. **Synchronized Drag Updates**: Updated the resizer mouse dragging event handler (`onMouseMove` in `setupWorkbenchResizer()`) to recalculate the fixed column width based on the cursor position relative to the workbench grid container boundaries:
+   - **Normal Layout**: `newFixedW = gridRect.right - e.clientX` (since the right column is fixed).
+   - **Swapped Layout**: `newFixedW = e.clientX - gridRect.left` (since the left column is fixed).
+3. **Flex Overrides Clear**: The dragging handler now dynamically updates both columns' inline `width` AND `flex-basis` attributes (`style.flex = '0 1 ' + newFixedW + 'px'`) during dragging. This allows the layout to adapt fluidly in real-time, letting the user shrink or expand either panel freely down to `320px`.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies presence of new buttons, clicks "Switch Spots" to assert DOM element movement, clicks again to toggle back, opens layout dropdown, and asserts emoji-free text. |
+| `test_resizer_dragging.js` | **PASSED** ✅ | Simulates mouse drag events to verify relative widths resize correctly in standard layout, and shifts positions correctly in swapped layout. |
+| `test_folder_slideshow.js` | **PASSED** ✅ | Mocks library state in localStorage, transitions to the Profile tab, and asserts that the first recipe's default thumbnail and glassmorphic corner folder badge render immediately, then simulates hover (mouseenter/mouseleave) to verify video autoplay and image carousel loops start and stop correctly. |
+
+---
+
+## 📂 Folder Video Slideshow Preview on Hover
+
+### The Goal
+Provide a premium, active preview inside the folder cards (`.bento-widget`) on the Library/Profile tab that showcases a slideshow of the recipes and videos stored inside that folder.
+
+### The Solution
+1. **Default Video Thumbnail Banner**: Instead of showing the plain folder SVG icon by default, the card renders the **thumbnail image of the first video/recipe** inside the folder as a full-bleed banner covering the top 70% of the card.
+2. **Semi-Transparent Folder Badge**: Placed a small, elegant, semi-transparent glassmorphic folder badge (`28x28px`, rounded, with a `backdrop-filter: blur(8px)`) in the top-left corner of the banner. This provides a clean visual indicator that the card is a folder rather than a single recipe.
+3. **Hover-Triggered Slideshow**: When the mouse enters the card, the slideshow starts cycling through all videos and thumbnails inside the folder:
+   - **Autoplay Muted Videos**: Videos play muted and loop inline inside the banner container.
+   - **Static Image Fallback**: If a recipe only has a thumbnail image (no video), it displays the image in the banner.
+   - **Automatic Carousel loop**: Cycles to the next media file in the folder every `2.5` seconds while hovered.
+4. **Resets on Mouse Leave**: Once the user stops hovering, the slideshow interval is cleared, active video instances are released, and the card banner restores back to displaying the first recipe's static thumbnail image.
+
+
+
