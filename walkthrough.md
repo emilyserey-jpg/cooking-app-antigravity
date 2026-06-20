@@ -105,6 +105,7 @@ All tests run in the Chrome DevTools browser session passed successfully:
 | `test_layout_swapping.js` | **PASSED** ✅ | Verifies presence of new buttons, clicks "Switch Spots" to assert DOM element movement, clicks again to toggle back, opens layout dropdown, and asserts emoji-free text. |
 | `test_resizer_dragging.js` | **PASSED** ✅ | Simulates mouse drag events to verify relative widths resize correctly in standard layout, and shifts positions correctly in swapped layout. |
 | `test_folder_slideshow.js` | **PASSED** ✅ | Mocks library state in localStorage, transitions to the Profile tab, and asserts that the first recipe's default thumbnail and glassmorphic corner folder badge render immediately, then simulates hover (mouseenter/mouseleave) to verify video autoplay and image carousel loops start and stop correctly. |
+| `test_symmetrical_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" in standard, bottom-controls, and bottom-editor layouts swaps column panels symmetrically while maintaining column visibility. |
 
 ---
 
@@ -121,6 +122,20 @@ Provide a premium, active preview inside the folder cards (`.bento-widget`) on b
    - **Static Image Fallback**: If a recipe only has a thumbnail image (no video), it displays the image in the banner.
    - **Automatic Carousel loop**: Cycles to the next media file in the folder every `2.5` seconds while hovered.
 4. **Resets on Mouse Leave**: Once the user stops hovering, the slideshow interval is cleared, active video instances are released, and the card banner restores back to displaying the first recipe's static thumbnail image.
+
+---
+
+## ↔️ Symmetrical Column Layout Swapping
+
+### The Goal
+Provide a premium, logical column swapping experience in the Recipe Editor workbench by ensuring that "Switch Spots" swaps columns symmetrically rather than manually splitting controls or shifting layout modes.
+
+### The Solution
+1. **Standard Layout**: Swapping columns places the Step Editor (`recipePanel`) on the Left, and keeps the Video player + Scrubber + Playback controls together in the Right Column. Both columns remain visible and resizable.
+2. **Bottom Controls Layout**: Swapping columns places the Step Editor (`recipePanel`) in the Left Column, and the Video player in the Right Column. The Scrubber and Playback controls stay neatly docked at the Bottom of the screen. Both columns remain visible and resizable.
+3. **Bottom Editor Layout**: Swapping columns places the Scrubber and Playback controls in the Left Column, and the Video player in the Right Column. The Step Editor stays neatly docked at the Bottom of the screen. Both columns remain visible and resizable.
+4. **Resizer Dragging**: Updated `setupWorkbenchResizer` so that dragging constraints adapt dynamically to the swapped state. In all layout modes, if panels are swapped, the Left column becomes the fixed-width column and the Right column becomes the flex-width column, ensuring smooth dragging regardless of screen layout.
+5. **Toggle Logic**: Simplified `window.toggleSwapPanels` to swap columns within the *current* layout mode rather than toggling/altering the selected layout mode.
 
 
 
