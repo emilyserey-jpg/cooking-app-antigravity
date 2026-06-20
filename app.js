@@ -10708,7 +10708,9 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.padding = '0px';
       rightCol.style.margin = '0px';
       if (resizer) resizer.style.display = 'none';
-      if (recipePanel) recipePanel.style.display = 'none';
+      Array.from(rightCol.children).forEach(child => {
+        if (child !== sidebarBtn) child.style.display = 'none';
+      });
       if (leftCol) {
         leftCol.style.width = '100%';
         leftCol.style.flex = '1';
@@ -10733,7 +10735,9 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.paddingLeft = '8px';
       rightCol.style.paddingBottom = '10px';
       if (resizer) resizer.style.display = 'flex';
-      if (recipePanel) recipePanel.style.display = 'flex';
+      Array.from(rightCol.children).forEach(child => {
+        if (child !== sidebarBtn) child.style.display = '';
+      });
       if (leftCol) {
         leftCol.style.width = `calc(100% - ${fixedW}px)`;
         leftCol.style.flex = '1 1 auto';
@@ -10756,7 +10760,13 @@ window.switchWorkbenchLayout = function(layoutMode) {
 
   // 2. Timeline/controls collapse state sync
   if (timelineBtn) {
-    const activeBottomContainer = (layoutMode === 'standard') ? scrubber : bottomCol;
+    let activeBottomContainer;
+    if (layoutMode === 'standard') {
+      activeBottomContainer = window.swapWorkbenchPanels ? recipePanel : scrubber;
+    } else {
+      activeBottomContainer = bottomCol;
+    }
+
     if (activeBottomContainer) {
       if (timelineBtn.parentElement !== activeBottomContainer) {
         activeBottomContainer.appendChild(timelineBtn);
@@ -10769,53 +10779,43 @@ window.switchWorkbenchLayout = function(layoutMode) {
       timelineBtn.style.borderRadius = '8px 8px 0 0';
 
       if (isTimelineCollapsed) {
+        activeBottomContainer.style.height = '0px';
+        activeBottomContainer.style.minHeight = '0px';
+        activeBottomContainer.style.margin = '0px';
+        activeBottomContainer.style.padding = '0px';
+        Array.from(activeBottomContainer.children).forEach(child => {
+          if (child !== timelineBtn) child.style.display = 'none';
+        });
+
         if (layoutMode === 'standard') {
-          if (scrubber) {
-            scrubber.style.height = '0px';
-            scrubber.style.minHeight = '0px';
-            scrubber.style.margin = '0px';
-            scrubber.style.padding = '0px';
-            Array.from(scrubber.children).forEach(child => {
-              if (child !== timelineBtn) child.style.display = 'none';
-            });
+          if (!window.swapWorkbenchPanels && controls) {
+            controls.style.display = 'none';
           }
-          if (controls) controls.style.display = 'none';
         } else {
-          if (bottomCol) {
-            bottomCol.style.height = '0px';
-            bottomCol.style.minHeight = '0px';
-            bottomCol.style.margin = '0px';
-            bottomCol.style.padding = '0px';
-            Array.from(bottomCol.children).forEach(child => {
-              if (child !== timelineBtn) child.style.display = 'none';
-            });
-          }
           if (hResizer) hResizer.style.display = 'none';
         }
         if (timelineIcon) timelineIcon.textContent = '∧';
       } else {
         if (layoutMode === 'standard') {
-          if (scrubber) {
-            scrubber.style.height = '';
-            scrubber.style.minHeight = '';
-            scrubber.style.margin = '';
-            scrubber.style.padding = '';
-            Array.from(scrubber.children).forEach(child => {
-              if (child !== timelineBtn) child.style.display = '';
-            });
+          activeBottomContainer.style.height = window.swapWorkbenchPanels ? 'auto' : '';
+          activeBottomContainer.style.minHeight = '';
+          activeBottomContainer.style.margin = '';
+          activeBottomContainer.style.padding = '';
+          Array.from(activeBottomContainer.children).forEach(child => {
+            if (child !== timelineBtn) child.style.display = '';
+          });
+          if (!window.swapWorkbenchPanels && controls) {
+            controls.style.display = '';
           }
-          if (controls) controls.style.display = '';
         } else {
-          if (bottomCol) {
-            const h = (layoutMode === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220));
-            bottomCol.style.height = h + 'px';
-            bottomCol.style.minHeight = '';
-            bottomCol.style.margin = '';
-            bottomCol.style.padding = '';
-            Array.from(bottomCol.children).forEach(child => {
-              if (child !== timelineBtn) child.style.display = '';
-            });
-          }
+          const h = (layoutMode === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220));
+          bottomCol.style.height = h + 'px';
+          bottomCol.style.minHeight = '';
+          bottomCol.style.margin = '';
+          bottomCol.style.padding = '';
+          Array.from(bottomCol.children).forEach(child => {
+            if (child !== timelineBtn) child.style.display = '';
+          });
           if (hResizer) hResizer.style.display = 'flex';
         }
         if (timelineIcon) timelineIcon.textContent = '∨';
@@ -15673,8 +15673,9 @@ window.toggleEditorSidebar = function() {
     rightPanel.style.paddingBottom = '10px';
     
     if (resizer) resizer.style.display = 'flex';
-    const recipeWrapper = document.getElementById('recipePanelWrapper');
-    if (recipeWrapper) recipeWrapper.style.display = 'flex';
+    Array.from(rightPanel.children).forEach(child => {
+      if (child !== collapseBtn) child.style.display = '';
+    });
 
     if (leftCol) {
       leftCol.style.width = `calc(100% - ${fixedW}px)`;
@@ -15705,8 +15706,9 @@ window.toggleEditorSidebar = function() {
     rightPanel.style.margin = '0px';
     
     if (resizer) resizer.style.display = 'none';
-    const recipeWrapper = document.getElementById('recipePanelWrapper');
-    if (recipeWrapper) recipeWrapper.style.display = 'none';
+    Array.from(rightPanel.children).forEach(child => {
+      if (child !== collapseBtn) child.style.display = 'none';
+    });
 
     if (leftCol) {
       leftCol.style.width = '100%';
@@ -15743,62 +15745,69 @@ window.toggleHorizontalPanel = function() {
   const hResizer = document.getElementById('workbenchHorizontalResizer');
   const collapseBtn = document.getElementById('timelineCollapseBtn');
   const collapseIcon = document.getElementById('timelineCollapseIcon');
+  const recipePanel = document.getElementById('recipePanelWrapper');
 
   const isCollapsed = window.isTimelineCollapsed;
+
+  // Determine active bottom container
+  let activeBottomContainer;
+  if (layout === 'standard') {
+    activeBottomContainer = window.swapWorkbenchPanels ? recipePanel : scrubber;
+  } else {
+    activeBottomContainer = bottomCol;
+  }
+
+  if (!activeBottomContainer) return;
 
   if (isCollapsed) {
     window.isTimelineCollapsed = false;
     if (layout === 'standard') {
-      if (scrubber) {
-        scrubber.style.height = '';
-        scrubber.style.minHeight = '';
-        scrubber.style.margin = '';
-        scrubber.style.padding = '';
-        scrubber.style.overflow = 'visible';
-        Array.from(scrubber.children).forEach(child => {
-          if (child !== collapseBtn) child.style.display = '';
-        });
+      activeBottomContainer.style.height = window.swapWorkbenchPanels ? 'auto' : '';
+      activeBottomContainer.style.minHeight = '';
+      activeBottomContainer.style.margin = '';
+      activeBottomContainer.style.padding = '';
+      activeBottomContainer.style.overflow = 'visible';
+      Array.from(activeBottomContainer.children).forEach(child => {
+        if (child !== collapseBtn) child.style.display = '';
+      });
+      if (!window.swapWorkbenchPanels && controls) {
+        controls.style.display = '';
       }
-      if (controls) controls.style.display = '';
     } else {
-      if (bottomCol) {
-        bottomCol.style.height = (layout === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220)) + 'px';
-        bottomCol.style.minHeight = '';
-        bottomCol.style.margin = '';
-        bottomCol.style.padding = '';
-        bottomCol.style.overflow = 'visible';
-        Array.from(bottomCol.children).forEach(child => {
-          if (child !== collapseBtn) child.style.display = '';
-        });
-      }
+      activeBottomContainer.style.height = (layout === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220)) + 'px';
+      activeBottomContainer.style.minHeight = '';
+      activeBottomContainer.style.margin = '';
+      activeBottomContainer.style.padding = '';
+      activeBottomContainer.style.overflow = 'visible';
+      Array.from(activeBottomContainer.children).forEach(child => {
+        if (child !== collapseBtn) child.style.display = '';
+      });
       if (hResizer) hResizer.style.display = 'flex';
     }
     if (collapseIcon) collapseIcon.textContent = '∨';
   } else {
     window.isTimelineCollapsed = true;
     if (layout === 'standard') {
-      if (scrubber) {
-        scrubber.style.height = '0px';
-        scrubber.style.minHeight = '0px';
-        scrubber.style.margin = '0px';
-        scrubber.style.padding = '0px';
-        scrubber.style.overflow = 'visible';
-        Array.from(scrubber.children).forEach(child => {
-          if (child !== collapseBtn) child.style.display = 'none';
-        });
+      activeBottomContainer.style.height = '0px';
+      activeBottomContainer.style.minHeight = '0px';
+      activeBottomContainer.style.margin = '0px';
+      activeBottomContainer.style.padding = '0px';
+      activeBottomContainer.style.overflow = 'visible';
+      Array.from(activeBottomContainer.children).forEach(child => {
+        if (child !== collapseBtn) child.style.display = 'none';
+      });
+      if (!window.swapWorkbenchPanels && controls) {
+        controls.style.display = 'none';
       }
-      if (controls) controls.style.display = 'none';
     } else {
-      if (bottomCol) {
-        bottomCol.style.height = '0px';
-        bottomCol.style.minHeight = '0px';
-        bottomCol.style.margin = '0px';
-        bottomCol.style.padding = '0px';
-        bottomCol.style.overflow = 'visible';
-        Array.from(bottomCol.children).forEach(child => {
-          if (child !== collapseBtn) child.style.display = 'none';
-        });
-      }
+      activeBottomContainer.style.height = '0px';
+      activeBottomContainer.style.minHeight = '0px';
+      activeBottomContainer.style.margin = '0px';
+      activeBottomContainer.style.padding = '0px';
+      activeBottomContainer.style.overflow = 'visible';
+      Array.from(activeBottomContainer.children).forEach(child => {
+        if (child !== collapseBtn) child.style.display = 'none';
+      });
       if (hResizer) hResizer.style.display = 'none';
     }
     if (collapseIcon) collapseIcon.textContent = '∧';
