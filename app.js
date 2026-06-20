@@ -4268,32 +4268,23 @@ function mySpaceRenderFolderStrip() {
     let folderIconHtml = '';
     if (hasPreviews) {
       folderIconHtml = `
-        <div class="folder-preview-container" style="position:relative; width:40px; height:40px; margin-bottom:auto; flex-shrink:0;">
-          <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; top:0; left:0; width:100%; height:100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: opacity 0.25s;">
+        <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:22px; border-top-right-radius:${size === 'row' ? '12px' : '22px'}; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02); transition: background 0.25s;">
+          <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: opacity 0.25s; z-index: 1;">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
-          <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transition: opacity 0.25s; overflow:hidden; pointer-events:none;">
-            <svg width="40" height="40" viewBox="0 0 24 24">
-              <defs>
-                <mask id="folderMask-${f.id}">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="#ffffff"></path>
-                </mask>
-              </defs>
-              <g mask="url(#folderMask-${f.id})">
-                <foreignObject x="0" y="0" width="24" height="24">
-                  <div class="folder-preview-content" style="width:24px; height:24px; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                  </div>
-                </foreignObject>
-              </g>
-            </svg>
+          <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transition: opacity 0.25s; overflow:hidden; pointer-events:none; z-index: 2;">
+            <div class="folder-preview-content" style="width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            </div>
           </div>
         </div>
       `;
     } else {
       folderIconHtml = `
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); margin-bottom:auto; flex-shrink:0;">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
+        <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:22px; border-top-right-radius:${size === 'row' ? '12px' : '22px'}; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02);">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
       `;
     }
 
