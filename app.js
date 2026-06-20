@@ -10701,6 +10701,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
     if (sidebarBtn.parentElement !== rightCol) {
       rightCol.insertBefore(sidebarBtn, rightCol.firstChild);
     }
+    sidebarBtn.style.left = '0';
+    sidebarBtn.style.right = 'auto';
+    sidebarBtn.style.transform = 'translate(-50%, -50%)';
+    sidebarBtn.style.borderRadius = '8px 0 0 8px';
+
     if (isSidebarCollapsed) {
       rightCol.style.width = '0px';
       rightCol.style.flex = 'none';
@@ -10715,19 +10720,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
         leftCol.style.width = '100%';
         leftCol.style.flex = '1';
       }
-      if (window.swapWorkbenchPanels) {
-        sidebarBtn.style.left = 'auto';
-        sidebarBtn.style.right = '0';
-        sidebarBtn.style.transform = 'translate(50%, -50%)';
-        sidebarBtn.style.borderRadius = '0 8px 8px 0';
-        if (sidebarIcon) sidebarIcon.textContent = '›';
-      } else {
-        sidebarBtn.style.left = '0';
-        sidebarBtn.style.right = 'auto';
-        sidebarBtn.style.transform = 'translate(-50%, -50%)';
-        sidebarBtn.style.borderRadius = '8px 0 0 8px';
-        if (sidebarIcon) sidebarIcon.textContent = '‹';
-      }
+      if (sidebarIcon) sidebarIcon.textContent = '‹';
     } else {
       rightCol.style.width = fixedW + 'px';
       rightCol.style.flex = `0 1 ${fixedW}px`;
@@ -10742,19 +10735,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
         leftCol.style.width = `calc(100% - ${fixedW}px)`;
         leftCol.style.flex = '1 1 auto';
       }
-      if (window.swapWorkbenchPanels) {
-        sidebarBtn.style.left = 'auto';
-        sidebarBtn.style.right = '0';
-        sidebarBtn.style.transform = 'translate(50%, -50%)';
-        sidebarBtn.style.borderRadius = '0 8px 8px 0';
-        if (sidebarIcon) sidebarIcon.textContent = '‹';
-      } else {
-        sidebarBtn.style.left = '0';
-        sidebarBtn.style.right = 'auto';
-        sidebarBtn.style.transform = 'translate(-50%, -50%)';
-        sidebarBtn.style.borderRadius = '8px 0 0 8px';
-        if (sidebarIcon) sidebarIcon.textContent = '›';
-      }
+      if (sidebarIcon) sidebarIcon.textContent = '›';
     }
   }
 
@@ -15683,19 +15664,11 @@ window.toggleEditorSidebar = function() {
     }
 
     if (collapseBtn) {
-      if (window.swapWorkbenchPanels) {
-        collapseBtn.style.left = 'auto';
-        collapseBtn.style.right = '0';
-        collapseBtn.style.transform = 'translate(50%, -50%)';
-        collapseBtn.style.borderRadius = '0 8px 8px 0';
-        if (collapseIcon) collapseIcon.textContent = '‹';
-      } else {
-        collapseBtn.style.left = '0';
-        collapseBtn.style.right = 'auto';
-        collapseBtn.style.transform = 'translate(-50%, -50%)';
-        collapseBtn.style.borderRadius = '8px 0 0 8px';
-        if (collapseIcon) collapseIcon.textContent = '›';
-      }
+      collapseBtn.style.left = '0';
+      collapseBtn.style.right = 'auto';
+      collapseBtn.style.transform = 'translate(-50%, -50%)';
+      collapseBtn.style.borderRadius = '8px 0 0 8px';
+      if (collapseIcon) collapseIcon.textContent = '›';
     }
   } else {
     window.isSidebarCollapsed = true;
@@ -15716,19 +15689,11 @@ window.toggleEditorSidebar = function() {
     }
 
     if (collapseBtn) {
-      if (window.swapWorkbenchPanels) {
-        collapseBtn.style.left = 'auto';
-        collapseBtn.style.right = '0';
-        collapseBtn.style.transform = 'translate(50%, -50%)';
-        collapseBtn.style.borderRadius = '0 8px 8px 0';
-        if (collapseIcon) collapseIcon.textContent = '›';
-      } else {
-        collapseBtn.style.left = '0';
-        collapseBtn.style.right = 'auto';
-        collapseBtn.style.transform = 'translate(-50%, -50%)';
-        collapseBtn.style.borderRadius = '8px 0 0 8px';
-        if (collapseIcon) collapseIcon.textContent = '‹';
-      }
+      collapseBtn.style.left = '0';
+      collapseBtn.style.right = 'auto';
+      collapseBtn.style.transform = 'translate(-50%, -50%)';
+      collapseBtn.style.borderRadius = '8px 0 0 8px';
+      if (collapseIcon) collapseIcon.textContent = '‹';
     }
   }
   
