@@ -11024,6 +11024,7 @@ window.updateTranscriptButtonUI = function() {
   const slider = document.getElementById('stopsSliderContainer');
   const extendBtnLabel = document.getElementById('extendTranscriptLabel');
   const extendBtnIcon = document.getElementById('extendTranscriptIcon');
+  const bodyCard = document.getElementById('editorStopsBodyCard');
 
   if (panel && btn) {
     if (isShow) {
@@ -11040,6 +11041,12 @@ window.updateTranscriptButtonUI = function() {
         if (wrapper) {
           wrapper.style.width = '100%';
           wrapper.style.flex = '1';
+        }
+        if (bodyCard) {
+          bodyCard.style.height = '100%';
+          bodyCard.style.minHeight = '660px';
+          bodyCard.style.maxHeight = 'none';
+          bodyCard.style.flex = '1';
         }
         if (extendBtnLabel) extendBtnLabel.textContent = 'Standard';
         if (extendBtnIcon) extendBtnIcon.textContent = '⤡';
@@ -11058,6 +11065,12 @@ window.updateTranscriptButtonUI = function() {
           wrapper.style.width = 'auto';
           wrapper.style.flex = 'none';
         }
+        if (bodyCard) {
+          bodyCard.style.height = 'auto';
+          bodyCard.style.minHeight = 'auto';
+          bodyCard.style.maxHeight = 'calc(100vh - 180px)';
+          bodyCard.style.flex = 'none';
+        }
         if (extendBtnLabel) extendBtnLabel.textContent = 'Extend';
         if (extendBtnIcon) extendBtnIcon.textContent = '⤢';
       }
@@ -11072,6 +11085,12 @@ window.updateTranscriptButtonUI = function() {
       if (wrapper) {
         wrapper.style.width = 'auto';
         wrapper.style.flex = 'none';
+      }
+      if (bodyCard) {
+        bodyCard.style.height = 'auto';
+        bodyCard.style.minHeight = 'auto';
+        bodyCard.style.maxHeight = 'calc(100vh - 180px)';
+        bodyCard.style.flex = 'none';
       }
     }
   }
@@ -11304,8 +11323,8 @@ function renderCreateSteps() {
   list.style.overflowY               = 'hidden';
   list.style.webkitOverflowScrolling = 'touch';
   list.style.maxHeight               = 'none';
-  list.style.height                  = 'calc(100% - 6px)';
-  list.style.minHeight               = '570px';
+  list.style.height                  = 'auto';
+  list.style.minHeight               = 'auto';
   list.style.flexShrink              = '0';
   list.style.touchAction             = 'pan-x pan-y';
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.58';
+      const CURRENT_VERSION = '9.59';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -1620,11 +1620,11 @@
                 #createStepTabs::-webkit-scrollbar { display: none; }
               </style>
 
-               <div class="glass-card" id="editorStopsBodyCard" style="padding:12px;min-height:660px;flex:1;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
+               <div class="glass-card" id="editorStopsBodyCard" style="padding:12px;min-height:660px;max-height:100%;flex:1;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;">
                 
                 <div style="position:relative;flex:1;height:100%;display:flex;flex-direction:row;overflow:hidden;gap:12px;width:100%;min-width:0;">
                   <!-- Collapsible Transcript Sidebar Wrapper -->
-                  <div id="transcriptSidebarWrapper" style="display: flex; flex-direction: row; height: 100%; flex-shrink: 0; align-items: stretch; transition: all 0.3s ease;">
+                  <div id="transcriptSidebarWrapper" style="display: flex; flex-direction: row; height: auto; flex-shrink: 0; align-items: stretch; transition: all 0.3s ease;">
                     <!-- Fixed Transcript Panel (left) -->
                     <div id="fixedTranscriptPanel" style="width:0px;height:auto;max-height:100%;align-self:flex-start;flex-shrink:0;display:flex;flex-direction:column;gap:5px;min-height:0;background:rgba(255,255,255,0.45);backdrop-filter:blur(8px);border-radius:12px;border:0px solid rgba(124,58,237,0.15);padding:0px;box-sizing:border-box;transition: all 0.3s ease;overflow:hidden;">
                       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-shrink:0;margin-bottom:2px;">
@@ -1648,7 +1648,7 @@
                   </div>
 
                   <!-- Slider Container (right) -->
-                  <div id="stopsSliderContainer" style="flex:1;position:relative;display:flex;height:100%;overflow:hidden;align-items:stretch;width:100%;min-width:0;">
+                  <div id="stopsSliderContainer" style="flex:1;position:relative;display:flex;height:auto;overflow:hidden;align-items:flex-start;width:100%;min-width:0;">
                     <!-- Left scroll button -->
                     <button onclick="window.scrollStepsList(-300)" id="stepsScrollLeftBtn" tabindex="-1"
                       style="display:none;position:absolute;left:-4px;top:calc(50% - 14px);z-index:20;background:rgba(255,255,255,0.95);border:1.5px solid rgba(124,58,237,0.35);border-radius:50%;width:28px;height:28px;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);color:#7c3aed;font-weight:900;font-size:1.1rem;line-height:1;user-select:none;transition:all 0.15s;"
@@ -2399,6 +2399,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.58"></script>
+  <script type="module" src="app.js?v=9.59"></script>
 </body>
 </html>
