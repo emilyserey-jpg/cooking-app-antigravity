@@ -4434,7 +4434,6 @@ window.startFolderSlideshow = function(cardEl, folderId) {
   renderCurrent();
 
   if (baseSvg) baseSvg.style.opacity = '0';
-  previewDiv.style.opacity = '1';
 
   if (previewRecipes.length > 1) {
     const intervalId = setInterval(() => {
@@ -4457,12 +4456,38 @@ window.stopFolderSlideshow = function(cardEl, folderId) {
   if (!container) return;
 
   const baseSvg = container.querySelector('.folder-base-svg');
-  const previewDiv = container.querySelector('.folder-masked-preview');
   const contentDiv = container.querySelector('.folder-preview-content');
 
   if (baseSvg) baseSvg.style.opacity = '1';
-  if (previewDiv) previewDiv.style.opacity = '0';
-  if (contentDiv) contentDiv.innerHTML = '';
+
+  // Restore the default first recipe thumbnail
+  let libData = { folders: [] };
+  try {
+    const raw = localStorage.getItem('cookingGPS_library_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    libData = (parsed && typeof parsed === 'object') ? parsed : { folders: [] };
+  } catch(e) {}
+  const folder = (libData.folders || []).find(f => f.id === folderId);
+  if (!folder) return;
+
+  const recipesSource = (typeof allMyRecipes !== 'undefined' && allMyRecipes && allMyRecipes.length > 0) ? allMyRecipes : (window.allMyRecipes || []);
+  const folderRecipes = (folder.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
+  const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
+
+  if (contentDiv) {
+    contentDiv.innerHTML = '';
+    if (previewRecipes.length > 0) {
+      const firstRecipe = previewRecipes[0];
+      if (firstRecipe.thumbnail_url) {
+        contentDiv.innerHTML = `<img src="${encodeURI(firstRecipe.thumbnail_url)}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">`;
+      } else {
+        const hash = firstRecipe.id ? firstRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+        const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
+        const grad = gradients[hash % gradients.length];
+        contentDiv.innerHTML = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
+      }
+    }
+  }
 };
 
 window.toggleFolderSize = function(folderId) {
