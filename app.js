@@ -4267,13 +4267,27 @@ function mySpaceRenderFolderStrip() {
 
     let folderIconHtml = '';
     if (hasPreviews) {
+      const firstRecipe = previewRecipes[0];
+      let defaultPreviewHtml = '';
+      if (firstRecipe.thumbnail_url) {
+        defaultPreviewHtml = `<img src="${encodeURI(firstRecipe.thumbnail_url)}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">`;
+      } else {
+        const hash = firstRecipe.id ? firstRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+        const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
+        const grad = gradients[hash % gradients.length];
+        defaultPreviewHtml = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
+      }
+
       folderIconHtml = `
         <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:22px; border-top-right-radius:${size === 'row' ? '12px' : '22px'}; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02); transition: background 0.25s;">
-          <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: opacity 0.25s; z-index: 1;">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transition: opacity 0.25s; overflow:hidden; pointer-events:none; z-index: 2;">
+          <div class="folder-badge" style="position:absolute; top:12px; left:12px; width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index: 3;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.2" stroke="${colorVal}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:1; transition: opacity 0.25s; overflow:hidden; pointer-events:none; z-index: 2;">
             <div class="folder-preview-content" style="width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+              ${defaultPreviewHtml}
             </div>
           </div>
         </div>
@@ -4281,7 +4295,7 @@ function mySpaceRenderFolderStrip() {
     } else {
       folderIconHtml = `
         <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:22px; border-top-right-radius:${size === 'row' ? '12px' : '22px'}; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02);">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+          <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
@@ -4456,9 +4470,11 @@ window.stopFolderSlideshow = function(cardEl, folderId) {
   if (!container) return;
 
   const baseSvg = container.querySelector('.folder-base-svg');
+  const previewDiv = container.querySelector('.folder-masked-preview');
   const contentDiv = container.querySelector('.folder-preview-content');
 
   if (baseSvg) baseSvg.style.opacity = '1';
+  if (previewDiv) previewDiv.style.opacity = '1';
 
   // Restore the default first recipe thumbnail
   let libData = { folders: [] };
