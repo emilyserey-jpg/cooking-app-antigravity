@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.78';
+      const CURRENT_VERSION = '9.79';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=9.78">
+  <link rel="stylesheet" href="styles_v853.css?v=9.79">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1476,7 +1476,7 @@
                     </button>
                     <!-- Option 2: Move Panel Left/Right -->
                     <button type="button" onclick="window.toggleSwapLeftRightColumns(); window.closeLayoutDropdown();" id="swapLeftRightBtn2"
-                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      style="display:none; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
                       onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
                       onmouseleave="if(window.swapLeftRightColumns){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-horizontal"><path d="m18 8 4 4-4 4M6 8l-4 4 4 4M2 12h20"/></svg>
@@ -1639,7 +1639,7 @@
                     </button>
                     <!-- Option 2: Move Panel Left/Right -->
                     <button type="button" onclick="window.toggleSwapLeftRightColumns(); window.closeLayoutDropdown();" id="swapLeftRightBtn"
-                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      style="display:none; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
                       onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
                       onmouseleave="if(window.swapLeftRightColumns){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-horizontal"><path d="m18 8 4 4-4 4M6 8l-4 4 4 4M2 12h20"/></svg>
@@ -2452,6 +2452,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.78"></script>
+  <script type="module" src="app.js?v=9.79"></script>
 </body>
 </html>
