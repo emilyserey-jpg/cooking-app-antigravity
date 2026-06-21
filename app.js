@@ -10628,7 +10628,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients' || p.id === 'rightColAddCustom') ? 'hidden' : 'auto';
         }
       });
     }
@@ -10705,7 +10705,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients' || p.id === 'rightColAddCustom') ? 'hidden' : 'auto';
         }
       });
     } else if (isControlsAtBottom) {
@@ -10734,7 +10734,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients' || p.id === 'rightColAddCustom') ? 'hidden' : 'auto';
         }
       });
     }
@@ -16204,7 +16204,7 @@ window.syncCustomPageUI = function() {
 
     cardsHtml += `
       <!-- Setup Details Card for ${tabId} -->
-      <div class="glass-card" id="card_${tabId}" style="padding:12px;min-height:350px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;width:100%;flex-shrink:0;scroll-snap-align:center;">
+      <div class="glass-card" id="card_${tabId}" style="padding:12px; max-height:calc(100% - 12px); min-height:350px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; width:100%; flex:1; flex-shrink:0; scroll-snap-align:center; overflow:hidden;">
         <!-- AI Status Button -->
         <div id="customPageAiStatusContainer_${tabId}" style="display:none; margin-bottom: 2px; position: relative;">
           <button class="btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 32px 10px 10px; font-family:var(--font); font-size:0.75rem; font-weight:800; border-radius:10px; border:1.5px solid rgba(124, 58, 237, 0.2); background:rgba(124, 58, 237, 0.05); color:var(--primary); transition:all 0.3s; pointer-events:none; cursor:default; text-align: center; line-height: 1.4;">
@@ -16246,9 +16246,9 @@ window.syncCustomPageUI = function() {
           </div>
         </div>
         
-        <div style="display:flex;flex-direction:column;gap:10px;flex:1;justify-content:flex-start;">
+        <div style="display:flex;flex-direction:column;gap:10px;flex:1;justify-content:flex-start;min-height:0;">
           <!-- Quick presets row -->
-          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px; flex-shrink:0;">
             <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Quick Page Presets</label>
             <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; align-items:center;">
               <button type="button" onclick="window.applyCustomPagePreset('${tabId}', 'Ingredients', '', 'ingredients')" class="btn" style="background: rgba(124, 58, 237, 0.08); color: var(--primary); border: none; border-radius: 8px; padding: 6px 12px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; font-family: var(--font);" onmouseenter="this.style.background='rgba(124, 58, 237, 0.15)'" onmouseleave="this.style.background='rgba(124, 58, 237, 0.08)'">
@@ -16261,7 +16261,7 @@ window.syncCustomPageUI = function() {
           </div>
 
           <!-- Page Name Input -->
-          <div style="display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; flex-direction:column; gap:4px; flex-shrink:0;">
             <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Page Name</label>
             <input type="text" id="inlineCustomPageNameInput_${tabId}" value="${page.name}" placeholder="e.g. Kitchen Equipment, Chef Tips" 
               oninput="window.updateCustomPageName('${tabId}', this.value)"
@@ -16270,17 +16270,17 @@ window.syncCustomPageUI = function() {
           </div>
 
           <!-- Page Content Textarea -->
-          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
-            <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Page Content (Optional)</label>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px; flex:1; min-height:0; flex-shrink:0;">
+            <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0;">Page Content (Optional)</label>
             <textarea id="inlineCustomPageContentInput_${tabId}" oninput="window.updateCustomPageContent('${tabId}', this.value); window.autoResizeTextarea(this);" placeholder="Type page content here manually... (or leave blank to auto-generate using AI)" 
-              style="width:100%; min-height:120px; max-height:200px; height:auto; overflow-y:auto; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none;"
+              style="width:100%; min-height:120px; max-height:100%; height:auto; overflow-y:auto; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none; flex:1; flex-shrink:0;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">${page.content}</textarea>
           </div>
 
           <!-- Save/Update Page Changes Button -->
           <button id="saveInlineChangesBtn_${tabId}" onclick="window.saveInlineCustomPageChanges('${tabId}')"
             title="${btnText}"
-            style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; border-radius:10px; border:none; cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s; background:linear-gradient(135deg, #7c3aed, #6366f1); color:#fff; box-shadow:0 3px 8px rgba(124,58,237,0.25); box-sizing:border-box; white-space:nowrap;"
+            style="width:100%; padding:10px; font-size:0.8rem; font-weight:900; border-radius:10px; border:none; cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s; background:linear-gradient(135deg, #7c3aed, #6366f1); color:#fff; box-shadow:0 3px 8px rgba(124,58,237,0.25); box-sizing:border-box; white-space:nowrap; flex-shrink:0;"
             onmouseenter="this.style.opacity='0.9';"
             onmouseleave="this.style.opacity='1';"
             onmousedown="this.style.transform='scale(0.96)';"
@@ -16333,7 +16333,7 @@ window.syncCustomPageUI = function() {
             display: none;
           }
         </style>
-        <div class="custom-page-carousel-track" style="display:flex; flex-direction:row; gap:16px; overflow-x:auto; scroll-snap-type: x mandatory; width:100%; box-sizing:border-box; scrollbar-width: none; -ms-overflow-style: none;">
+        <div class="custom-page-carousel-track" style="display:flex; flex-direction:row; gap:16px; overflow-x:auto; scroll-snap-type: x mandatory; width:100%; flex:1; min-height:0; box-sizing:border-box; scrollbar-width: none; -ms-overflow-style: none;">
           ${cardsHtml}
         </div>
         <div class="carousel-dots-row" style="display:flex; justify-content:center; gap:6px; margin-top:8px; align-items:center;">

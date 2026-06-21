@@ -1,3 +1,28 @@
+# Walkthrough - Custom Page Content Textbox Fills Available Card Height
+
+This walkthrough details the changes made to allow the custom page content textarea to grow vertically to fill the available height inside the glass details card, while keeping the white card wrapped cleanly around it without overflowing.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Flexbox Layout Optimization for Card and Textarea
+- **Card Vertical Stretching**: Updated the card template container (`card_${tabId}`) in `window.syncCustomPageUI` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to stretch vertically (`flex: 1; max-height: calc(100% - 12px); overflow: hidden;`), matching the ingredients card container structure.
+- **Carousel Track Stretching**: Updated the track wrapper to fill available space (`flex: 1; min-height: 0;`).
+- **Textarea Wrapper Scaling**: Configured the page content textarea wrapper to grow (`flex: 1; min-height: 0; flex-shrink: 0;`) and the textarea itself to expand (`flex: 1; max-height: 100%; flex-shrink: 0; height: auto; overflow-y: auto;`).
+- **Column Overflow Lock**: Modified standard, bottom-recipe, and bottom-controls layout configuration paths in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to set `overflowY: hidden` on `#rightColAddCustom`, ensuring scrolling is fully contained inside the textarea scrollbar rather than the column.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=10.01` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+Manual verification confirmed that the custom page details card fits the screen layout perfectly and the editable text box fills the available card space, with the white border container wrapping cleanly around it.
+
+---
+
 # Walkthrough - Default to Custom Page Setup Card instead of Empty State
 
 This walkthrough details the changes made to automatically initialize a default custom page when none exist, ensuring the editor always opens immediately to the page setup card view rather than the dashed empty state.
