@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.96';
+      const CURRENT_VERSION = '9.97';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -1722,26 +1722,25 @@
               </div>
             </div>
 
-            <!-- Col 4: Ingredients & Visibility -->
-            <div id="rightColIngredients" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
+            <div id="rightColIngredients" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:hidden;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
               <!-- Ingredients Card -->
-              <div class="glass-card" id="editorIngredientsCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
+              <div class="glass-card" id="editorIngredientsCard" style="padding:10px 13px;display:flex;flex-direction:column;max-height:calc(100% - 12px);min-height:0;flex:0 1 auto;box-sizing:border-box;overflow:hidden;">
                 <!-- AI Ingredients button moved from AI Tools -->
                 <button id="aiWriteIngredientsBtn" onclick="aiWriteIngredients()" 
-                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;">
+                  style="width:100%;background:#fff;border:2px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px;font-family:var(--font);font-weight:800;font-size:0.75rem;cursor:pointer;color:#7c3aed;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;flex-shrink:0;">
                   <span>AI Ingredients</span>
                   <span class="check-write-ingredients" style="display:none;color:#22c55e;font-size:0.85rem;"></span>
                 </button>
                 
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">
                   <label style="display:block;font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin:0;">Ingredients List</label>
                   <button id="aiEditIngredientsBtn" onclick="window.editIngredientsWithAI(); event.stopPropagation();" title="Use AI guidelines to refine the ingredients list"
                     style="background:#fff; color:#7c3aed; border:1px solid rgba(124,58,237,0.3); border-radius:5px; padding:2px 6px; font-family:var(--font); font-weight:800; font-size:0.6rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:2px;">
                     AI Edit
                   </button>
                 </div>
-                <textarea id="ingredientsText" rows="6" placeholder="List recipe ingredients here (one per line)..."
-                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:vertical;outline:none;line-height:1.5;box-sizing:border-box;"></textarea>
+                <textarea id="ingredientsText" placeholder="List recipe ingredients here (one per line)..." oninput="window.autoResizeTextarea(this);"
+                  style="width:100%;background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:10px;padding:8px 10px;font-family:var(--font);font-size:0.82rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.5;box-sizing:border-box;flex:0 1 auto;min-height:120px;max-height:100%;overflow-y:auto;height:auto;"></textarea>
                                   <!-- Top Right Container for bottom-recipe layout -->
           <div id="workbenchTopRight" style="display:none; flex-direction:column; gap:0.5rem; width:420px; flex-shrink:0; overflow-y:auto; scrollbar-width:thin; padding-left:8px; padding-bottom:10px;"></div>
         </div>
@@ -2452,6 +2451,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.96"></script>
+  <script type="module" src="app.js?v=9.97"></script>
 </body>
 </html>

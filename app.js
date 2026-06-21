@@ -383,7 +383,10 @@ async function initializeApp() {
   // Wire updateAIChecklists to ingredientsText input edits
   const ingTextEl = document.getElementById('ingredientsText');
   if (ingTextEl) {
-    ingTextEl.addEventListener('input', window.updateAIChecklists);
+    ingTextEl.addEventListener('input', () => {
+      window.autoResizeTextarea(ingTextEl);
+      window.updateAIChecklists();
+    });
   }
 
   // Handle browser back/forward navigation using hashchange listener
@@ -5548,6 +5551,13 @@ window.loadRecipeToEditor = function(recipe) {
   // Is public
   createIsPublic = recipe.is_published || false;
 
+  // Ingredients List
+  const ingText = document.getElementById('ingredientsText');
+  if (ingText) {
+    ingText.value = recipe.ingredients || '';
+    setTimeout(() => window.autoResizeTextarea(ingText), 50);
+  }
+
   // Map loops to createStepsArr
   const parsed = parseLoops(recipe.loops);
   createStepsArr = parsed.map((l, idx) => {
@@ -10618,7 +10628,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
         }
       });
     }
@@ -10695,7 +10705,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
         }
       });
     } else if (isControlsAtBottom) {
@@ -10724,7 +10734,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
       panels.forEach(p => {
         if (p) {
           p.style.maxHeight = '100%';
-          p.style.overflowY = 'auto';
+          p.style.overflowY = (p.id === 'rightColIngredients') ? 'hidden' : 'auto';
         }
       });
     }
@@ -14158,7 +14168,10 @@ window.aiWriteIngredients = async function() {
   try {
     if (gem?.ingredients?.length) {
       const box = document.getElementById('ingredientsText');
-      if (box) box.value = gem.ingredients.join('\n');
+      if (box) {
+        box.value = gem.ingredients.join('\n');
+        window.autoResizeTextarea(box);
+      }
       window._aiIngredients = gem.ingredients.join('\n');
       const r = document.getElementById('ingredientsResult');
       if (r) r.style.display = 'block';
@@ -14315,7 +14328,10 @@ window.aiDoEverything = async function() {
       }
       if (gem.ingredients?.length) {
         const b = document.getElementById('ingredientsText');
-        if (b) b.value = gem.ingredients.join('\n');
+        if (b) {
+          b.value = gem.ingredients.join('\n');
+          window.autoResizeTextarea(b);
+        }
         window._aiIngredients = gem.ingredients.join('\n');
         const r = document.getElementById('ingredientsResult'); if (r) r.style.display='block';
       }
@@ -14555,7 +14571,10 @@ window.aiDoVideoOnly = async function() {
     }
     if (gem.ingredients?.length) {
       const b = document.getElementById('ingredientsText');
-      if (b) b.value = gem.ingredients.join('\n');
+      if (b) {
+        b.value = gem.ingredients.join('\n');
+        window.autoResizeTextarea(b);
+      }
       window._aiIngredients = gem.ingredients.join('\n');
       const r = document.getElementById('ingredientsResult'); if (r) r.style.display='block';
     }
