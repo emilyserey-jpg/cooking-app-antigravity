@@ -10861,11 +10861,11 @@ window.toggleSwapPanels = function() {
 };
 
 window.syncLayoutDropdownBtnStyle = function() {
-  const syncBtn = function(btnId) {
+  const syncBtn = function(btnId, menuId) {
     const layoutBtn = document.getElementById(btnId);
     if (!layoutBtn) return;
     const isActive = window.swapWorkbenchPanels || window.currentWorkbenchLayout === 'bottom-recipe';
-    const menuOpen = window.activeLayoutDropdownBtnId === btnId;
+    const menuOpen = window.activeLayoutMenuId === menuId;
     
     if (menuOpen) {
       layoutBtn.style.background = 'var(--primary-light)';
@@ -10885,71 +10885,30 @@ window.syncLayoutDropdownBtnStyle = function() {
     }
   };
   
-  syncBtn('layoutDropdownBtn');
-  syncBtn('layoutDropdownBtn2');
+  syncBtn('layoutDropdownBtn', 'layoutDropdownMenu');
+  syncBtn('layoutDropdownBtn2', 'layoutDropdownMenu2');
 };
 
-window.toggleLayoutDropdown = function(e, btnId) {
+window.toggleLayoutDropdown = function(e, menuId) {
   if (e) e.stopPropagation();
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
 
-  let menu = document.getElementById('layoutDropdownContent');
-  if (!menu) {
-    menu = document.createElement('div');
-    menu.id = 'layoutDropdownContent';
-    menu.className = 'glass-card';
-    menu.style.position = 'absolute';
-    menu.style.width = '160px';
-    menu.style.zIndex = '999999';
-    menu.style.padding = '6px';
-    menu.style.boxShadow = 'var(--shadow-lg)';
-    menu.style.border = '2px solid var(--border-card)';
-    menu.style.flexDirection = 'column';
-    menu.style.gap = '4px';
-    menu.style.background = '#ffffff';
-    menu.style.borderRadius = '12px';
-    menu.style.display = 'none';
-    document.body.appendChild(menu);
+  const isShown = menu.style.display === 'flex';
+  window.closeLayoutDropdown();
+  window.closeEditorTabDropdown();
 
-    const styleEl = document.createElement('style');
-    styleEl.innerHTML = `
-      #layoutDropdownContent button:hover {
-        background: rgba(124, 58, 237, 0.08) !important;
-        color: var(--primary) !important;
-      }
-    `;
-    document.head.appendChild(styleEl);
-  }
+  if (!isShown) {
+    const isSwap = window.swapWorkbenchPanels;
+    const isFullWidth = window.currentWorkbenchLayout === 'bottom-recipe';
 
-  // Ensure it is appended to document.body so that offsetParent is document.body (essential for accurate page position styling)
-  if (menu.parentElement !== document.body) {
-    document.body.appendChild(menu);
-  }
+    const swapBtnId = (menuId === 'layoutDropdownMenu') ? 'swapPanelsBtn' : 'swapPanelsBtn2';
+    const fullWidthBtnId = (menuId === 'layoutDropdownMenu') ? 'editorFullWidthBtn' : 'editorFullWidthBtn2';
+    const textId = (menuId === 'layoutDropdownMenu') ? 'optLayoutFullWidthText' : 'optLayoutFullWidthText2';
 
-  const isHidden = menu.style.display === 'none' || menu.style.display === '';
-  if (isHidden) {
-    window.closeLayoutDropdown();
-    window.closeEditorTabDropdown();
-
-    menu.innerHTML = `
-      <!-- Option 1: Switch Spots -->
-      <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn"
-        style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
-        <span>Switch Spots</span>
-      </button>
-      <!-- Option 2: Full Width / Column Layout -->
-      <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn"
-        style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-        <span id="optLayoutFullWidthText">Full Width</span>
-      </button>
-    `;
-
-    const swapOpt = document.getElementById('swapPanelsBtn');
+    const swapOpt = document.getElementById(swapBtnId);
     if (swapOpt) {
-      if (window.swapWorkbenchPanels) {
+      if (isSwap) {
         swapOpt.style.background = 'var(--primary-light)';
         swapOpt.style.color = 'var(--primary)';
       } else {
@@ -10958,10 +10917,10 @@ window.toggleLayoutDropdown = function(e, btnId) {
       }
     }
 
-    const fullWidthOpt = document.getElementById('editorFullWidthBtn');
-    const optFullWidthText = document.getElementById('optLayoutFullWidthText');
+    const fullWidthOpt = document.getElementById(fullWidthBtnId);
+    const optFullWidthText = document.getElementById(textId);
     if (fullWidthOpt) {
-      if (window.currentWorkbenchLayout === 'bottom-recipe') {
+      if (isFullWidth) {
         fullWidthOpt.style.background = 'var(--primary-light)';
         fullWidthOpt.style.color = 'var(--primary)';
         if (optFullWidthText) optFullWidthText.textContent = 'Column Layout';
@@ -10973,22 +10932,7 @@ window.toggleLayoutDropdown = function(e, btnId) {
     }
 
     menu.style.display = 'flex';
-    const rect = btn.getBoundingClientRect();
-    menu.style.top = `${rect.bottom + 6 + window.scrollY}px`;
-    
-    const menuWidth = 160;
-    const padding = 10;
-    const viewportWidth = window.innerWidth;
-    let left = rect.left + window.scrollX;
-    if (left + menuWidth > viewportWidth - padding) {
-      left = Math.max(padding, viewportWidth - menuWidth - padding);
-    }
-    menu.style.left = `${left}px`;
-
-    window.activeLayoutDropdownBtnId = btnId;
-  } else {
-    menu.style.display = 'none';
-    window.activeLayoutDropdownBtnId = null;
+    window.activeLayoutMenuId = menuId;
   }
   
   if (typeof window.syncLayoutDropdownBtnStyle === 'function') {
@@ -10997,9 +10941,11 @@ window.toggleLayoutDropdown = function(e, btnId) {
 };
 
 window.closeLayoutDropdown = function() {
-  const menu = document.getElementById('layoutDropdownContent');
-  if (menu) menu.style.display = 'none';
-  window.activeLayoutDropdownBtnId = null;
+  const m1 = document.getElementById('layoutDropdownMenu');
+  const m2 = document.getElementById('layoutDropdownMenu2');
+  if (m1) m1.style.display = 'none';
+  if (m2) m2.style.display = 'none';
+  window.activeLayoutMenuId = null;
   if (typeof window.syncLayoutDropdownBtnStyle === 'function') {
     window.syncLayoutDropdownBtnStyle();
   }
@@ -16824,9 +16770,13 @@ document.addEventListener('click', (e) => {
       menu.style.display = 'none';
     }
   }
-  const layoutMenu = document.getElementById('layoutDropdownContent');
-  if (layoutMenu && layoutMenu.style.display === 'flex') {
-    if (!e.target.closest('#layoutDropdownContent') && !e.target.closest('#layoutDropdownBtn') && !e.target.closest('#layoutDropdownBtn2')) {
+  const m1 = document.getElementById('layoutDropdownMenu');
+  const m2 = document.getElementById('layoutDropdownMenu2');
+  const m1Open = m1 && m1.style.display === 'flex';
+  const m2Open = m2 && m2.style.display === 'flex';
+  if (m1Open || m2Open) {
+    if (!e.target.closest('#layoutDropdownMenu') && !e.target.closest('#layoutDropdownBtn') &&
+        !e.target.closest('#layoutDropdownMenu2') && !e.target.closest('#layoutDropdownBtn2')) {
       window.closeLayoutDropdown();
     }
   }

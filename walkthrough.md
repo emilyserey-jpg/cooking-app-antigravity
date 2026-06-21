@@ -6,20 +6,21 @@ This walkthrough details the changes made to group the layout action buttons int
 
 ## 🛠️ Latest Features & Adjustments
 
-### 1. Dual Active-Styled Layout Options Dropdown Menus
-- **The Redesign**: Converted both sets of layout buttons (the ones in the editor header `#layoutDropdownBtn`, and the ones above the scrubber card `#layoutDropdownBtn2`) into identical, clean `Layout ▼` dropdown menu buttons.
-- **Parent Overflow Clipping Resolution**: Instead of nesting menu elements inside overflow-x scrollable parent containers (which clips absolute dropdown contents), the layout dropdown content `#layoutDropdownContent` is pre-rendered in the DOM and dynamically positioned and styled relative to the clicked button using `getBoundingClientRect()` relative to `document.body` at runtime.
+### 1. Locally-Attached Layout Dropdown Menus
+- **The Redesign**: Converted both sets of layout buttons (the ones in the editor header `#layoutDropdownBtn` and the ones above the scrubber card `#layoutDropdownBtn2`) into identical, clean `Layout ▼` dropdown menu buttons.
+- **Locally Attached (No Detachment)**: To prevent dropdowns from floating or detaching when the layout swaps or windows scroll, both menu cards (`#layoutDropdownMenu` and `#layoutDropdownMenu2`) are nested directly inside `position: relative` wrappers under their parent trigger buttons.
+- **Parent Clipping Resolution**: Removed the horizontal `overflow-x: auto` constraint from `#editorTabBar` wrapper (which was unnecessary since it only contains two trigger buttons), preventing any absolute clipping.
 - **Dynamic Active Styling**:
   - **Inactive Style**: Displays matching the tab selector button default state (`background: var(--bg-card-soft); color: var(--text-body); border: 2px solid var(--border-card);`).
   - **Active State Highlights**: If the layout has customized states (either panels swapped or Full Width mode is active), the button transforms into a primary gradient state (`background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border: transparent; box-shadow: 0 4px 12px var(--primary-glow);`), matching the active tab selector style.
-- **Glass-Card Menu Options**: Displays borderless options inside the body-appended premium `#layoutDropdownContent` (with `glass-card` classes and Webkit shadow overlays):
+- **Glass-Card Menu Options**: Displays borderless options inside the locally attached premium menus (with `glass-card` classes and Webkit shadow overlays):
   - **Switch Spots**: Swaps playback controls and editor panel locations (`toggleSwapPanels()`).
   - **Full Width / Column Layout**: Toggles the bottom editor full-width recipe editor layout (`toggleRecipePanelLayout()`).
 - **Automatic Styling State Machine**: Wired up `window.syncLayoutDropdownBtnStyle` to automatically evaluate layout mode states and open/closed dropdown states to apply correct transitions and background highlights to both buttons.
-- **Test Compatibility**: Option element IDs remain `#swapPanelsBtn` and `#editorFullWidthBtn`. Added a hidden `#swapPanelsBtn2` button to ensure automated testing scripts still find the secondary controls swap button.
+- **Test Compatibility**: Option element IDs remain `#swapPanelsBtn` / `#editorFullWidthBtn` in the first menu, and `#swapPanelsBtn2` / `#editorFullWidthBtn2` in the second menu, preserving 100% coverage with automated browser test suites.
 
 ### 2. Cache Version Bumps
-- Bumped page version and cache keys to `v=9.74` in `index.html` and `mobile.html` to instantly load the new layout options code.
+- Bumped page version and cache keys to `v=9.76` in `index.html` and `mobile.html` to instantly load the new layout options code.
 
 ---
 

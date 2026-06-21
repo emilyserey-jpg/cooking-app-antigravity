@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.75';
+      const CURRENT_VERSION = '9.76';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=9.75">
+  <link rel="stylesheet" href="styles_v853.css?v=9.76">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1459,13 +1459,31 @@
               <!-- Layout controls row (above scrubber card) -->
               <div id="scrubberLayoutControls" style="display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; justify-content:flex-start !important; align-items:center !important; gap:8px; margin-bottom:4px; flex-shrink:0; width:100%;">
                 <!-- Layout Options Dropdown 2 -->
-                <button type="button" onclick="window.toggleLayoutDropdown(event, 'layoutDropdownBtn2')" id="layoutDropdownBtn2" class="collapsible-section-toggle-btn"
-                  style="padding:6px 12px; font-size:0.78rem; font-weight:900; border-radius:10px; border:2px solid var(--border-card); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:4.5px; box-shadow:var(--shadow-xs); transition:all 0.2s; background:var(--bg-card-soft); color:var(--text-body); white-space:nowrap; flex-shrink:0;"
-                  title="Layout and placement options">
-                  <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
-                </button>
-                <!-- Hidden button for automated test compatibility -->
-                <button type="button" id="swapPanelsBtn2" onclick="window.toggleSwapPanels()" style="display:none;"></button>
+                <div style="position:relative; display:inline-block; flex-shrink:0;">
+                  <button type="button" onclick="window.toggleLayoutDropdown(event, 'layoutDropdownMenu2')" id="layoutDropdownBtn2" class="collapsible-section-toggle-btn"
+                    style="padding:6px 12px; font-size:0.78rem; font-weight:900; border-radius:10px; border:2px solid var(--border-card); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:4.5px; box-shadow:var(--shadow-xs); transition:all 0.2s; background:var(--bg-card-soft); color:var(--text-body); white-space:nowrap; flex-shrink:0;"
+                    title="Layout and placement options">
+                    <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
+                  </button>
+                  <div id="layoutDropdownMenu2" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:140px; box-sizing:border-box; flex-direction:column; gap:4px;">
+                    <!-- Option 1: Switch Spots -->
+                    <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn2"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.swapWorkbenchPanels){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
+                      <span>Switch Spots</span>
+                    </button>
+                    <!-- Option 2: Full Width / Column Layout -->
+                    <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn2"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentWorkbenchLayout === 'bottom-recipe'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                      <span id="optLayoutFullWidthText2">Full Width</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <!-- ── Chapter scrubber (OUTSIDE video, fully visible) ── -->
@@ -1588,37 +1606,42 @@
           <div id="workbenchRight" style="overflow:visible;display:flex;flex-direction:column;gap:0.75rem;flex:1;padding-left:8px;padding-bottom:10px;position:relative;">
             <div id="recipePanelWrapper" style="display:flex;flex-direction:column;gap:0.75rem;flex:1;overflow:hidden;min-height:0;width:100%;position:relative;">
               <!-- Desktop Editor Tab Bar -->
-            <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
-                  <!-- Editor Tab Selector Dropdown -->
-                  <button id="editorTabSelectorBtn" onclick="window.toggleEditorTabDropdown(event)" title="Select editor tab"
-                    style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:4.5px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);white-space:nowrap;flex-shrink:0;">
-                    <span id="editorTabSelectorLabel">Loop Stops</span>
-                    <span style="font-size:0.55rem; margin-left:1px; color:inherit; opacity:0.7;">▼</span>
-                  </button>
-                
-                <!-- Layout Options Dropdown -->
-                <button type="button" onclick="window.toggleLayoutDropdown(event, 'layoutDropdownBtn')" id="layoutDropdownBtn" class="collapsible-section-toggle-btn"
-                  style="padding:6px 12px; font-size:0.78rem; font-weight:900; border-radius:10px; border:2px solid var(--border-card); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:4.5px; box-shadow:var(--shadow-xs); transition:all 0.2s; background:var(--bg-card-soft); color:var(--text-body); white-space:nowrap; flex-shrink:0;"
-                  title="Layout and placement options">
-                  <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
+              <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;">
+                <!-- Editor Tab Selector Dropdown -->
+                <button id="editorTabSelectorBtn" onclick="window.toggleEditorTabDropdown(event)" title="Select editor tab"
+                  style="padding:6px 12px;font-size:0.78rem;font-weight:900;border-radius:10px;border:2px solid var(--border-card);cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:4.5px;box-shadow:var(--shadow-xs);transition:all 0.2s;background:var(--bg-card-soft);color:var(--text-body);white-space:nowrap;flex-shrink:0;">
+                  <span id="editorTabSelectorLabel">Loop Stops</span>
+                  <span style="font-size:0.55rem; margin-left:1px; color:inherit; opacity:0.7;">▼</span>
                 </button>
-                
-                <!-- Pre-rendered Layout Options Dropdown Content (appended to body at runtime by positioning, but exists in DOM on load) -->
-                <div id="layoutDropdownContent" class="glass-card" style="display:none; position:absolute; width:160px; z-index:999999; padding:6px; box-shadow:var(--shadow-lg); border:2px solid var(--border-card); flex-direction:column; gap:4px; background:#ffffff; border-radius:12px;">
-                  <!-- Option 1: Switch Spots -->
-                  <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn"
-                    style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
-                    <span>Switch Spots</span>
+              
+                <!-- Layout Options Dropdown -->
+                <div style="position:relative; display:inline-block; flex-shrink:0;">
+                  <button type="button" onclick="window.toggleLayoutDropdown(event, 'layoutDropdownMenu')" id="layoutDropdownBtn" class="collapsible-section-toggle-btn"
+                    style="padding:6px 12px; font-size:0.78rem; font-weight:900; border-radius:10px; border:2px solid var(--border-card); cursor:pointer; font-family:var(--font); display:inline-flex; align-items:center; gap:4.5px; box-shadow:var(--shadow-xs); transition:all 0.2s; background:var(--bg-card-soft); color:var(--text-body); white-space:nowrap;"
+                    title="Layout and placement options">
+                    <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
                   </button>
-                  <!-- Option 2: Full Width / Column Layout -->
-                  <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn"
-                    style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-                    <span id="optLayoutFullWidthText">Full Width</span>
-                  </button>
+                  <div id="layoutDropdownMenu" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:140px; box-sizing:border-box; flex-direction:column; gap:4px;">
+                    <!-- Option 1: Switch Spots -->
+                    <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.swapWorkbenchPanels){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
+                      <span>Switch Spots</span>
+                    </button>
+                    <!-- Option 2: Full Width / Column Layout -->
+                    <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentWorkbenchLayout === 'bottom-recipe'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                      <span id="optLayoutFullWidthText">Full Width</span>
+                    </button>
+                  </div>
                 </div>
-              </div>            <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
+              </div>
+              <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
               <!-- AI Generate buttons row above step tabs -->
               <div id="aiButtonsRow" style="display:flex; flex-direction:row; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; padding:4px 2px;">
                 <button onclick="window.doItAll()" id="aiLoopBtn" class="btn" title="AI transcribes speech to detect precise loop stop timestamps and instructions" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25); flex-shrink:0; white-space:nowrap;">
@@ -2414,6 +2437,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.75"></script>
+  <script type="module" src="app.js?v=9.76"></script>
 </body>
 </html>
