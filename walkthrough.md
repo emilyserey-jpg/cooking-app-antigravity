@@ -1,3 +1,39 @@
+# Active Styled Layout Options Dropdown Menu Walkthrough
+
+This walkthrough details the changes made to group the layout action buttons into a single premium dropdown menu matching the styling of the active editor tab dropdown selector.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Active-Styled Layout Options Dropdown Menu
+- **Visual Design**: Replaced the standalone `Switch Spots` and `Full Width` buttons with a single dropdown button `Layout ▼` (`#layoutDropdownBtn`).
+- **Dynamic Active Styling**:
+  - **Inactive Style**: Displays matching the tab selector button default state (`background: var(--bg-card-soft); color: var(--text-body); border: 2px solid var(--border-card);`).
+  - **Active State Highlights**: If the layout has customized states (either panels swapped or Full Width mode is active), the button transforms into a primary gradient state (`background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border: transparent; box-shadow: 0 4px 12px var(--primary-glow);`), matching the active tab selector style.
+- **Glass-Card Menu Options**: Displays borderless options inside a premium `#layoutDropdownMenu` (with `glass-card` classes and Webkit shadow overlays):
+  - **Switch Spots**: Swaps playback controls and editor panel locations (`toggleSwapPanels()`).
+  - **Full Width / Column Layout**: Toggles the bottom editor full-width recipe editor layout (`toggleRecipePanelLayout()`).
+- **Automatic Styling State Machine**: Wired up `window.syncLayoutDropdownBtnStyle` to automatically evaluate layout mode states and open/closed dropdown states to apply correct transitions and background highlights.
+- **Test Compatibility**: Option element IDs remain `#swapPanelsBtn` and `#editorFullWidthBtn`, maintaining complete coverage with all automated browser test scripts.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.73` in `index.html` and `mobile.html` to instantly load the new layout options code.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" inside the dropdown swaps panels symmetrically, and ensures no regressions with layout controls. |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility. |
+
+---
+
 # Hiding Panel Column Vertical Scrollbars Walkthrough
 
 This walkthrough details the visual improvements to hide vertical scrollbars inside the Recipe Editor panel column views.
