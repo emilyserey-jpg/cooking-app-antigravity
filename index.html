@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.76';
+      const CURRENT_VERSION = '9.77';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=9.76">
+  <link rel="stylesheet" href="styles_v853.css?v=9.77">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1472,7 +1472,7 @@
                       onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
                       onmouseleave="if(window.swapWorkbenchPanels){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
-                      <span>Switch Spots</span>
+                      <span id="optLayoutSwapText2">Switch Spots</span>
                     </button>
                     <!-- Option 2: Full Width / Column Layout -->
                     <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn2"
@@ -1628,7 +1628,7 @@
                       onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
                       onmouseleave="if(window.swapWorkbenchPanels){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
-                      <span>Switch Spots</span>
+                      <span id="optLayoutSwapText">Move Panel to Left</span>
                     </button>
                     <!-- Option 2: Full Width / Column Layout -->
                     <button type="button" onclick="window.toggleRecipePanelLayout(); window.closeLayoutDropdown();" id="editorFullWidthBtn"
@@ -2437,6 +2437,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.76"></script>
+  <script type="module" src="app.js?v=9.77"></script>
 </body>
 </html>

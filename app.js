@@ -10903,17 +10903,33 @@ window.toggleLayoutDropdown = function(e, menuId) {
     const isFullWidth = window.currentWorkbenchLayout === 'bottom-recipe';
 
     const swapBtnId = (menuId === 'layoutDropdownMenu') ? 'swapPanelsBtn' : 'swapPanelsBtn2';
+    const swapTextId = (menuId === 'layoutDropdownMenu') ? 'optLayoutSwapText' : 'optLayoutSwapText2';
     const fullWidthBtnId = (menuId === 'layoutDropdownMenu') ? 'editorFullWidthBtn' : 'editorFullWidthBtn2';
     const textId = (menuId === 'layoutDropdownMenu') ? 'optLayoutFullWidthText' : 'optLayoutFullWidthText2';
 
     const swapOpt = document.getElementById(swapBtnId);
+    const optSwapText = document.getElementById(swapTextId);
     if (swapOpt) {
       if (isSwap) {
         swapOpt.style.background = 'var(--primary-light)';
         swapOpt.style.color = 'var(--primary)';
+        if (optSwapText) {
+          if (window.currentWorkbenchLayout === 'bottom-recipe' || window.currentWorkbenchLayout === 'bottom-controls') {
+            optSwapText.textContent = 'Move Panel to Bottom';
+          } else {
+            optSwapText.textContent = 'Move Panel to Right';
+          }
+        }
       } else {
         swapOpt.style.background = 'transparent';
         swapOpt.style.color = 'var(--text-body)';
+        if (optSwapText) {
+          if (window.currentWorkbenchLayout === 'bottom-recipe' || window.currentWorkbenchLayout === 'bottom-controls') {
+            optSwapText.textContent = 'Move Panel to Top';
+          } else {
+            optSwapText.textContent = 'Move Panel to Left';
+          }
+        }
       }
     }
 
