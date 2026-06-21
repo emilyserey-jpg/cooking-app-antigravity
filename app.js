@@ -11951,8 +11951,8 @@ function renderCreateSteps() {
           </div>
         </div>
         
-        <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;flex:0 1 auto;overflow:hidden;">
-          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);flex:0 1 auto;min-height:0;max-height:200px;overflow-y:auto;height:auto;"
+        <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;flex:0 0 auto;overflow:hidden;">
+          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);flex:0 0 auto;min-height:0;max-height:200px;overflow-y:auto;height:auto;"
             oninput="window.autoResizeTextarea(this); if(createStepsArr[${i}]){createStepsArr[${i}].description=this.value;}"
             onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
           <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
