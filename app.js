@@ -10922,6 +10922,11 @@ window.toggleLayoutDropdown = function(e, btnId) {
     document.head.appendChild(styleEl);
   }
 
+  // Ensure it is appended to document.body so that offsetParent is document.body (essential for accurate page position styling)
+  if (menu.parentElement !== document.body) {
+    document.body.appendChild(menu);
+  }
+
   const isHidden = menu.style.display === 'none' || menu.style.display === '';
   if (isHidden) {
     window.closeLayoutDropdown();
