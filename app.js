@@ -2895,7 +2895,7 @@ window.refreshWidgetsVisibility = function() {
         <!-- Picked Recipe Card Display -->
         <div id="shufflePicked_${w.id}" style="display:none; width:100%; text-align:center; background:rgba(74,144,217,0.04); border:1px solid rgba(74,144,217,0.15); border-radius:12px; padding:10px; box-sizing:border-box;">
           <div style="font-size:0.6rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Chef's Suggestion</div>
-          <div id="shufflePickedTitle_${w.id}" style="font-size:0.85rem; font-weight:800; color:var(--text-heading); margin-bottom:8px; line-height:1.3;">Recipe Title</div>
+          <div id="shufflePickedTitle_${w.id}" style="font-size:0.85rem; font-weight:800; color:var(--text-heading); margin-bottom:8px; line-height:1.3;">Title</div>
           <button id="shuffleCookBtn_${w.id}" class="btn btn-primary" style="padding:6px 12px; font-size:0.7rem; font-weight:800; border-radius:8px; width:100%;">Cook Now</button>
         </div>
         
@@ -8586,6 +8586,7 @@ window.togglePanel = function(bodyId, chevronId) {
 };
 
 window.switchView            = switchView;
+window.renderCreateSteps     = renderCreateSteps;
 window.changeDefaultLandingView = function(view) {
   localStorage.setItem('cooking_gps_landing_view', view);
   showTip(`Default landing view set to: ${view === 'create' ? 'Create' : 'My Space'}`);
@@ -9335,6 +9336,10 @@ window.showTip               = showTip;
 // ============================================================
 let createIsPublic   = false;
 let createStepsArr   = [];
+Object.defineProperty(window, 'createStepsArr', {
+  get: () => createStepsArr,
+  set: (val) => { createStepsArr = val; }
+});
 let uploadedVideoUID = null;   // Cloudflare Stream video UID
 let localVideoURL    = null;   // blob URL for local preview while uploading
 
@@ -10396,7 +10401,14 @@ window.toggleLayoutDropdown = function(e) {
 window.autoResizeTextarea = function(el) {
   if (!el) return;
   el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+  const maxHeight = 220; // Limit height to ~13-14 lines of text
+  if (el.scrollHeight > maxHeight) {
+    el.style.height = maxHeight + 'px';
+    el.style.overflowY = 'auto';
+  } else {
+    el.style.height = el.scrollHeight + 'px';
+    el.style.overflowY = 'hidden';
+  }
 };
 
 window.syncCollapseButtons = function() {
@@ -10525,9 +10537,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
   leftCol.style.width = `calc(100% - ${fixedW}px)`;
   leftCol.style.flex = '1 1 auto';
   leftCol.style.minWidth = '320px';
+  leftCol.style.height = '100%';
   rightCol.style.width = fixedW + 'px';
   rightCol.style.flex = `0 1 ${fixedW}px`;
   rightCol.style.minWidth = '320px';
+  rightCol.style.height = '100%';
   controls.style.flex = 'none';
   controls.style.width = '100%';
   if (scrubber) {
@@ -10552,8 +10566,14 @@ window.switchWorkbenchLayout = function(layoutMode) {
     const panels = [
       document.getElementById('rightColStops'),
       document.getElementById('rightColIngredients'),
-      document.getElementById('rightColSave')
+      document.getElementById('rightColSave'),
+      document.getElementById('rightColTranscripts'),
+      document.getElementById('rightColAddCustom')
     ];
+    Object.keys(window.customPages || {}).forEach(key => {
+      const col = document.getElementById(`rightCol_${key}`);
+      if (col) panels.push(col);
+    });
 
     const videoWrapper = document.getElementById('workbenchVideoWrapper');
     const videoResizer = document.getElementById('videoResizerBar');
@@ -10617,8 +10637,8 @@ window.switchWorkbenchLayout = function(layoutMode) {
     if (videoResizer) leftCol.appendChild(videoResizer);
     if (videoWrapper) leftCol.appendChild(videoWrapper);
 
-    const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
-    const isControlsAtBottom = (layoutMode === 'bottom-controls' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-recipe' && window.swapWorkbenchPanels);
+    const isRecipeAtBottom = (layoutMode === 'bottom-recipe');
+    const isControlsAtBottom = (layoutMode === 'bottom-controls');
 
     resizer.style.display = 'flex';
     rightCol.style.display = 'flex';
@@ -10629,8 +10649,14 @@ window.switchWorkbenchLayout = function(layoutMode) {
     const panels = [
       document.getElementById('rightColStops'),
       document.getElementById('rightColIngredients'),
-      document.getElementById('rightColSave')
+      document.getElementById('rightColSave'),
+      document.getElementById('rightColTranscripts'),
+      document.getElementById('rightColAddCustom')
     ];
+    Object.keys(window.customPages || {}).forEach(key => {
+      const col = document.getElementById(`rightCol_${key}`);
+      if (col) panels.push(col);
+    });
 
     if (isRecipeAtBottom) {
       window.isControlsFullWidth = false;
@@ -10671,6 +10697,13 @@ window.switchWorkbenchLayout = function(layoutMode) {
         controlsStrip.style.position = 'static';
         controlsStrip.style.left = '0';
       }
+
+      panels.forEach(p => {
+        if (p) {
+          p.style.maxHeight = '100%';
+          p.style.overflowY = 'auto';
+        }
+      });
     } else if (isControlsAtBottom) {
       window.isControlsFullWidth = true;
 
@@ -10708,18 +10741,25 @@ window.switchWorkbenchLayout = function(layoutMode) {
   // Update recipe panel inline layout toggle option inside layout dropdown
   const optFullWidth = document.getElementById('editorFullWidthBtn');
   const optFullWidthText = document.getElementById('optLayoutFullWidthText');
-  if (optFullWidth) {
-    optFullWidth.style.border = 'none';
-    if (layoutMode === 'bottom-recipe') {
-      optFullWidth.style.background = 'var(--primary-light)';
-      optFullWidth.style.color = 'var(--primary)';
-      if (optFullWidthText) optFullWidthText.textContent = 'Column Layout';
+  const optFullWidth2 = document.getElementById('editorFullWidthBtn2');
+  const optFullWidthText2 = document.getElementById('optLayoutFullWidthText2');
+
+  const updateFullWidthBtn = function(btn, textEl, targetLayout) {
+    if (!btn) return;
+    btn.style.border = 'none';
+    if (layoutMode === targetLayout) {
+      btn.style.background = 'var(--primary-light)';
+      btn.style.color = 'var(--primary)';
+      if (textEl) textEl.textContent = 'Column Layout';
     } else {
-      optFullWidth.style.background = 'transparent';
-      optFullWidth.style.color = 'var(--text-body)';
-      if (optFullWidthText) optFullWidthText.textContent = 'Full Width';
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--text-body)';
+      if (textEl) textEl.textContent = 'Full Width';
     }
-  }
+  };
+
+  updateFullWidthBtn(optFullWidth, optFullWidthText, 'bottom-recipe');
+  updateFullWidthBtn(optFullWidth2, optFullWidthText2, 'bottom-controls');
 
   // Sync the "Switch Spots" button styling (dropdown item and scrubber header button)
   const swapOpt = document.getElementById('swapPanelsBtn');
@@ -10852,7 +10892,7 @@ window.switchWorkbenchLayout = function(layoutMode) {
             child.style.display = '';
           }
         });
-        const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+        const isRecipeAtBottom = (layoutMode === 'bottom-recipe');
         if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
           window.switchEditorTab(window.activeEditorTab || 'stops');
         }
@@ -10892,10 +10932,15 @@ window.toggleRecipePanelLayout = function() {
 };
 
 window.toggleSwapPanels = function() {
-  window.swapWorkbenchPanels = !window.swapWorkbenchPanels;
-  
   const currentLayout = window.currentWorkbenchLayout || 'standard';
-  window.switchWorkbenchLayout(currentLayout);
+  if (currentLayout === 'bottom-recipe') {
+    window.switchWorkbenchLayout('bottom-controls');
+  } else if (currentLayout === 'bottom-controls') {
+    window.switchWorkbenchLayout('bottom-recipe');
+  } else {
+    window.swapWorkbenchPanels = !window.swapWorkbenchPanels;
+    window.switchWorkbenchLayout(currentLayout);
+  }
 };
 
 window.toggleSwapLeftRightColumns = function() {
@@ -10942,7 +10987,19 @@ window.syncLayoutDropdownBtnStyle = function() {
   const syncBtn = function(btnId, menuId) {
     const layoutBtn = document.getElementById(btnId);
     if (!layoutBtn) return;
-    const isActive = window.swapWorkbenchPanels || window.currentWorkbenchLayout === 'bottom-recipe' || (window.swapLeftRightColumns && window.innerWidth > 768);
+    
+    let isActive = false;
+    if (btnId === 'layoutDropdownBtn') {
+      isActive = window.swapWorkbenchPanels || 
+                 window.currentWorkbenchLayout === 'bottom-recipe' || 
+                 (window.swapLeftRightColumns && window.innerWidth > 768);
+    } else if (btnId === 'layoutDropdownBtn2') {
+      const parentCol = layoutBtn.closest('#workbenchLeft, #workbenchRight');
+      isActive = window.swapWorkbenchPanels || 
+                 window.currentWorkbenchLayout === 'bottom-controls' ||
+                 (parentCol && window.swapLeftRightColumns && window.innerWidth > 768);
+    }
+    
     const menuOpen = window.activeLayoutMenuId === menuId;
     
     if (menuOpen) {
@@ -10978,7 +11035,8 @@ window.toggleLayoutDropdown = function(e, menuId) {
 
   if (!isShown) {
     const isSwap = window.swapWorkbenchPanels;
-    const isFullWidth = window.currentWorkbenchLayout === 'bottom-recipe';
+    const targetLayout = (menuId === 'layoutDropdownMenu') ? 'bottom-recipe' : 'bottom-controls';
+    const isFullWidth = window.currentWorkbenchLayout === targetLayout;
 
     const swapBtnId = (menuId === 'layoutDropdownMenu') ? 'swapPanelsBtn' : 'swapPanelsBtn2';
     const swapTextId = (menuId === 'layoutDropdownMenu') ? 'optLayoutSwapText' : 'optLayoutSwapText2';
@@ -11006,17 +11064,15 @@ window.toggleLayoutDropdown = function(e, menuId) {
     const swapLeftRightOpt = document.getElementById(swapLeftRightBtnId);
     const optLeftRightText = document.getElementById(leftRightTextId);
     if (swapLeftRightOpt) {
-      const rightCol = document.getElementById('workbenchRight');
-      
-      // The option is only visible if this dropdown's panel is inside the side column (workbenchRight)
-      const isPanelInSideColumn = rightCol && rightCol.contains(swapLeftRightOpt);
-      const shouldShow = (menuId === 'layoutDropdownMenu') && isPanelInSideColumn && (window.innerWidth > 768);
+      const parentCol = swapLeftRightOpt.closest('#workbenchLeft, #workbenchRight');
+      const shouldShow = parentCol && (window.innerWidth > 768);
 
       if (shouldShow) {
         swapLeftRightOpt.style.display = 'flex';
         
-        // Since it is inside rightCol, its physical column side is determined by swapLeftRightColumns
-        const side = window.swapLeftRightColumns ? 'left' : 'right';
+        const isLeftColumn = parentCol.id === 'workbenchLeft';
+        const isPhysicalRight = isLeftColumn ? window.swapLeftRightColumns : !window.swapLeftRightColumns;
+        const side = isPhysicalRight ? 'right' : 'left';
           
         if (optLeftRightText) {
           optLeftRightText.textContent = (side === 'left') ? 'Move Panel to Right' : 'Move Panel to Left';
@@ -11437,8 +11493,8 @@ window.updateTranscriptButtonUI = function() {
         }
         if (bodyCard) {
           bodyCard.style.height = '100%';
-          bodyCard.style.minHeight = '660px';
-          bodyCard.style.maxHeight = 'none';
+          bodyCard.style.minHeight = '0';
+          bodyCard.style.maxHeight = '100%';
           bodyCard.style.flex = '1';
         }
         if (extendBtnLabel) extendBtnLabel.textContent = 'Standard';
@@ -11459,10 +11515,10 @@ window.updateTranscriptButtonUI = function() {
           wrapper.style.flex = 'none';
         }
         if (bodyCard) {
-          bodyCard.style.height = 'auto';
-          bodyCard.style.minHeight = 'auto';
-          bodyCard.style.maxHeight = 'calc(100vh - 180px)';
-          bodyCard.style.flex = 'none';
+          bodyCard.style.height = '100%';
+          bodyCard.style.minHeight = '0';
+          bodyCard.style.maxHeight = '100%';
+          bodyCard.style.flex = '1';
         }
         if (extendBtnLabel) extendBtnLabel.textContent = 'Extend';
         if (extendBtnIcon) extendBtnIcon.textContent = '⤢';
@@ -11480,10 +11536,10 @@ window.updateTranscriptButtonUI = function() {
         wrapper.style.flex = 'none';
       }
       if (bodyCard) {
-        bodyCard.style.height = 'auto';
-        bodyCard.style.minHeight = 'auto';
-        bodyCard.style.maxHeight = 'calc(100vh - 180px)';
-        bodyCard.style.flex = 'none';
+        bodyCard.style.height = '100%';
+        bodyCard.style.minHeight = '0';
+        bodyCard.style.maxHeight = '100%';
+        bodyCard.style.flex = '1';
       }
     }
   }
@@ -11852,7 +11908,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:auto;min-height:auto;overflow-y:visible;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;scroll-snap-align:center;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:auto;max-height:100%;min-height:auto;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;scroll-snap-align:center;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -11902,7 +11958,7 @@ function renderCreateSteps() {
         </div>
         
         <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;">
-          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);overflow-y:hidden;height:auto;"
+          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);max-height:220px;overflow-y:auto;height:auto;"
             oninput="window.autoResizeTextarea(this); if(createStepsArr[${i}]){createStepsArr[${i}].description=this.value;}"
             onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
           <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
@@ -11937,8 +11993,7 @@ function renderCreateSteps() {
   setTimeout(() => {
     if (list) {
       list.querySelectorAll('textarea[placeholder^="Add notes"]').forEach(ta => {
-        ta.style.height = 'auto';
-        ta.style.height = ta.scrollHeight + 'px';
+        window.autoResizeTextarea(ta);
       });
     }
   }, 0);
@@ -12437,7 +12492,7 @@ let _fsmPendingFolderId = null;
 window.openFolderSaveModal = function() {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput ? titleInput.value.trim() : '';
-  if (!title) { showTip('Please enter a recipe title first!'); if (titleInput) titleInput.focus(); return; }
+  if (!title) { showTip('Please enter a title first!'); if (titleInput) titleInput.focus(); return; }
   if (!currentUser) { showTip('Please sign in to save your recipe.'); window.openAuthModal(); return; }
 
   _fsmPendingFolderId = null;
@@ -12701,7 +12756,7 @@ window.captureLocalVideoPreview = function() {
 window.saveNewRecipe = async function(targetFolderId) {
   const titleInput = document.getElementById('newRecipeTitleInput');
   const title = titleInput?.value?.trim();
-  if (!title) { showTip('Please enter a recipe title first!'); titleInput?.focus(); return; }
+  if (!title) { showTip('Please enter a title first!'); titleInput?.focus(); return; }
   if (!currentUser) { showTip('Please sign in to save your recipe.'); window.openAuthModal(); return; }
 
   const btn = document.getElementById('saveRecipeBtn');
@@ -14777,29 +14832,28 @@ window.setupResponsiveDrawers = function() {
     const saveButtonsCard = document.getElementById('editorSaveButtonsCard');
     const ingredientsCard = document.getElementById('editorIngredientsCard');
 
-    if (headerContainer && titleCard && titleCard.parentElement !== headerContainer) {
-      headerContainer.appendChild(titleCard);
-      // Premium compact inline style for header pill
-      titleCard.style.padding = '4px 12px';
-      titleCard.style.display = 'flex';
-      titleCard.style.alignItems = 'center';
-      titleCard.style.gap = '8px';
-      titleCard.style.width = '100%';
-      titleCard.style.flex = '1';
-      titleCard.style.margin = '0';
+    if (colSave && titleCard && titleCard.parentElement !== colSave) {
+      colSave.insertBefore(titleCard, colSave.firstChild);
+    }
+    if (titleCard) {
+      titleCard.style.padding = '10px 13px';
+      titleCard.style.display = 'block';
+      titleCard.style.width = 'auto';
+      titleCard.style.flex = 'none';
+      titleCard.style.margin = '';
       const label = titleCard.querySelector('label');
       if (label) {
-        label.style.display = 'inline-block';
-        label.style.marginBottom = '0';
-        label.style.whiteSpace = 'nowrap';
+        label.style.display = 'block';
+        label.style.marginBottom = '4px';
+        label.style.whiteSpace = 'normal';
       }
       const input = document.getElementById('newRecipeTitleInput');
       if (input) {
         input.style.width = '100%';
-        input.style.border = 'none';
-        input.style.background = 'transparent';
-        input.style.padding = '4px 0';
-        input.style.borderRadius = '0';
+        input.style.border = '2px solid var(--border-card)';
+        input.style.background = 'var(--bg-card-soft)';
+        input.style.padding = '8px 10px';
+        input.style.borderRadius = '10px';
       }
     }
     if (colVoiceover && voiceoverSection && voiceoverSection.parentElement !== colVoiceover) {
@@ -15433,7 +15487,7 @@ window.generateAICover = async function() {
   const ingredients = document.getElementById('ingredientsText')?.value?.trim() || '';
   
   if (!title) {
-    showTip('Please enter a recipe title first so AI knows what to cook!');
+    showTip('Please enter a title first so AI knows what to cook!');
     return;
   }
 
@@ -15768,8 +15822,8 @@ function setupWorkbenchHorizontalResizer() {
     let newHeight = startHeight - deltaY;
 
     const layoutMode = window.currentWorkbenchLayout || 'standard';
-    const isControlsAtBottom = (layoutMode === 'bottom-controls' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-recipe' && window.swapWorkbenchPanels);
-    const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+    const isControlsAtBottom = (layoutMode === 'bottom-controls');
+    const isRecipeAtBottom = (layoutMode === 'bottom-recipe');
 
     // Constrain height based on what content is currently at the bottom
     let minH = 150;
@@ -16030,7 +16084,7 @@ window.toggleHorizontalPanel = function() {
           child.style.display = '';
         }
       });
-      const isRecipeAtBottom = (layout === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layout === 'bottom-controls' && window.swapWorkbenchPanels);
+      const isRecipeAtBottom = (layout === 'bottom-recipe');
       if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
         window.switchEditorTab(window.activeEditorTab || 'stops');
       }

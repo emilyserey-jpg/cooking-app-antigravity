@@ -1802,12 +1802,6 @@ a:focus-visible {
     display: none !important;
   }
 
-  /* Hide mobile bottom navigation bar when editing a recipe, to avoid overlapping editor toolbars */
-  body.mobile-editing-active .view-tabs,
-  body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) .view-tabs {
-    display: none !important;
-  }
-
   /* Allow body scroll and set viewport height to auto when editing */
   body.mobile-editing-active,
   body:has(#createStage2:not([style*="display: none"]):not([style*="display:none"])) {
@@ -2262,40 +2256,53 @@ a:focus-visible {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     background: #ffffff !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
   }
 
-  /* Move view-tabs to the bottom of the screen as a floating navigation bar */
-  .view-tabs {
-    position: fixed !important;
-    bottom: 16px !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: auto !important;
-    max-width: none !important;
-    z-index: 999 !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border: 2px solid rgba(74, 144, 217, 0.16) !important;
-    box-shadow: 0 8px 30px rgba(74, 144, 217, 0.15) !important;
-    border-radius: var(--radius-pill) !important;
-    padding: 6px 8px !important;
-    display: flex !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scrollbar-width: none !important;
-    touch-action: pan-x !important;
-    -webkit-overflow-scrolling: touch !important;
+  .header-actions {
+    gap: 8px !important;
   }
-  .view-tabs::-webkit-scrollbar {
+
+  .view-tabs {
+    padding: 3px !important;
+    border-width: 1px !important;
+    gap: 2px !important;
+  }
+
+  .view-tab {
+    padding: 5px 10px !important;
+    font-size: 0.78rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .view-tab i {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+/* Hide logo text and collapse sign-in badge on very small screens to make room for tabs */
+@media (max-width: 580px) {
+  .logo-text {
     display: none !important;
   }
-
-  .app-container {
-    padding-bottom: 96px !important; /* space for floating bottom nav */
+  #userBadgeLabel {
+    display: none !important;
   }
+  .user-profile-badge {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .user-profile-badge i,
+  .user-profile-badge svg {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
 
   .bento-dashboard-grid {
     grid-template-columns: 1fr !important;
