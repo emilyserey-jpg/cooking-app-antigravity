@@ -1,3 +1,30 @@
+# Walkthrough - Deserialize Ingredients Loader to Prevent Layout Stretching
+
+This walkthrough details the changes made to deserialize recipe ingredients when loading them in the editor, preventing raw JSON meta-strings from stretching the layout.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Deserialized Ingredients Load in Editor
+- **Ingredients Loader Update**: Updated `window.loadRecipeToEditor` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to set the ingredients textarea value using `window.deserializeRecipeIngredients(recipe.ingredients || '')`. This strips out any raw JSON metadata blocks (e.g. `---CUSTOM_PAGES--- { ... } ---INGREDIENTS---`) and only displays user-facing ingredients.
+- **Prevent Layout Stretching**: Loading clean spaced text list allows the browser to wrap lines naturally, preventing dynamic textarea height recalculations from stretching the card layout or screen width.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.98` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `verify_ingredients_scroll.js` | **PASSED** ✅ | Checks right column layout properties, loads ingredients, and asserts ingredients textarea scrollability and height capping constraints. |
+
+---
+
 # Walkthrough - Timeline Column Swapping and Layout Customization
 
 This walkthrough details the changes made to allow swapping columns side-by-side from the timeline layout dropdown menu and synchronize the dropdown states and highlights.

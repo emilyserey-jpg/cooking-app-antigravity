@@ -5554,7 +5554,7 @@ window.loadRecipeToEditor = function(recipe) {
   // Ingredients List
   const ingText = document.getElementById('ingredientsText');
   if (ingText) {
-    ingText.value = recipe.ingredients || '';
+    ingText.value = window.deserializeRecipeIngredients ? window.deserializeRecipeIngredients(recipe.ingredients || '') : (recipe.ingredients || '');
     setTimeout(() => window.autoResizeTextarea(ingText), 50);
   }
 
