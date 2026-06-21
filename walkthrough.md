@@ -1,3 +1,32 @@
+# Walkthrough - Custom Page Dynamic Textarea Auto-Resizing with Capped Growth
+
+This walkthrough details the changes made to let the custom page content textarea start at a minimum height of 120px, auto-resize to fit text dynamically up to a 200px maximum height limit, and scroll internally once that cap is reached—ensuring the white glass card wraps cleanly around it and prevent overlaps or save button cutoffs.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Dynamic Textarea Auto-Resize & Height Capping
+- **Natural Card Height Wrapping**: Reverted the fixed flex-height constraints (`flex: 1; max-height: calc(100% - 12px); overflow: hidden;`) on the details card container (`card_${tabId}`) in `window.syncCustomPageUI` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to allow the card to size naturally with its contents (`min-height: 350px; flex-shrink: 0;`).
+- **Textarea Dynamic Height Growth**: Removed `flex: 1` forcing from the textarea wrapper and textarea style, letting the textarea start at `min-height: 120px` and scale up to `max-height: 200px` as input changes. Once 200px is reached, vertical scroll mode triggers.
+- **Squeezing Prevention**: Re-applied `flex-shrink: 0` constraints to both the textarea wrapper and the textarea element to comply with workspace layout guidelines.
+- **Card-Level Parent Scrolling**: Restored `overflow-y: auto` to the parent column `#rightColAddCustom` in all layouts (standard, bottom-recipe, and bottom-controls). If the card height exceeds the viewport, the column handles scrolling without clipping the bottom save button.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=10.02` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+Manual verification confirmed that:
+- The custom page content textbox starts at 120px height when empty.
+- As content is typed, the textbox automatically scales in height and the card grows dynamically around it, keeping the Save/Update button positioned perfectly.
+- Once the text grows beyond 200px in height, the textbox caps its height and enables internal scrolling.
+- If the card becomes taller than the sidebar, the parent column scrolls cleanly without any element overlap or clipping.
+
+---
+
 # Walkthrough - Custom Page Content Textbox Fills Available Card Height
 
 This walkthrough details the changes made to allow the custom page content textarea to grow vertically to fill the available height inside the glass details card, while keeping the white card wrapped cleanly around it without overflowing.
