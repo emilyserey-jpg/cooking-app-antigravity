@@ -1,3 +1,37 @@
+# Layout Options Dropdown Menu Walkthrough
+
+This walkthrough details the changes made to group the layout action buttons into a single clean dropdown menu inside the Recipe Editor panel header tab bar.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Layout Options Dropdown Menu
+- **The Redesign**: Replaced the standalone `Switch Spots` and `Full Width` header tab buttons with a single dropdown button named `Layout ▼` (`#layoutDropdownBtn`).
+- **Interactive Menu Container**: Clicking the dropdown displays `#layoutDropdownMenu`, a floating menu displaying two borderless, clean options:
+  - **Switch Spots**: Swaps playback controls and editor panel locations (`toggleSwapPanels()`).
+  - **Full Width / Column Layout**: Toggles the bottom editor full-width recipe editor layout (`toggleRecipePanelLayout()`).
+- **Click-Outside Dismissal**: Clicking anywhere outside the dropdown menu automatically dismisses/closes the dropdown.
+- **Active State Highlights**: Option backgrounds display in `var(--primary-light)` with `var(--primary)` text highlights when active (e.g. when panels are swapped or Full Width mode is active).
+- **Test Compatibility**: Preserved the original option element IDs (`#swapPanelsBtn` and `#editorFullWidthBtn`) inside the dropdown, ensuring all existing automated layout swapping browser tests continue to execute and pass flawlessly.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.72` in `index.html` and `mobile.html` to instantly load the fresh layout options code.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" inside the dropdown swaps panels symmetrically, and ensures no regressions with layout controls. |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility. |
+
+---
+
 # Hiding Panel Column Vertical Scrollbars Walkthrough
 
 This walkthrough details the visual improvements to hide vertical scrollbars inside the Recipe Editor panel column views.

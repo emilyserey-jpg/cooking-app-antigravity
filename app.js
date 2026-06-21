@@ -10693,50 +10693,44 @@ window.switchWorkbenchLayout = function(layoutMode) {
     }
   }
 
-  // Update recipe panel inline layout toggle button
-  const recipeLayoutBtn = document.getElementById('editorFullWidthBtn');
-  if (recipeLayoutBtn) {
-    if (layoutMode === 'bottom-controls') {
-      recipeLayoutBtn.style.display = 'none';
+  // Update recipe panel inline layout toggle option inside layout dropdown
+  const optFullWidth = document.getElementById('editorFullWidthBtn');
+  const optFullWidthText = document.getElementById('optLayoutFullWidthText');
+  if (optFullWidth) {
+    optFullWidth.style.border = 'none';
+    if (layoutMode === 'bottom-recipe') {
+      optFullWidth.style.background = 'var(--primary-light)';
+      optFullWidth.style.color = 'var(--primary)';
+      if (optFullWidthText) optFullWidthText.textContent = 'Column Layout';
     } else {
-      recipeLayoutBtn.style.display = 'inline-flex';
-      const span = recipeLayoutBtn.querySelector('span');
-      if (span) {
-        span.textContent = (layoutMode === 'bottom-recipe') ? 'Column Layout' : 'Full Width';
-      }
+      optFullWidth.style.background = 'transparent';
+      optFullWidth.style.color = 'var(--text-body)';
+      if (optFullWidthText) optFullWidthText.textContent = 'Full Width';
     }
   }
 
-  // No dropdown sync needed
-
-  // Sync the "Switch Spots" button styling
-  const swapBtn = document.getElementById('swapPanelsBtn');
+  // Sync the "Switch Spots" button styling (dropdown item and scrubber header button)
+  const swapOpt = document.getElementById('swapPanelsBtn');
   const swapBtn2 = document.getElementById('swapPanelsBtn2');
-  [swapBtn, swapBtn2].forEach(btn => {
-    if (btn) {
-      if (window.swapWorkbenchPanels) {
-        btn.style.background = 'var(--primary-light)';
-        btn.style.color = 'var(--primary)';
-        btn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
-      } else {
-        btn.style.background = 'rgba(74, 144, 217, 0.04)';
-        btn.style.color = 'var(--text-body)';
-        btn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
-      }
-    }
-  });
-
-  // Sync the "Full Width" button styling
-  const fullWidthBtn = document.getElementById('editorFullWidthBtn');
-  if (fullWidthBtn) {
-    if (window.currentWorkbenchLayout === 'bottom-recipe') {
-      fullWidthBtn.style.background = 'var(--primary-light)';
-      fullWidthBtn.style.color = 'var(--primary)';
-      fullWidthBtn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
+  if (swapOpt) {
+    swapOpt.style.border = 'none';
+    if (window.swapWorkbenchPanels) {
+      swapOpt.style.background = 'var(--primary-light)';
+      swapOpt.style.color = 'var(--primary)';
     } else {
-      fullWidthBtn.style.background = 'rgba(74, 144, 217, 0.04)';
-      fullWidthBtn.style.color = 'var(--text-body)';
-      fullWidthBtn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
+      swapOpt.style.background = 'transparent';
+      swapOpt.style.color = 'var(--text-body)';
+    }
+  }
+  if (swapBtn2) {
+    if (window.swapWorkbenchPanels) {
+      swapBtn2.style.background = 'var(--primary-light)';
+      swapBtn2.style.color = 'var(--primary)';
+      swapBtn2.style.borderColor = 'rgba(74, 144, 217, 0.35)';
+    } else {
+      swapBtn2.style.background = 'rgba(74, 144, 217, 0.04)';
+      swapBtn2.style.color = 'var(--text-body)';
+      swapBtn2.style.borderColor = 'rgba(74, 144, 217, 0.25)';
     }
   }
 
@@ -10884,7 +10878,37 @@ window.toggleSwapPanels = function() {
   window.switchWorkbenchLayout(currentLayout);
 };
 
-// No click-outside dropdown handling needed
+window.toggleLayoutDropdown = function(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('layoutDropdownMenu');
+  const btn = document.getElementById('layoutDropdownBtn');
+  if (!menu) return;
+  const isShown = menu.style.display === 'block';
+  window.closeLayoutDropdown();
+  if (!isShown) {
+    menu.style.display = 'block';
+    if (btn) {
+      btn.style.background = 'var(--primary-light)';
+      btn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
+      btn.style.color = 'var(--primary)';
+    }
+  }
+};
+
+window.closeLayoutDropdown = function() {
+  const menu = document.getElementById('layoutDropdownMenu');
+  const btn = document.getElementById('layoutDropdownBtn');
+  if (menu) menu.style.display = 'none';
+  if (btn) {
+    btn.style.background = 'rgba(74, 144, 217, 0.04)';
+    btn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
+    btn.style.color = 'var(--text-body)';
+  }
+};
+
+document.addEventListener('click', () => {
+  window.closeLayoutDropdown();
+});
 
 // Flash the on-screen arrow button briefly when keyboard triggers it
 function flashNavBtn(dir) {
