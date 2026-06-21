@@ -10401,14 +10401,8 @@ window.toggleLayoutDropdown = function(e) {
 window.autoResizeTextarea = function(el) {
   if (!el) return;
   el.style.height = 'auto';
-  const maxHeight = 220; // Limit height to ~13-14 lines of text
-  if (el.scrollHeight > maxHeight) {
-    el.style.height = maxHeight + 'px';
-    el.style.overflowY = 'auto';
-  } else {
-    el.style.height = el.scrollHeight + 'px';
-    el.style.overflowY = 'hidden';
-  }
+  el.style.height = el.scrollHeight + 'px';
+  el.style.overflowY = 'auto';
 };
 
 window.syncCollapseButtons = function() {
@@ -11908,7 +11902,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:auto;max-height:100%;min-height:auto;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;scroll-snap-align:center;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:auto;max-height:calc(100% - 12px);min-height:auto;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;scroll-snap-align:center;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -11957,8 +11951,8 @@ function renderCreateSteps() {
           </div>
         </div>
         
-        <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;">
-          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);max-height:220px;overflow-y:auto;height:auto;"
+        <div style="position:relative;width:100%;min-height:60px;display:flex;flex-direction:column;min-width:0;flex:0 1 auto;overflow:hidden;">
+          <textarea placeholder="Add notes for this step…" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:6px 28px 6px 8px;font-family:var(--font);font-size:0.75rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;box-shadow:inset 0 1px 2px rgba(0,0,0,0.02);flex:0 1 auto;min-height:0;max-height:200px;overflow-y:auto;height:auto;"
             oninput="window.autoResizeTextarea(this); if(createStepsArr[${i}]){createStepsArr[${i}].description=this.value;}"
             onchange="updateStepDescription(${i},this.value)">${desc}</textarea>
           <button onclick="event.stopPropagation(); window.askAiTweakDescription(${i})" title="AI Edit Description"
