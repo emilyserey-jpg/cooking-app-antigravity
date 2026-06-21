@@ -10664,11 +10664,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
       if (window.swapWorkbenchPanels) {
         btn.style.background = 'var(--primary-light)';
         btn.style.color = 'var(--primary)';
-        btn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+        btn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
       } else {
-        btn.style.background = 'var(--bg-card-soft)';
+        btn.style.background = 'rgba(74, 144, 217, 0.04)';
         btn.style.color = 'var(--text-body)';
-        btn.style.borderColor = 'var(--border-card)';
+        btn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
       }
     }
   });
@@ -10679,11 +10679,24 @@ window.switchWorkbenchLayout = function(layoutMode) {
     if (window.currentWorkbenchLayout === 'bottom-recipe') {
       fullWidthBtn.style.background = 'var(--primary-light)';
       fullWidthBtn.style.color = 'var(--primary)';
-      fullWidthBtn.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+      fullWidthBtn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
     } else {
-      fullWidthBtn.style.background = 'var(--bg-card-soft)';
+      fullWidthBtn.style.background = 'rgba(74, 144, 217, 0.04)';
       fullWidthBtn.style.color = 'var(--text-body)';
-      fullWidthBtn.style.borderColor = 'var(--border-card)';
+      fullWidthBtn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
+    }
+  }
+
+  const playbackControlsLayoutBtn = document.getElementById('playbackControlsLayoutBtn');
+  if (playbackControlsLayoutBtn) {
+    if (window.currentWorkbenchLayout === 'bottom-controls') {
+      playbackControlsLayoutBtn.style.background = 'var(--primary-light)';
+      playbackControlsLayoutBtn.style.color = 'var(--primary)';
+      playbackControlsLayoutBtn.style.borderColor = 'rgba(74, 144, 217, 0.35)';
+    } else {
+      playbackControlsLayoutBtn.style.background = 'rgba(74, 144, 217, 0.04)';
+      playbackControlsLayoutBtn.style.color = 'var(--text-body)';
+      playbackControlsLayoutBtn.style.borderColor = 'rgba(74, 144, 217, 0.25)';
     }
   }
 
@@ -10785,6 +10798,9 @@ window.switchWorkbenchLayout = function(layoutMode) {
           Array.from(activeBottomContainer.children).forEach(child => {
             if (child !== timelineBtn) child.style.display = '';
           });
+          if (activeBottomContainer === recipePanel && typeof window.switchEditorTab === 'function') {
+            window.switchEditorTab(window.activeEditorTab || 'stops');
+          }
           if (!window.swapWorkbenchPanels && controls) {
             controls.style.display = '';
           }
@@ -10797,6 +10813,10 @@ window.switchWorkbenchLayout = function(layoutMode) {
           Array.from(bottomCol.children).forEach(child => {
             if (child !== timelineBtn) child.style.display = '';
           });
+          const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+          if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
+            window.switchEditorTab(window.activeEditorTab || 'stops');
+          }
           if (hResizer) hResizer.style.display = 'flex';
         }
         if (timelineIcon) timelineIcon.textContent = '∨';
@@ -10807,6 +10827,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
   // Adjust video sizes to ensure proper video sizing
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();
+  }
+
+  // Sync active page tab visibility
+  if (typeof window.switchEditorTab === 'function') {
+    window.switchEditorTab(window.activeEditorTab || 'stops');
   }
 };
 
@@ -14435,7 +14460,7 @@ window.setupResponsiveDrawers = function() {
   const coverCard = document.getElementById('editorCoverCard');
   const visibilityCard = document.getElementById('editorVisibilityCard');
   const voiceoverSection = document.getElementById('voiceoverSection');
-  const stopsSection = document.getElementById('editorStopsCard');
+  const stopsSection = document.getElementById('editorStopsCard') || document.getElementById('editorStopsBodyCard');
   const saveBtn = document.getElementById('saveRecipeBtn');
   const saveDraftBtn = document.getElementById('saveDraftBtn');
   const videoWrapper = document.getElementById('workbenchVideoWrapper');
@@ -15735,6 +15760,9 @@ window.toggleHorizontalPanel = function() {
       Array.from(activeBottomContainer.children).forEach(child => {
         if (child !== collapseBtn) child.style.display = '';
       });
+      if (activeBottomContainer === recipePanel && typeof window.switchEditorTab === 'function') {
+        window.switchEditorTab(window.activeEditorTab || 'stops');
+      }
       if (!window.swapWorkbenchPanels && controls) {
         controls.style.display = '';
       }
@@ -15747,6 +15775,10 @@ window.toggleHorizontalPanel = function() {
       Array.from(activeBottomContainer.children).forEach(child => {
         if (child !== collapseBtn) child.style.display = '';
       });
+      const isRecipeAtBottom = (layout === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layout === 'bottom-controls' && window.swapWorkbenchPanels);
+      if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
+        window.switchEditorTab(window.activeEditorTab || 'stops');
+      }
       if (hResizer) hResizer.style.display = 'flex';
     }
     if (collapseIcon) collapseIcon.textContent = '∨';
@@ -16016,7 +16048,7 @@ window.getEditorTabs = function() {
   if (isMobile) {
     return ['stops', 'add_custom', 'save'];
   }
-  return ['stops', 'add_custom', 'transcripts', 'save'];
+  return ['stops', 'add_custom', 'transcripts', 'ingredients', 'save'];
 };
 
 window.toggleEditorTabDropdown = function(e) {
@@ -16068,10 +16100,16 @@ window.toggleEditorTabDropdown = function(e) {
     });
 
     let transcriptOptionHtml = '';
+    let ingredientsOptionHtml = '';
     if (!isMobile) {
       transcriptOptionHtml = `
         <button onclick="window.switchEditorTab('transcripts')" id="optTabTranscripts" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
           Transcripts
+        </button>
+      `;
+      ingredientsOptionHtml = `
+        <button onclick="window.switchEditorTab('ingredients')" id="optTabIngredients" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
+          Ingredients
         </button>
       `;
     }
@@ -16089,6 +16127,7 @@ window.toggleEditorTabDropdown = function(e) {
       </div>
 
       ${transcriptOptionHtml}
+      ${ingredientsOptionHtml}
 
       <button onclick="window.switchEditorTab('save')" id="optTabSave" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;">
         Preview & Save
@@ -16106,6 +16145,7 @@ window.toggleEditorTabDropdown = function(e) {
     let activeBtn = null;
     if (current === 'stops') activeBtn = document.getElementById('optTabStops');
     else if (current === 'transcripts') activeBtn = document.getElementById('optTabTranscripts');
+    else if (current === 'ingredients') activeBtn = document.getElementById('optTabIngredients');
     else if (current === 'save') activeBtn = document.getElementById('optTabSave');
     else if (current === 'add_custom') activeBtn = document.getElementById('optTabAddCustom');
     else activeBtn = document.getElementById(`optTab_${current}`);
@@ -16165,6 +16205,7 @@ window.switchEditorTab = function(tabName) {
     else if (tabName === 'save') labelEl.textContent = 'Preview & Save';
     else if (tabName === 'add_custom') labelEl.textContent = 'Custom Pages';
     else if (tabName === 'transcripts') labelEl.textContent = 'Transcripts';
+    else if (tabName === 'ingredients') labelEl.textContent = 'Ingredients';
     else if (tabName.startsWith('custom_') && customPages[tabName]) {
       labelEl.textContent = `${customPages[tabName].name || 'Untitled Page'}`;
     }
@@ -16181,7 +16222,7 @@ window.switchEditorTab = function(tabName) {
     }
   } else {
     tabs.forEach(key => {
-      const colId = key === 'add_custom' ? 'rightColAddCustom' : (key.startsWith('custom_') ? `rightCol_${key}` : (key === 'stops' ? 'rightColStops' : (key === 'transcripts' ? 'rightColTranscripts' : 'rightColSave')));
+      const colId = key === 'add_custom' ? 'rightColAddCustom' : (key.startsWith('custom_') ? `rightCol_${key}` : (key === 'stops' ? 'rightColStops' : (key === 'transcripts' ? 'rightColTranscripts' : (key === 'ingredients' ? 'rightColIngredients' : 'rightColSave'))));
       const col = document.getElementById(colId);
       if (col) {
         if (key === targetTabName) {
@@ -16202,7 +16243,7 @@ window.switchEditorTab = function(tabName) {
     }
 
     // Desktop Tab Styling Sync
-    const isSelectorActive = tabName === 'stops' || tabName === 'add_custom' || tabName === 'transcripts' || tabName === 'save' || tabName.startsWith('custom_');
+    const isSelectorActive = tabName === 'stops' || tabName === 'add_custom' || tabName === 'transcripts' || tabName === 'ingredients' || tabName === 'save' || tabName.startsWith('custom_');
     const btnSelector = document.getElementById('editorTabSelectorBtn');
 
     const activeStyle = 'linear-gradient(135deg, var(--primary), var(--primary-hover))';

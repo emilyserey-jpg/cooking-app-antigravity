@@ -229,3 +229,55 @@ Running the automated test suites verified that all panel collapse interactions,
 | `test_symmetrical_swapping.js` | **PASSED** ✅ | Verifies that clicking Switch Spots in standard, bottom-controls, and bottom-editor layouts swaps column panels symmetrically while maintaining column visibility. |
 
 
+---
+
+## 🎨 Unified Light Blue Layout Buttons
+
+### The Goal
+Unify the styling of the panel swapping ("Switch Spots") and layout toggling ("Full Width" / "Column Layout") buttons across both the tab bar and above the timeline card, using a consistent light blue theme instead of white/grey default states.
+
+### The Solution
+1. **HTML Defaults updated**:
+   - Modified `index.html` inline styles of `#swapPanelsBtn`, `#swapPanelsBtn2`, and `#playbackControlsLayoutBtn` to default to the light blue theme:
+     - **Background**: `rgba(74, 144, 217, 0.04)`
+     - **Border**: `rgba(74, 144, 217, 0.25)`
+     - **Color**: `var(--text-body)` (a premium slate blue/grey)
+2. **Dynamic Logic Sync**:
+   - Updated the styling logic in `app.js`'s layout sync blocks to maintain the light blue theme:
+     - **Inactive state**: Uses the same light blue background (`rgba(74, 144, 217, 0.04)`), slate blue text (`var(--text-body)`), and blue border (`rgba(74, 144, 217, 0.25)`).
+     - **Active state**: Uses a solid light blue background (`var(--primary-light)`), medium blue text (`var(--primary)`), and a clean blue border (`rgba(74, 144, 217, 0.35)`) instead of the previous purple/indigo border.
+3. **Cache Refresh**:
+   - Bumped the application version and stylesheet link version parameters to `v=9.65` in both `index.html` and `mobile.html`.
+
+### 🧪 Verification Results
+Running the automated test suites verified that all button updates, layout swapping, and style transitions function perfectly:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies correct layout switching states, tab selection changes, and DOM tree correctness. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies presence of layout buttons, clicks Switch Spots, asserts symmetrical panel relocation, and cycles through bottom layouts. |
+
+---
+
+## ↔️ Horizontal Row Alignment & Equal Button Sizes
+
+### The Goal
+Keep the layout buttons on a single horizontal row even in narrow sidebar views (instead of wrapping and stacking vertically) and ensure the button pairs are exactly the same size.
+
+### The Solution
+1. **Fixed Horizontal Flex Row**:
+   - Added CSS overrides for `#scrubberLayoutControls` and `#editorTabBar` inside all stylesheets (`styles.css`, `styles_v853.css`, `mobile.css`, and `mobile_v853.css`) with `display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important;`.
+   - This ensures that even when dynamic layout transitions in `app.js` toggle collapse states by resetting child displays (`child.style.display = ''`), the layout containers automatically preserve their flex-row flow, preventing vertical stacking.
+2. **Identical Button Sizes**:
+   - Set fixed width and centered alignment rules on the paired buttons in the stylesheets:
+     - **Bottom Layout Buttons** (`#swapPanelsBtn2` and `#playbackControlsLayoutBtn`): overridden to `width: 120px !important; justify-content: center !important;`.
+     - **Tab Bar Layout Buttons** (`#swapPanelsBtn` and `#editorFullWidthBtn`): overridden to `width: 130px !important; justify-content: center !important;`.
+   - This guarantees that both buttons in each toolbar pair look perfectly symmetric and identical in size.
+3. **Cache Busted**:
+   - Bumped the query version parameter to `v=9.66` in `index.html` and `mobile.html` to load the new stylesheet rules immediately.
+
+### 🧪 Verification Results
+Executed the page layout verification suite to assert alignment:
+- Verified that both `#scrubberLayoutControls` and `#editorTabBar` compute to `display: flex`.
+- Verified that `#swapPanelsBtn2` and `#playbackControlsLayoutBtn` compute to exactly `120px` width.
+- Verified that `#swapPanelsBtn` and `#editorFullWidthBtn` compute to exactly `130px` width.

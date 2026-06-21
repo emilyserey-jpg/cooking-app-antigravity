@@ -2947,10 +2947,7 @@ a:focus-visible {
 #view-create .collapsible-section-title {
   font-size: 0.62rem !important;
 }
-#view-create #playbackControlsLayoutBtn {
-  font-size: 0.6rem !important;
-  padding: 1px 4px !important;
-}
+
 
 /* Speed Dropdown Menu styling */
 .player-speed-dropdown-menu {
@@ -3107,4 +3104,24 @@ a:focus-visible {
 /* Library Options Dropdown Item Hover */
 .lib-option-item:hover {
   background-color: var(--bg-card-soft) !important;
+}
+
+/* Layout Toolbar & Scrubber Buttons styling alignment */
+#scrubberLayoutControls {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+}
+#editorTabBar {
+  display: flex !important;
+}
+#swapPanelsBtn2,
+#playbackControlsLayoutBtn {
+  width: 120px !important;
+  justify-content: center !important;
+}
+#swapPanelsBtn,
+#editorFullWidthBtn {
+  width: 130px !important;
+  justify-content: center !important;
 }
