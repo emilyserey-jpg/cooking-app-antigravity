@@ -1,3 +1,194 @@
+# Hiding Panel Column Vertical Scrollbars Walkthrough
+
+This walkthrough details the visual improvements to hide vertical scrollbars inside the Recipe Editor panel column views.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Hide Column Vertical Scrollbars
+- **Webkit Scrollbar Override**: Added CSS selectors to hide the scrollbar (`display: none`) on Chrome, Safari, and other Webkit browsers for all 5 vertical editor panel column views:
+  - `#rightColStops` (Loop stops & cards editor)
+  - `#rightColIngredients` (Ingredients text editor)
+  - `#rightColTranscripts` (Transcription editor)
+  - `#rightColSave` (Details & save options)
+  - `#rightColAddCustom` (Custom pages selector)
+- **Inline Fail-safes**: Added inline `scrollbar-width: none; -ms-overflow-style: none;` declarations to all 5 container elements in `index.html` to guarantee cross-browser scrollbar hiding.
+- **Unobstructed Scrollability**: The columns remain 100% functional, allowing users to scroll vertically via touchpads, mouse wheels, and touch swiping, but without displaying cluttered scrollbars on-screen.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.71` in `index.html` and `mobile.html` to instantly force cache refresh.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility and avoids stacked columns. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" swaps panels symmetrically, and ensures no regressions with the layout controls. |
+
+---
+
+# Workbench Layout Initialization & Drag-Scroll Prevention Walkthrough
+
+This walkthrough details the layout width constraints initialization fixes and native drag event prevention overrides inside the Recipe Editor panel.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Workbench Layout Initialization Fix
+- **The Bug**: On first load or recipe page transitions, the layout switcher `switchWorkbenchLayout` was not invoked. This left the right-hand panel `#workbenchRight` with standard unconstrained CSS flexbox values. Consequently, when multiple step cards were loaded, the panel stretched to the full `1920px` width of `#createStepsList`, extending completely off-screen and leaving no visible overflow in the parent columns (making horizontal carousels appear locked/frozen).
+- **The Fix**: Added an explicit call to `window.switchWorkbenchLayout('standard')` inside `initCreateView` in `app.js`. This guarantees that the layout is initialized and constrained to its exact target width (e.g. `420px`) on load, allowing the children rows to overflow and scroll horizontally.
+
+### 2. Native Dragstart Prevention
+- **HTML5 Drag Override**: Added a `dragstart` event listener inside `window.enableDragScroll` that calls `e.preventDefault()`. This disables the browser's default HTML5 element drag-and-drop operations on buttons and text selections, ensuring that custom mouse drag-scrolling executes smoothly and uninterrupted in all desktop browsers.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_drag_scroll.js` | **PASSED** ✅ | Simulates mouse click and drag-left actions on `#aiButtonsRow`, and asserts that the scrollLeft value successfully increases. |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility and avoids stacked columns. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" swaps panels symmetrically, and ensures no regressions with the layout controls. |
+
+---
+
+# Mouse Drag-to-Scroll on Header Rows Walkthrough
+
+This walkthrough details the changes made to enable horizontal mouse drag-scrolling on all Recipe Editor header rows and lists containing buttons.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Drag-Scroll Mouse Threshold & Interception
+- **Mouse Drag-Scroll on Buttons**: Refactored `window.enableDragScroll` in `app.js` to allow mouse dragging on buttons while maintaining selection safety (ignoring dragging on textareas and inputs).
+- **5-Pixel Threshold**: Implemented a 5-pixel mouse movement threshold to clearly differentiate a horizontal scroll gesture from a simple click/tap.
+- **Click Event Interception (Capture Phase)**: Added a capture-phase event listener on the scroll container. If a drag occurs, it captures and discards the click event (`e.preventDefault()`, `e.stopPropagation()`). This prevents child button click actions from firing when dragging concludes.
+- **Normal Click Preservation**: If the mouse moves 5 pixels or less, the gesture is classified as a click and is passed down to trigger the button's action handler normally.
+
+### 2. Carousel Row Scroll Bindings
+- Wired up the drag-scroll handler to the following 5 scrollable rows during page initialization:
+  - `#editorTabBar` (Desktop editor tab bar)
+  - `#editorTabBarMobile` (Mobile editor tab bar)
+  - `#aiButtonsRow` (Desktop AI buttons row)
+  - `#aiButtonsRowMobile` (Mobile AI buttons row)
+  - `#createStepTabs` (Step tabs selector row)
+
+### 3. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.70` in `index.html` and `mobile.html` to instantly apply the updated `app.js` script.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility and avoids stacked columns. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" swaps panels symmetrically, and ensures no regressions with the layout controls. |
+
+---
+
+# Horizontal Carousel Header Rows Walkthrough
+
+This walkthrough details the changes made to convert the header control rows in the Recipe Editor panel into independent, horizontally scrollable carousels.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Carousel Rows Layout & Flex Protection
+- **Row 1 (Tabs)**: Configured the desktop tab bar (`#editorTabBar`) to hide native scrollbars on Webkit browsers while keeping its horizontal scrolling intact.
+- **Row 2 (AI Buttons)**: Grouped the AI buttons into a dedicated row `#aiButtonsRow` (desktop) and `#aiButtonsRowMobile` (mobile) with horizontal scrolling, flex direction, and flex shrink protection to prevent buttons from shrinking or wrapping.
+- **Row 3 (Step Tabs)**: Configured the step tab buttons inside `#createStepTabs` (desktop) to use `flex-shrink: 0` and `white-space: nowrap` styles dynamically in `app.js` to prevent shrinkage when scrolling.
+- **Row 4 (Step Cards List)**: Added inline scrollbar hiding styles to `#createStepsList` on both desktop and mobile layouts.
+
+### 2. Scrollbar Hiding
+- Added custom Webkit scrollbar hiding styles (`display: none`) in all stylesheets (`styles.css`, `styles_v853.css`, `mobile.css`, `mobile_v853.css`) for all header rows and the card list.
+
+### 3. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.69` in `index.html` and `mobile.html` to instantly apply stylesheet and javascript updates.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility and avoids stacked columns. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" swaps panels symmetrically, and ensures no regressions with the layout controls. |
+
+---
+
+# Anchoring Panel Collapse Buttons to Video Player Edges Walkthrough
+
+This walkthrough details the changes made to move the collapse handle buttons (`#sidebarCollapseBtn` and `#timelineCollapseBtn`) so they are anchored directly to the edges of the video player container (`#workbenchVideoWrapper`), ensuring they stick adjacent to their respective collapsible panels and dynamically scale without manual reparenting.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Centralized Button Syncing
+- **Central sync function (`window.syncCollapseButtons`)**: Created a centralized function in `app.js` to manage both `#sidebarCollapseBtn` and `#timelineCollapseBtn` parent, style, position, and icon updates.
+- **Right Edge Anchoring for Sidebar Toggle**: The vertical collapse button (`#sidebarCollapseBtn`) is permanently parented by `#workbenchVideoWrapper` and positioned on its right-hand edge: `right: 0; left: auto; top: 50%; transform: translate(100%, -50%); border-radius: 0 8px 8px 0;` (completely outside the video player boundaries).
+- **Bottom Edge Anchoring for Timeline Toggle**: The horizontal collapse button (`#timelineCollapseBtn`) is permanently parented by `#workbenchVideoWrapper` and positioned on its bottom edge: `bottom: 0; top: auto; left: 50%; transform: translate(-50%, 100%); border-radius: 0 0 8px 8px;` (completely below the video player bottom boundary).
+- **Adaptive Text Icon Directions**:
+  - Sidebar collapsed: `‹` (points left to pull/expand panel)
+  - Sidebar expanded: `›` (points right to push/collapse panel)
+  - Timeline collapsed: `∧` (points up to expand panel)
+  - Timeline expanded: `∨` (points down to collapse panel)
+
+### 2. Panel Collapse Code Refactoring
+- **Removed Dynamic Parenting**: Cleared dynamic `appendChild`/`insertBefore` parenting overrides from `syncWorkbenchLayoutUI()`, `toggleEditorSidebar()`, and `toggleHorizontalPanel()`.
+- **Simplified Style Mutators**: Cleared inline style overrides for the collapse handles inside `toggleEditorSidebar()` and `toggleHorizontalPanel()`, substituting them with calls to `window.syncCollapseButtons()`.
+
+### 3. Stylesheet Updates
+- **`styles.css` & `styles_v853.css`**: Updated `.collapse-handle-vertical` to `border-radius: 0 8px 8px 0` and `.collapse-handle-horizontal` to `border-radius: 0 0 8px 8px` to ensure buttons have correct rounded corners pointing outwards when sticking to the right/bottom of the video player.
+
+### 4. Layout Spacing / Clearance
+- **Clearance Zone below Video**: Added `margin-bottom: 16px` to `#workbenchVideoWrapper` in `index.html`. Together with the layout container's default gap, this creates a clean 24px clearance area below the video. The horizontal timeline collapse button now floats freely within this gap, completely eliminating overlap with the controls buttons below it.
+
+### 5. Unified Layout Toggle Buttons Size
+- **Unified Button Styling**: Configured the timeline controls layout buttons (`#swapPanelsBtn2` and `#playbackControlsLayoutBtn`) to exactly match the larger size and premium styling of the tab bar buttons (`#swapPanelsBtn` and `#editorFullWidthBtn`).
+- **Uniform Dimensions**: Updated the overriding width to a uniform `130px !important` in both `styles.css` and `styles_v853.css`.
+- **Matched Spacing & Font Weight**: Adjusted the inline styles in `index.html` for both scrubber control buttons to use a height padding of `6px 12px`, border-radius of `10px`, border thickness of `2px`, and font-weight of `900` to make them identical to the tab bar toolbar buttons.
+
+### 6. Horizontal Carousel & Scroll Snapping for Step Cards
+- **CSS Scroll Snapping**: Added `scroll-snap-type: x mandatory` and `scroll-behavior: smooth` to `#createStepsList` in `app.js` to enable snap-scrolling on loop stop cards.
+- **Card Center Snapping**: Added `scroll-snap-align: center` to the template of each step card (`.loop-stop-card`) so that swiping left/right automatically aligns the active/closest card perfectly in the center of the list view.
+- **Drag-Scroll Snap Suspension**: Modified `window.enableDragScroll` to set `el.style.scrollSnapType = 'none'` on `mousedown` and restore it on `mouseup`/`mouseleave`. This completely eliminates mouse drag scrolling jitter on desktop, keeping dragging smooth and snapping only when the mouse is released.
+- **Cache Refresh**: Bumped asset query versions to `9.68` in `index.html` and `mobile.html`.
+
+---
+
+## 🧪 Verification Results
+
+All tests run in the Chrome DevTools browser session passed successfully:
+
+| Test Script | Status | Description |
+| :--- | :--- | :--- |
+| `test_collapsible_panels.js` | **PASSED** ✅ | Verifies that collapsible panels (sidebar and timeline) collapse and expand cleanly in both standard and swapped layouts. |
+| `test_layout_behavior.js` | **PASSED** ✅ | Verifies that switching layouts, swapping panels, and collapsing/uncollapsing bottom panels correctly synchronizes active tab page visibility and avoids stacked columns. |
+| `test_layout_swapping.js` | **PASSED** ✅ | Verifies that clicking "Switch Spots" swaps panels symmetrically, and ensures no regressions. |
+
+---
+
 # Layout Restoration & Swapping Option Walkthrough
 
 This walkthrough details the restoration of the panel swapping ("Switch Spots") button and the layout selector dropdown in the desktop Recipe Editor workbench.

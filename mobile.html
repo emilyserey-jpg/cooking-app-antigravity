@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.63';
+      const CURRENT_VERSION = '9.71';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=9.66">
+  <link rel="stylesheet" href="mobile_v853.css?v=9.71">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1637,48 +1637,45 @@
                       </svg>
                     </button>
                   </div>
-                  <!-- AI: Create Steps from Analyzing Video -->
-                  <div style="position:relative;width:100%;margin-bottom:6px;">
-                    <button id="aiLoopBtn" onclick="doItAll()"
-                      style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
-                      <span>AI: Create Steps from Analyzing Video</span>
-                      <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;"></span>
-                    </button>
-                    <span onclick="event.stopPropagation(); window.toggleAiInfo('speech');" title="View details"
-                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                    </span>
-                  </div>
-                  <div id="aiInfoSpeechMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
-                    <strong>Voice Analysis:</strong> Best for videos where the chef speaks and explains the steps. It transcribes the speech to detect precise timestamps and instructions.
-                  </div>
+                  <!-- Horizontal Scrollable Row for AI Buttons -->
+                  <div id="aiButtonsRowMobile" style="display:flex; flex-direction:row; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; padding:4px 2px; width:100%;">
+                    <!-- AI: Create Steps from Analyzing Video -->
+                    <div style="position:relative; width:auto; flex-shrink:0; margin-bottom:0;">
+                      <button id="aiLoopBtn" onclick="doItAll()"
+                        style="width:100%;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
+                        <span>AI: Create Steps from Analyzing Video</span>
+                        <span class="check-place-stops" style="display:none;color:#22c55e;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;"></span>
+                      </button>
+                      <span onclick="event.stopPropagation(); window.toggleAiInfo('speech');" title="View details"
+                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                      </span>
+                    </div>
 
-                  <!-- AI: Analyze Video Only (No Audio) -->
-                  <div style="position:relative;width:100%;margin-bottom:6px;">
-                    <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
-                      style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
-                      <span>AI: Analyze Video Only (No Audio)</span>
-                    </button>
-                    <span onclick="event.stopPropagation(); window.toggleAiInfo('video');" title="View details"
-                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                    </span>
-                  </div>
-                  <div id="aiInfoVideoMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
-                    <strong>Visual Analysis:</strong> Best for videos with background music, songs, or no voice. It uses visual-only AI analysis of scenes, actions, and captions.
-                  </div>
+                    <!-- AI: Analyze Video Only (No Audio) -->
+                    <div style="position:relative; width:auto; flex-shrink:0; margin-bottom:0;">
+                      <button id="aiVideoOnlyBtn" onclick="window.aiDoVideoOnly()"
+                        style="width:100%;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;box-shadow:0 2px 6px rgba(236,72,153,0.2);display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;margin-bottom:0;">
+                        <span>AI: Analyze Video Only (No Audio)</span>
+                      </button>
+                      <span onclick="event.stopPropagation(); window.toggleAiInfo('video');" title="View details"
+                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                      </span>
+                    </div>
 
-                  <!-- AI: Generate Transcript -->
-                  <div style="position:relative;width:100%;margin-bottom:6px;">
-                    <button id="transcribeBtnMobile" onclick="window.transcribeVideo()" class="btn"
-                      style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(16,185,129,0.2);white-space:nowrap;margin-bottom:0;">
-                      <span>AI: Generate Transcript</span>
-                      <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;"></span>
-                    </button>
-                    <span onclick="event.stopPropagation(); window.toggleAiInfo('transcript');" title="View details"
-                      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                    </span>
+                    <!-- AI: Generate Transcript -->
+                    <div style="position:relative; width:auto; flex-shrink:0; margin-bottom:0;">
+                      <button id="transcribeBtnMobile" onclick="window.transcribeVideo()" class="btn"
+                        style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:8px 32px 8px 8px;font-family:var(--font);font-weight:900;font-size:0.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(16,185,129,0.2);white-space:nowrap;margin-bottom:0;">
+                        <span>AI: Generate Transcript</span>
+                        <span class="check-transcribe" style="display:none;color:#10b981;font-size:0.78rem;background:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:4px;"></span>
+                      </button>
+                      <span onclick="event.stopPropagation(); window.toggleAiInfo('transcript');" title="View details"
+                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.18);color:#fff;transition:background 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                      </span>
+                    </div>
                   </div>
                   <div id="aiInfoTranscriptMobile" style="display:none;font-size:0.68rem;color:var(--text-muted);background:var(--bg-card-soft);border-radius:6px;padding:6px 10px;margin-top:-3px;margin-bottom:8px;border:1px solid var(--border-card);line-height:1.35;box-sizing:border-box;width:100%;">
                     <strong>Speech Transcript:</strong> Generates a full word-for-word transcript of all speech and vocals in the video to review or use as subtitles.
@@ -2428,6 +2425,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=9.66"></script>
+  <script type="module" src="app.js?v=9.71"></script>
 </body>
 </html>

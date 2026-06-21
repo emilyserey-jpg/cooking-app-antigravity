@@ -822,14 +822,14 @@ h1, h2, h3, h4, h5 {
 .collapse-handle-vertical {
   width: 20px;
   height: 56px;
-  border-radius: 8px 0 0 8px;
+  border-radius: 0 8px 8px 0;
   top: 50%;
   transform: translateY(-50%);
 }
 .collapse-handle-horizontal {
   width: 64px;
   height: 20px;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0 0 8px 8px;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -3539,13 +3539,27 @@ a:focus-visible {
 #editorTabBar {
   display: flex !important;
 }
+#swapPanelsBtn,
+#editorFullWidthBtn,
 #swapPanelsBtn2,
 #playbackControlsLayoutBtn {
-  width: 120px !important;
-  justify-content: center !important;
-}
-#swapPanelsBtn,
-#editorFullWidthBtn {
   width: 130px !important;
   justify-content: center !important;
 }
+
+#editorTabBar::-webkit-scrollbar,
+#aiButtonsRow::-webkit-scrollbar,
+#createStepTabs::-webkit-scrollbar,
+#createStepsList::-webkit-scrollbar {
+  display: none;
+}
+
+#rightColStops::-webkit-scrollbar,
+#rightColIngredients::-webkit-scrollbar,
+#rightColTranscripts::-webkit-scrollbar,
+#rightColSave::-webkit-scrollbar,
+#rightColAddCustom::-webkit-scrollbar {
+  display: none;
+}
+
+

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function() {
-      const CURRENT_VERSION = '9.63';
+      const CURRENT_VERSION = '9.71';
       const urlParams = new URLSearchParams(window.location.search);
       const reqVersion = urlParams.get('v');
 
@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=9.66">
+  <link rel="stylesheet" href="styles_v853.css?v=9.71">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1382,7 +1382,7 @@
             </div>
 
             <!-- Video (overlay: only play/pause + add stop) -->
-            <div id="workbenchVideoWrapper" style="flex:1;flex-shrink:0;min-height:300px;border-radius:24px;overflow:hidden;background:#000;position:relative;box-shadow:var(--shadow-md);">
+            <div id="workbenchVideoWrapper" style="flex:1;flex-shrink:0;min-height:300px;border-radius:24px;overflow:visible;background:#000;position:relative;box-shadow:var(--shadow-md);margin-bottom:16px;">
               
               <!-- Floating Top Controls Header (matching player mockup layout) -->
               <div class="player-top-controls-wrapper" style="position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
@@ -1442,22 +1442,28 @@
                 <button onclick="addStepAtCurrentTime()"
                   style="background:var(--primary);border:none;border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(74,144,217,0.4);">Add Stop</button>
               </div>
+              
+              <!-- Sidebar Collapse Handle Button -->
+              <button id="sidebarCollapseBtn" class="collapse-handle-btn collapse-handle-vertical" onclick="window.toggleEditorSidebar()" title="Collapse side editor panel" style="right:0; transform:translate(100%, -50%); top:50%; z-index:1000;">
+                <span id="sidebarCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">›</span>
+              </button>
+
+              <!-- Timeline Collapse Handle Button -->
+              <button id="timelineCollapseBtn" class="collapse-handle-btn collapse-handle-horizontal" onclick="window.toggleHorizontalPanel()" title="Collapse timeline panel" style="bottom:0; transform:translate(-50%, 100%); left:50%; z-index:1000;">
+                <span id="timelineCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">∨</span>
+              </button>
             </div>
 
             <!-- ── Scrubber Wrapper (to keep controls and scrubber card together when swapping panels) ── -->
             <div id="editorScrubberWrapper" style="display:flex; flex-direction:column; flex-shrink:0; position:relative; overflow:visible;">
-              <!-- Horizontal Panel Collapse Toggle Button -->
-              <button id="timelineCollapseBtn" class="collapse-handle-btn collapse-handle-horizontal" onclick="window.toggleHorizontalPanel()" title="Collapse timeline panel" style="top:0; transform:translate(-50%, -50%); z-index:1000;">
-                <span id="timelineCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">∨</span>
-              </button>
               <!-- Layout controls row (above scrubber card) -->
               <div id="scrubberLayoutControls" style="display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; justify-content:flex-start !important; align-items:center !important; gap:8px; margin-bottom:4px; flex-shrink:0; width:100%;">
                 <!-- Switch Spots Toggle Button -->
-                <button type="button" onclick="window.toggleSwapPanels()" id="swapPanelsBtn2" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:4px 8px; border:1.5px solid rgba(74,144,217,0.25); border-radius:8px; background:rgba(74,144,217,0.04); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Switch spots for playback and edit controls">
+                <button type="button" onclick="window.toggleSwapPanels()" id="swapPanelsBtn2" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:6px 12px; border:2px solid rgba(74,144,217,0.25); border-radius:10px; font-weight:900; background:rgba(74,144,217,0.04); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Switch spots for playback and edit controls">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right"><path d="M8 3 3 8l5 5"/><path d="M3 8h18"/><path d="m16 21 5-5-5-5"/><path d="M21 16H3"/></svg>
                   <span>Switch Spots</span>
                 </button>
-                <button type="button" onclick="window.togglePlaybackControlsLayout()" id="playbackControlsLayoutBtn" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:4px 8px; border:1.5px solid rgba(74,144,217,0.25); border-radius:8px; background:rgba(74,144,217,0.04); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Toggle full-width bottom layout">
+                <button type="button" onclick="window.togglePlaybackControlsLayout()" id="playbackControlsLayoutBtn" class="collapsible-section-toggle-btn" style="font-size:0.72rem; padding:6px 12px; border:2px solid rgba(74,144,217,0.25); border-radius:10px; font-weight:900; background:rgba(74,144,217,0.04); color:var(--text-body); display:flex; align-items:center; gap:3px;" title="Toggle full-width bottom layout">
                   <span>Full Width</span>
                 </button>
               </div>
@@ -1580,10 +1586,6 @@
 
           <!-- ══ RIGHT: Scrollable recipe panel (tabbed flow on desktop) ══ -->
           <div id="workbenchRight" style="overflow:visible;display:flex;flex-direction:column;gap:0.75rem;flex:1;padding-left:8px;padding-bottom:10px;position:relative;">
-            <!-- Side Panel Collapse Toggle Button -->
-            <button id="sidebarCollapseBtn" class="collapse-handle-btn collapse-handle-vertical" onclick="window.toggleEditorSidebar()" title="Collapse side editor panel" style="left:0; transform:translate(-50%, -50%); top:50%;">
-              <span id="sidebarCollapseIcon" style="font-size:0.95rem;line-height:1;font-weight:900;">›</span>
-            </button>
             <div id="recipePanelWrapper" style="display:flex;flex-direction:column;gap:0.75rem;flex:1;overflow:hidden;min-height:0;width:100%;position:relative;">
               <!-- Desktop Editor Tab Bar -->
             <div id="editorTabBar" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding-bottom:8px;border-bottom:2px solid var(--border-card);flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;">
@@ -1604,13 +1606,13 @@
                 <button type="button" onclick="window.toggleRecipePanelLayout()" id="editorFullWidthBtn" class="collapsible-section-toggle-btn" style="padding:6px 12px; font-size:0.78rem; font-weight:900; border-radius:10px; border:2px solid rgba(74,144,217,0.25); background:rgba(74,144,217,0.04); color:var(--text-body); display:inline-flex; align-items:center; gap:4.5px; cursor:pointer; box-shadow:var(--shadow-xs); transition:all 0.2s; white-space:nowrap; flex-shrink:0;" title="Toggle full-width bottom layout">
                   <span>Full Width</span>
                 </button>
-              </div>            <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+              </div>            <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
               <!-- AI Generate buttons row above step tabs -->
-              <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
-                <button onclick="window.doItAll()" id="aiLoopBtn" class="btn" title="AI transcribes speech to detect precise loop stop timestamps and instructions" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25);">
+              <div id="aiButtonsRow" style="display:flex; flex-direction:row; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; padding:4px 2px;">
+                <button onclick="window.doItAll()" id="aiLoopBtn" class="btn" title="AI transcribes speech to detect precise loop stop timestamps and instructions" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25); flex-shrink:0; white-space:nowrap;">
                   AI: Create Steps (With Audio)
                 </button>
-                <button onclick="window.aiDoVideoOnly()" id="aiVideoOnlyBtn" class="btn" title="AI analyzes the video visuals directly (ignoring speech/audio)" style="background:linear-gradient(135deg,#ec4899,#f43f5e); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(236,72,153,0.25);">
+                <button onclick="window.aiDoVideoOnly()" id="aiVideoOnlyBtn" class="btn" title="AI analyzes the video visuals directly (ignoring speech/audio)" style="background:linear-gradient(135deg,#ec4899,#f43f5e); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(236,72,153,0.25); flex-shrink:0; white-space:nowrap;">
                   AI: Analyze Video Only (No Audio)
                 </button>
               </div>
@@ -1671,7 +1673,7 @@
             </div>
 
             <!-- Col 4: Ingredients & Visibility -->
-            <div id="rightColIngredients" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+            <div id="rightColIngredients" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
               <!-- Ingredients Card -->
               <div class="glass-card" id="editorIngredientsCard" style="padding:10px 13px;flex-shrink:0;box-sizing:border-box;">
                 <!-- AI Ingredients button moved from AI Tools -->
@@ -1696,7 +1698,7 @@
       </div>
 
             <!-- Col 4.5: Transcripts Panel -->
-            <div id="rightColTranscripts" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+            <div id="rightColTranscripts" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
                <div class="glass-card" id="editorTranscriptsCard" style="padding:14px 16px;min-height:660px;flex:1;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;">
                 <!-- Header with title and Generate button -->
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0; border-bottom:1.5px solid rgba(0,0,0,0.05); padding-bottom:10px;">
@@ -1725,7 +1727,7 @@
             </div>
 
             <!-- Col 5: Cover & Save Buttons -->
-            <div id="rightColSave" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+            <div id="rightColSave" style="display:none;flex-direction:column;gap:0.5rem;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
               <!-- Recipe Title -->
               <div class="glass-card" id="editorTitleCard" style="padding:10px 13px; flex-shrink:0; box-sizing:border-box;">
                 <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Recipe Title</label>
@@ -1789,7 +1791,7 @@
             </div>
 
             <!-- Add Custom Page Setup Col -->
-            <div id="rightColAddCustom" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;">
+            <div id="rightColAddCustom" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
             </div>
             </div> <!-- closes #recipePanelWrapper -->
 
@@ -2400,6 +2402,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=9.66"></script>
+  <script type="module" src="app.js?v=9.71"></script>
 </body>
 </html>

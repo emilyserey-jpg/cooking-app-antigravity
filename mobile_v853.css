@@ -3125,3 +3125,20 @@ a:focus-visible {
   width: 130px !important;
   justify-content: center !important;
 }
+
+#editorTabBar::-webkit-scrollbar,
+#editorTabBarMobile::-webkit-scrollbar,
+#aiButtonsRowMobile::-webkit-scrollbar,
+#createStepsList::-webkit-scrollbar {
+  display: none;
+}
+
+#rightColStops::-webkit-scrollbar,
+#rightColIngredients::-webkit-scrollbar,
+#rightColTranscripts::-webkit-scrollbar,
+#rightColSave::-webkit-scrollbar,
+#rightColAddCustom::-webkit-scrollbar {
+  display: none;
+}
+
+

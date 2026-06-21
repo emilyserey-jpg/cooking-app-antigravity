@@ -429,6 +429,13 @@ async function initializeApp() {
   if (typeof window.updateEditorSaveButtonsUI === 'function') {
     window.updateEditorSaveButtonsUI();
   }
+
+  // Initialize drag-scrolling on horizontal carousel rows
+  window.enableDragScroll(document.getElementById('editorTabBar'));
+  window.enableDragScroll(document.getElementById('editorTabBarMobile'));
+  window.enableDragScroll(document.getElementById('aiButtonsRow'));
+  window.enableDragScroll(document.getElementById('aiButtonsRowMobile'));
+  window.enableDragScroll(document.getElementById('createStepTabs'));
 }
 
 // App execution trigger moved to the bottom of the file to prevent Temporal Dead Zone (TDZ) reference errors
@@ -9333,6 +9340,9 @@ let localVideoURL    = null;   // blob URL for local preview while uploading
 
 function initCreateView() {
   if (window.lucide) lucide.createIcons();
+  if (typeof window.switchWorkbenchLayout === 'function') {
+    window.switchWorkbenchLayout('standard');
+  }
 }
 
 // ── Drag & drop handlers ──────────────────────────────────────
@@ -10388,6 +10398,49 @@ window.autoResizeTextarea = function(el) {
   el.style.height = el.scrollHeight + 'px';
 };
 
+window.syncCollapseButtons = function() {
+  const sidebarBtn = document.getElementById('sidebarCollapseBtn');
+  const sidebarIcon = document.getElementById('sidebarCollapseIcon');
+  const timelineBtn = document.getElementById('timelineCollapseBtn');
+  const timelineIcon = document.getElementById('timelineCollapseIcon');
+  const videoWrapper = document.getElementById('workbenchVideoWrapper');
+
+  if (!videoWrapper) return;
+
+  // 1. Sidebar Collapse Button Sync
+  if (sidebarBtn) {
+    if (sidebarBtn.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(sidebarBtn);
+    }
+    sidebarBtn.style.left = 'auto';
+    sidebarBtn.style.right = '0';
+    sidebarBtn.style.top = '50%';
+    sidebarBtn.style.transform = 'translate(100%, -50%)';
+    sidebarBtn.style.borderRadius = '0 8px 8px 0';
+
+    if (sidebarIcon) {
+      sidebarIcon.textContent = window.isSidebarCollapsed ? '‹' : '›';
+    }
+  }
+
+  // 2. Timeline Collapse Button Sync
+  if (timelineBtn) {
+    if (timelineBtn.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(timelineBtn);
+    }
+    timelineBtn.style.left = '50%';
+    timelineBtn.style.right = 'auto';
+    timelineBtn.style.top = 'auto';
+    timelineBtn.style.bottom = '0';
+    timelineBtn.style.transform = 'translate(-50%, 100%)';
+    timelineBtn.style.borderRadius = '0 0 8px 8px';
+
+    if (timelineIcon) {
+      timelineIcon.textContent = window.isTimelineCollapsed ? '∧' : '∨';
+    }
+  }
+};
+
 window.switchWorkbenchLayout = function(layoutMode) {
   window.currentWorkbenchLayout = layoutMode;
   
@@ -10701,24 +10754,11 @@ window.switchWorkbenchLayout = function(layoutMode) {
   }
 
   // Sync Collapsible panel elements
-  const sidebarBtn = document.getElementById('sidebarCollapseBtn');
-  const sidebarIcon = document.getElementById('sidebarCollapseIcon');
-  const timelineBtn = document.getElementById('timelineCollapseBtn');
-  const timelineIcon = document.getElementById('timelineCollapseIcon');
-
   const isSidebarCollapsed = window.isSidebarCollapsed;
   const isTimelineCollapsed = window.isTimelineCollapsed;
 
   // 1. Sidebar collapse state sync
-  if (sidebarBtn && rightCol) {
-    if (sidebarBtn.parentElement !== rightCol) {
-      rightCol.insertBefore(sidebarBtn, rightCol.firstChild);
-    }
-    sidebarBtn.style.left = '0';
-    sidebarBtn.style.right = 'auto';
-    sidebarBtn.style.transform = 'translate(-50%, -50%)';
-    sidebarBtn.style.borderRadius = '8px 0 0 8px';
-
+  if (rightCol) {
     if (isSidebarCollapsed) {
       rightCol.style.width = '0px';
       rightCol.style.flex = 'none';
@@ -10727,13 +10767,12 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.margin = '0px';
       if (resizer) resizer.style.display = 'none';
       Array.from(rightCol.children).forEach(child => {
-        if (child !== sidebarBtn) child.style.display = 'none';
+        child.style.display = 'none';
       });
       if (leftCol) {
         leftCol.style.width = '100%';
         leftCol.style.flex = '1';
       }
-      if (sidebarIcon) sidebarIcon.textContent = '‹';
     } else {
       rightCol.style.width = fixedW + 'px';
       rightCol.style.flex = `0 1 ${fixedW}px`;
@@ -10742,86 +10781,79 @@ window.switchWorkbenchLayout = function(layoutMode) {
       rightCol.style.paddingBottom = '10px';
       if (resizer) resizer.style.display = 'flex';
       Array.from(rightCol.children).forEach(child => {
-        if (child !== sidebarBtn) child.style.display = '';
+        child.style.display = '';
       });
       if (leftCol) {
         leftCol.style.width = `calc(100% - ${fixedW}px)`;
         leftCol.style.flex = '1 1 auto';
       }
-      if (sidebarIcon) sidebarIcon.textContent = '›';
     }
   }
 
   // 2. Timeline/controls collapse state sync
-  if (timelineBtn) {
-    let activeBottomContainer;
-    if (layoutMode === 'standard') {
-      activeBottomContainer = window.swapWorkbenchPanels ? recipePanel : scrubber;
-    } else {
-      activeBottomContainer = bottomCol;
-    }
+  let activeBottomContainer;
+  if (layoutMode === 'standard') {
+    activeBottomContainer = window.swapWorkbenchPanels ? recipePanel : scrubber;
+  } else {
+    activeBottomContainer = bottomCol;
+  }
 
-    if (activeBottomContainer) {
-      if (timelineBtn.parentElement !== activeBottomContainer) {
-        activeBottomContainer.appendChild(timelineBtn);
-      }
-      activeBottomContainer.style.position = 'relative';
-      activeBottomContainer.style.overflow = 'visible';
-      timelineBtn.style.top = '0';
-      timelineBtn.style.bottom = 'auto';
-      timelineBtn.style.transform = 'translate(-50%, -50%)';
-      timelineBtn.style.borderRadius = '8px 8px 0 0';
+  if (activeBottomContainer) {
+    activeBottomContainer.style.position = 'relative';
+    activeBottomContainer.style.overflow = 'visible';
 
-      if (isTimelineCollapsed) {
-        activeBottomContainer.style.height = '0px';
-        activeBottomContainer.style.minHeight = '0px';
-        activeBottomContainer.style.margin = '0px';
-        activeBottomContainer.style.padding = '0px';
-        Array.from(activeBottomContainer.children).forEach(child => {
-          if (child !== timelineBtn) child.style.display = 'none';
-        });
+    if (isTimelineCollapsed) {
+      activeBottomContainer.style.height = '0px';
+      activeBottomContainer.style.minHeight = '0px';
+      activeBottomContainer.style.margin = '0px';
+      activeBottomContainer.style.padding = '0px';
+      Array.from(activeBottomContainer.children).forEach(child => {
+        child.style.display = 'none';
+      });
 
-        if (layoutMode === 'standard') {
-          if (!window.swapWorkbenchPanels && controls) {
-            controls.style.display = 'none';
-          }
-        } else {
-          if (hResizer) hResizer.style.display = 'none';
+      if (layoutMode === 'standard') {
+        if (!window.swapWorkbenchPanels && controls) {
+          controls.style.display = 'none';
         }
-        if (timelineIcon) timelineIcon.textContent = '∧';
       } else {
-        if (layoutMode === 'standard') {
-          activeBottomContainer.style.height = window.swapWorkbenchPanels ? 'auto' : '';
-          activeBottomContainer.style.minHeight = '';
-          activeBottomContainer.style.margin = '';
-          activeBottomContainer.style.padding = '';
-          Array.from(activeBottomContainer.children).forEach(child => {
-            if (child !== timelineBtn) child.style.display = '';
-          });
-          if (activeBottomContainer === recipePanel && typeof window.switchEditorTab === 'function') {
-            window.switchEditorTab(window.activeEditorTab || 'stops');
-          }
-          if (!window.swapWorkbenchPanels && controls) {
-            controls.style.display = '';
-          }
-        } else {
-          const h = (layoutMode === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220));
-          bottomCol.style.height = h + 'px';
-          bottomCol.style.minHeight = '';
-          bottomCol.style.margin = '';
-          bottomCol.style.padding = '';
-          Array.from(bottomCol.children).forEach(child => {
-            if (child !== timelineBtn) child.style.display = '';
-          });
-          const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
-          if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
-            window.switchEditorTab(window.activeEditorTab || 'stops');
-          }
-          if (hResizer) hResizer.style.display = 'flex';
+        if (hResizer) hResizer.style.display = 'none';
+      }
+    } else {
+      if (layoutMode === 'standard') {
+        activeBottomContainer.style.height = window.swapWorkbenchPanels ? 'auto' : '';
+        activeBottomContainer.style.minHeight = '';
+        activeBottomContainer.style.margin = '';
+        activeBottomContainer.style.padding = '';
+        Array.from(activeBottomContainer.children).forEach(child => {
+          child.style.display = '';
+        });
+        if (activeBottomContainer === recipePanel && typeof window.switchEditorTab === 'function') {
+          window.switchEditorTab(window.activeEditorTab || 'stops');
         }
-        if (timelineIcon) timelineIcon.textContent = '∨';
+        if (!window.swapWorkbenchPanels && controls) {
+          controls.style.display = '';
+        }
+      } else {
+        const h = (layoutMode === 'bottom-recipe' ? (window.resizedRecipeHeight || 380) : (window.resizedControlsHeight || 220));
+        bottomCol.style.height = h + 'px';
+        bottomCol.style.minHeight = '';
+        bottomCol.style.margin = '';
+        bottomCol.style.padding = '';
+        Array.from(bottomCol.children).forEach(child => {
+          child.style.display = '';
+        });
+        const isRecipeAtBottom = (layoutMode === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layoutMode === 'bottom-controls' && window.swapWorkbenchPanels);
+        if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
+          window.switchEditorTab(window.activeEditorTab || 'stops');
+        }
+        if (hResizer) hResizer.style.display = 'flex';
       }
     }
+  }
+
+  // Call the central helper to sync collapse buttons parent, styling, and text icons
+  if (typeof window.syncCollapseButtons === 'function') {
+    window.syncCollapseButtons();
   }
 
   // Adjust video sizes to ensure proper video sizing
@@ -11339,36 +11371,71 @@ window.updateStepsScrollButtons = function() {
 window.enableDragScroll = function(el) {
   if (!el) return;
   let isDown = false;
+  let isDragging = false;
   let startX;
   let scrollLeft;
 
   el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
     const tag = e.target.tagName.toLowerCase();
-    if (tag === 'textarea' || tag === 'input' || tag === 'button' || e.target.closest('button')) {
+    if (tag === 'textarea' || tag === 'input') {
       return;
     }
     isDown = true;
-    el.style.cursor = 'grabbing';
+    isDragging = false;
     startX = e.pageX - el.offsetLeft;
     scrollLeft = el.scrollLeft;
+    el.dataset.dragged = "false";
   });
 
   el.addEventListener('mouseleave', () => {
-    isDown = false;
-    el.style.cursor = 'default';
+    if (isDown) {
+      isDown = false;
+      isDragging = false;
+      el.style.cursor = 'default';
+      if (el.style.scrollSnapType && el.style.scrollSnapType !== 'none') {
+        el.style.scrollSnapType = 'x mandatory';
+      }
+    }
   });
 
   el.addEventListener('mouseup', () => {
-    isDown = false;
-    el.style.cursor = 'default';
+    if (isDown) {
+      isDown = false;
+      el.style.cursor = 'default';
+      if (el.style.scrollSnapType && el.style.scrollSnapType !== 'none') {
+        el.style.scrollSnapType = 'x mandatory';
+      }
+    }
   });
 
   el.addEventListener('mousemove', (e) => {
     if (!isDown) return;
-    e.preventDefault();
     const x = e.pageX - el.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    el.scrollLeft = scrollLeft - walk;
+    const distance = Math.abs(x - startX);
+    if (distance > 5) {
+      if (!isDragging) {
+        isDragging = true;
+        el.style.cursor = 'grabbing';
+        el.style.scrollSnapType = 'none';
+        el.dataset.dragged = "true";
+      }
+      e.preventDefault();
+      const walk = (x - startX) * 1.5;
+      el.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  el.addEventListener('click', (e) => {
+    if (el.dataset.dragged === "true") {
+      e.preventDefault();
+      e.stopPropagation();
+      el.dataset.dragged = "false";
+    }
+  }, true);
+
+  el.addEventListener('dragstart', (e) => {
+    e.preventDefault();
   });
 };
 
@@ -11468,8 +11535,8 @@ function renderCreateSteps() {
       const isActive = (i === currentNavStepIndex);
       
       const style = isActive
-        ? `background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px var(--primary-glow); font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px;`
-        : `background: var(--bg-card-soft); color: var(--text-body); border-color: var(--border-card); box-shadow: none; font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid var(--border-card); cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px;`;
+        ? `background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border-color: transparent; box-shadow: 0 4px 12px var(--primary-glow); font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px; flex-shrink: 0; white-space: nowrap;`
+        : `background: var(--bg-card-soft); color: var(--text-body); border-color: var(--border-card); box-shadow: none; font-size: 0.78rem; font-weight: 900; border-radius: 10px; border: 2px solid var(--border-card); cursor: pointer; font-family: var(--font); display: flex; align-items: center; gap: 6px; transition: all 0.2s; padding: 6px 12px; flex-shrink: 0; white-space: nowrap;`;
       
       const dotStyle = `width: 8px; height: 8px; border-radius: 50%; background: ${color}; display: inline-block; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.15);`;
       
@@ -11501,6 +11568,10 @@ function renderCreateSteps() {
   list.style.minHeight               = 'auto';
   list.style.flexShrink              = '0';
   list.style.touchAction             = 'pan-x pan-y';
+  list.style.scrollSnapType          = 'x mandatory';
+  list.style.scrollBehavior          = 'smooth';
+  list.style.scrollbarWidth          = 'none';
+  list.style.msOverflowStyle         = 'none';
 
   // Stop propagation of touch events to prevent swiping the parent carousel when scrolling loop stops horizontally
   if (!list.dataset.touchListenerAdded) {
@@ -11594,7 +11665,7 @@ function renderCreateSteps() {
       <div id="stepRow_${i}"
         onfocusin="if(!event.target.closest('input, textarea, button') && window.selectCreateStep && currentNavStepIndex !== ${i}) { window.selectCreateStep(${i}); }"
         onclick="if(!event.target.closest('input, textarea, button') && window.selectCreateStep) { window.selectCreateStep(${i}); }"
-        style="width:${isDesktop ? '310px' : '280px'};height:auto;min-height:auto;overflow-y:visible;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;${activeStyle};cursor:pointer;"
+        style="width:${isDesktop ? '310px' : '280px'};height:auto;min-height:auto;overflow-y:visible;flex-shrink:0;backdrop-filter:blur(8px);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;transition:all 0.2s ease;overflow-x:hidden;scroll-snap-align:center;${activeStyle};cursor:pointer;"
         class="loop-stop-card"
         onmouseenter="if(!${isActive}){this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.06)';}"
         onmouseleave="if(!${isActive}){this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';}">
@@ -15663,8 +15734,6 @@ window.toggleEditorSidebar = function() {
   const rightPanel = document.getElementById('workbenchRight');
   const resizer = document.getElementById('workbenchResizer');
   const leftCol = document.getElementById('workbenchLeft');
-  const collapseBtn = document.getElementById('sidebarCollapseBtn');
-  const collapseIcon = document.getElementById('sidebarCollapseIcon');
   if (!rightPanel) return;
 
   const isCollapsed = window.isSidebarCollapsed;
@@ -15680,20 +15749,12 @@ window.toggleEditorSidebar = function() {
     
     if (resizer) resizer.style.display = 'flex';
     Array.from(rightPanel.children).forEach(child => {
-      if (child !== collapseBtn) child.style.display = '';
+      child.style.display = '';
     });
 
     if (leftCol) {
       leftCol.style.width = `calc(100% - ${fixedW}px)`;
       leftCol.style.flex = '1 1 auto';
-    }
-
-    if (collapseBtn) {
-      collapseBtn.style.left = '0';
-      collapseBtn.style.right = 'auto';
-      collapseBtn.style.transform = 'translate(-50%, -50%)';
-      collapseBtn.style.borderRadius = '8px 0 0 8px';
-      if (collapseIcon) collapseIcon.textContent = '›';
     }
   } else {
     window.isSidebarCollapsed = true;
@@ -15705,21 +15766,17 @@ window.toggleEditorSidebar = function() {
     
     if (resizer) resizer.style.display = 'none';
     Array.from(rightPanel.children).forEach(child => {
-      if (child !== collapseBtn) child.style.display = 'none';
+      child.style.display = 'none';
     });
 
     if (leftCol) {
       leftCol.style.width = '100%';
       leftCol.style.flex = '1';
     }
-
-    if (collapseBtn) {
-      collapseBtn.style.left = '0';
-      collapseBtn.style.right = 'auto';
-      collapseBtn.style.transform = 'translate(-50%, -50%)';
-      collapseBtn.style.borderRadius = '8px 0 0 8px';
-      if (collapseIcon) collapseIcon.textContent = '‹';
-    }
+  }
+  
+  if (typeof window.syncCollapseButtons === 'function') {
+    window.syncCollapseButtons();
   }
   
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
@@ -15733,8 +15790,6 @@ window.toggleHorizontalPanel = function() {
   const controls = document.getElementById('stepNavControlsRow');
   const bottomCol = document.getElementById('workbenchBottom');
   const hResizer = document.getElementById('workbenchHorizontalResizer');
-  const collapseBtn = document.getElementById('timelineCollapseBtn');
-  const collapseIcon = document.getElementById('timelineCollapseIcon');
   const recipePanel = document.getElementById('recipePanelWrapper');
 
   const isCollapsed = window.isTimelineCollapsed;
@@ -15758,7 +15813,7 @@ window.toggleHorizontalPanel = function() {
       activeBottomContainer.style.padding = '';
       activeBottomContainer.style.overflow = 'visible';
       Array.from(activeBottomContainer.children).forEach(child => {
-        if (child !== collapseBtn) child.style.display = '';
+        child.style.display = '';
       });
       if (activeBottomContainer === recipePanel && typeof window.switchEditorTab === 'function') {
         window.switchEditorTab(window.activeEditorTab || 'stops');
@@ -15773,7 +15828,7 @@ window.toggleHorizontalPanel = function() {
       activeBottomContainer.style.padding = '';
       activeBottomContainer.style.overflow = 'visible';
       Array.from(activeBottomContainer.children).forEach(child => {
-        if (child !== collapseBtn) child.style.display = '';
+        child.style.display = '';
       });
       const isRecipeAtBottom = (layout === 'bottom-recipe' && !window.swapWorkbenchPanels) || (layout === 'bottom-controls' && window.swapWorkbenchPanels);
       if (isRecipeAtBottom && typeof window.switchEditorTab === 'function') {
@@ -15781,7 +15836,6 @@ window.toggleHorizontalPanel = function() {
       }
       if (hResizer) hResizer.style.display = 'flex';
     }
-    if (collapseIcon) collapseIcon.textContent = '∨';
   } else {
     window.isTimelineCollapsed = true;
     if (layout === 'standard') {
@@ -15791,7 +15845,7 @@ window.toggleHorizontalPanel = function() {
       activeBottomContainer.style.padding = '0px';
       activeBottomContainer.style.overflow = 'visible';
       Array.from(activeBottomContainer.children).forEach(child => {
-        if (child !== collapseBtn) child.style.display = 'none';
+        child.style.display = 'none';
       });
       if (!window.swapWorkbenchPanels && controls) {
         controls.style.display = 'none';
@@ -15803,11 +15857,14 @@ window.toggleHorizontalPanel = function() {
       activeBottomContainer.style.padding = '0px';
       activeBottomContainer.style.overflow = 'visible';
       Array.from(activeBottomContainer.children).forEach(child => {
-        if (child !== collapseBtn) child.style.display = 'none';
+        child.style.display = 'none';
       });
       if (hResizer) hResizer.style.display = 'none';
     }
-    if (collapseIcon) collapseIcon.textContent = '∧';
+  }
+
+  if (typeof window.syncCollapseButtons === 'function') {
+    window.syncCollapseButtons();
   }
 
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
