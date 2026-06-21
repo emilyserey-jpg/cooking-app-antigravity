@@ -10404,36 +10404,35 @@ window.syncCollapseButtons = function() {
   const sidebarIcon = document.getElementById('sidebarCollapseIcon');
   const timelineBtn = document.getElementById('timelineCollapseBtn');
   const timelineIcon = document.getElementById('timelineCollapseIcon');
+  const videoWrapper = document.getElementById('workbenchVideoWrapper');
 
-  const rightCol = document.getElementById('workbenchRight');
-  const recipePanel = document.getElementById('recipePanelWrapper');
-  const scrubber = document.getElementById('editorScrubberWrapper') || document.getElementById('editorScrubberCard');
-  const bottomCol = document.getElementById('workbenchBottom');
-  const layoutMode = window.currentWorkbenchLayout || 'standard';
+  if (!videoWrapper) return;
 
   // 1. Sidebar Collapse Button Sync
-  if (sidebarBtn && rightCol) {
-    if (sidebarBtn.parentElement !== rightCol) {
-      rightCol.appendChild(sidebarBtn);
+  if (sidebarBtn) {
+    if (sidebarBtn.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(sidebarBtn);
     }
     if (window.swapLeftRightColumns) {
-      // Editor is on the left side of the screen
-      sidebarBtn.style.left = 'auto';
-      sidebarBtn.style.right = '0';
-      sidebarBtn.style.top = '50%';
-      sidebarBtn.style.transform = 'translate(100%, -50%)';
-      sidebarBtn.style.borderRadius = '0 8px 8px 0';
-
-      if (sidebarIcon) {
-        sidebarIcon.textContent = window.isSidebarCollapsed ? '›' : '‹';
-      }
-    } else {
-      // Editor is on the right side of the screen
+      // Editor is on the left side of the screen, video is on the right.
+      // Sits on the left edge of the video display, pointing outwards.
       sidebarBtn.style.left = '0';
       sidebarBtn.style.right = 'auto';
       sidebarBtn.style.top = '50%';
       sidebarBtn.style.transform = 'translate(-100%, -50%)';
       sidebarBtn.style.borderRadius = '8px 0 0 8px';
+
+      if (sidebarIcon) {
+        sidebarIcon.textContent = window.isSidebarCollapsed ? '›' : '‹';
+      }
+    } else {
+      // Editor is on the right side of the screen, video is on the left.
+      // Sits on the right edge of the video display, pointing outwards.
+      sidebarBtn.style.left = 'auto';
+      sidebarBtn.style.right = '0';
+      sidebarBtn.style.top = '50%';
+      sidebarBtn.style.transform = 'translate(100%, -50%)';
+      sidebarBtn.style.borderRadius = '0 8px 8px 0';
 
       if (sidebarIcon) {
         sidebarIcon.textContent = window.isSidebarCollapsed ? '‹' : '›';
@@ -10443,27 +10442,18 @@ window.syncCollapseButtons = function() {
 
   // 2. Timeline Collapse Button Sync
   if (timelineBtn) {
-    let activeBottomContainer;
-    if (layoutMode === 'standard') {
-      activeBottomContainer = window.swapWorkbenchPanels ? recipePanel : scrubber;
-    } else {
-      activeBottomContainer = bottomCol;
+    if (timelineBtn.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(timelineBtn);
     }
+    timelineBtn.style.left = '50%';
+    timelineBtn.style.right = 'auto';
+    timelineBtn.style.top = 'auto';
+    timelineBtn.style.bottom = '0';
+    timelineBtn.style.transform = 'translate(-50%, 100%)';
+    timelineBtn.style.borderRadius = '0 0 8px 8px';
 
-    if (activeBottomContainer) {
-      if (timelineBtn.parentElement !== activeBottomContainer) {
-        activeBottomContainer.appendChild(timelineBtn);
-      }
-      timelineBtn.style.left = '50%';
-      timelineBtn.style.right = 'auto';
-      timelineBtn.style.top = '0';
-      timelineBtn.style.bottom = 'auto';
-      timelineBtn.style.transform = 'translate(-50%, -100%)';
-      timelineBtn.style.borderRadius = '8px 8px 0 0';
-
-      if (timelineIcon) {
-        timelineIcon.textContent = window.isTimelineCollapsed ? '∧' : '∨';
-      }
+    if (timelineIcon) {
+      timelineIcon.textContent = window.isTimelineCollapsed ? '∧' : '∨';
     }
   }
 };
