@@ -10943,6 +10943,9 @@ window.applyLeftRightColumnsSwap = function() {
       }
     }
   }
+  if (typeof window.syncCollapseButtons === 'function') {
+    window.syncCollapseButtons();
+  }
 };
 
 window.syncLayoutDropdownBtnStyle = function() {
