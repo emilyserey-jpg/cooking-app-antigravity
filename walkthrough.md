@@ -1,3 +1,26 @@
+# Walkthrough - Auto-Resizing Custom Page Content Textareas
+
+This walkthrough details the changes made to support dynamic vertical expansion, auto-resizing, and scroll height capping for the inline custom page content textareas, matching the behavior of the main recipe ingredients list box.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Auto-Resizing Custom Page Content
+- **Template Updates**: Updated the inline page content textarea template in `window.syncCustomPageUI` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to trigger `window.autoResizeTextarea(this)` on input, and set styling boundaries (`min-height: 120px; max-height: 200px; height: auto; overflow-y: auto;`).
+- **Initial Sizing & AI Updates**: Added auto-resize trigger loops in `window.syncCustomPageUI` (initial render timeout) and `window.generateContentForInlineSetup` (after content generation by AI) in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to guarantee textareas scale to fit their contents immediately.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=9.99` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+Manual verification confirmed that the custom page details content textareas grow dynamically as text is typed or generated, cap at `200px`, and scroll internally without stretching the glass cards.
+
+---
+
 # Walkthrough - Deserialize Ingredients Loader to Prevent Layout Stretching
 
 This walkthrough details the changes made to deserialize recipe ingredients when loading them in the editor, preventing raw JSON meta-strings from stretching the layout.

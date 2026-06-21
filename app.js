@@ -16262,8 +16262,8 @@ window.syncCustomPageUI = function() {
           <!-- Page Content Textarea -->
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
             <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Page Content (Optional)</label>
-            <textarea id="inlineCustomPageContentInput_${tabId}" oninput="window.updateCustomPageContent('${tabId}', this.value)" placeholder="Type page content here manually... (or leave blank to auto-generate using AI)" 
-              style="width:100%; height:120px; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none;"
+            <textarea id="inlineCustomPageContentInput_${tabId}" oninput="window.updateCustomPageContent('${tabId}', this.value); window.autoResizeTextarea(this);" placeholder="Type page content here manually... (or leave blank to auto-generate using AI)" 
+              style="width:100%; min-height:120px; max-height:200px; height:auto; overflow-y:auto; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">${page.content}</textarea>
           </div>
 
@@ -16363,6 +16363,13 @@ window.syncCustomPageUI = function() {
       }
     }
   });
+
+  // Trigger autoResizeTextarea on all newly rendered inline page content textareas
+  setTimeout(() => {
+    document.querySelectorAll('[id^="inlineCustomPageContentInput_"]').forEach(ta => {
+      window.autoResizeTextarea(ta);
+    });
+  }, 50);
 
   if (typeof lucide !== 'undefined' && lucide.createIcons) {
     lucide.createIcons();
@@ -16773,6 +16780,7 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
     
     contentInput.value = data.content || '';
     contentInput.disabled = false;
+    window.autoResizeTextarea(contentInput);
     
     window.setCustomPageAiStatus(tabId, `Done generating "${pageName}"!`, 'success');
     if (typeof setAIStatus === 'function') setAIStatus(`Done generating "${pageName}"!`, false);
