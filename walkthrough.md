@@ -1,24 +1,25 @@
 # Active Styled Layout Options Dropdown Menu Walkthrough
 
-This walkthrough details the changes made to group the layout action buttons into a single premium dropdown menu matching the styling of the active editor tab dropdown selector.
+This walkthrough details the changes made to group the layout action buttons into single premium dropdown menus matching the styling of the active editor tab dropdown selector.
 
 ---
 
 ## 🛠️ Latest Features & Adjustments
 
-### 1. Active-Styled Layout Options Dropdown Menu
-- **Visual Design**: Replaced the standalone `Switch Spots` and `Full Width` buttons with a single dropdown button `Layout ▼` (`#layoutDropdownBtn`).
+### 1. Dual Active-Styled Layout Options Dropdown Menus
+- **The Redesign**: Converted both sets of layout buttons (the ones in the editor header `#layoutDropdownBtn`, and the ones above the scrubber card `#layoutDropdownBtn2`) into identical, clean `Layout ▼` dropdown menu buttons.
+- **Parent Overflow Clipping Resolution**: Instead of nesting menu elements inside overflow-x scrollable parent containers (which clips absolute dropdown contents), the layout dropdown content `#layoutDropdownContent` is pre-rendered in the DOM and dynamically positioned and styled relative to the clicked button using `getBoundingClientRect()` relative to `document.body` at runtime.
 - **Dynamic Active Styling**:
   - **Inactive Style**: Displays matching the tab selector button default state (`background: var(--bg-card-soft); color: var(--text-body); border: 2px solid var(--border-card);`).
   - **Active State Highlights**: If the layout has customized states (either panels swapped or Full Width mode is active), the button transforms into a primary gradient state (`background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border: transparent; box-shadow: 0 4px 12px var(--primary-glow);`), matching the active tab selector style.
-- **Glass-Card Menu Options**: Displays borderless options inside a premium `#layoutDropdownMenu` (with `glass-card` classes and Webkit shadow overlays):
+- **Glass-Card Menu Options**: Displays borderless options inside the body-appended premium `#layoutDropdownContent` (with `glass-card` classes and Webkit shadow overlays):
   - **Switch Spots**: Swaps playback controls and editor panel locations (`toggleSwapPanels()`).
   - **Full Width / Column Layout**: Toggles the bottom editor full-width recipe editor layout (`toggleRecipePanelLayout()`).
-- **Automatic Styling State Machine**: Wired up `window.syncLayoutDropdownBtnStyle` to automatically evaluate layout mode states and open/closed dropdown states to apply correct transitions and background highlights.
-- **Test Compatibility**: Option element IDs remain `#swapPanelsBtn` and `#editorFullWidthBtn`, maintaining complete coverage with all automated browser test scripts.
+- **Automatic Styling State Machine**: Wired up `window.syncLayoutDropdownBtnStyle` to automatically evaluate layout mode states and open/closed dropdown states to apply correct transitions and background highlights to both buttons.
+- **Test Compatibility**: Option element IDs remain `#swapPanelsBtn` and `#editorFullWidthBtn`. Added a hidden `#swapPanelsBtn2` button to ensure automated testing scripts still find the secondary controls swap button.
 
 ### 2. Cache Version Bumps
-- Bumped page version and cache keys to `v=9.73` in `index.html` and `mobile.html` to instantly load the new layout options code.
+- Bumped page version and cache keys to `v=9.74` in `index.html` and `mobile.html` to instantly load the new layout options code.
 
 ---
 
