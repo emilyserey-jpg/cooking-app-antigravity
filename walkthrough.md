@@ -1,3 +1,27 @@
+# Walkthrough - Custom Page Content Textarea Extended Height Boundaries
+
+This walkthrough details the changes made to increase the custom page content textarea minimum height limit to 150px (to provide a roomier default display) and the maximum height limit to 300px (to allow more text content to be shown before internal scrolling activates).
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Extended Textarea Height Limits
+- **Min-Height Bump**: Increased the textbox minimum starting height from `120px` to `150px` in `window.syncCustomPageUI` inside [app.js](file:///Users/emilyserey/Desktop/App/app.js).
+- **Max-Height Bump**: Raised the dynamic growth capping height from `200px` to `300px` to let the textarea auto-expand further before internal scrolling triggers.
+- **Visual Alignment**: The glass card container and save button adjust dynamically to wrap the expanded boundaries perfectly.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=10.03` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+Manual verification confirmed that the empty custom page details textbox starts with a taller 150px default area, expands up to 300px dynamically, and the details card resizes naturally without overlapping or cutting off the Save/Update action button.
+
+---
+
 # Walkthrough - Custom Page Dynamic Textarea Auto-Resizing with Capped Growth
 
 This walkthrough details the changes made to let the custom page content textarea start at a minimum height of 120px, auto-resize to fit text dynamically up to a 200px maximum height limit, and scroll internally once that cap is reached—ensuring the white glass card wraps cleanly around it and prevent overlaps or save button cutoffs.

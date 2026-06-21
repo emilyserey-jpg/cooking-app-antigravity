@@ -16273,7 +16273,7 @@ window.syncCustomPageUI = function() {
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px; flex-shrink:0;">
             <label style="font-size:0.62rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0;">Page Content (Optional)</label>
             <textarea id="inlineCustomPageContentInput_${tabId}" oninput="window.updateCustomPageContent('${tabId}', this.value); window.autoResizeTextarea(this);" placeholder="Type page content here manually... (or leave blank to auto-generate using AI)" 
-              style="width:100%; min-height:120px; max-height:200px; height:auto; overflow-y:auto; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none; flex-shrink:0;"
+              style="width:100%; min-height:150px; max-height:300px; height:auto; overflow-y:auto; padding:10px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.75rem; font-weight:600; color:var(--text-body); background:var(--bg-card-soft); box-sizing:border-box; outline:none; resize:none; flex-shrink:0;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">${page.content}</textarea>
           </div>
 
