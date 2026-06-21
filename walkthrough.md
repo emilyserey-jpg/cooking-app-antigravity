@@ -1,3 +1,27 @@
+# Walkthrough - Default to Custom Page Setup Card instead of Empty State
+
+This walkthrough details the changes made to automatically initialize a default custom page when none exist, ensuring the editor always opens immediately to the page setup card view rather than the dashed empty state.
+
+---
+
+## 🛠️ Latest Features & Adjustments
+
+### 1. Default Custom Page Card Presentation
+- **Automatic Initialization**: Updated `window.syncCustomPageUI` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to detect if `customPages` is empty. If so, it automatically initializes a default empty page (`customPages[newId] = { name: '', icon: '', content: '', promptType: 'custom' }`). This forces the card editor details page to display immediately on load and when swiping/navigating to the tab on mobile.
+- **Default Navigation Selection**: Updated `window.switchEditorTab` in [app.js](file:///Users/emilyserey/Desktop/App/app.js) to default navigation to the first custom page key if pages exist.
+- **Database Safety**: Since `serializeRecipeIngredients` automatically filters out custom pages with empty names and contents, these auto-initialized blank pages are never saved to the database unless the user actually writes content in them.
+
+### 2. Cache Version Bumps
+- Bumped page version and cache keys to `v=10.00` in [index.html](file:///Users/emilyserey/Desktop/App/index.html) and [mobile.html](file:///Users/emilyserey/Desktop/App/mobile.html) to force immediately loading the updated scripting files.
+
+---
+
+## 🧪 Verification Results
+
+Manual verification confirmed that opening the Custom Pages tab now immediately presents the setup card with preset choices and inputs rather than the dashed placeholder card.
+
+---
+
 # Walkthrough - Auto-Resizing Custom Page Content Textareas
 
 This walkthrough details the changes made to support dynamic vertical expansion, auto-resizing, and scroll height capping for the inline custom page content textareas, matching the behavior of the main recipe ingredients list box.

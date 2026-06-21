@@ -16180,11 +16180,21 @@ window.updateAIChecklists = function() {
 };
 
 window.syncCustomPageUI = function() {
-  const keys = Object.keys(customPages);
+  let keys = Object.keys(customPages);
+  if (keys.length === 0) {
+    const newId = 'custom_' + Date.now();
+    customPages[newId] = {
+      name: '',
+      icon: '',
+      content: '',
+      promptType: 'custom'
+    };
+    keys = [newId];
+  }
 
   // Generate cards HTML
   let cardsHtml = '';
-  Object.keys(customPages).forEach(tabId => {
+  keys.forEach(tabId => {
     const page = customPages[tabId];
     const hasBeenSaved = page.hasBeenSaved || (page.content && page.content.trim().length > 0);
     if (page.hasBeenSaved === undefined) {
@@ -16526,6 +16536,8 @@ window.switchEditorTab = function(tabName) {
       };
       window.syncCustomPageUI();
       tabName = newId;
+    } else {
+      tabName = keys[0];
     }
   }
 
