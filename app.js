@@ -10313,6 +10313,7 @@ window.navOrScrub = function(dir) {
 
 window.currentWorkbenchLayout = 'standard';
 window.swapWorkbenchPanels = false;
+window.swapLeftRightColumns = false;
 window.isControlsFullWidth = false;
 window.resizedRecipeHeight = 380;
 window.resizedControlsHeight = 220;
@@ -10412,14 +10413,26 @@ window.syncCollapseButtons = function() {
     if (sidebarBtn.parentElement !== videoWrapper) {
       videoWrapper.appendChild(sidebarBtn);
     }
-    sidebarBtn.style.left = 'auto';
-    sidebarBtn.style.right = '0';
-    sidebarBtn.style.top = '50%';
-    sidebarBtn.style.transform = 'translate(100%, -50%)';
-    sidebarBtn.style.borderRadius = '0 8px 8px 0';
+    if (window.swapLeftRightColumns) {
+      sidebarBtn.style.left = '0';
+      sidebarBtn.style.right = 'auto';
+      sidebarBtn.style.top = '50%';
+      sidebarBtn.style.transform = 'translate(-100%, -50%)';
+      sidebarBtn.style.borderRadius = '8px 0 0 8px';
 
-    if (sidebarIcon) {
-      sidebarIcon.textContent = window.isSidebarCollapsed ? '‹' : '›';
+      if (sidebarIcon) {
+        sidebarIcon.textContent = window.isSidebarCollapsed ? '›' : '‹';
+      }
+    } else {
+      sidebarBtn.style.left = 'auto';
+      sidebarBtn.style.right = '0';
+      sidebarBtn.style.top = '50%';
+      sidebarBtn.style.transform = 'translate(100%, -50%)';
+      sidebarBtn.style.borderRadius = '0 8px 8px 0';
+
+      if (sidebarIcon) {
+        sidebarIcon.textContent = window.isSidebarCollapsed ? '‹' : '›';
+      }
     }
   }
 
@@ -10445,8 +10458,9 @@ window.switchWorkbenchLayout = function(layoutMode) {
   window.currentWorkbenchLayout = layoutMode;
   
   // Close dropdown if open
-  const dd = document.getElementById('layoutDropdownContent');
-  if (dd) dd.style.display = 'none';
+  if (typeof window.closeLayoutDropdown === 'function') {
+    window.closeLayoutDropdown();
+  }
   
   // Update dropdown button label
   const labelSpan = document.querySelector('#layoutSelectorBtn span:not(:last-child)');
@@ -10841,6 +10855,10 @@ window.switchWorkbenchLayout = function(layoutMode) {
   if (typeof window.switchEditorTab === 'function') {
     window.switchEditorTab(window.activeEditorTab || 'stops');
   }
+  
+  if (typeof window.applyLeftRightColumnsSwap === 'function') {
+    window.applyLeftRightColumnsSwap();
+  }
 };
 
 window.togglePlaybackControlsLayout = function() {
@@ -10860,11 +10878,48 @@ window.toggleSwapPanels = function() {
   window.switchWorkbenchLayout(currentLayout);
 };
 
+window.toggleSwapLeftRightColumns = function() {
+  window.swapLeftRightColumns = !window.swapLeftRightColumns;
+  window.applyLeftRightColumnsSwap();
+  if (typeof window.syncLayoutDropdownBtnStyle === 'function') {
+    window.syncLayoutDropdownBtnStyle();
+  }
+};
+
+window.applyLeftRightColumnsSwap = function() {
+  const grid = document.getElementById('workbenchGrid');
+  const leftCol = document.getElementById('workbenchLeft');
+  const rightCol = document.getElementById('workbenchRight');
+  if (grid) {
+    if (window.swapLeftRightColumns) {
+      grid.style.flexDirection = 'row-reverse';
+      if (leftCol) {
+        leftCol.style.paddingRight = '0px';
+        leftCol.style.paddingLeft = '6px';
+      }
+      if (rightCol && !window.isSidebarCollapsed) {
+        rightCol.style.paddingLeft = '0px';
+        rightCol.style.paddingRight = '8px';
+      }
+    } else {
+      grid.style.flexDirection = 'row';
+      if (leftCol) {
+        leftCol.style.paddingRight = '6px';
+        leftCol.style.paddingLeft = '0px';
+      }
+      if (rightCol && !window.isSidebarCollapsed) {
+        rightCol.style.paddingLeft = '8px';
+        rightCol.style.paddingRight = '0px';
+      }
+    }
+  }
+};
+
 window.syncLayoutDropdownBtnStyle = function() {
   const syncBtn = function(btnId, menuId) {
     const layoutBtn = document.getElementById(btnId);
     if (!layoutBtn) return;
-    const isActive = window.swapWorkbenchPanels || window.currentWorkbenchLayout === 'bottom-recipe';
+    const isActive = window.swapWorkbenchPanels || window.currentWorkbenchLayout === 'bottom-recipe' || (window.swapLeftRightColumns && window.innerWidth > 768);
     const menuOpen = window.activeLayoutMenuId === menuId;
     
     if (menuOpen) {
@@ -10910,26 +10965,49 @@ window.toggleLayoutDropdown = function(e, menuId) {
     const swapOpt = document.getElementById(swapBtnId);
     const optSwapText = document.getElementById(swapTextId);
     if (swapOpt) {
+      if (optSwapText) {
+        optSwapText.textContent = 'Switch Spots';
+      }
       if (isSwap) {
         swapOpt.style.background = 'var(--primary-light)';
         swapOpt.style.color = 'var(--primary)';
-        if (optSwapText) {
-          if (window.currentWorkbenchLayout === 'bottom-recipe' || window.currentWorkbenchLayout === 'bottom-controls') {
-            optSwapText.textContent = 'Move Panel to Bottom';
-          } else {
-            optSwapText.textContent = 'Move Panel to Right';
-          }
-        }
       } else {
         swapOpt.style.background = 'transparent';
         swapOpt.style.color = 'var(--text-body)';
-        if (optSwapText) {
-          if (window.currentWorkbenchLayout === 'bottom-recipe' || window.currentWorkbenchLayout === 'bottom-controls') {
-            optSwapText.textContent = 'Move Panel to Top';
-          } else {
-            optSwapText.textContent = 'Move Panel to Left';
-          }
+      }
+    }
+
+    const swapLeftRightBtnId = (menuId === 'layoutDropdownMenu') ? 'swapLeftRightBtn' : 'swapLeftRightBtn2';
+    const leftRightTextId = (menuId === 'layoutDropdownMenu') ? 'optLayoutLeftRightText' : 'optLayoutLeftRightText2';
+
+    const swapLeftRightOpt = document.getElementById(swapLeftRightBtnId);
+    const optLeftRightText = document.getElementById(leftRightTextId);
+    if (swapLeftRightOpt) {
+      const rightCol = document.getElementById('workbenchRight');
+      
+      // The option is only visible if this dropdown's panel is inside the side column (workbenchRight)
+      const isPanelInSideColumn = rightCol && rightCol.contains(swapLeftRightOpt);
+      const shouldShow = isPanelInSideColumn && (window.innerWidth > 768);
+
+      if (shouldShow) {
+        swapLeftRightOpt.style.display = 'flex';
+        
+        // Since it is inside rightCol, its physical column side is determined by swapLeftRightColumns
+        const side = window.swapLeftRightColumns ? 'left' : 'right';
+          
+        if (optLeftRightText) {
+          optLeftRightText.textContent = (side === 'left') ? 'Move Panel to Right' : 'Move Panel to Left';
         }
+        
+        if (window.swapLeftRightColumns) {
+          swapLeftRightOpt.style.background = 'var(--primary-light)';
+          swapLeftRightOpt.style.color = 'var(--primary)';
+        } else {
+          swapLeftRightOpt.style.background = 'transparent';
+          swapLeftRightOpt.style.color = 'var(--text-body)';
+        }
+      } else {
+        swapLeftRightOpt.style.display = 'none';
       }
     }
 
@@ -15592,7 +15670,12 @@ function setupWorkbenchResizer() {
     const gridRect = grid.getBoundingClientRect();
     
     // workbenchRight is always the fixed column and workbenchLeft (leftSide) is always the flex column.
-    let newFixedW = gridRect.right - e.clientX;
+    let newFixedW;
+    if (window.swapLeftRightColumns) {
+      newFixedW = e.clientX - gridRect.left;
+    } else {
+      newFixedW = gridRect.right - e.clientX;
+    }
 
     // Apply constraints to the fixed column width: min 320px, max 80% of window/grid width
     const minW = 320;
