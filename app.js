@@ -8784,6 +8784,19 @@ window.handleEditLibraryClick = function(event) {
   toggleUserDropdown(event);
 };
 
+window.handleCustomizeLayoutClick = function(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  // Navigate straight to the My Space (profile) page
+  switchView('profile');
+  // Toggle bento editing
+  window.toggleDashboardEditMode();
+  // Close the user initials/spatula dropdown
+  toggleUserDropdown(event);
+};
+
 // ── Combined Options Dropdown ─────────────────────────────────────────────
 window.toggleLibOptionsDropdown = function(event) {
   if (event) event.stopPropagation();
