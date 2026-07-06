@@ -9310,7 +9310,10 @@ function updateMultigridLayoutClass() {
         } else {
           let h;
           if (window.currentSplitLayoutActive) {
-            const splitWidth = Math.round(w * 0.40);
+            let splitWidth = w;
+            if (splitWidth > 250) {
+              splitWidth = Math.round(splitWidth * 0.40);
+            }
             h = Math.round(splitWidth / aspect);
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
