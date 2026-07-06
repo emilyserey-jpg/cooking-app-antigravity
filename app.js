@@ -3875,15 +3875,21 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
 
     // Subscribe button configuration
     const subBtn = document.getElementById('pubSubscribeBtn');
-    if (subBtn) {
-      if (currentUser && creatorEmail === currentUser.email) {
+    const aboutEditBtn = document.getElementById('pubAboutEditBtn');
+    
+    if (currentUser && creatorEmail === currentUser.email) {
+      if (subBtn) {
         subBtn.textContent = 'Customize Workspace';
         subBtn.className = 'btn-subscribe subscribed';
         subBtn.onclick = () => switchView('profile');
-      } else {
+      }
+      if (aboutEditBtn) aboutEditBtn.style.display = 'flex';
+    } else {
+      if (subBtn) {
         subBtn.className = 'btn-subscribe';
         subBtn.onclick = () => togglePubSubscribe();
       }
+      if (aboutEditBtn) aboutEditBtn.style.display = 'none';
     }
 
     // Refresh sub state UI
