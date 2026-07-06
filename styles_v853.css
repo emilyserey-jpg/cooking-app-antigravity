@@ -3788,7 +3788,7 @@ a:focus-visible {
 }
 
 /* Row 1: Playback navigation buttons */
-.phone-screen.split-view-active .player-controls-strip .control-btn:not(#playerMuteBtn) {
+.phone-screen.split-view-active .player-controls-strip .control-btn:not(#playerMuteBtn):not(#playerSpeedBtn) {
   width: 24px !important;
   height: 24px !important;
   min-width: 24px !important;
@@ -3797,7 +3797,7 @@ a:focus-visible {
   padding: 0 !important;
   margin: 0 !important;
 }
-.phone-screen.split-view-active .player-controls-strip .control-btn:not(#playerMuteBtn) svg {
+.phone-screen.split-view-active .player-controls-strip .control-btn:not(#playerMuteBtn):not(#playerSpeedBtn) svg {
   width: 10px !important;
   height: 10px !important;
 }
