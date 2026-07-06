@@ -3785,6 +3785,13 @@ function updateSubscribeUI(email) {
     subCountEl.textContent = `@${email.split('@')[0]} • ${formatSubs} subscribers • ${recipeCount} recipes`;
   }
   
+  const followersEl = document.getElementById('pubStatFollowers');
+  if (followersEl) followersEl.textContent = formatSubs;
+  const recipesEl = document.getElementById('pubStatRecipes');
+  if (recipesEl) recipesEl.textContent = recipeCount;
+  const postsEl = document.getElementById('pubStatPosts');
+  if (postsEl) postsEl.textContent = recipeCount;
+  
   const aboutSubsEl = document.getElementById('pubAboutStatsSubs');
   if (aboutSubsEl) {
     aboutSubsEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="users" style="width: 14px; height: 14px;"></i></span><span>${totalSubs.toLocaleString()} subscribers</span>`;
