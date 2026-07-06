@@ -504,10 +504,75 @@
             <h2 style="font-size:1.7rem;font-weight:900;color:var(--text-heading);margin-bottom:3px;">My Library</h2>
             <p style="font-size:0.82rem;color:var(--text-muted);font-weight:600;">Your saved videos — organized your way</p>
           </div>
-          <button onclick="libCreateFolder()"
-            style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(74,144,217,0.3);white-space:nowrap;">
-            <span style="font-size:1.1rem;">＋</span> New Folder
-          </button>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button onclick="libCreateFolder()"
+              style="background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(74,144,217,0.3);white-space:nowrap;">
+              <span style="font-size:1.1rem;">＋</span> New Folder
+            </button>
+            
+            <!-- Combined Sort & Layout Options Dropdown -->
+            <div class="lib-options-dropdown-wrapper" style="position: relative; display: inline-block;">
+              <button id="libOptionsDropdownBtn" onclick="window.toggleLibOptionsDropdown(event)" 
+                style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 8px;"
+                onfocus="this.style.borderColor='var(--primary)'" 
+                onblur="this.style.borderColor='var(--border-card)'">
+                <i data-lucide="sliders-horizontal" style="width: 14px; height: 14px; stroke-width: 2.5;"></i>
+                <span id="libOptionsActiveLabel">View Options</span>
+                <i data-lucide="chevron-down" style="width: 12px; height: 12px; stroke-width: 2.5; transition: transform 0.2s;" id="libOptionsChevron"></i>
+              </button>
+              <div id="libOptionsDropdownMenu" class="lib-options-dropdown-menu" 
+                style="display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 2px solid var(--border-card); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1000; padding: 12px; min-width: 210px; flex-direction: column; gap: 10px; box-sizing: border-box;">
+                
+                <!-- Sort Section -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Sort By</span>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <button onclick="window.libSetSort('az')" class="lib-option-item" id="libOptSort_az" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span>A → Z</span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                    <button onclick="window.libSetSort('za')" class="lib-option-item" id="libOptSort_za" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span>Z → A</span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                    <button onclick="window.libSetSort('custom')" class="lib-option-item" id="libOptSort_custom" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span>Custom Drag</span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Separator -->
+                <div style="height: 1px; background: var(--border-card); margin: 2px 0;"></div>
+
+                <!-- Layout Section -->
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Layout</span>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <button onclick="window.libSetLayout('grid')" class="lib-option-item" id="libOptLayout_grid" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i data-lucide="grid" style="width: 13px; height: 13px;"></i> Grid
+                      </span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                    <button onclick="window.libSetLayout('list')" class="lib-option-item" id="libOptLayout_list" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i data-lucide="list" style="width: 13px; height: 13px;"></i> List
+                      </span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                    <button onclick="window.libSetLayout('compact')" class="lib-option-item" id="libOptLayout_compact" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
+                      <span style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i data-lucide="align-justify" style="width: 13px; height: 13px;"></i> Compact
+                      </span>
+                      <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ── Search + Sort toolbar ── -->
@@ -518,68 +583,6 @@
             <input id="libSearchInput" oninput="libSearch(this.value)" placeholder="Search folders & videos…"
               style="width:100%;box-sizing:border-box;padding:10px 14px 10px 36px;border-radius:12px;border:2px solid var(--border-card);background:#fff;font-family:var(--font);font-size:0.88rem;font-weight:600;color:var(--text-heading);outline:none;transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-card)'">
-          </div>
-          <!-- Combined Sort & Layout Options Dropdown -->
-          <div class="lib-options-dropdown-wrapper" style="position: relative; display: inline-block;">
-            <button id="libOptionsDropdownBtn" onclick="window.toggleLibOptionsDropdown(event)" 
-              style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--border-card); background: #fff; font-family: var(--font); font-size: 0.82rem; font-weight: 800; color: var(--text-heading); outline: none; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 8px;"
-              onfocus="this.style.borderColor='var(--primary)'" 
-              onblur="this.style.borderColor='var(--border-card)'">
-              <i data-lucide="sliders-horizontal" style="width: 14px; height: 14px; stroke-width: 2.5;"></i>
-              <span id="libOptionsActiveLabel">View Options</span>
-              <i data-lucide="chevron-down" style="width: 12px; height: 12px; stroke-width: 2.5; transition: transform 0.2s;" id="libOptionsChevron"></i>
-            </button>
-            <div id="libOptionsDropdownMenu" class="lib-options-dropdown-menu" 
-              style="display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 2px solid var(--border-card); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 1000; padding: 12px; min-width: 210px; flex-direction: column; gap: 10px; box-sizing: border-box;">
-              
-              <!-- Sort Section -->
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Sort By</span>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <button onclick="window.libSetSort('az')" class="lib-option-item" id="libOptSort_az" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span>A → Z</span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                  <button onclick="window.libSetSort('za')" class="lib-option-item" id="libOptSort_za" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span>Z → A</span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                  <button onclick="window.libSetSort('custom')" class="lib-option-item" id="libOptSort_custom" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span>Custom Drag</span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Separator -->
-              <div style="height: 1px; background: var(--border-card); margin: 2px 0;"></div>
-
-              <!-- Layout Section -->
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding-left: 6px;">Layout</span>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <button onclick="window.libSetLayout('grid')" class="lib-option-item" id="libOptLayout_grid" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span style="display: inline-flex; align-items: center; gap: 8px;">
-                      <i data-lucide="grid" style="width: 13px; height: 13px;"></i> Grid
-                    </span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                  <button onclick="window.libSetLayout('list')" class="lib-option-item" id="libOptLayout_list" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span style="display: inline-flex; align-items: center; gap: 8px;">
-                      <i data-lucide="list" style="width: 13px; height: 13px;"></i> List
-                    </span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                  <button onclick="window.libSetLayout('compact')" class="lib-option-item" id="libOptLayout_compact" style="background: none; border: none; width: 100%; padding: 7px 10px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 700; color: var(--text-heading); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;">
-                    <span style="display: inline-flex; align-items: center; gap: 8px;">
-                      <i data-lucide="align-justify" style="width: 13px; height: 13px;"></i> Compact
-                    </span>
-                    <i class="lib-check-icon" data-lucide="check" style="width: 12px; height: 12px; color: var(--primary); display: none;"></i>
-                  </button>
-                </div>
-              </div>
-
-            </div>
           </div>
         </div>
 
