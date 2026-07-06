@@ -9112,8 +9112,36 @@ function updateMultigridLayoutClass() {
     const leftCol = document.querySelector('.player-left-column');
 
     if (leftCol) {
-      leftCol.style.setProperty('height', 'auto', 'important');
-      leftCol.style.setProperty('flex', '0 0 auto', 'important');
+      if (window.currentSplitLayoutActive) {
+        leftCol.style.setProperty('height', '100%', 'important');
+        leftCol.style.setProperty('flex', '0 0 40%', 'important');
+        leftCol.style.setProperty('width', '40%', 'important');
+        leftCol.style.setProperty('max-width', '40%', 'important');
+      } else {
+        leftCol.style.setProperty('height', 'auto', 'important');
+        leftCol.style.setProperty('flex', '0 0 auto', 'important');
+        leftCol.style.removeProperty('width');
+        leftCol.style.removeProperty('max-width');
+      }
+    }
+
+    const rightCol = document.querySelector('.mobile-player-body');
+    if (rightCol) {
+      if (window.currentSplitLayoutActive) {
+        rightCol.style.setProperty('height', '100%', 'important');
+        rightCol.style.setProperty('max-height', '100%', 'important');
+        rightCol.style.setProperty('flex', '1 1 auto', 'important');
+        rightCol.style.setProperty('width', '60%', 'important');
+        rightCol.style.setProperty('max-width', '60%', 'important');
+        rightCol.style.setProperty('overflow-y', 'auto', 'important');
+      } else {
+        rightCol.style.removeProperty('height');
+        rightCol.style.removeProperty('max-height');
+        rightCol.style.removeProperty('flex');
+        rightCol.style.removeProperty('width');
+        rightCol.style.removeProperty('max-width');
+        rightCol.style.removeProperty('overflow-y');
+      }
     }
 
     if (screen) {
@@ -9199,7 +9227,12 @@ function updateMultigridLayoutClass() {
           videoContainer.style.setProperty('align-self', 'center', 'important');
         } else {
           let h;
-          if (isPortrait) {
+          if (window.currentSplitLayoutActive) {
+            const splitWidth = Math.round(w * 0.40);
+            h = Math.round(splitWidth / aspect);
+            videoContainer.style.setProperty('width', '100%', 'important');
+            videoContainer.style.setProperty('margin', '0 auto', 'important');
+          } else if (isPortrait) {
             h = Math.min(460, Math.round(window.innerHeight * 0.6));
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');

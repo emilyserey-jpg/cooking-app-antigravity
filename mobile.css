@@ -3311,9 +3311,9 @@ a:focus-visible {
 }
 
 .phone-screen.split-view-active .player-left-column {
-  width: 46% !important;
-  max-width: 46% !important;
-  flex: 0 0 46% !important;
+  width: 40% !important;
+  max-width: 40% !important;
+  flex: 0 0 40% !important;
   height: 100% !important;
   border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   background: #fff !important;
@@ -3322,10 +3322,12 @@ a:focus-visible {
 }
 
 .phone-screen.split-view-active .mobile-player-body {
-  width: 54% !important;
-  max-width: 54% !important;
+  width: 60% !important;
+  max-width: 60% !important;
   flex: 1 1 auto !important;
   height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
   padding: 6px 4px 80px 4px !important;
 }
 
