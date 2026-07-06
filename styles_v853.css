@@ -3142,6 +3142,7 @@ a:focus-visible {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important; /* Right-align Options button */
+  flex-wrap: wrap !important;
   gap: 10px !important;
   padding: 8px 12px 6px 12px !important;
   box-sizing: border-box !important;
@@ -3564,6 +3565,34 @@ a:focus-visible {
 #rightColSave::-webkit-scrollbar,
 #rightColAddCustom::-webkit-scrollbar {
   display: none;
+}
+
+@media (max-width: 360px) {
+  .player-controls-strip {
+    gap: 4px !important;
+    padding: 4px 6px !important;
+  }
+  .player-controls-strip .control-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .player-controls-strip .control-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  .player-controls-strip .control-btn.play-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .player-controls-strip .control-btn.play-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  #editorSpeedBtn, #playerSpeedBtn {
+    min-width: 30px !important;
+    height: 30px !important;
+    padding: 0 4px !important;
+  }
 }
 
 
