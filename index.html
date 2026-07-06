@@ -1401,7 +1401,7 @@
               </div>
 
               <video id="uploadedVideoPlayer"
-                style="width:100%;height:100%;object-fit:cover;display:block;background:#000;border-radius:24px;"
+                style="width:100%;height:100%;object-fit:contain;display:block;background:#000;border-radius:24px;"
                 preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
                 onclick="toggleVideoPlay()"></video>
 
@@ -1465,7 +1465,7 @@
                     title="Layout and placement options">
                     <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
                   </button>
-                  <div id="layoutDropdownMenu2" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:160px; box-sizing:border-box; flex-direction:column; gap:4px;">
+                  <div id="layoutDropdownMenu2" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:160px; max-height:280px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; box-sizing:border-box; flex-direction:column; gap:4px;">
                     <!-- Option 1: Switch Spots -->
                     <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn2"
                       style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
@@ -1489,6 +1489,55 @@
                       onmouseleave="if(window.currentWorkbenchLayout === 'bottom-controls'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
                       <span id="optLayoutFullWidthText2">Full Width</span>
+                    </button>
+                    <!-- Option 4: Fit Video -->
+                    <button type="button" onclick="window.setVideoFitMode('contain'); window.closeLayoutDropdown();" id="videoFitContainBtn2"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentVideoFitMode === 'contain'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minimize"><path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5"/></svg>
+                      <span>Fit Video (YouTube Style)</span>
+                    </button>
+                    <!-- Option 5: Fill Video -->
+                    <button type="button" onclick="window.setVideoFitMode('cover'); window.closeLayoutDropdown();" id="videoFitCoverBtn2"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentVideoFitMode === 'cover'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize"><path d="M8 3H3v5M21 8V3h-5M3 16v5h5M16 21h5v-5"/></svg>
+                      <span>Zoom to Fill (Cropped)</span>
+                    </button>
+                    <!-- Divider -->
+                    <div style="height: 1.5px; background: rgba(0,0,0,0.06); margin: 4px 6px;"></div>
+                    <!-- Label -->
+                    <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 4px 12px; display: block;">Player Box Shape</span>
+                    <!-- Shape Options -->
+                    <button type="button" onclick="window.setPlayerBoxShape('auto'); window.closeLayoutDropdown();" id="btnBoxShape_auto2"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === 'auto'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M6 9h2v2H6V9zm10 2h-2V9h2v2z"/></svg>
+                      <span>Auto (Match Video)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('16-9'); window.closeLayoutDropdown();" id="btnBoxShape_16-92"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '16-9'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><path d="m17 2-5 5-5-5"/></svg>
+                      <span>Landscape (16:9)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('1-1'); window.closeLayoutDropdown();" id="btnBoxShape_1-12"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '1-1'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                      <span>Square (1:1)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('9-16'); window.closeLayoutDropdown();" id="btnBoxShape_9-162"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '9-16'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                      <span>Portrait (9:16)</span>
                     </button>
                   </div>
                 </div>
@@ -1628,7 +1677,7 @@
                     title="Layout and placement options">
                     <span>Layout</span> <span style="font-size:0.55rem; margin-left:2px; vertical-align:middle;">▼</span>
                   </button>
-                  <div id="layoutDropdownMenu" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:160px; box-sizing:border-box; flex-direction:column; gap:4px;">
+                  <div id="layoutDropdownMenu" class="glass-card" style="display:none; position:absolute; left:0; top:calc(100% + 6px); background:#ffffff; border:2px solid var(--border-card); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; z-index:999999; min-width:160px; max-height:280px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; box-sizing:border-box; flex-direction:column; gap:4px;">
                     <!-- Option 1: Switch Spots -->
                     <button type="button" onclick="window.toggleSwapPanels(); window.closeLayoutDropdown();" id="swapPanelsBtn"
                       style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
@@ -1652,6 +1701,57 @@
                       onmouseleave="if(window.currentWorkbenchLayout === 'bottom-recipe'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
                       <span id="optLayoutFullWidthText">Full Width</span>
+                    </button>
+                    <!-- Divider -->
+                    <div style="height: 1.5px; background: rgba(0,0,0,0.06); margin: 4px 6px;"></div>
+                    <!-- Option 4: Fit Video -->
+                    <button type="button" onclick="window.setVideoFitMode('contain'); window.closeLayoutDropdown();" id="videoFitContainBtn"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentVideoFitMode === 'contain'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minimize"><path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5"/></svg>
+                      <span>Fit Video (YouTube Style)</span>
+                    </button>
+                    <!-- Option 5: Fill Video -->
+                    <button type="button" onclick="window.setVideoFitMode('cover'); window.closeLayoutDropdown();" id="videoFitCoverBtn"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentVideoFitMode === 'cover'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize"><path d="M8 3H3v5M21 8V3h-5M3 16v5h5M16 21h5v-5"/></svg>
+                      <span>Zoom to Fill (Cropped)</span>
+                    </button>
+                    <!-- Divider -->
+                    <div style="height: 1.5px; background: rgba(0,0,0,0.06); margin: 4px 6px;"></div>
+                    <!-- Label -->
+                    <span style="font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 4px 12px; display: block;">Player Box Shape</span>
+                    <!-- Shape Options -->
+                    <button type="button" onclick="window.setPlayerBoxShape('auto'); window.closeLayoutDropdown();" id="btnBoxShape_auto"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === 'auto'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M6 9h2v2H6V9zm10 2h-2V9h2v2z"/></svg>
+                      <span>Auto (Match Video)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('16-9'); window.closeLayoutDropdown();" id="btnBoxShape_16-9"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '16-9'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tv"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><path d="m17 2-5 5-5-5"/></svg>
+                      <span>Landscape (16:9)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('1-1'); window.closeLayoutDropdown();" id="btnBoxShape_1-1"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '1-1'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+                      <span>Square (1:1)</span>
+                    </button>
+                    <button type="button" onclick="window.setPlayerBoxShape('9-16'); window.closeLayoutDropdown();" id="btnBoxShape_9-16"
+                      style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; color:var(--text-body); padding:8px 12px; text-align:left; font-family:var(--font); font-size:0.75rem; font-weight:800; cursor:pointer; border-radius:8px; transition:all 0.15s;"
+                      onmouseenter="this.style.background='var(--primary-light)'; this.style.color='var(--primary)';"
+                      onmouseleave="if(window.currentPlayerBoxShape === '9-16'){ this.style.background='var(--primary-light)'; this.style.color='var(--primary)'; } else { this.style.background='transparent'; this.style.color='var(--text-body)'; }">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                      <span>Portrait (9:16)</span>
                     </button>
                   </div>
                 </div>

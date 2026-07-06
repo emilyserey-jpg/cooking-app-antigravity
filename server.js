@@ -100,6 +100,45 @@ app.get('/api/cf-video-status/:uid', async (req, res) => {
   }
 });
 
+// ─── Cloudflare Stream: Delete a video ──────────────────────────────────────
+app.delete('/api/cf-video-delete/:uid', async (req, res) => {
+  if (!CF_ACCOUNT_ID || !CF_API_TOKEN)
+    return res.status(500).json({ error: 'Cloudflare Stream not configured.' });
+  try {
+    const response = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/stream/${req.params.uid}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${CF_API_TOKEN}` },
+      }
+    );
+    // Cloudflare returns 200 OK with success: true for deletions
+    const data = await response.json();
+    if (!data.success) return res.status(400).json({ error: data.errors?.[0]?.message || 'Cloudflare deletion failed.' });
+    res.json({ success: true, message: 'Video deleted from Cloudflare Stream.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Supabase Storage: Delete a video ───────────────────────────────────────
+app.delete('/api/supabase-video-delete', async (req, res) => {
+  const { filepath } = req.body;
+  if (!filepath) return res.status(400).json({ error: 'filepath is required.' });
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
+    );
+    const { data, error } = await sb.storage.from('videos').remove([filepath]);
+    if (error) throw error;
+    res.json({ success: true, message: 'File deleted from Supabase Storage.', data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Helper for Gemini File API upload and state waiting
 async function uploadToGeminiFileAPI(buffer, mimeType, originalName) {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured.');

@@ -347,6 +347,23 @@ async function initializeApp() {
     });
   }
 
+  // Attach input event listeners for Title and Ingredients auto-saving
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
+      if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
+    });
+  }
+  const ingredientsInput = document.getElementById('ingredientsText');
+  if (ingredientsInput) {
+    ingredientsInput.addEventListener('input', () => {
+      if (typeof window.serializeRecipeIngredients === 'function') {
+        window._aiIngredients = window.serializeRecipeIngredients();
+      }
+      if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
+    });
+  }
+
   // Connect to Supabase
   await initSupabase();
 
@@ -1914,6 +1931,13 @@ function speakFeedback(phrase) {
 // INTERFACE VIEW SWITCHER / HELPER SHEETS
 // ----------------------------------------------------
 function switchView(viewId) {
+  // Save active draft when leaving the Create view
+  if (currentView === 'create' && viewId !== 'create') {
+    if (typeof window.saveLocalDraft === 'function') {
+      window.saveLocalDraft();
+    }
+  }
+
   if (viewId !== 'create') {
     document.body.classList.remove('mobile-editing-active');
   }
@@ -4902,6 +4926,249 @@ window.deleteRecipeById = async function(id) {
   }
 };
 
+// ==============================================================================
+// ─── Autosave & Recovery System ───────────────────────────────────────────────
+// ==============================================================================
+window.saveLocalDraft = function() {
+  const titleInput = document.getElementById('newRecipeTitleInput');
+  const title = titleInput ? titleInput.value.trim() : '';
+  const draft = {
+    title,
+    steps: window.createStepsArr || [],
+    uploadedVideoUID: window.uploadedVideoUID || null,
+    ingredients: window._aiIngredients || '',
+    cachedSegments: window.cachedSegments || [],
+    timestamp: Date.now()
+  };
+  localStorage.setItem('cookingGPS_active_draft', JSON.stringify(draft));
+};
+
+window.checkAndShowAutosaveBanner = function() {
+  const oldBanner = document.getElementById('autosaveBanner');
+  if (oldBanner) oldBanner.remove();
+
+  const saved = localStorage.getItem('cookingGPS_active_draft');
+  if (!saved) return;
+
+  let draft;
+  try {
+    draft = JSON.parse(saved);
+  } catch (e) {
+    return;
+  }
+
+  if (!draft || (!draft.title && (!draft.steps || draft.steps.length === 0) && !draft.uploadedVideoUID)) {
+    localStorage.removeItem('cookingGPS_active_draft');
+    return;
+  }
+
+  const container = document.getElementById('view-create');
+  if (!container) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'autosaveBanner';
+  banner.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #fffbeb;
+    border: 1.5px solid #fef3c7;
+    border-radius: 16px;
+    margin: 15px auto 25px auto;
+    max-width: 800px;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05);
+    box-sizing: border-box;
+    gap: 15px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  `;
+
+  banner.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 250px; flex: 1;">
+      <span style="font-size: 1.3rem;">📝</span>
+      <div>
+        <div style="font-weight: 800; color: #92400e; font-size: 0.85rem;">Unsaved draft in progress ("${draft.title || 'Untitled Draft'}")</div>
+        <div style="font-size: 0.72rem; color: #b45309; font-weight: 600;">Would you like to keep working on this recipe?</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button onclick="window.keepEditingDraft()" style="background: #d97706; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s;">Keep Editing</button>
+      <button onclick="window.saveLocalDraftToSupabase()" style="background: #fff; color: #d97706; border: 1.5px solid #d97706; border-radius: 8px; padding: 6px 14px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; cursor: pointer;">Save as Draft</button>
+      <button onclick="window.discardLocalDraft()" style="background: #fff5f5; color: #e53e3e; border: 1.5px solid #feb2b2; border-radius: 8px; padding: 6px 14px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; cursor: pointer;">Delete & Start Over</button>
+    </div>
+  `;
+
+  container.insertBefore(banner, container.firstChild);
+};
+
+window.keepEditingDraft = function() {
+  const saved = localStorage.getItem('cookingGPS_active_draft');
+  if (!saved) return;
+  const draft = JSON.parse(saved);
+  
+  document.getElementById('newRecipeTitleInput').value = draft.title || '';
+  window.createStepsArr = draft.steps || [];
+  window.uploadedVideoUID = draft.uploadedVideoUID || null;
+  window._aiIngredients = draft.ingredients || '';
+  window.cachedSegments = draft.cachedSegments || [];
+
+  if (draft.uploadedVideoUID) {
+    const videoUrl = `https://videodelivery.net/${draft.uploadedVideoUID}/manifest/video.m3u8`;
+    showEditorStage(videoUrl);
+  } else {
+    document.getElementById('createStage1').style.display = 'none';
+    document.getElementById('createStage2').style.display = 'flex';
+  }
+
+  renderCreateSteps();
+  if (typeof window.updateEditorSaveButtonsUI === 'function') {
+    window.updateEditorSaveButtonsUI();
+  }
+
+  const banner = document.getElementById('autosaveBanner');
+  if (banner) banner.remove();
+};
+
+window.saveLocalDraftToSupabase = async function() {
+  const saved = localStorage.getItem('cookingGPS_active_draft');
+  if (!saved) return;
+  const draft = JSON.parse(saved);
+
+  if (!currentUser) {
+    showTip('Please sign in to save drafts.');
+    window.openAuthModal();
+    return;
+  }
+
+  const banner = document.getElementById('autosaveBanner');
+  const btns = banner.querySelectorAll('button');
+  btns.forEach(b => b.disabled = true);
+  const keepBtn = btns[0];
+  if (keepBtn) keepBtn.textContent = 'Saving...';
+
+  try {
+    const { createRecipe } = await import('./supabase-client.js');
+    const steps = draft.steps.map(s => s.label);
+    const loops = draft.steps.map(s => ({
+      start:       s.time,
+      end:         s.endTime ?? null,
+      label:       s.label,
+      description: s.description || '',
+      ingredients: s.ingredients || [],
+      audio_url:   s.audio_url || s.audioUrl || '',
+      timer:       s.timer,
+      timers:      s.timers || (s.timer ? [{ duration: Number(s.timer), label: 'Timer 1' }] : [])
+    }));
+
+    let videoUrl = null;
+    if (draft.uploadedVideoUID) {
+      videoUrl = `https://videodelivery.net/${draft.uploadedVideoUID}/manifest/video.m3u8`;
+    }
+
+    await createRecipe({
+      title:         draft.title || 'Untitled Draft',
+      creator:       currentUser.email,
+      duration:      0,
+      steps,
+      loops,
+      video_url:     videoUrl,
+      thumbnail_url: null,
+      is_draft:      true,
+      ingredients:   draft.ingredients || '',
+      text_overlays: draft.cachedSegments || []
+    });
+
+    showTip('Draft saved to cloud profile!');
+    localStorage.removeItem('cookingGPS_active_draft');
+    resetCreateView();
+    if (banner) banner.remove();
+  } catch (err) {
+    console.error('Error saving local draft to Supabase:', err);
+    showTip('Failed to save draft: ' + err.message);
+    btns.forEach(b => b.disabled = false);
+    if (keepBtn) keepBtn.textContent = 'Keep Editing';
+  }
+};
+
+window.discardLocalDraft = async function() {
+  if (!confirm('Are you sure you want to discard your changes and start over? This cannot be undone.')) {
+    return;
+  }
+
+  const activeUID = window.uploadedVideoUID || null;
+  let savedUID = null;
+  const saved = localStorage.getItem('cookingGPS_active_draft');
+  if (saved) {
+    try {
+      const draft = JSON.parse(saved);
+      savedUID = draft.uploadedVideoUID || null;
+    } catch(e){}
+  }
+
+  const uidToDelete = activeUID || savedUID;
+  if (uidToDelete) {
+    try {
+      await fetch(`/api/cf-video-delete/${uidToDelete}`, { method: 'DELETE' });
+      console.log('Orphaned video deleted from Cloudflare Stream:', uidToDelete);
+    } catch (err) {
+      console.error('Failed to delete Cloudflare video:', err);
+    }
+  }
+
+  localStorage.removeItem('cookingGPS_active_draft');
+  resetCreateView();
+  
+  const banner = document.getElementById('autosaveBanner');
+  if (banner) banner.remove();
+  
+  const clearBtn = document.getElementById('clearDraftBtn');
+  if (clearBtn) clearBtn.remove();
+  
+  showTip('Unsaved session cleared.');
+};
+
+window.ensureStartOverButtonExists = function() {
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
+  if (!saveDraftBtn) return;
+
+  let clearBtn = document.getElementById('clearDraftBtn');
+  if (!clearBtn) {
+    clearBtn = document.createElement('button');
+    clearBtn.id = 'clearDraftBtn';
+    clearBtn.style.cssText = `
+      width: 100%;
+      background: #fff5f5;
+      border: 2px solid #feb2b2;
+      color: #e53e3e;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    `;
+    clearBtn.innerHTML = '<span>Start Over</span>';
+    clearBtn.onclick = function() {
+      if (typeof window.discardLocalDraft === 'function') {
+        window.discardLocalDraft();
+      }
+    };
+  }
+
+  // Insert clearBtn immediately after saveDraftBtn
+  const parent = saveDraftBtn.parentElement;
+  if (parent) {
+    parent.insertBefore(clearBtn, saveDraftBtn.nextSibling);
+  }
+};
+
 // Save as Draft (from Create view)
 window.saveDraft = async function() {
   window._aiIngredients = window.serializeRecipeIngredients();
@@ -5020,6 +5287,10 @@ window.saveDraft = async function() {
         ingredients: window._aiIngredients || '',
       });
     }
+
+    localStorage.removeItem('cookingGPS_active_draft');
+    const banner = document.getElementById('autosaveBanner');
+    if (banner) banner.remove();
 
     showTip(`"${title}" saved!`);
     if (btn) btn.disabled = false;
@@ -9358,6 +9629,9 @@ function initCreateView() {
   if (typeof window.switchWorkbenchLayout === 'function') {
     window.switchWorkbenchLayout('standard');
   }
+  if (typeof window.checkAndShowAutosaveBanner === 'function') {
+    window.checkAndShowAutosaveBanner();
+  }
 }
 
 // ── Drag & drop handlers ──────────────────────────────────────
@@ -9591,6 +9865,9 @@ function showEditorStage(videoUrl) {
   if (typeof window.adjustWorkbenchVideoSize === 'function') {
     window.adjustWorkbenchVideoSize();
   }
+  if (typeof window.ensureStartOverButtonExists === 'function') {
+    window.ensureStartOverButtonExists();
+  }
 }
 
 // Step colors — one per step, Wii-style pastels
@@ -9704,6 +9981,12 @@ window.onVideoLoaded = function() {
   if (videoEl) {
     if (typeof window.adjustWorkbenchVideoSize === 'function') {
       window.adjustWorkbenchVideoSize();
+    }
+    if (typeof window.setVideoFitMode === 'function') {
+      window.setVideoFitMode(window.currentVideoFitMode);
+    }
+    if (typeof window.setPlayerBoxShape === 'function') {
+      window.setPlayerBoxShape(window.currentPlayerBoxShape);
     }
     const isMutedPref = localStorage.getItem('cooking_gps_editor_muted') !== 'false';
     videoEl.muted = isMutedPref;
@@ -9819,6 +10102,7 @@ window.addStepAtCurrentTime = function() {
   renderCreateSteps();
   renderTimeline();
   showTip(`Step marked at ${m}:${s} — play to the loop end then tap Set End`);
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 // Set the loop end point for a step to the current video time
@@ -9836,6 +10120,7 @@ window.setStepEnd = function(i) {
   const em = Math.floor(endTime / 60);
   const es = Math.floor(endTime % 60).toString().padStart(2, '0');
   showTip(`Loop end set to ${em}:${es}`);
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 // ── Timeline renderer ──────────────────────────────────────────────────────
@@ -11108,6 +11393,12 @@ window.toggleLayoutDropdown = function(e, menuId) {
       }
     }
 
+    if (typeof window.updateVideoFitUI === 'function') {
+      window.updateVideoFitUI();
+    }
+    if (typeof window.updatePlayerBoxShapeUI === 'function') {
+      window.updatePlayerBoxShapeUI();
+    }
     menu.style.display = 'flex';
     window.activeLayoutMenuId = menuId;
   }
@@ -12124,6 +12415,7 @@ window.mergeCreateStep = function(i) {
   renderCreateSteps();
   renderTimeline();
   showTip(`Merged step ${i+1} with step ${i+2}!`);
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.redoStepDescription = async function(i, tweakPrompt = '') {
@@ -12339,6 +12631,7 @@ window.stepDrop = function(e, i) {
   dragSrcIndex = null;
   renderCreateSteps();
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 window.stepDragEnd = function(e) {
   dragSrcIndex = null;
@@ -12346,7 +12639,7 @@ window.stepDragEnd = function(e) {
   renderTimeline();
 };
 
-window.updateStepLabel       = (i, v) => { if (createStepsArr[i]) createStepsArr[i].label = v; renderTimeline(); };
+window.updateStepLabel       = (i, v) => { if (createStepsArr[i]) createStepsArr[i].label = v; renderTimeline(); if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft(); };
 window.updateStepDescription = (i, v) => {
   if (createStepsArr[i]) {
     createStepsArr[i].description = v;
@@ -12355,11 +12648,13 @@ window.updateStepDescription = (i, v) => {
       renderCreateSteps();
     }
   }
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 window.updateStepIngredientsText = (i, val) => {
   if (createStepsArr[i]) {
     createStepsArr[i].ingredients = val.split('\n').map(x => x.trim()).filter(Boolean);
   }
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.updateStepTimerMinutes = (i, v) => {
@@ -12382,6 +12677,7 @@ window.updateStepTimerMinutes = (i, v) => {
   }
   
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.updateStepTimerSeconds = (i, v) => {
@@ -12404,6 +12700,7 @@ window.updateStepTimerSeconds = (i, v) => {
   }
   
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.addStepTimer = (i) => {
@@ -12414,6 +12711,7 @@ window.addStepTimer = (i) => {
   step.timer = step.timers[0].duration;
   renderCreateSteps();
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.removeStepTimer = (i, tIdx) => {
@@ -12423,12 +12721,14 @@ window.removeStepTimer = (i, tIdx) => {
   step.timer = step.timers.length > 0 ? step.timers[0].duration : null;
   renderCreateSteps();
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.updateStepTimerLabel = (i, tIdx, val) => {
   const step = createStepsArr[i];
   if (!step || !step.timers || !step.timers[tIdx]) return;
   step.timers[tIdx].label = val.trim();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.updateStepTimerDurationMin = (i, tIdx, val) => {
@@ -12439,6 +12739,7 @@ window.updateStepTimerDurationMin = (i, tIdx, val) => {
   step.timers[tIdx].duration = min * 60 + currentSec;
   step.timer = step.timers[0].duration;
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.updateStepTimerDurationSec = (i, tIdx, val) => {
@@ -12449,6 +12750,7 @@ window.updateStepTimerDurationSec = (i, tIdx, val) => {
   step.timers[tIdx].duration = min * 60 + sec;
   step.timer = step.timers[0].duration;
   renderTimeline();
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 window.parseDescriptionAndIngredients = function(text, existingIngs) {
   let description = (text || '').trim();
@@ -12475,7 +12777,7 @@ window.navToStep = function(i) {
     window.scrollToActiveStep(i);
   }
 };
-window.removeCreateStep = (i)    => { createStepsArr.splice(i, 1); renderCreateSteps(); renderTimeline(); stopPreviewLoop(); };
+window.removeCreateStep = (i)    => { createStepsArr.splice(i, 1); renderCreateSteps(); renderTimeline(); stopPreviewLoop(); if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft(); };
 
 
 window.toggleCreatePrivacy = function() {
@@ -12905,6 +13207,10 @@ window.saveNewRecipe = async function(targetFolderId) {
         }
       } catch {}
     }
+    localStorage.removeItem('cookingGPS_active_draft');
+    const banner = document.getElementById('autosaveBanner');
+    if (banner) banner.remove();
+
     document.getElementById('createStage2').style.display = 'none';
     document.body.classList.remove('mobile-editing-active');
     showStage3WithFolderPicker(savedRecipe, createIsPublic);
@@ -13043,6 +13349,10 @@ window.resetCreateView = function() {
     }
     switchView(targetView);
   }
+
+  const clearBtn = document.getElementById('clearDraftBtn');
+  if (clearBtn) clearBtn.remove();
+
   editorPreviousView = null;
 };
 
@@ -13147,9 +13457,50 @@ Object.defineProperty(window, 'cachedTranscript', {
 });
 
 // Store the file when user picks it (called in handleFileSelect)
-// We patch handleFileSelect to also save uploadedFile
+// We patch handleFileSelect to also save uploadedFile and warn if unsaved changes exist
 const _origHandleFileSelect = window.handleFileSelect;
 window.handleFileSelect = async function(file) {
+  if (!file) return;
+
+  const activeUID = window.uploadedVideoUID || null;
+  let savedUID = null;
+  const saved = localStorage.getItem('cookingGPS_active_draft');
+  let draft = null;
+  if (saved) {
+    try {
+      draft = JSON.parse(saved);
+      savedUID = draft.uploadedVideoUID || null;
+    } catch(e){}
+  }
+
+  const hasUnsavedWork = activeUID || (draft && (draft.title || (draft.steps && draft.steps.length > 0) || draft.uploadedVideoUID));
+
+  if (hasUnsavedWork) {
+    if (!confirm('Starting a new recipe will permanently delete your current unsaved draft. Do you want to start over?')) {
+      const inputs = ['fileInput', 'importFileInput', 'mobileFileInput'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      return;
+    }
+
+    // Call delete API for old video
+    const uidToDelete = activeUID || savedUID;
+    if (uidToDelete) {
+      try {
+        fetch(`/api/cf-video-delete/${uidToDelete}`, { method: 'DELETE' });
+        console.log('Deleted old video:', uidToDelete);
+      } catch(err) {
+        console.error('Failed to delete old video:', err);
+      }
+    }
+
+    localStorage.removeItem('cookingGPS_active_draft');
+    const banner = document.getElementById('autosaveBanner');
+    if (banner) banner.remove();
+  }
+
   uploadedFile     = file;       // save for AI
   cachedTranscript = null;       // clear any previous cache
   cachedSegments   = null;
@@ -14909,6 +15260,9 @@ window.setupResponsiveDrawers = function() {
       window.switchEditorTab(window.activeEditorTab || 'stops');
     }
   }
+  if (typeof window.ensureStartOverButtonExists === 'function') {
+    window.ensureStartOverButtonExists();
+  }
 };
 
 let carouselScrolling = false;
@@ -15927,23 +16281,30 @@ window.adjustWorkbenchVideoSize = function() {
 
   const videoWidth = videoEl.videoWidth;
   const videoHeight = videoEl.videoHeight;
-  const aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+  
+  // Determine aspect ratio based on shape preference
+  let aspectRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+  const shape = window.currentPlayerBoxShape || 'auto';
+  if (shape === '16-9') aspectRatio = 16 / 9;
+  else if (shape === '1-1') aspectRatio = 1 / 1;
+  else if (shape === '9-16') aspectRatio = 9 / 16;
 
   // Only apply custom adjustments on desktop screens (width > 768)
   if (window.innerWidth <= 768) {
     wrapper.style.setProperty('flex', 'none', 'important');
     wrapper.style.setProperty('margin', '0 auto', 'important');
-    if (aspectRatio < 1) {
-      // Portrait video: set a taller height and fit width to aspect ratio exactly
+    const displayRatio = shape === 'auto' ? (videoWidth && videoHeight ? videoWidth / videoHeight : 16/9) : aspectRatio;
+    if (displayRatio < 1) {
+      // Portrait video/container: set a taller height and fit width exactly
       wrapper.style.setProperty('height', 'min(460px, 60vh)', 'important');
       wrapper.style.setProperty('width', 'auto', 'important');
       wrapper.style.setProperty('max-width', '100%', 'important');
-      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
+      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 9} / ${videoHeight || 16}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
     } else {
-      // Landscape video: size naturally to aspect ratio
+      // Landscape video/container: size naturally to ratio
       wrapper.style.setProperty('width', '100%', 'important');
       wrapper.style.setProperty('height', 'auto', 'important');
-      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 16} / ${videoHeight || 9}`, 'important');
+      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 16} / ${videoHeight || 9}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
     }
     return;
   }
@@ -15957,7 +16318,7 @@ window.adjustWorkbenchVideoSize = function() {
   let targetHeight, targetWidth;
 
   if (aspectRatio >= 1) {
-    // Landscape video: match aspect ratio precisely to fit container width
+    // Landscape container: match aspect ratio precisely to fit container width
     targetHeight = containerWidth / aspectRatio;
     // Cap height between 320px and 650px to fit well on desktop
     const minH = 320 * scale;
@@ -15969,7 +16330,7 @@ window.adjustWorkbenchVideoSize = function() {
       targetHeight = targetWidth / aspectRatio;
     }
   } else {
-    // Portrait video: set size based on container width & aspect ratio, bounded by height
+    // Portrait container: set size based on container width & aspect ratio, bounded by height
     const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82) * scale;
     const minH = 440 * scale;
     targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 780 * scale));
@@ -15983,11 +16344,115 @@ window.adjustWorkbenchVideoSize = function() {
   wrapper.style.setProperty('width', `${targetWidth}px`, 'important');
   wrapper.style.setProperty('flex', 'none', 'important');
   wrapper.style.setProperty('align-self', 'center', 'important');
-  wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
+  wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 9} / ${videoHeight || 16}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
 };
 
 // Listen to window resize events to recalculate heights dynamically
 window.addEventListener('resize', window.adjustWorkbenchVideoSize);
+
+// Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped)
+window.currentVideoFitMode = localStorage.getItem('cooking_gps_video_fit') || 'contain';
+
+window.setVideoFitMode = function(mode) {
+  window.currentVideoFitMode = mode;
+  localStorage.setItem('cooking_gps_video_fit', mode);
+  
+  // Update video element styling on all loaded players
+  const players = document.querySelectorAll('#uploadedVideoPlayer');
+  players.forEach(player => {
+    player.style.setProperty('object-fit', mode, 'important');
+    if (mode === 'contain') {
+      player.style.setProperty('background', '#000', 'important');
+    } else {
+      player.style.setProperty('background', 'transparent', 'important');
+    }
+  });
+
+  // Update dropdown checkmark states
+  window.updateVideoFitUI();
+};
+
+window.updateVideoFitUI = function() {
+  const mode = window.currentVideoFitMode;
+  
+  // Select buttons across any active dropdown menus
+  const containBtns = document.querySelectorAll('[id^="videoFitContainBtn"]');
+  const coverBtns = document.querySelectorAll('[id^="videoFitCoverBtn"]');
+  
+  containBtns.forEach(btn => {
+    if (mode === 'contain') {
+      btn.style.background = 'var(--primary-light)';
+      btn.style.color = 'var(--primary)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--text-body)';
+    }
+  });
+  
+  coverBtns.forEach(btn => {
+    if (mode === 'cover') {
+      btn.style.background = 'var(--primary-light)';
+      btn.style.color = 'var(--primary)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--text-body)';
+    }
+  });
+
+  // Also sync the mobile header fit icon
+  const mobileIcon = document.getElementById('mobileFitIcon');
+  if (mobileIcon) {
+    if (mode === 'contain') {
+      // In contain mode (Fit), show "maximize" (click to expand to cover)
+      mobileIcon.setAttribute('data-lucide', 'maximize');
+    } else {
+      // In cover mode (Fill), show "minimize" (click to shrink to contain)
+      mobileIcon.setAttribute('data-lucide', 'minimize');
+    }
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+};
+
+window.toggleVideoFitModeMobile = function() {
+  const nextMode = window.currentVideoFitMode === 'contain' ? 'cover' : 'contain';
+  window.setVideoFitMode(nextMode);
+};
+
+// Player Box Shape Mode (auto, 16-9, 1-1, 9-16)
+window.currentPlayerBoxShape = localStorage.getItem('cooking_gps_box_shape') || 'auto';
+
+window.setPlayerBoxShape = function(shape) {
+  window.currentPlayerBoxShape = shape;
+  localStorage.setItem('cooking_gps_box_shape', shape);
+
+  // Recalculate sizes
+  if (typeof window.adjustWorkbenchVideoSize === 'function') {
+    window.adjustWorkbenchVideoSize();
+  }
+
+  // Update checkmarks in UI dropdown
+  window.updatePlayerBoxShapeUI();
+};
+
+window.updatePlayerBoxShapeUI = function() {
+  const shape = window.currentPlayerBoxShape;
+
+  const shapes = ['auto', '16-9', '1-1', '9-16'];
+  shapes.forEach(s => {
+    const btns = document.querySelectorAll(`[id^="btnBoxShape_${s}"]`);
+    btns.forEach(btn => {
+      if (s === shape) {
+        btn.style.background = 'var(--primary-light)';
+        btn.style.color = 'var(--primary)';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-body)';
+      }
+    });
+  });
+};
 
 window.toggleEditorSidebar = function() {
   const rightPanel = document.getElementById('workbenchRight');
@@ -16693,12 +17158,20 @@ window.addNewCustomPageCard = function() {
   };
   window.syncCustomPageUI();
   window.switchEditorTab(newId);
+  if (typeof window.serializeRecipeIngredients === 'function') {
+    window._aiIngredients = window.serializeRecipeIngredients();
+  }
+  if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
 };
 
 window.removeCustomPageCard = function(tabId) {
   if (confirm('Are you sure you want to delete this custom page?')) {
     delete customPages[tabId];
     window.syncCustomPageUI();
+    if (typeof window.serializeRecipeIngredients === 'function') {
+      window._aiIngredients = window.serializeRecipeIngredients();
+    }
+    if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
   }
 };
 
@@ -16711,12 +17184,20 @@ window.updateCustomPageName = function(tabId, val) {
         labelEl.textContent = `${val || 'Untitled Page'}`;
       }
     }
+    if (typeof window.serializeRecipeIngredients === 'function') {
+      window._aiIngredients = window.serializeRecipeIngredients();
+    }
+    if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
   }
 };
 
 window.updateCustomPageContent = function(tabId, val) {
   if (customPages[tabId]) {
     customPages[tabId].content = val;
+    if (typeof window.serializeRecipeIngredients === 'function') {
+      window._aiIngredients = window.serializeRecipeIngredients();
+    }
+    if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
   }
 };
 
@@ -16788,6 +17269,10 @@ window.generateContentForInlineSetup = async function(tabId, promptType, pageNam
     const data = await res.json();
     if (customPages[tabId]) {
       customPages[tabId].content = data.content || '';
+      if (typeof window.serializeRecipeIngredients === 'function') {
+        window._aiIngredients = window.serializeRecipeIngredients();
+      }
+      if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
     }
     
     contentInput.value = data.content || '';
@@ -16812,12 +17297,20 @@ window.deleteCustomPage = function(tabId) {
     delete customPages[tabId];
     window.syncCustomPageUI();
     window.switchEditorTab('add_custom');
+    if (typeof window.serializeRecipeIngredients === 'function') {
+      window._aiIngredients = window.serializeRecipeIngredients();
+    }
+    if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
   }
 };
 
 window.updateCustomPageContent = function(tabId, val) {
   if (customPages[tabId]) {
     customPages[tabId].content = val;
+    if (typeof window.serializeRecipeIngredients === 'function') {
+      window._aiIngredients = window.serializeRecipeIngredients();
+    }
+    if (typeof window.saveLocalDraft === 'function') window.saveLocalDraft();
   }
 };
 
