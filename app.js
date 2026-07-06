@@ -5763,26 +5763,49 @@ window.applySplitLayoutMobile = function() {
   }
 };
 
-// Video Zoom Crop (relieves side letterboxes by zooming 1.78x on landscape container)
-window.currentVideoZoomCropActive = localStorage.getItem('cooking_gps_video_zoom_crop') === 'true';
+// Video Zoom Crop (relieves side letterboxes by zooming 3.16x on landscape container)
+let initialZoomActive = false;
+try {
+  initialZoomActive = localStorage.getItem('cooking_gps_video_zoom_crop') === 'true';
+} catch (e) {
+  console.warn('localStorage access failed:', e);
+}
+window.currentVideoZoomCropActive = initialZoomActive;
 
 window.toggleVideoZoomCrop = function() {
   const active = !window.currentVideoZoomCropActive;
   window.currentVideoZoomCropActive = active;
-  localStorage.setItem('cooking_gps_video_zoom_crop', active);
+  try {
+    localStorage.setItem('cooking_gps_video_zoom_crop', active);
+  } catch (e) {
+    console.warn('localStorage set failed:', e);
+  }
   window.applyVideoZoomCrop();
 };
 
 window.applyVideoZoomCrop = function() {
   const active = window.currentVideoZoomCropActive;
-  const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas');
+  
+  // Select all potential players: mobile real video, mobile canvas, and desktop main player
+  const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas, #uploadedVideoPlayer');
   players.forEach(player => {
     if (active) {
-      player.style.setProperty('transform', 'scale(3.16)', 'important');
+      player.style.setProperty('transform', 'scale3d(3.16, 3.16, 1)', 'important');
       player.style.setProperty('transform-origin', 'center center', 'important');
+      player.style.setProperty('will-change', 'transform', 'important');
     } else {
       player.style.removeProperty('transform');
       player.style.removeProperty('transform-origin');
+      player.style.removeProperty('will-change');
+    }
+  });
+
+  const placeholders = document.querySelectorAll('.mobile-video-placeholder, #workbenchVideoWrapper');
+  placeholders.forEach(ph => {
+    if (active) {
+      ph.style.setProperty('overflow', 'hidden', 'important');
+    } else {
+      ph.style.removeProperty('overflow');
     }
   });
 
