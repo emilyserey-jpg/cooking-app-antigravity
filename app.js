@@ -3895,18 +3895,6 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     // Refresh sub state UI
     updateSubscribeUI(creatorEmail);
 
-    // Update About stats
-    const stats = getCreatorStats(creatorEmail);
-    const joinedEl = document.getElementById('pubAboutStatsJoined');
-    if (joinedEl) joinedEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="calendar" style="width: 14px; height: 14px;"></i></span><span>Joined ${stats.joined}</span>`;
-    
-    const countEl = document.getElementById('pubAboutStatsRecipes');
-    if (countEl) countEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="chef-hat" style="width: 14px; height: 14px;"></i></span><span>${list.length} public recipes</span>`;
-    
-    const viewsEl = document.getElementById('pubAboutStatsViews');
-    const mockViewsTotal = stats.views + (list.length * 148);
-    if (viewsEl) viewsEl.innerHTML = `<span class="yt-about-stat-icon"><i data-lucide="trending-up" style="width: 14px; height: 14px;"></i></span><span>${mockViewsTotal.toLocaleString()} total views</span>`;
-
     // Render Home and Recipes contents
     pubRenderYTHome(list);
     pubRenderYTRecipes(list);
