@@ -3621,6 +3621,22 @@ a:focus-visible {
   background: #fff !important;
   display: flex !important;
   flex-direction: column !important;
+  overflow-y: auto !important;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.phone-screen.split-view-active .player-left-column::-webkit-scrollbar {
+  display: none !important;
+}
+
+.phone-screen.split-view-active #playerRecipeTitleContainer {
+  padding: 8px 10px !important;
+  margin-bottom: 6px !important;
+  border-radius: 8px !important;
+}
+.phone-screen.split-view-active #playerRecipeTitle {
+  font-size: 0.75rem !important;
+  line-height: 1.25 !important;
 }
 
 .phone-screen.split-view-active .mobile-player-body {
