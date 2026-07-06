@@ -124,8 +124,8 @@
           <button id="editProfileMenuBtn" onclick="openEditProfileModal(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
             <i data-lucide="user-cog" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit Profile
           </button>
-          <button id="editPageMenuBtn" onclick="openEditProfileModal(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
-            <i data-lucide="edit" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit Page
+          <button id="editPageMenuBtn" onclick="window.handleEditLibraryClick(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
+            <i data-lucide="edit" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit My Library
           </button>
           
           
@@ -497,9 +497,18 @@
       </div>
     </section>
 
-    <!-- GRID VIEW — Multi-step simultaneous looping viewer -->
     <section id="view-grid-view" class="view-section" style="padding:0;">
       <div style="max-width:1100px;margin:0 auto;padding:1.5rem 1.25rem 3rem;">
+
+        <!-- ── Library Edit Mode Active Banner ── -->
+        <div id="libEditBanner" style="display:none; align-items:center; justify-content:space-between; padding:10px 16px; border-radius:12px; background:var(--primary-soft); border:1.5px solid var(--primary); margin-bottom:1.25rem; box-sizing:border-box;">
+          <span style="font-size:0.82rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+            <i data-lucide="info" style="width:16px; height:16px;"></i> Library Edit Mode Active
+          </span>
+          <button onclick="window.toggleLibEditMode(false)" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-family:var(--font); font-weight:900; font-size:0.75rem; cursor:pointer;">
+            Done
+          </button>
+        </div>
 
         <!-- ── Library Header ── -->
         <div style="margin-bottom:1rem;">

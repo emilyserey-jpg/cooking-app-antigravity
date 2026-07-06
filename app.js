@@ -2006,7 +2006,12 @@ function switchView(viewId) {
     if (!libState) libLoad();
     renderLibrary();
   }
-  if (viewId !== 'grid-view') stopAllGridLoops();
+  if (viewId !== 'grid-view') {
+    stopAllGridLoops();
+    if (window.libEditMode) {
+      window.toggleLibEditMode(false);
+    }
+  }
   if (viewId === 'my-profile') {
     // Load own public channel
     if (!currentUser) {
@@ -8134,7 +8139,7 @@ function libRenderContent() {
 
 function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
-  const isDrag = libState.sort === 'custom';
+  const isDrag = window.libEditMode && libState.sort === 'custom';
 
   const recipesSource = window.getFolderRecipesSource();
   const folderRecipes = (f.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
@@ -8192,7 +8197,7 @@ function libFolderCardHTML(f) {
       ondrop="libOnDrop(event,'folder','${f.id}')"
       ondragleave="libOnDragLeave(event)">
       <!-- Actions menu -->
-      <div style="position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:10;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:14px;right:14px;display:${window.libEditMode ? 'flex' : 'none'};gap:6px;z-index:10;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
           style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
@@ -8214,31 +8219,33 @@ function libRecipeCardHTML(r, folderId) {
   const date = r.created_at
     ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : '';
-  const isDrag = libState.sort === 'custom';
+  const isDrag = window.libEditMode && libState.sort === 'custom';
   const layout = libState.layout || 'grid';
 
   let folderSelectHtml = '';
-  if (!folderId) {
-    // Loose video
-    folderSelectHtml = `
-      <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', null)" 
-              class="lib-folder-select-trigger"
-              style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
-        Save to folder
-      </button>
-    `;
-  } else {
-    // In-folder video: simple grey Remove button
-    folderSelectHtml = `
-      <button onclick="event.stopPropagation(); libRemoveFromFolder('${r.id}', '${folderId}')" 
-              title="Remove from folder"
-              style="display:inline-flex; align-items:center; gap:4px; border:none; border-radius:8px; padding:5px 10px; font-family:var(--font); font-weight:800; font-size:0.65rem; outline:none; background:rgba(0,0,0,0.06); color:var(--text-muted); cursor:pointer; white-space:nowrap; transition: background 0.2s;">
-        Remove
-      </button>
-    `;
+  if (window.libEditMode) {
+    if (!folderId) {
+      // Loose video
+      folderSelectHtml = `
+        <button onclick="window.toggleLibFolderDropdown(event, '${r.id}', null)" 
+                class="lib-folder-select-trigger"
+                style="display:inline-flex; align-items:center; gap:6px; border:2px solid var(--border-card); border-radius:8px; padding:4px 8px; font-family:var(--font); font-weight:700; font-size:0.65rem; outline:none; background:#fff; color:var(--text-muted); max-width:115px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: border-color 0.2s, background 0.2s;">
+          Save to folder
+        </button>
+      `;
+    } else {
+      // In-folder video: simple grey Remove button
+      folderSelectHtml = `
+        <button onclick="event.stopPropagation(); libRemoveFromFolder('${r.id}', '${folderId}')" 
+                title="Remove from folder"
+                style="display:inline-flex; align-items:center; gap:4px; border:none; border-radius:8px; padding:5px 10px; font-family:var(--font); font-weight:800; font-size:0.65rem; outline:none; background:rgba(0,0,0,0.06); color:var(--text-muted); cursor:pointer; white-space:nowrap; transition: background 0.2s;">
+          Remove
+        </button>
+      `;
+    }
   }
 
-  const deleteBtn = !folderId
+  const deleteBtn = (window.libEditMode && !folderId)
     ? `<button onclick="event.stopPropagation();libDeleteRecipe('${r.id}')" title="Delete video"
          style="background:rgba(239,68,68,0.08);border:none;border-radius:7px;padding:5px 10px;font-family:var(--font);font-size:0.65rem;font-weight:800;cursor:pointer;color:#ef4444;white-space:nowrap;">Delete</button>`
     : '';
@@ -8730,6 +8737,47 @@ function libUpdateLayoutBtns() {
   }
   libUpdateOptionsDropdownHighlighting();
 }
+
+// ── Library Edit Mode State & Handlers ─────────────────────────────────────
+window.libEditMode = false;
+
+window.toggleLibEditMode = function(active) {
+  window.libEditMode = !!active;
+
+  // Toggle visibility of the Edit Mode banners
+  document.querySelectorAll('#libEditBanner').forEach(banner => {
+    banner.style.display = window.libEditMode ? 'flex' : 'none';
+  });
+
+  // Update the spatula dropdown menu buttons
+  document.querySelectorAll('#editPageMenuBtn').forEach(btn => {
+    if (window.libEditMode) {
+      btn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Done Editing Library';
+      btn.style.color = 'var(--primary)';
+    } else {
+      btn.innerHTML = '<i data-lucide="edit" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit My Library';
+      btn.style.color = 'var(--text-body)';
+    }
+  });
+
+  if (window.lucide) window.lucide.createIcons();
+
+  // Re-render the library content
+  libRenderContent();
+};
+
+window.handleEditLibraryClick = function(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  // Navigate straight to the Library view
+  switchView('grid-view');
+  // Toggle the edit mode
+  window.toggleLibEditMode(!window.libEditMode);
+  // Close the user initials/spatula dropdown
+  toggleUserDropdown(event);
+};
 
 // ── Combined Options Dropdown ─────────────────────────────────────────────
 window.toggleLibOptionsDropdown = function(event) {
