@@ -2385,106 +2385,165 @@ a:focus-visible {
     display: flex !important;
     flex-direction: column !important;
   }
+}
 
-  .channel-container {
-    margin: 0.75rem auto 2rem;
-    border-radius: var(--radius-md);
-    border-width: 1px;
-  }
-  .channel-banner {
-    height: 110px;
-  }
-  .channel-banner-logo {
-    font-size: 1.4rem;
-    bottom: 10px;
-    right: 15px;
-  }
-  .channel-header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 1.5rem 1.25rem 1rem;
-    gap: 1rem;
-  }
-  .channel-avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 2.2rem;
-  }
-  .channel-details {
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .channel-title {
-    font-size: 1.4rem;
-  }
-  .channel-meta {
-    justify-content: center;
-    font-size: 0.82rem;
-  }
-  .channel-bio-snippet {
-    font-size: 0.82rem;
-  }
-  .channel-actions {
-    justify-content: center;
-    width: 100%;
-  }
-  .btn-subscribe, .btn-channel-secondary {
-    padding: 8px 18px;
-    font-size: 0.82rem;
-  }
-  .channel-tabs {
-    padding-inline-start: 1rem;
-    gap: 1.25rem;
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    touch-action: pan-x !important;
-  }
-  .channel-tabs::-webkit-scrollbar {
-    display: none !important;
-  }
-  .channel-tab-btn {
-    padding: 10px 2px;
-    font-size: 0.88rem;
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-  }
-  .channel-tab-content {
-    padding: 1.25rem 1rem;
-    min-height: 250px;
-  }
-  .yt-video-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem 1rem;
-  }
-  .yt-trailer-section {
-    flex-direction: column;
-    padding: 1rem;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .yt-trailer-thumbnail-container {
-    min-width: 100%;
-  }
-  .yt-trailer-title {
-    font-size: 1.15rem;
-  }
-  .yt-trailer-desc {
-    font-size: 0.82rem;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-  .yt-about-section {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  .yt-about-bio-col, .yt-about-stats-col {
-    min-width: 100%;
-  }
+/* Creator channel styles pulled out of media query to support simulated mobile screens on all viewports */
+.channel-container {
+  margin: 0.75rem auto 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.channel-banner {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #4a90d9 50%, #c8e2f8 100%);
+  overflow: hidden;
+}
+.channel-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(30, 58, 95, 0.35) 0%, transparent 100%);
+}
+.channel-banner-logo {
+  position: absolute;
+  bottom: 10px;
+  right: 15px;
+  color: rgba(255, 255, 255, 0.2);
+  font-family: var(--font);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.channel-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 1.25rem 1rem;
+  gap: 1rem;
+}
+.channel-avatar-wrapper {
+  flex-shrink: 0;
+}
+.channel-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border: 3px solid #fff;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.channel-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.channel-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--text-heading);
+  margin: 0;
+  line-height: 1.2;
+}
+.channel-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.channel-bio-snippet {
+  font-size: 0.82rem;
+  color: var(--text-body);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.channel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.btn-subscribe, .btn-channel-secondary {
+  padding: 8px 18px;
+  font-size: 0.82rem;
+}
+.channel-tabs {
+  padding-inline-start: 1rem;
+  gap: 1.25rem;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  touch-action: pan-x !important;
+}
+.channel-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+.channel-tab-btn {
+  padding: 10px 2px;
+  font-size: 0.88rem;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+.channel-tab-content {
+  padding: 1.25rem 1rem;
+  min-height: 250px;
+}
+.yt-video-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem 1rem;
+}
+.yt-trailer-section {
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.yt-trailer-thumbnail-container {
+  min-width: 100%;
+}
+.yt-trailer-title {
+  font-size: 1.15rem;
+}
+.yt-trailer-desc {
+  font-size: 0.82rem;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.yt-about-section {
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.yt-about-bio-col, .yt-about-stats-col {
+  min-width: 100%;
 }
 
 /* ====================================================
