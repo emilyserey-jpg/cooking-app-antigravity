@@ -182,9 +182,9 @@
                 <div id="playerMultigridContainer" style="display:none; position:absolute; inset:0; z-index:4; overflow-y:auto; background:#0f172a; padding: 48px 8px 8px 8px; box-sizing:border-box;">
                   <!-- Grid layout controls (Layout: Row | Quad) -->
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
-                    <div style="display:flex; gap:6px;">
-                      <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="background:rgba(255,255,255,0.15); color:#fff; border:none; padding:4px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s;">Row Layout</button>
-                      <button onclick="window.setPlayerGridLayout('quad')" id="playerLayoutQuadBtn" style="background:var(--primary); color:#fff; border:none; padding:4px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s;">Quad Layout</button>
+                    <div style="display:inline-flex; background:rgba(255,255,255,0.08); padding:2px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);">
+                      <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:transparent; color:rgba(255,255,255,0.6);">Row Layout</button>
+                      <button onclick="window.setPlayerGridLayout('quad')" id="playerLayoutQuadBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:var(--primary); color:#fff;">Quad Layout</button>
                     </div>
                   </div>
                   <!-- Pick Sections (Horizontal scroll list of step checkboxes) -->
@@ -373,11 +373,11 @@
             </div>
 
             <!-- Multigrid Descriptions Layout Toggle Controls -->
-            <div id="playerMultigridDescControls" style="display:none; align-items:center; justify-content:space-between; margin-bottom:8px; width:100%;">
+            <div id="playerMultigridDescControls" style="display:none; align-items:center; justify-content:space-between; margin-bottom:8px; width:100%; flex-wrap:wrap; gap:8px;">
               <span style="font-size:0.75rem; font-weight:800; color:var(--text-title); display:flex; align-items:center; gap:4px;">
                 <i data-lucide="book-open" style="width:14px; height:14px; color:var(--primary);"></i> Step Descriptions
               </span>
-              <div style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px;">
+              <div style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
                 <button id="descViewRowBtn" onclick="window.setPlayerDescLayout('row')" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
                   Horizontal
                 </button>
@@ -394,9 +394,9 @@
 
             <!-- Steps timeline scroll list -->
             <div class="step-nav-chips-container">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
                 <div class="step-nav-chips-title" style="margin: 0;">Recipe Timeline</div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                   <button id="playerResetProgressBtn" onclick="resetPlayerProgress()" tabindex="-1" style="display: none; align-items: center; justify-content: center; padding: 4px 8px; border: none; border-radius: 6px; font-family: var(--font); font-size: 0.65rem; font-weight: 800; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-muted);" title="Reset progress">
                     Reset
                   </button>

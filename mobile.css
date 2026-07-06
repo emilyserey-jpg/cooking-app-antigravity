@@ -2738,6 +2738,7 @@ a:focus-visible {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important; /* Right-align Options button */
+  flex-wrap: wrap !important;
   gap: 10px !important;
   padding: 8px 12px 6px 12px !important;
   box-sizing: border-box !important;
@@ -2990,6 +2991,7 @@ a:focus-visible {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important; /* Right-align Options button */
+  flex-wrap: wrap !important;
   gap: 10px !important;
   padding: 8px 12px 6px 12px !important;
   box-sizing: border-box !important;

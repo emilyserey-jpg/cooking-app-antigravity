@@ -9008,10 +9008,12 @@ window.setPlayerGridLayout = function(layout) {
   const quadBtn = document.getElementById('playerLayoutQuadBtn');
   
   if (rowBtn) {
-    rowBtn.style.background = layout === 'row' ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+    rowBtn.style.background = layout === 'row' ? 'var(--primary)' : 'transparent';
+    rowBtn.style.color = layout === 'row' ? '#fff' : 'rgba(255,255,255,0.6)';
   }
   if (quadBtn) {
-    quadBtn.style.background = layout === 'quad' ? 'var(--primary)' : 'rgba(255,255,255,0.15)';
+    quadBtn.style.background = layout === 'quad' ? 'var(--primary)' : 'transparent';
+    quadBtn.style.color = layout === 'quad' ? '#fff' : 'rgba(255,255,255,0.6)';
   }
 
   renderPlayerMultigrid();
@@ -9268,10 +9270,15 @@ function renderPlayerMultigrid() {
   // Render selector checkboxes
   if (selectorList) {
     selectorList.innerHTML = recipeData.steps.map((step, idx) => {
-      const checked = playerSelectedSteps.has(idx) ? 'checked' : '';
+      const isSelected = playerSelectedSteps.has(idx);
+      const checked = isSelected ? 'checked' : '';
+      const bg = isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.08)';
+      const color = isSelected ? '#fff' : 'rgba(255,255,255,0.7)';
+      const border = isSelected ? '1.5px solid transparent' : '1.5px solid rgba(255,255,255,0.15)';
+      
       return `
-        <label style="display:inline-flex; align-items:center; gap:4px; font-family:var(--font); font-size:0.68rem; font-weight:800; color:#fff; background:rgba(255,255,255,0.08); padding:4px 10px; border-radius:999px; cursor:pointer; user-select:none; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-          <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="accent-color:var(--primary); cursor:pointer;" />
+        <label style="display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; font-family:var(--font); font-size:0.75rem; font-weight:800; border-radius:50%; cursor:pointer; user-select:none; transition:all 0.2s; background:${bg}; color:${color}; border:${border};">
+          <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="display: none;" />
           ${idx + 1}
         </label>
       `;
