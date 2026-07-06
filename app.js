@@ -9313,6 +9313,12 @@ function renderPlayerMultigrid() {
     const startTime = recipeData.loops[idx] || 0;
     const endTime = recipeData.loops[idx + 1] || recipeData.duration;
     
+    const mainVideo = document.getElementById('mobileRealVideo') || document.getElementById('uploadedVideoPlayer');
+    let tileRatio = '16/9';
+    if (mainVideo && mainVideo.videoWidth && mainVideo.videoHeight) {
+      tileRatio = `${mainVideo.videoWidth} / ${mainVideo.videoHeight}`;
+    }
+
     const tile = document.createElement('div');
     tile.className = 'multigrid-tile';
     tile.style.cssText = `
@@ -9321,7 +9327,7 @@ function renderPlayerMultigrid() {
       border-radius: 10px;
       overflow: hidden;
       border: 1.5px solid rgba(255,255,255,0.1);
-      aspect-ratio: 16/9;
+      aspect-ratio: ${tileRatio};
       flex-shrink: 0;
       scroll-snap-align: start;
       cursor: pointer;
@@ -9335,7 +9341,7 @@ function renderPlayerMultigrid() {
 
     if (videoUrl) {
       tile.innerHTML = `
-        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:contain; display:block;"></video>
+        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:${window.currentVideoFitMode || 'contain'}; display:block;"></video>
         <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
         
         <!-- Close button (x) to remove step -->
@@ -16367,8 +16373,8 @@ window.setVideoFitMode = function(mode) {
   window.currentVideoFitMode = mode;
   localStorage.setItem('cooking_gps_video_fit', mode);
   
-  // Update video element styling on all loaded players
-  const players = document.querySelectorAll('#uploadedVideoPlayer');
+  // Update video element styling on all loaded players (main and multigrid)
+  const players = document.querySelectorAll('#uploadedVideoPlayer, #mobileRealVideo, [id^="playerMultigridVid_"]');
   players.forEach(player => {
     player.style.setProperty('object-fit', mode, 'important');
     if (mode === 'contain') {
