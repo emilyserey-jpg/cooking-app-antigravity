@@ -1122,13 +1122,13 @@ function updateStepDetailsUI() {
 window.renderMultigridDescriptions = function() {
   const container = document.getElementById('playerMultigridDescriptions');
   const ctrlContainer = document.getElementById('playerMultigridDescControls');
-  const activeCard = document.querySelector('.step-card-active');
+  const activeCard = document.querySelector('.step-slider-viewport');
   if (!container || !recipeData || !recipeData.steps) return;
 
   if (!isPlayerMultigridActive) {
     container.style.display = 'none';
     if (ctrlContainer) ctrlContainer.style.display = 'none';
-    if (activeCard) activeCard.style.display = 'flex';
+    if (activeCard) activeCard.style.display = 'block';
     return;
   }
 
