@@ -16452,6 +16452,31 @@ window.updatePlayerBoxShapeUI = function() {
       }
     });
   });
+
+  // Update mobile toggle icon
+  const mobileIcon = document.getElementById('mobileShapeIcon');
+  if (mobileIcon) {
+    if (shape === 'auto') {
+      mobileIcon.setAttribute('data-lucide', 'expand');
+    } else if (shape === '16-9') {
+      mobileIcon.setAttribute('data-lucide', 'tv');
+    } else if (shape === '1-1') {
+      mobileIcon.setAttribute('data-lucide', 'square');
+    } else if (shape === '9-16') {
+      mobileIcon.setAttribute('data-lucide', 'smartphone');
+    }
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+};
+
+window.togglePlayerBoxShapeMobile = function() {
+  const shapes = ['auto', '16-9', '1-1', '9-16'];
+  const currentIndex = shapes.indexOf(window.currentPlayerBoxShape || 'auto');
+  const nextIndex = (currentIndex + 1) % shapes.length;
+  const nextShape = shapes[nextIndex];
+  window.setPlayerBoxShape(nextShape);
 };
 
 window.toggleEditorSidebar = function() {
@@ -17512,7 +17537,15 @@ document.addEventListener('click', (e) => {
 
 // ── App execution trigger at very bottom ──
 if (document.readyState === 'loading') {
-  window.addEventListener('DOMContentLoaded', initializeApp);
+  window.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    if (typeof window.updatePlayerBoxShapeUI === 'function') {
+      window.updatePlayerBoxShapeUI();
+    }
+  });
 } else {
   initializeApp();
+  if (typeof window.updatePlayerBoxShapeUI === 'function') {
+    window.updatePlayerBoxShapeUI();
+  }
 }
