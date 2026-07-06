@@ -3743,30 +3743,31 @@ a:focus-visible {
   padding: 6px 4px 80px 4px !important;
 }
 
-/* Video container adjust for toolbar padding */
+/* Video container adjust */
 .phone-screen.split-view-active .mobile-video-container {
   border-radius: 0 !important;
   border-bottom: 1.5px solid rgba(0, 0, 0, 0.05) !important;
   box-shadow: none !important;
-  overflow: visible !important;
-  padding-top: 42px !important; /* Space above video for toolbar */
 }
 
 /* Move floating buttons into a neat toolbar above the video */
 .phone-screen.split-view-active .player-top-controls-wrapper {
-  position: absolute !important;
-  top: 4px !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 100 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 10 !important;
+  width: 100% !important;
+  max-width: 100% !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 4px 6px !important;
-  background: rgba(0, 0, 0, 0.03) !important;
+  padding: 6px 10px !important;
+  background: rgba(0, 0, 0, 0.02) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
   pointer-events: auto !important;
   box-sizing: border-box !important;
+  margin: 0 !important;
 }
 .phone-screen.split-view-active .player-top-controls-wrapper .player-top-btn {
   background: #fff !important;

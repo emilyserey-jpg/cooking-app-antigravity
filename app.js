@@ -5719,6 +5719,25 @@ window.applySplitLayoutMobile = function() {
     }
   });
 
+  const wrappers = document.querySelectorAll('.player-top-controls-wrapper');
+  wrappers.forEach(wrapper => {
+    const isMobilePlayer = wrapper.closest('.player-mobile-wrapper');
+    if (!isMobilePlayer) return;
+
+    const placeholder = isMobilePlayer.querySelector('.mobile-video-placeholder');
+    const container = isMobilePlayer.querySelector('.mobile-video-container');
+    
+    if (active) {
+      if (container && wrapper.parentNode !== container.parentNode) {
+        container.parentNode.insertBefore(wrapper, container);
+      }
+    } else {
+      if (placeholder && wrapper.parentNode !== placeholder) {
+        placeholder.appendChild(wrapper);
+      }
+    }
+  });
+
   const splitBtns = document.querySelectorAll('.split-layout-toggle-btn span');
   splitBtns.forEach(btn => {
     btn.textContent = active ? 'Standard Layout' : 'Split Layout';
