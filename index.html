@@ -121,6 +121,10 @@
 
         <!-- User Dropdown Menu (on the right) -->
         <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; left:auto; width:160px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+          <button id="editProfileMenuBtn" onclick="openEditProfileModal(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
+            <i data-lucide="user-cog" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit Profile
+          </button>
+          
           <button id="dashboardEditBtn" onclick="toggleDashboardEditMode(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
             <i data-lucide="layout" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i>
             <span id="dashboardEditBtnText">Customize Layout</span>
@@ -1060,6 +1064,60 @@
                 Add to Shopping List
               </button>
             </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Profile Modal -->
+      <div id="editProfileModal" onclick="closeEditProfileModal()"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);">
+        <div onclick="event.stopPropagation()"
+          style="background:#fff;border-radius:20px;display:flex;flex-direction:column;width:100%;max-width:360px;box-shadow:var(--shadow-lg);border:2px solid var(--border-card);overflow:hidden;box-sizing:border-box;">
+          
+          <!-- Modal Header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1.5px solid var(--border-card);">
+            <h3 style="font-size:0.95rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Profile</h3>
+            <button onclick="closeEditProfileModal()"
+              style="background:rgba(0,0,0,0.05);border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;color:var(--text-muted);font-weight:bold;line-height:1;">&times;</button>
+          </div>
+          
+          <!-- Modal Body (following strict textarea layout rules) -->
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box;flex-shrink:0;">
+            <!-- Display Name -->
+            <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+              <label style="font-size:0.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;">Display Name</label>
+              <input id="editProfileNameInput" type="text" placeholder="e.g. Emily Serey"
+                style="width:100%;padding:10px 12px;border:1.5px solid var(--border-card);border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:700;color:var(--text-body);box-sizing:border-box;outline:none;" />
+            </div>
+            
+            <!-- Category -->
+            <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+              <label style="font-size:0.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;">Category / Profession</label>
+              <input id="editProfileCategoryInput" type="text" placeholder="e.g. Cooking creator"
+                style="width:100%;padding:10px 12px;border:1.5px solid var(--border-card);border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:700;color:var(--text-body);box-sizing:border-box;outline:none;" />
+            </div>
+            
+            <!-- Bio Description (non-squeezing wrapper and textarea) -->
+            <div style="display:flex;flex-direction:column;gap:4px;width:100%;flex-shrink:0;">
+              <label style="font-size:0.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;">Bio Description</label>
+              <div style="flex-shrink:0;width:100%;display:flex;flex-direction:column;">
+                <textarea id="editProfileBioInput" placeholder="Write something about your cooking channel..."
+                  style="width:100%;max-height:100px;overflow-y:auto;flex-shrink:0;padding:10px 12px;border:1.5px solid var(--border-card);border-radius:8px;font-family:var(--font);font-size:0.82rem;font-weight:700;color:var(--text-body);box-sizing:border-box;outline:none;resize:none;line-height:1.4;"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Modal Footer -->
+          <div style="padding:16px;border-top:1.5px solid var(--border-card);display:flex;gap:8px;background:rgba(0,0,0,0.01);box-sizing:border-box;width:100%;">
+            <button onclick="closeEditProfileModal()" class="btn-channel-secondary"
+              style="flex:1;justify-content:center;text-align:center;padding:10px !important;font-size:0.8rem !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box;">
+              Cancel
+            </button>
+            <button onclick="saveEditProfileData()" class="btn-subscribe"
+              style="flex:1;justify-content:center;text-align:center;padding:10px !important;font-size:0.8rem !important;border-radius:8px !important;margin:0 !important;box-sizing:border-box;">
+              Save Changes
+            </button>
           </div>
         </div>
       </div>

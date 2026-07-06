@@ -3855,18 +3855,20 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     const list = recipes || [];
     pubCurrentCreator = { email: creatorEmail, recipes: list };
 
-    const displayName = creatorEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const msData = (currentUser && creatorEmail === currentUser.email && typeof mySpaceLoadData === 'function') ? mySpaceLoadData() : null;
+    const customName = (msData && msData.displayName) ? msData.displayName : null;
+    const displayName = customName || creatorEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     if (nameEl) nameEl.textContent = displayName;
 
-    // Load Bio
-    const msData = (pubFromTab && currentUser && typeof mySpaceLoadData === 'function') ? mySpaceLoadData() : null;
-    const bioText = (msData && msData.bio) ? msData.bio : 'Cooking creator';
+    // Load custom category & bio description
+    const categoryText = (msData && msData.category) ? msData.category : 'Cooking creator';
+    const bioText = (msData && msData.bio) ? msData.bio : '';
     
     const bioTextEl = document.getElementById('pubBioTextSnippet');
-    if (bioTextEl) bioTextEl.textContent = bioText;
+    if (bioTextEl) bioTextEl.textContent = categoryText;
     
     const aboutBioEl = document.getElementById('pubAboutBio');
-    if (aboutBioEl) aboutBioEl.textContent = bioText;
+    if (aboutBioEl) aboutBioEl.textContent = bioText || 'No bio description provided.';
 
     const avatarEl = document.getElementById('pubAvatar');
     if (avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
@@ -4208,6 +4210,66 @@ window.mySpaceSaveBio = function() {
   if (bioText) bioText.style.fontStyle = bio ? 'normal' : 'italic';
   input.style.display = 'none';
   if (display) display.style.display = '';
+};
+
+// ── Creator Edit Profile Dialog handlers ──────────────────────────────────────
+window.openEditProfileModal = function() {
+  if (!currentUser) { openAuthModal(); return; }
+  const modal = document.getElementById('editProfileModal');
+  if (!modal) return;
+  
+  const nameInput = document.getElementById('editProfileNameInput');
+  const catInput  = document.getElementById('editProfileCategoryInput');
+  const bioInput  = document.getElementById('editProfileBioInput');
+  
+  const data = mySpaceLoadData();
+  
+  const defaultDisplayName = currentUser.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  if (nameInput) nameInput.value = data.displayName || defaultDisplayName;
+  if (catInput)  catInput.value  = data.category || 'Cooking creator';
+  if (bioInput)  bioInput.value  = data.bio || '';
+  
+  modal.style.display = 'flex';
+};
+
+window.closeEditProfileModal = function() {
+  const modal = document.getElementById('editProfileModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.saveEditProfileData = function() {
+  const nameInput = document.getElementById('editProfileNameInput');
+  const catInput  = document.getElementById('editProfileCategoryInput');
+  const bioInput  = document.getElementById('editProfileBioInput');
+  
+  const displayName = nameInput ? nameInput.value.trim() : '';
+  const category    = catInput ? catInput.value.trim() : '';
+  const bio         = bioInput ? bioInput.value.trim() : '';
+  
+  const data = mySpaceLoadData();
+  data.displayName = displayName;
+  data.category    = category;
+  data.bio         = bio;
+  mySpaceSaveData(data);
+  
+  // Update public profile details on DOM immediately
+  const nameEl = document.getElementById('pubName');
+  if (nameEl) nameEl.textContent = displayName || currentUser.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  
+  const bioTextEl = document.getElementById('pubBioTextSnippet');
+  if (bioTextEl) bioTextEl.textContent = category || 'Cooking creator';
+  
+  const aboutBioEl = document.getElementById('pubAboutBio');
+  if (aboutBioEl) aboutBioEl.textContent = bio || 'No bio description provided.';
+  
+  const avatarEl = document.getElementById('pubAvatar');
+  if (avatarEl) {
+    const finalName = displayName || currentUser.email.split('@')[0];
+    avatarEl.textContent = finalName.charAt(0).toUpperCase();
+  }
+  
+  closeEditProfileModal();
+  showTip('Profile updated successfully!');
 };
 
 window.getFolderRecipesSource = function() {
