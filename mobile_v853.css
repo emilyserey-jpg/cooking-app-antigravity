@@ -2615,6 +2615,27 @@ a:focus-visible {
 .yt-video-card .yt-card-info {
   display: none !important;
 }
+
+/* Spatula / Initials Toggle on Hover */
+.spatula-avatar-btn .avatar-initials-wrap {
+  display: none !important;
+}
+.spatula-avatar-btn .spatula-icon-wrap {
+  display: flex !important;
+}
+
+.spatula-avatar-btn.logged-in .avatar-initials-wrap {
+  display: none !important;
+}
+.spatula-avatar-btn.logged-in .spatula-icon-wrap {
+  display: flex !important;
+}
+.spatula-avatar-btn.logged-in:hover .avatar-initials-wrap {
+  display: flex !important;
+}
+.spatula-avatar-btn.logged-in:hover .spatula-icon-wrap {
+  display: none !important;
+}
 .yt-trailer-section {
   flex-direction: column;
   padding: 1rem;

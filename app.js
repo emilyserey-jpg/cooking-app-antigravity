@@ -3452,6 +3452,7 @@ function updateUserBadge(user) {
   const initialsWrap = avatar.querySelector('.avatar-initials-wrap');
 
   if (user) {
+    avatar.classList.add('logged-in');
     const initials = user.email.slice(0, 2).toUpperCase();
     label.textContent = user.email.split('@')[0];
     if (initialsWrap) {
@@ -3462,6 +3463,7 @@ function updateUserBadge(user) {
     avatar.style.background = 'linear-gradient(135deg,#4a90d9,#6aaee8)';
     avatar.style.color = '#fff';
   } else {
+    avatar.classList.remove('logged-in');
     label.textContent = 'Sign In';
     if (initialsWrap) {
       initialsWrap.textContent = '?';
