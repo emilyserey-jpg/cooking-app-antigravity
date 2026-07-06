@@ -5742,6 +5742,11 @@ window.applySplitLayoutMobile = function() {
   splitBtns.forEach(btn => {
     btn.textContent = active ? 'Standard Layout' : 'Split Layout';
   });
+
+  const multigridText = document.getElementById('playerMultigridBtnText');
+  if (multigridText) {
+    multigridText.textContent = active ? 'Grid' : 'Multigrid';
+  }
   
   const splitIcons = document.querySelectorAll('.split-layout-toggle-btn i');
   splitIcons.forEach(icon => {
@@ -5773,7 +5778,7 @@ window.applyVideoZoomCrop = function() {
   const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas');
   players.forEach(player => {
     if (active) {
-      player.style.setProperty('transform', 'scale(1.78)', 'important');
+      player.style.setProperty('transform', 'scale(3.16)', 'important');
       player.style.setProperty('transform-origin', 'center center', 'important');
     } else {
       player.style.removeProperty('transform');
@@ -5795,6 +5800,10 @@ window.applyVideoZoomCrop = function() {
     }
   });
   if (window.lucide) lucide.createIcons();
+
+  if (typeof window.adjustPlayerVideoSize === 'function') {
+    window.adjustPlayerVideoSize();
+  }
 };
 
 document.addEventListener('click', (e) => {
@@ -9245,6 +9254,10 @@ function updateMultigridLayoutClass() {
         const realVideo = document.getElementById('mobileRealVideo');
         if (realVideo && realVideo.videoWidth && realVideo.videoHeight) {
           aspect = realVideo.videoWidth / realVideo.videoHeight;
+        }
+        
+        if (window.currentSplitLayoutActive && window.currentVideoZoomCropActive) {
+          aspect = 9 / 16;
         }
         
         const isPortrait = aspect < 1;
