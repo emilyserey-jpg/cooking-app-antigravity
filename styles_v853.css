@@ -3910,6 +3910,24 @@ a:focus-visible {
 }
 
 /* Spatula Avatar Button: Spatula by default, Initials on hover */
+.spatula-avatar-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important;
+  border: 1.5px solid rgba(255,255,255,0.4) !important;
+  box-shadow: 0 3px 10px rgba(74, 144, 217, 0.3) !important;
+  color: #fff !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.spatula-avatar-btn:hover {
+  transform: rotate(-8deg) scale(1.06) !important;
+  box-shadow: 0 4px 14px rgba(74, 144, 217, 0.4) !important;
+}
 .spatula-avatar-btn .spatula-icon-wrap {
   display: flex !important;
   align-items: center !important;

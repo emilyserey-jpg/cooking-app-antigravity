@@ -77,17 +77,34 @@
 
   <!-- App Header -->
   <header class="app-header">
-    <a href="#" class="logo-container">
-      <div class="logo-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 3H9a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z" />
-          <line x1="11" y1="6" x2="11" y2="10" />
-          <line x1="13" y1="6" x2="13" y2="10" />
-          <path d="M12 13v8" />
-        </svg>
+    <div style="display:flex; align-items:center; gap:8px; position:relative; flex-shrink:0; margin-right:12px;">
+      <!-- Combined Spatula / Avatar Profile Button -->
+      <div id="userAvatarCircle" class="spatula-avatar-btn" onclick="window.toggleUserDropdown(event)" style="width:34px; height:34px; border-radius:50%; background:var(--primary-soft); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:900; font-size:0.85rem; cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow-sm); flex-shrink:0;">
+        <span class="spatula-icon-wrap" style="display:flex; align-items:center; justify-content:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3H9a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z" />
+            <line x1="11" y1="6" x2="11" y2="10" />
+            <line x1="13" y1="6" x2="13" y2="10" />
+            <path d="M12 13v8" />
+          </svg>
+        </span>
+        <span class="avatar-initials-wrap" style="display:none;">?</span>
       </div>
-      <div class="logo-text">In The <span>Loop</span></div>
-    </a>
+      
+      <a href="#" class="logo-container" style="text-decoration:none; display:flex; align-items:center;">
+        <div class="logo-text">In The <span>Loop</span></div>
+      </a>
+
+      <!-- Hidden label to keep JavaScript happy -->
+      <span id="userBadgeLabel" style="display:none;">Sign In</span>
+
+      <!-- User Dropdown Menu (relocated to the left side under spatula button) -->
+      <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; right:auto; width:120px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+        <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
+          <i data-lucide="log-out" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Log Out
+        </button>
+      </div>
+    </div>
     
     <div class="header-actions">
       <!-- Tabs to switch between view formats -->
@@ -107,32 +124,6 @@
         <button class="view-tab" onclick="switchView('my-profile')" id="myProfileTab">
           <i data-lucide="tv-2"></i> My Profile
         </button>
-      </div>
-
-      <!-- User Info Badge Container -->
-      <div style="position:relative; display:inline-block; flex-shrink:0;">
-        <div class="user-profile-badge" id="userProfileBadge" onclick="toggleUserDropdown(event)" style="cursor:pointer;">
-          <div id="userAvatarCircle" class="spatula-avatar-btn" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;transition:all 0.2s;">
-            <span class="spatula-icon-wrap" style="display:flex; align-items:center; justify-content:center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 3H9a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z" />
-                <line x1="11" y1="6" x2="11" y2="10" />
-                <line x1="13" y1="6" x2="13" y2="10" />
-                <path d="M12 13v8" />
-              </svg>
-            </span>
-            <span class="avatar-initials-wrap" style="display:none;">?</span>
-          </div>
-          <span id="userBadgeLabel">Sign In</span>
-          <i data-lucide="chevron-down"></i>
-        </div>
-        
-        <!-- User Dropdown Menu -->
-        <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; width:120px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
-          <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
-            <i data-lucide="log-out" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Log Out
-          </button>
-        </div>
       </div>
     </div>
   </header>
