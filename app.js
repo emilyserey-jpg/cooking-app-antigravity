@@ -8786,9 +8786,7 @@ function libUpdateOptionsDropdownHighlighting() {
   
   const label = document.getElementById('libOptionsActiveLabel');
   if (label) {
-    const sortLabel = currentSort === 'az' ? 'A-Z' : currentSort === 'za' ? 'Z-A' : 'Custom';
-    const layoutLabel = currentLayout.charAt(0).toUpperCase() + currentLayout.slice(1);
-    label.textContent = `View: ${sortLabel} • ${layoutLabel}`;
+    label.textContent = 'View';
   }
   
   if (window.lucide) window.lucide.createIcons();
