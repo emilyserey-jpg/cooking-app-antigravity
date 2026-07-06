@@ -16294,24 +16294,20 @@ window.adjustWorkbenchVideoSize = function() {
     wrapper.style.setProperty('flex', 'none', 'important');
     wrapper.style.setProperty('margin', '0 auto', 'important');
     
-    // Use selected shape if forced, otherwise match video's natural ratio
-    const shape = window.currentPlayerBoxShape || 'auto';
-    let displayRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
-    if (shape === '16-9') displayRatio = 16 / 9;
-    else if (shape === '1-1') displayRatio = 1 / 1;
-    else if (shape === '9-16') displayRatio = 9 / 16;
+    // Always match the video's natural aspect ratio on mobile to eliminate all black bars
+    const naturalRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
     
-    if (displayRatio < 1) {
-      // Portrait video/container: set a taller height and fit width exactly
+    if (naturalRatio < 1) {
+      // Portrait video: set a taller height and fit width exactly
       wrapper.style.setProperty('height', 'min(460px, 60vh)', 'important');
       wrapper.style.setProperty('width', 'auto', 'important');
       wrapper.style.setProperty('max-width', '100%', 'important');
-      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 9} / ${videoHeight || 16}` : '9/16', 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
     } else {
-      // Landscape video/container: size naturally to ratio (width 100%, height auto)
+      // Landscape video: size naturally to ratio (width 100%, height auto)
       wrapper.style.setProperty('width', '100%', 'important');
       wrapper.style.setProperty('height', 'auto', 'important');
-      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 16} / ${videoHeight || 9}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 16} / ${videoHeight || 9}`, 'important');
     }
     return;
   }
@@ -16410,11 +16406,11 @@ window.updateVideoFitUI = function() {
   const mobileIcon = document.getElementById('mobileFitIcon');
   if (mobileIcon) {
     if (mode === 'contain') {
-      // In contain mode (Fit), show "maximize" (click to expand to cover)
-      mobileIcon.setAttribute('data-lucide', 'maximize');
+      // In contain mode (Fit), show "expand" (4-arrow icon)
+      mobileIcon.setAttribute('data-lucide', 'expand');
     } else {
-      // In cover mode (Fill), show "minimize" (click to shrink to contain)
-      mobileIcon.setAttribute('data-lucide', 'minimize');
+      // In cover mode (Fill), show "shrink"
+      mobileIcon.setAttribute('data-lucide', 'shrink');
     }
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
