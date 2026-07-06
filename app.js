@@ -3671,7 +3671,29 @@ function renderDiscoverGrid(recipes) {
   }
   if (empty) empty.style.display = 'none';
   if (count) count.textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
-  grid.innerHTML = recipes.map(r => renderRecipeCard(r, false)).join('');
+  
+  grid.innerHTML = recipes.map(function(r) {
+    const mins = r.duration
+      ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
+      : '';
+    const mediaHtml = getRecipeCardThumbnail(r);
+
+    return `
+      <div class="yt-video-card" onclick="loadRecipeById('${r.id}')"
+           onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+           onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
+        <div class="yt-thumbnail-wrapper">
+          ${mediaHtml}
+          ${r.video_url ? `
+            <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
+                   style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
+            </video>
+          ` : ''}
+          ${mins ? `<div class="yt-duration-badge" style="z-index:3;">${mins}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
