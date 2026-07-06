@@ -5758,6 +5758,45 @@ window.applySplitLayoutMobile = function() {
   }
 };
 
+// Video Zoom Crop (relieves side letterboxes by zooming 1.78x on landscape container)
+window.currentVideoZoomCropActive = localStorage.getItem('cooking_gps_video_zoom_crop') === 'true';
+
+window.toggleVideoZoomCrop = function() {
+  const active = !window.currentVideoZoomCropActive;
+  window.currentVideoZoomCropActive = active;
+  localStorage.setItem('cooking_gps_video_zoom_crop', active);
+  window.applyVideoZoomCrop();
+};
+
+window.applyVideoZoomCrop = function() {
+  const active = window.currentVideoZoomCropActive;
+  const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas');
+  players.forEach(player => {
+    if (active) {
+      player.style.setProperty('transform', 'scale(1.78)', 'important');
+      player.style.setProperty('transform-origin', 'center center', 'important');
+    } else {
+      player.style.removeProperty('transform');
+      player.style.removeProperty('transform-origin');
+    }
+  });
+
+  const zoomBtns = document.querySelectorAll('.video-zoom-crop-btn span');
+  zoomBtns.forEach(btn => {
+    btn.textContent = active ? 'Fit Video' : 'Zoom Video';
+  });
+
+  const zoomIcons = document.querySelectorAll('.video-zoom-crop-btn i');
+  zoomIcons.forEach(icon => {
+    if (active) {
+      icon.setAttribute('data-lucide', 'zoom-out');
+    } else {
+      icon.setAttribute('data-lucide', 'zoom-in');
+    }
+  });
+  if (window.lucide) lucide.createIcons();
+};
+
 document.addEventListener('click', (e) => {
   // If the target is the folder select/options, or if the element was detached from the DOM during click handling,
   // do not close the player actions dropdown.
@@ -17654,6 +17693,9 @@ if (document.readyState === 'loading') {
     if (typeof window.applySplitLayoutMobile === 'function') {
       window.applySplitLayoutMobile();
     }
+    if (typeof window.applyVideoZoomCrop === 'function') {
+      window.applyVideoZoomCrop();
+    }
   });
 } else {
   initializeApp();
@@ -17662,5 +17704,8 @@ if (document.readyState === 'loading') {
   }
   if (typeof window.applySplitLayoutMobile === 'function') {
     window.applySplitLayoutMobile();
+  }
+  if (typeof window.applyVideoZoomCrop === 'function') {
+    window.applyVideoZoomCrop();
   }
 }
