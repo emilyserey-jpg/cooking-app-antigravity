@@ -499,7 +499,7 @@ h1, h2, h3, h4, h5 {
   display: flex !important;
   flex-direction: column !important;
   overflow-y: auto !important;
-  padding: 10px 14px 80px !important;
+  padding: 10px 10px 80px !important;
   gap: 10px !important;
 }
 
@@ -519,14 +519,14 @@ h1, h2, h3, h4, h5 {
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   gap: 12px !important;
-  padding: 8px 14px 16px 14px !important;
+  padding: 8px 10px 16px 10px !important;
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
   scrollbar-width: none !important;
   touch-action: pan-x !important;
   scroll-snap-type: x mandatory;
-  scroll-padding: 0 14px;
+  scroll-padding: 0 10px;
 }
 .step-cards-slider::-webkit-scrollbar {
   display: none !important;
@@ -534,8 +534,8 @@ h1, h2, h3, h4, h5 {
 
 .step-slider-card {
   flex-shrink: 0 !important;
-  width: calc(100vw - 64px) !important;
-  max-width: 320px !important;
+  width: calc(100vw - 28px) !important;
+  max-width: 100% !important;
   scroll-snap-align: center;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
