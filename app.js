@@ -3862,15 +3862,16 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     const displayName = customName || creatorEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     if (nameEl) nameEl.textContent = displayName;
 
-    // Load custom category & bio description
+    // Load custom category, tagline, & about text
     const categoryText = (msData && msData.category) ? msData.category : 'Cooking creator';
     const bioText = (msData && msData.bio) ? msData.bio : '';
+    const aboutText = (msData && msData.aboutText) ? msData.aboutText : '';
     
     const bioTextEl = document.getElementById('pubBioTextSnippet');
-    if (bioTextEl) bioTextEl.textContent = categoryText;
+    if (bioTextEl) bioTextEl.textContent = bioText || categoryText;
     
     const aboutBioEl = document.getElementById('pubAboutBio');
-    if (aboutBioEl) aboutBioEl.textContent = bioText || 'No bio description provided.';
+    if (aboutBioEl) aboutBioEl.textContent = aboutText || 'No bio description provided.';
 
     const avatarEl = document.getElementById('pubAvatar');
     if (avatarEl) avatarEl.textContent = displayName.charAt(0).toUpperCase();
@@ -4226,6 +4227,7 @@ window.openEditProfileModal = function() {
   const nameInput = document.getElementById('editProfileNameInput');
   const catInput  = document.getElementById('editProfileCategoryInput');
   const bioInput  = document.getElementById('editProfileBioInput');
+  const aboutInput = document.getElementById('editProfileAboutInput');
   
   const data = mySpaceLoadData();
   
@@ -4233,6 +4235,7 @@ window.openEditProfileModal = function() {
   if (nameInput) nameInput.value = data.displayName || defaultDisplayName;
   if (catInput)  catInput.value  = data.category || 'Cooking creator';
   if (bioInput)  bioInput.value  = data.bio || '';
+  if (aboutInput) aboutInput.value = data.aboutText || '';
   
   modal.style.display = 'flex';
 };
@@ -4246,15 +4249,18 @@ window.saveEditProfileData = function() {
   const nameInput = document.getElementById('editProfileNameInput');
   const catInput  = document.getElementById('editProfileCategoryInput');
   const bioInput  = document.getElementById('editProfileBioInput');
+  const aboutInput = document.getElementById('editProfileAboutInput');
   
   const displayName = nameInput ? nameInput.value.trim() : '';
   const category    = catInput ? catInput.value.trim() : '';
   const bio         = bioInput ? bioInput.value.trim() : '';
+  const aboutText   = aboutInput ? aboutInput.value.trim() : '';
   
   const data = mySpaceLoadData();
   data.displayName = displayName;
   data.category    = category;
   data.bio         = bio;
+  data.aboutText   = aboutText;
   mySpaceSaveData(data);
   
   // Update public profile details on DOM immediately
@@ -4262,10 +4268,10 @@ window.saveEditProfileData = function() {
   if (nameEl) nameEl.textContent = displayName || currentUser.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   
   const bioTextEl = document.getElementById('pubBioTextSnippet');
-  if (bioTextEl) bioTextEl.textContent = category || 'Cooking creator';
+  if (bioTextEl) bioTextEl.textContent = bio || category || 'Cooking creator';
   
   const aboutBioEl = document.getElementById('pubAboutBio');
-  if (aboutBioEl) aboutBioEl.textContent = bio || 'No bio description provided.';
+  if (aboutBioEl) aboutBioEl.textContent = aboutText || 'No bio description provided.';
   
   const avatarEl = document.getElementById('pubAvatar');
   if (avatarEl) {
