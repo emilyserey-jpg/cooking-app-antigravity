@@ -5764,23 +5764,11 @@ window.applySplitLayoutMobile = function() {
 };
 
 // Video Zoom Crop (relieves side letterboxes by zooming 3.16x on landscape container)
-let initialZoomActive = false;
-try {
-  initialZoomActive = localStorage.getItem('cooking_gps_video_zoom_crop') === 'true';
-} catch (e) {
-  console.warn('localStorage access failed:', e);
-}
-window.currentVideoZoomCropActive = initialZoomActive;
+window.currentVideoZoomCropActive = (window.currentVideoFitMode === 'cover');
 
 window.toggleVideoZoomCrop = function() {
-  const active = !window.currentVideoZoomCropActive;
-  window.currentVideoZoomCropActive = active;
-  try {
-    localStorage.setItem('cooking_gps_video_zoom_crop', active);
-  } catch (e) {
-    console.warn('localStorage set failed:', e);
-  }
-  window.applyVideoZoomCrop();
+  const nextMode = window.currentVideoFitMode === 'contain' ? 'cover' : 'contain';
+  window.setVideoFitMode(nextMode);
 };
 
 window.applyVideoZoomCrop = function() {
@@ -9279,7 +9267,7 @@ function updateMultigridLayoutClass() {
           aspect = realVideo.videoWidth / realVideo.videoHeight;
         }
         
-        if (window.currentSplitLayoutActive && window.currentVideoZoomCropActive) {
+        if (window.currentVideoZoomCropActive) {
           aspect = 9 / 16;
         }
         
@@ -16535,11 +16523,21 @@ window.adjustWorkbenchVideoSize = function() {
 window.addEventListener('resize', window.adjustWorkbenchVideoSize);
 
 // Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped)
-window.currentVideoFitMode = localStorage.getItem('cooking_gps_video_fit') || 'contain';
+let initialFitMode = 'contain';
+try {
+  initialFitMode = localStorage.getItem('cooking_gps_video_fit') || 'contain';
+} catch (e) {
+  console.warn('localStorage access failed:', e);
+}
+window.currentVideoFitMode = initialFitMode;
 
 window.setVideoFitMode = function(mode) {
   window.currentVideoFitMode = mode;
-  localStorage.setItem('cooking_gps_video_fit', mode);
+  try {
+    localStorage.setItem('cooking_gps_video_fit', mode);
+  } catch (e) {
+    console.warn('localStorage set failed:', e);
+  }
   
   // Update video element styling on all loaded players (main and multigrid)
   const players = document.querySelectorAll('#uploadedVideoPlayer, #mobileRealVideo, [id^="playerMultigridVid_"]');
@@ -16551,6 +16549,12 @@ window.setVideoFitMode = function(mode) {
       player.style.setProperty('background', 'transparent', 'important');
     }
   });
+
+  // Sync zoom crop active status to cover mode
+  window.currentVideoZoomCropActive = (mode === 'cover');
+  if (typeof window.applyVideoZoomCrop === 'function') {
+    window.applyVideoZoomCrop();
+  }
 
   // Update dropdown checkmark states
   window.updateVideoFitUI();
