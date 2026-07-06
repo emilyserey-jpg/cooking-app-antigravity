@@ -3331,11 +3331,75 @@ a:focus-visible {
   padding: 6px 4px 80px 4px !important;
 }
 
-/* Video adjust */
+/* Video container adjust for toolbar padding */
 .phone-screen.split-view-active .mobile-video-container {
   border-radius: 0 !important;
   border-bottom: 1.5px solid rgba(0, 0, 0, 0.05) !important;
   box-shadow: none !important;
+  overflow: visible !important;
+  padding-top: 42px !important; /* Space above video for toolbar */
+}
+
+/* Move floating buttons into a neat toolbar above the video */
+.phone-screen.split-view-active .player-top-controls-wrapper {
+  position: absolute !important;
+  top: 4px !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 4px 6px !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+}
+.phone-screen.split-view-active .player-top-controls-wrapper .player-top-btn {
+  background: #fff !important;
+  color: var(--text-body) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  font-size: 0.65rem !important;
+  border-radius: 6px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+}
+.phone-screen.split-view-active .player-top-controls-wrapper .player-top-btn i,
+.phone-screen.split-view-active .player-top-controls-wrapper .player-top-btn svg {
+  color: var(--text-body) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+.phone-screen.split-view-active .player-top-controls-wrapper .player-btn-text {
+  display: inline !important; /* Ensure labels show on toolbar */
+  font-weight: 700 !important;
+}
+.phone-screen.split-view-active .player-controls-middle-group button {
+  border-radius: 6px !important;
+  width: auto !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  background: #fff !important;
+  color: var(--text-body) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.phone-screen.split-view-active .player-controls-middle-group button i,
+.phone-screen.split-view-active .player-controls-middle-group button svg {
+  color: var(--text-body) !important;
+  width: 12px !important;
+  height: 12px !important;
 }
 
 /* Tab bar shrink */
@@ -3411,40 +3475,64 @@ a:focus-visible {
   margin-top: 4px !important;
 }
 
-/* Controls strip adjustment */
+/* Split playback controls panel into two layers */
 .phone-screen.split-view-active .player-controls-strip {
-  gap: 2px !important;
-  padding: 4px 2px !important;
-  justify-content: space-around !important;
-  flex-wrap: nowrap !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px 4px !important;
+  padding: 6px !important;
+  justify-content: center !important;
 }
-.phone-screen.split-view-active .player-controls-strip .control-btn {
-  width: 22px !important;
-  height: 22px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-width: 22px !important;
-}
-.phone-screen.split-view-active .player-controls-strip .control-btn svg {
-  width: 10px !important;
-  height: 10px !important;
-}
-.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn {
+
+/* Row 1: Playback navigation buttons */
+.phone-screen.split-view-active .player-controls-strip .control-btn:not(.mute-btn):not(#playerSpeedBtn):not(.speed-badge-btn) {
   width: 26px !important;
   height: 26px !important;
   min-width: 26px !important;
+  flex: 0 0 auto !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn:not(.mute-btn):not(#playerSpeedBtn):not(.speed-badge-btn) svg {
+  width: 11px !important;
+  height: 11px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
 }
 .phone-screen.split-view-active .player-controls-strip .control-btn.play-btn svg {
   width: 12px !important;
   height: 12px !important;
 }
+
+/* Row 2: Secondary utility buttons (Mute, Speed) */
+.phone-screen.split-view-active .player-controls-strip .control-btn.mute-btn,
 .phone-screen.split-view-active .player-controls-strip .speed-badge-btn,
-.phone-screen.split-view-active #playerSpeedBtn {
-  min-width: 22px !important;
-  height: 22px !important;
-  font-size: 0.6rem !important;
-  padding: 0 !important;
+.phone-screen.split-view-active .player-controls-strip #playerSpeedBtn {
+  height: 28px !important;
+  flex: 1 1 45% !important;
+  min-width: 60px !important;
+  border-radius: 6px !important;
+  font-size: 0.65rem !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: var(--text-body) !important;
+  box-shadow: none !important;
 }
+.phone-screen.split-view-active .player-controls-strip .control-btn.mute-btn svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
 .phone-screen.split-view-active .step-nav-chips-container {
   padding: 8px 4px !important;
 }
