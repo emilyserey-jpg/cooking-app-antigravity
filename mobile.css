@@ -1710,9 +1710,7 @@ a:focus-visible {
   
   #workbenchVideoWrapper {
     position: relative !important;
-    flex: 1 !important;
-    min-height: 300px !important;
-    max-height: 680px !important;
+    flex: 0 0 auto !important;
     width: 100% !important;
   }
   
