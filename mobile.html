@@ -120,7 +120,12 @@
         <span id="userBadgeLabel" style="display:none;">Sign In</span>
 
         <!-- User Dropdown Menu (on the right) -->
-        <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; left:auto; width:120px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+        <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; left:auto; width:160px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
+          <button id="dashboardEditBtn" onclick="toggleDashboardEditMode(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
+            <i data-lucide="layout" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i>
+            <span id="dashboardEditBtnText">Customize Layout</span>
+          </button>
+          
           <button onclick="handleDropdownSignOut(event)" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:#e05c5c; font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#fef2f2';" onmouseleave="this.style.background='none';">
             <i data-lucide="log-out" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Log Out
           </button>
@@ -1108,12 +1113,8 @@
          ================================================ -->
     <section id="view-profile" class="view-section" style="padding:0;">
 
-      <!-- ══ HERO BANNER ══ -->
       <div style="max-width:1100px; margin:1.5rem auto 0; padding:0 1.25rem; display:flex; justify-content:space-between; align-items:center;">
         <h2 style="font-size:1.4rem; font-weight:900; color:var(--text-heading); margin:0;">Dashboard Workspace</h2>
-        <button onclick="toggleDashboardEditMode()" id="dashboardEditBtn" style="background:rgba(74,144,217,0.1); border:none; border-radius:12px; padding:8px 16px; color:var(--primary); font-family:var(--font); font-size:0.8rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow:var(--shadow-sm);" onmouseenter="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(74,144,217,0.1)'; this.style.color='var(--primary)';" title="Customize your space dashboard">
-          Customize Layout
-        </button>
       </div>
 
       <!-- Manage Widgets Panel (Visible in Customize Layout mode) -->

@@ -2717,20 +2717,40 @@ function toggleDashboardEditMode() {
     bGrid.classList.remove('dashboard-editing');
     if (profileView) profileView.classList.remove('dashboard-editing');
     if (btn) {
-      btn.innerHTML = 'Customize Layout';
-      btn.style.background = 'rgba(74,144,217,0.1)';
-      btn.style.color = 'var(--primary)';
+      const btnText = btn.querySelector('#dashboardEditBtnText') || btn;
+      if (btnText === btn) {
+        btn.innerHTML = 'Customize Layout';
+      } else {
+        btnText.textContent = 'Customize Layout';
+      }
+      const isMenuBtn = btn.style.display === 'flex' || btn.closest('#userDropdownMenu');
+      if (isMenuBtn) {
+        btn.style.color = 'var(--text-body)';
+        btn.style.background = 'none';
+      } else {
+        btn.style.background = 'rgba(74, 144, 217, 0.1)';
+        btn.style.color = 'var(--primary)';
+      }
     }
-    // showTip("Dashboard layout saved."); // Disabled per user request
   } else {
     bGrid.classList.add('dashboard-editing');
     if (profileView) profileView.classList.add('dashboard-editing');
     if (btn) {
-      btn.innerHTML = 'Save Layout';
-      btn.style.background = 'var(--green)';
-      btn.style.color = '#fff';
+      const btnText = btn.querySelector('#dashboardEditBtnText') || btn;
+      if (btnText === btn) {
+        btn.innerHTML = 'Save Layout';
+      } else {
+        btnText.textContent = 'Save Layout';
+      }
+      const isMenuBtn = btn.style.display === 'flex' || btn.closest('#userDropdownMenu');
+      if (isMenuBtn) {
+        btn.style.color = 'var(--green)';
+        btn.style.background = 'none';
+      } else {
+        btn.style.background = 'var(--green)';
+        btn.style.color = '#fff';
+      }
     }
-    // showTip("Edit Mode active. Customize sizes and add/delete widgets."); // Disabled per user request
   }
   
   // Refresh widget visibility and the manage widgets panel state
