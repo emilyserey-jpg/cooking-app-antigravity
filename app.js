@@ -16293,18 +16293,21 @@ window.adjustWorkbenchVideoSize = function() {
   if (window.innerWidth <= 768) {
     wrapper.style.setProperty('flex', 'none', 'important');
     wrapper.style.setProperty('margin', '0 auto', 'important');
-    const displayRatio = shape === 'auto' ? (videoWidth && videoHeight ? videoWidth / videoHeight : 16/9) : aspectRatio;
-    if (displayRatio < 1) {
-      // Portrait video/container: set a taller height and fit width exactly
+    
+    // Always match the video's natural aspect ratio on mobile to eliminate all black bars
+    const naturalRatio = (videoWidth && videoHeight) ? (videoWidth / videoHeight) : (16 / 9);
+    
+    if (naturalRatio < 1) {
+      // Portrait video: set a taller height and fit width exactly
       wrapper.style.setProperty('height', 'min(460px, 60vh)', 'important');
       wrapper.style.setProperty('width', 'auto', 'important');
       wrapper.style.setProperty('max-width', '100%', 'important');
-      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 9} / ${videoHeight || 16}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 9} / ${videoHeight || 16}`, 'important');
     } else {
-      // Landscape video/container: size naturally to ratio
+      // Landscape video: size naturally to ratio (width 100%, height auto)
       wrapper.style.setProperty('width', '100%', 'important');
       wrapper.style.setProperty('height', 'auto', 'important');
-      wrapper.style.setProperty('aspect-ratio', shape === 'auto' ? `${videoWidth || 16} / ${videoHeight || 9}` : (shape === '16-9' ? '16/9' : (shape === '1-1' ? '1/1' : '9/16')), 'important');
+      wrapper.style.setProperty('aspect-ratio', `${videoWidth || 16} / ${videoHeight || 9}`, 'important');
     }
     return;
   }
