@@ -3959,15 +3959,6 @@ function pubRenderYTRecipes(recipes) {
       ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
       : '';
     const mediaHtml = getRecipeCardThumbnail(r);
-    const creatorName = r.creator.split('@')[0];
-    const initial = creatorName.charAt(0).toUpperCase();
-    
-    // Deterministic views/date
-    const viewsHash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
-    const views = viewsHash % 2 === 0 
-      ? `${(viewsHash % 90) + 10}K views`
-      : `${(viewsHash % 800) + 100} views`;
-    const relativeTime = getRelativeTime(r.created_at);
 
     return `
       <div class="yt-video-card" onclick="openPubLightbox(${idx})"
@@ -3980,14 +3971,7 @@ function pubRenderYTRecipes(recipes) {
                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
             </video>
           ` : ''}
-          ${mins ? `<div class="yt-duration-badge">${mins}</div>` : ''}
-        </div>
-        <div class="yt-card-info">
-          <div class="yt-card-avatar">${initial}</div>
-          <div class="yt-card-details">
-            <h4 class="yt-card-title">${escapeHTML(r.title || 'Untitled')}</h4>
-            <div class="yt-card-meta">${views} • ${relativeTime}</div>
-          </div>
+          ${mins ? `<div class="yt-duration-badge" style="z-index:3;">${mins}</div>` : ''}
         </div>
       </div>
     `;
@@ -4008,97 +3992,40 @@ function pubRenderYTHome(recipes) {
     return;
   }
 
-  if (recentSection) recentSection.style.display = 'block';
+  // Hide YouTube-style featured trailer banner for clean Instagram grid
+  featuredContainer.innerHTML = '';
+  
+  if (recentSection) {
+    recentSection.style.display = 'block';
+    recentSection.style.marginTop = '0.5rem';
+    // Hide 'Recent Uploads' title header
+    const headerText = recentSection.querySelector('h3');
+    if (headerText) headerText.style.display = 'none';
+  }
 
-  // Render Trailer Video (Index 0)
-  const trailer = recipes[0];
-  const durationStr = trailer.duration
-    ? Math.floor(trailer.duration / 60) + ':' + String(Math.floor(trailer.duration % 60)).padStart(2, '0')
-    : '';
-  const mediaHtml = getRecipeCardThumbnail(trailer);
-  const viewsHash = trailer.id ? trailer.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
-  const views = viewsHash % 2 === 0 
-    ? `${(viewsHash % 90) + 10}K views`
-    : `${(viewsHash % 800) + 100} views`;
-  const relativeTime = getRelativeTime(trailer.created_at);
+  // Render all recipes in a clean Instagram visual grid
+  recentGrid.innerHTML = recipes.map(function(r, idx) {
+    const mins = r.duration
+      ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
+      : '';
+    const cardMedia = getRecipeCardThumbnail(r);
 
-  featuredContainer.innerHTML = `
-    <div class="yt-trailer-section">
-      <div class="yt-trailer-thumbnail-container">
-        <div class="yt-thumbnail-wrapper" onclick="openPubLightbox(0)" style="cursor:pointer;"
-             onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
-             onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
-          ${mediaHtml}
-          ${trailer.video_url ? `
-            <video class="lib-card-video" data-src="${encodeURI(trailer.video_url)}" muted loop playsinline
+    return `
+      <div class="yt-video-card" onclick="openPubLightbox(${idx})"
+           onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
+           onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
+        <div class="yt-thumbnail-wrapper">
+          ${cardMedia}
+          ${r.video_url ? `
+            <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
             </video>
           ` : ''}
-          ${durationStr ? `<div class="yt-duration-badge" style="z-index:3;">${durationStr}</div>` : ''}
+          ${mins ? `<div class="yt-duration-badge" style="z-index:3;">${mins}</div>` : ''}
         </div>
       </div>
-      <div class="yt-trailer-details">
-        <span class="yt-trailer-badge">Featured Recipe</span>
-        <h2 class="yt-trailer-title">${escapeHTML(trailer.title || 'Untitled')}</h2>
-        <div class="yt-trailer-meta">${views} • ${relativeTime}</div>
-        <p class="yt-trailer-desc">${escapeHTML(trailer.description || 'No description provided.')}</p>
-        <div class="yt-trailer-actions">
-          <button onclick="pubHomeWatchTrailer()" class="btn-subscribe" style="padding:8px 18px; font-size:0.82rem;">
-            Watch Guide
-          </button>
-          <button onclick="pubHomeAddTrailerToGrocery()" class="btn-channel-secondary">
-            Add to List
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Render Recent Grid (Index 1 to remaining)
-  const recentList = recipes.slice(1);
-  if (!recentList.length) {
-    if (recentSection) recentSection.style.display = 'none';
-    recentGrid.innerHTML = '';
-  } else {
-    recentGrid.innerHTML = recentList.map(function(r, index) {
-      const idx = index + 1; // map back to original recipes array index
-      const mins = r.duration
-        ? Math.floor(r.duration / 60) + ':' + String(Math.floor(r.duration % 60)).padStart(2, '0')
-        : '';
-      const cardMedia = getRecipeCardThumbnail(r);
-      const creatorName = r.creator.split('@')[0];
-      const initial = creatorName.charAt(0).toUpperCase();
-      
-      const vHash = r.id ? r.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
-      const vCount = vHash % 2 === 0 
-        ? `${(vHash % 90) + 10}K views`
-        : `${(vHash % 800) + 100} views`;
-      const relTime = getRelativeTime(r.created_at);
-
-      return `
-        <div class="yt-video-card" onclick="openPubLightbox(${idx})"
-             onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
-             onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
-          <div class="yt-thumbnail-wrapper">
-            ${cardMedia}
-            ${r.video_url ? `
-              <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
-                     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
-              </video>
-            ` : ''}
-            ${mins ? `<div class="yt-duration-badge" style="z-index:3;">${mins}</div>` : ''}
-          </div>
-          <div class="yt-card-info">
-            <div class="yt-card-avatar">${initial}</div>
-            <div class="yt-card-details">
-              <h4 class="yt-card-title">${escapeHTML(r.title || 'Untitled')}</h4>
-              <div class="yt-card-meta">${vCount} • ${relTime}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
+    `;
+  }).join('');
 }
 
 window.pubHomeWatchTrailer = function() {
