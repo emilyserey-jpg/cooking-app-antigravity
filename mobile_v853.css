@@ -2520,12 +2520,11 @@ a:focus-visible {
   border-color: #cbd5e1 !important;
 }
 .channel-tabs {
-  border-top: 1px solid var(--border-card) !important;
-  border-bottom: none !important;
+  border-bottom: 1.5px solid var(--border-card);
   margin-top: 1rem;
   display: flex !important;
-  padding-inline-start: 0 !important;
-  gap: 0 !important;
+  padding-inline-start: 1.25rem !important;
+  gap: 1.5rem !important;
   background: none !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
@@ -2538,7 +2537,7 @@ a:focus-visible {
 .channel-tab-btn {
   background: none !important;
   border: none !important;
-  padding: 14px 0 !important;
+  padding: 12px 4px !important;
   font-family: var(--font) !important;
   font-weight: 700 !important;
   font-size: 0.85rem !important;
@@ -2548,9 +2547,8 @@ a:focus-visible {
   transition: color 0.2s ease !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
   gap: 6px !important;
-  flex: 1 !important;
+  flex-shrink: 0 !important;
   box-shadow: none !important;
   border-radius: 0 !important;
 }
@@ -2560,11 +2558,10 @@ a:focus-visible {
 .channel-tab-btn::after {
   content: '';
   position: absolute;
-  top: -1px; /* Instagram top indicator line */
-  bottom: auto;
+  bottom: -1.5px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 2.5px;
   background: #1e293b;
   border-radius: 99px;
   transform: scaleX(0);
@@ -2578,7 +2575,7 @@ a:focus-visible {
   transform: scaleX(1);
 }
 .channel-tab-content {
-  padding: 8px 0 0 0 !important; /* Flush on sides for Instagram grid */
+  padding: 1.25rem 1rem;
   min-height: 250px;
 }
 /* Instagram-style 3-column video grid */

@@ -920,56 +920,38 @@
         </button>
       </div>
 
-      <div class="channel-container" style="border-radius:16px; border:1px solid var(--border-card); background:#fff; overflow:hidden;">
-        <!-- Clean minimal header logo placeholder -->
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px 8px; border-bottom:1px solid var(--border-card);">
-          <div style="font-size:0.85rem; font-weight:900; color:var(--text-heading); letter-spacing:-0.01em;">emilyserey</div>
-          <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; opacity:0.65;">In The Loop</div>
+      <div class="channel-container">
+        
+        <!-- Banner cover image -->
+        <div class="channel-banner">
+          <div class="channel-banner-overlay"></div>
+          <div style="position:absolute; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.06); top:-50px; left:10%;"></div>
+          <div style="position:absolute; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.03); bottom:-100px; right:15%;"></div>
+          <div class="channel-banner-logo">In The Loop</div>
         </div>
 
         <!-- Identity row -->
-        <div class="channel-header" style="padding:16px; display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
-          <!-- Top row: Avatar + Stats Count -->
-          <div style="display:flex; align-items:center; gap:20px; width:100%; box-sizing:border-box;">
-            <div class="channel-avatar-wrapper" style="flex-shrink:0;">
-              <div id="pubAvatar" class="channel-avatar" style="width:72px; height:72px; font-size:2rem;">E</div>
-            </div>
-            <div style="display:flex; flex:1; justify-content:space-around; align-items:center; text-align:center;">
-              <div>
-                <div id="pubStatPosts" style="font-size:0.95rem; font-weight:800; color:var(--text-heading);">1</div>
-                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.01em;">Posts</div>
-              </div>
-              <div>
-                <div id="pubStatFollowers" style="font-size:0.95rem; font-weight:800; color:var(--text-heading);">389</div>
-                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.01em;">Followers</div>
-              </div>
-              <div>
-                <div id="pubStatRecipes" style="font-size:0.95rem; font-weight:800; color:var(--text-heading);">1</div>
-                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.01em;">Recipes</div>
-              </div>
-            </div>
+        <div class="channel-header">
+          <div class="channel-avatar-wrapper">
+            <div id="pubAvatar" class="channel-avatar">?</div>
           </div>
-
-          <!-- Mid row: Bio details -->
-          <div style="display:flex; flex-direction:column; align-items:flex-start; width:100%; gap:2px; text-align:left; box-sizing:border-box;">
-            <h1 id="pubName" class="channel-title" style="font-size:0.95rem; font-weight:800; color:var(--text-heading); margin:0;">Emily Serey</h1>
-            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">Cooking Creator</div>
-            <div id="pubBioTextSnippet" class="channel-bio-snippet" style="font-size:0.78rem; color:var(--text-body); line-height:1.4; margin-top:2px;">Cooking with love. Let's get in the loop!</div>
-          </div>
-
-          <!-- Bottom row: Wide action buttons -->
-          <div class="channel-actions" style="display:flex; gap:8px; width:100%; margin-top:4px; box-sizing:border-box;">
-            <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe" style="flex:1; justify-content:center; text-align:center; padding:8px 12px !important; font-size:0.8rem !important; border-radius:8px !important;">
-              Subscribe
-            </button>
-            <button id="pubShareBtn" onclick="showTip('Share link copied!')" class="btn-channel-secondary" style="flex:1; justify-content:center; text-align:center; padding:8px 12px !important; font-size:0.8rem !important; border-radius:8px !important; border:1px solid #e2e8f0 !important; background:#f8fafc !important;">
-              <i data-lucide="share-2" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;"></i> Share
-            </button>
+          <div class="channel-details">
+            <h1 id="pubName" class="channel-title">Loading…</h1>
+            <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
+            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator</div>
+            <div class="channel-actions">
+              <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe">
+                Subscribe
+              </button>
+              <button id="pubShareBtn" onclick="showTip('Share link copied!')" class="btn-channel-secondary">
+                <i data-lucide="share-2" style="width:14px;height:14px;"></i> Share
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Tabs -->
-        <div class="channel-tabs" style="border-top:1px solid var(--border-card); margin-top:4px;">
+        <div class="channel-tabs">
           <button id="pubTabHomeBtn" onclick="pubSwitchTab('home')" class="channel-tab-btn active">
             <i data-lucide="home" style="width:14px;height:14px;"></i> Home
           </button>
