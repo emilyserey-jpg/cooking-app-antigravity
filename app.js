@@ -5698,6 +5698,47 @@ window.closePlayerActionsDropdown = function() {
   if (menu) menu.style.display = 'none';
 };
 
+// Split view layout toggle
+window.currentSplitLayoutActive = localStorage.getItem('cooking_gps_split_layout') === 'true';
+
+window.toggleSplitLayoutMobile = function() {
+  const active = !window.currentSplitLayoutActive;
+  window.currentSplitLayoutActive = active;
+  localStorage.setItem('cooking_gps_split_layout', active);
+  window.applySplitLayoutMobile();
+};
+
+window.applySplitLayoutMobile = function() {
+  const active = window.currentSplitLayoutActive;
+  const screens = document.querySelectorAll('.phone-screen');
+  screens.forEach(screen => {
+    if (active) {
+      screen.classList.add('split-view-active');
+    } else {
+      screen.classList.remove('split-view-active');
+    }
+  });
+
+  const splitBtns = document.querySelectorAll('.split-layout-toggle-btn span');
+  splitBtns.forEach(btn => {
+    btn.textContent = active ? 'Standard Layout' : 'Split Layout';
+  });
+  
+  const splitIcons = document.querySelectorAll('.split-layout-toggle-btn i');
+  splitIcons.forEach(icon => {
+    if (active) {
+      icon.setAttribute('data-lucide', 'layout');
+    } else {
+      icon.setAttribute('data-lucide', 'columns-2');
+    }
+  });
+  if (window.lucide) lucide.createIcons();
+
+  if (typeof window.adjustPlayerVideoSize === 'function') {
+    window.adjustPlayerVideoSize();
+  }
+};
+
 document.addEventListener('click', (e) => {
   // If the target is the folder select/options, or if the element was detached from the DOM during click handling,
   // do not close the player actions dropdown.
@@ -17558,10 +17599,16 @@ if (document.readyState === 'loading') {
     if (typeof window.updatePlayerBoxShapeUI === 'function') {
       window.updatePlayerBoxShapeUI();
     }
+    if (typeof window.applySplitLayoutMobile === 'function') {
+      window.applySplitLayoutMobile();
+    }
   });
 } else {
   initializeApp();
   if (typeof window.updatePlayerBoxShapeUI === 'function') {
     window.updatePlayerBoxShapeUI();
+  }
+  if (typeof window.applySplitLayoutMobile === 'function') {
+    window.applySplitLayoutMobile();
   }
 }

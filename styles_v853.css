@@ -3606,4 +3606,54 @@ a:focus-visible {
   }
 }
 
+/* Split View Layout Option */
+.phone-screen.split-view-active {
+  flex-direction: row !important;
+  align-items: stretch !important;
+}
+.phone-screen.split-view-active .player-left-column {
+  width: 48% !important;
+  max-width: 48% !important;
+  flex: 0 0 48% !important;
+  height: 100% !important;
+  border-right: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  background: #fff !important;
+}
+.phone-screen.split-view-active .mobile-player-body {
+  width: 52% !important;
+  max-width: 52% !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  padding: 8px 6px 80px 6px !important;
+}
+.phone-screen.split-view-active .mobile-video-container {
+  border-radius: 0 !important;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: none !important;
+}
+.phone-screen.split-view-active .step-slider-card {
+  width: calc(100% - 12px) !important;
+  margin: 0 6px !important;
+}
+.phone-screen.split-view-active .player-controls-strip {
+  padding: 4px !important;
+  gap: 3px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn {
+  width: 28px !important;
+  height: 28px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn {
+  width: 32px !important;
+  height: 32px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
 
