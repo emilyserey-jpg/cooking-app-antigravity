@@ -3391,6 +3391,26 @@ a:focus-visible {
   display: none !important;
 }
 
+/* Enforce layout order visually via flexbox ordering */
+.phone-screen.split-view-active .player-controls-strip #playerCombinedPrevBtn {
+  order: 1 !important;
+}
+.phone-screen.split-view-active .player-controls-strip #playerStripPlayPauseBtn {
+  order: 2 !important;
+}
+.phone-screen.split-view-active .player-controls-strip #playerCombinedNextBtn {
+  order: 3 !important;
+}
+.phone-screen.split-view-active .player-controls-strip #playerModeCycleBtn {
+  order: 4 !important;
+}
+.phone-screen.split-view-active .player-controls-strip #playerMuteBtn {
+  order: 5 !important;
+}
+.phone-screen.split-view-active .player-controls-strip .speed-dropdown-wrapper {
+  order: 6 !important;
+}
+
 /* Row 1: Playback navigation buttons (Circular, all 32px) */
 .phone-screen.split-view-active .player-controls-strip .control-btn:not(#playerMuteBtn):not(#playerSpeedBtn):not(#playerModeCycleBtn) {
   width: 32px !important;
