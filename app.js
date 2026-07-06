@@ -16415,19 +16415,19 @@ window.updateVideoFitUI = function() {
     }
   });
 
-  // Also sync the mobile header fit icon
-  const mobileIcon = document.getElementById('mobileFitIcon');
-  if (mobileIcon) {
+  // Also sync the mobile header fit icons
+  const mobileIcons = document.querySelectorAll('#mobileFitIcon, #mobileRealFitIcon');
+  mobileIcons.forEach(icon => {
     if (mode === 'contain') {
       // In contain mode (Fit), show "expand" (4-arrow icon)
-      mobileIcon.setAttribute('data-lucide', 'expand');
+      icon.setAttribute('data-lucide', 'expand');
     } else {
       // In cover mode (Fill), show "shrink"
-      mobileIcon.setAttribute('data-lucide', 'shrink');
+      icon.setAttribute('data-lucide', 'shrink');
     }
-    if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
+  });
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
   }
 };
 
