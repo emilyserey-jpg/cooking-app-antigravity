@@ -2666,7 +2666,7 @@ a:focus-visible {
 .player-main-tabs {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   gap: 8px !important;
   padding: 10px 12px 6px 12px !important;
   box-sizing: border-box !important;
@@ -2919,7 +2919,7 @@ a:focus-visible {
 .player-main-tabs {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   gap: 8px !important;
   padding: 10px 12px 6px 12px !important;
   box-sizing: border-box !important;
@@ -3304,54 +3304,147 @@ a:focus-visible {
   display: none;
 }
 
-/* Split View Layout Option */
+/* Split View Layout Option Adjustments */
 .phone-screen.split-view-active {
   flex-direction: row !important;
   align-items: stretch !important;
 }
+
 .phone-screen.split-view-active .player-left-column {
-  width: 48% !important;
-  max-width: 48% !important;
-  flex: 0 0 48% !important;
+  width: 46% !important;
+  max-width: 46% !important;
+  flex: 0 0 46% !important;
   height: 100% !important;
-  border-right: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   background: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
+
 .phone-screen.split-view-active .mobile-player-body {
-  width: 52% !important;
-  max-width: 52% !important;
+  width: 54% !important;
+  max-width: 54% !important;
   flex: 1 1 auto !important;
   height: 100% !important;
-  padding: 8px 6px 80px 6px !important;
+  padding: 6px 4px 80px 4px !important;
 }
+
+/* Video adjust */
 .phone-screen.split-view-active .mobile-video-container {
   border-radius: 0 !important;
   border-bottom: 1.5px solid rgba(0, 0, 0, 0.05) !important;
   box-shadow: none !important;
 }
+
+/* Tab bar shrink */
+.phone-screen.split-view-active .player-main-tabs {
+  padding: 6px 4px 4px 4px !important;
+}
+.phone-screen.split-view-active .player-tab-btn {
+  padding: 5px 8px !important;
+  font-size: 0.65rem !important;
+}
+.phone-screen.split-view-active .sec-action-btn.actions-menu-btn {
+  height: 28px !important;
+  padding: 0 6px !important;
+  font-size: 0.65rem !important;
+}
+
+/* Card layout adjustments */
+.phone-screen.split-view-active .step-slider-viewport {
+  margin-bottom: 6px !important;
+}
 .phone-screen.split-view-active .step-slider-card {
-  width: calc(100% - 12px) !important;
-  margin: 0 6px !important;
+  width: calc(100% - 8px) !important;
+  margin: 0 4px !important;
+  padding: 10px 8px !important;
+  position: relative !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
 }
-.phone-screen.split-view-active .player-controls-strip {
-  padding: 4px !important;
-  gap: 3px !important;
+
+/* Make space for absolute checkbox button */
+.phone-screen.split-view-active .step-slider-card > div:first-child {
+  padding-right: 32px !important;
 }
-.phone-screen.split-view-active .player-controls-strip .control-btn {
+
+/* Put checkbox button in top right */
+.phone-screen.split-view-active .step-slider-card > div:last-child {
+  position: absolute !important;
+  top: 10px !important;
+  right: 8px !important;
+  margin: 0 !important;
+}
+.phone-screen.split-view-active .player-mark-done-btn {
   width: 28px !important;
   height: 28px !important;
 }
+.phone-screen.split-view-active .player-mark-done-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Stack step meta details to prevent overlap */
+.phone-screen.split-view-active .step-meta-row {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 3px !important;
+}
+.phone-screen.split-view-active .step-duration-badge {
+  font-size: 0.6rem !important;
+  padding: 2px 6px !important;
+}
+.phone-screen.split-view-active .step-indicator-text {
+  font-size: 0.6rem !important;
+}
+.phone-screen.split-view-active .step-card-title {
+  font-size: 0.8rem !important;
+  margin-top: 2px !important;
+  word-wrap: break-word !important;
+}
+.phone-screen.split-view-active .step-instructions {
+  font-size: 0.68rem !important;
+  line-height: 1.3 !important;
+  word-wrap: break-word !important;
+  margin-top: 4px !important;
+}
+
+/* Controls strip adjustment */
+.phone-screen.split-view-active .player-controls-strip {
+  gap: 2px !important;
+  padding: 4px 2px !important;
+  justify-content: space-around !important;
+  flex-wrap: nowrap !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn {
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 22px !important;
+}
 .phone-screen.split-view-active .player-controls-strip .control-btn svg {
+  width: 10px !important;
+  height: 10px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+}
+.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn svg {
   width: 12px !important;
   height: 12px !important;
 }
-.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn {
-  width: 32px !important;
-  height: 32px !important;
+.phone-screen.split-view-active .player-controls-strip .speed-badge-btn,
+.phone-screen.split-view-active #playerSpeedBtn {
+  min-width: 22px !important;
+  height: 22px !important;
+  font-size: 0.6rem !important;
+  padding: 0 !important;
 }
-.phone-screen.split-view-active .player-controls-strip .control-btn.play-btn svg {
-  width: 14px !important;
-  height: 14px !important;
+.phone-screen.split-view-active .step-nav-chips-container {
+  padding: 8px 4px !important;
 }
 
 
