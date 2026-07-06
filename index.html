@@ -112,7 +112,17 @@
       <!-- User Info Badge Container -->
       <div style="position:relative; display:inline-block; flex-shrink:0;">
         <div class="user-profile-badge" id="userProfileBadge" onclick="toggleUserDropdown(event)" style="cursor:pointer;">
-          <div id="userAvatarCircle" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;">?</div>
+          <div id="userAvatarCircle" class="spatula-avatar-btn" style="width:28px;height:28px;border-radius:50%;background:var(--primary-soft);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:900;font-size:0.75rem;transition:all 0.2s;">
+            <span class="spatula-icon-wrap" style="display:flex; align-items:center; justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3H9a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z" />
+                <line x1="11" y1="6" x2="11" y2="10" />
+                <line x1="13" y1="6" x2="13" y2="10" />
+                <path d="M12 13v8" />
+              </svg>
+            </span>
+            <span class="avatar-initials-wrap" style="display:none;">?</span>
+          </div>
           <span id="userBadgeLabel">Sign In</span>
           <i data-lucide="chevron-down"></i>
         </div>

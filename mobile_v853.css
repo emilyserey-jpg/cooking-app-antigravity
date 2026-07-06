@@ -3491,4 +3491,22 @@ a:focus-visible {
   padding: 8px 4px !important;
 }
 
+/* Spatula Avatar Button: Spatula by default, Initials on hover */
+.spatula-avatar-btn .spatula-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.spatula-avatar-btn .avatar-initials-wrap {
+  display: none !important;
+}
+.spatula-avatar-btn:hover .spatula-icon-wrap {
+  display: none !important;
+}
+.spatula-avatar-btn:hover .avatar-initials-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 

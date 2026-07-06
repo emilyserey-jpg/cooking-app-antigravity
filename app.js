@@ -3429,15 +3429,25 @@ function updateUserBadge(user) {
   const avatar = document.getElementById('userAvatarCircle');
   if (!label || !avatar) return;
 
+  const initialsWrap = avatar.querySelector('.avatar-initials-wrap');
+
   if (user) {
     const initials = user.email.slice(0, 2).toUpperCase();
     label.textContent = user.email.split('@')[0];
-    avatar.textContent = initials;
+    if (initialsWrap) {
+      initialsWrap.textContent = initials;
+    } else {
+      avatar.textContent = initials;
+    }
     avatar.style.background = 'linear-gradient(135deg,#4a90d9,#6aaee8)';
     avatar.style.color = '#fff';
   } else {
     label.textContent = 'Sign In';
-    avatar.textContent = '?';
+    if (initialsWrap) {
+      initialsWrap.textContent = '?';
+    } else {
+      avatar.textContent = '?';
+    }
     avatar.style.background = 'rgba(74,144,217,0.1)';
     avatar.style.color = '#4a90d9';
   }
