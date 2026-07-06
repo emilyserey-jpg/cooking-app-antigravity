@@ -232,6 +232,11 @@ function initActiveStepCardSwiping() {
 
 // Initialize App
 async function initializeApp() {
+  // Proactively ensure default widgets are restored to dashboard
+  localStorage.setItem('cooking_gps_widget_hidden_bentoCalendarWidget', 'false');
+  localStorage.setItem('cooking_gps_widget_hidden_bentoStatsWidget', 'false');
+  localStorage.setItem('cooking_gps_widget_hidden_bentoGroceryWidget', 'false');
+
   canvasMobile = document.getElementById('mobileVideoCanvas');
   ctxMobile = canvasMobile ? canvasMobile.getContext('2d') : null;
   canvasDesktop = document.getElementById('desktopVideoCanvas');

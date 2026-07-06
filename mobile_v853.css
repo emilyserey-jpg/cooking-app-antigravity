@@ -2234,6 +2234,30 @@ a:focus-visible {
 .dashboard-editing .bento-widget-resize-btn {
   display: inline-flex !important;
 }
+.bento-widget-delete-btn {
+  display: none !important;
+  background: rgba(239, 68, 68, 0.08);
+  border: none;
+  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+.bento-widget-delete-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.dashboard-editing .bento-widget-delete-btn {
+  display: inline-flex !important;
+}
 .bio-edit-pencil {
   display: none !important;
 }
