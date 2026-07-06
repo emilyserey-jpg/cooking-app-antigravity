@@ -2120,6 +2120,17 @@ a:focus-visible {
 
 /* Mobile responsive layout overrides for bento dashboard and folders */
 @media (max-width: 768px) {
+  .app-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
   .bento-dashboard-grid {
     grid-template-columns: 1fr !important;
     gap: 1rem !important;
