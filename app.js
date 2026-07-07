@@ -8235,7 +8235,7 @@ function libFolderCardHTML(f) {
         <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
       </div>
       ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;z-index:3;">⠿ drag</div>' : ''}
-    </div>';
+    </div>`;
 }
 
 function libRecipeCardHTML(r, folderId) {
@@ -8372,12 +8372,11 @@ function libRecipeCardHTML(r, folderId) {
   return `
     <div class="lib-recipe-card" id="libR_${r.id}"
       style="background:#fff; border-radius:18px; border:2px solid var(--border-card); overflow:hidden;
-             cursor:pointer; transition:all 0.15s; display:flex; align-items:center; padding:12px 14px; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.02);"
+             cursor:pointer; transition:all 0.15s; display:flex; align-items:center; padding:12px 14px; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.02); width:100%; box-sizing:border-box;"
       onclick="libOpenRecipe('${r.id}')"
       ${dragAttr}
       onmouseenter="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(74,144,217,0.08)';"
-      onmouseleave="this.style.borderColor='var(--border-card)'; this.style.transform=''; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.02)';"
-      style="display:flex; align-items:center; width:100%; box-sizing:border-box;">
+      onmouseleave="this.style.borderColor='var(--border-card)'; this.style.transform=''; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.02)';">
       
       <!-- Premium thumbnail preview -->
       <div style="width:52px; height:52px; border-radius:10px; background:#111; overflow:hidden; flex-shrink:0; margin-right:12px; display:flex; align-items:center; justify-content:center; position:relative;">
