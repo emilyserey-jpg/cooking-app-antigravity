@@ -417,7 +417,7 @@ h1, h2, h3, h4, h5 {
   font-size: 0.72rem;
   font-weight: 700;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   color: var(--text-body);
 }
 
