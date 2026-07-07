@@ -8808,22 +8808,11 @@ window.profileEditMode = false;
 window.toggleProfileEditMode = function(active) {
   window.profileEditMode = !!active;
 
-  // Toggle visibility of the Edit Profile banner
-  document.querySelectorAll('#profileEditBanner').forEach(banner => {
-    banner.style.display = window.profileEditMode ? 'flex' : 'none';
-  });
-
-  // Toggle visibility of read vs edit profile fields
-  document.querySelectorAll('#pubHeaderReadInfo').forEach(el => {
+  // Toggle visibility of read-only About vs edit card
+  document.querySelectorAll('#pubAboutReadSection').forEach(el => {
     el.style.display = window.profileEditMode ? 'none' : 'block';
   });
-  document.querySelectorAll('#pubHeaderEditInfo').forEach(el => {
-    el.style.display = window.profileEditMode ? 'flex' : 'none';
-  });
-  document.querySelectorAll('#pubAboutBio').forEach(el => {
-    el.style.display = window.profileEditMode ? 'none' : 'block';
-  });
-  document.querySelectorAll('#pubAboutBioEditorWrapper').forEach(el => {
+  document.querySelectorAll('#pubProfileEditorCard').forEach(el => {
     el.style.display = window.profileEditMode ? 'flex' : 'none';
   });
 
