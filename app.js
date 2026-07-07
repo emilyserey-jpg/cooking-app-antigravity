@@ -8105,7 +8105,7 @@ function libRenderContent() {
         <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
           Folders (${folders.length})
         </div>
-        <div class="bento-dashboard-grid" style="margin: 0; padding: 0; max-width: 100%;" id="libFolderGrid">`;
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin:0; padding:0; max-width:100%;" id="libFolderGrid">`;
       folders.forEach(f => { if (f) html += libFolderCardHTML(f); });
       html += `</div></div>`;
     }
@@ -8152,6 +8152,16 @@ function libRenderContent() {
   }
 }
 
+function libHexToRgba(hex, alpha) {
+  let c = hex || '#4a90d9';
+  if (c.charAt(0) === '#') c = c.slice(1);
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const r = parseInt(c.slice(0, 2), 16) || 0;
+  const g = parseInt(c.slice(2, 4), 16) || 0;
+  const b = parseInt(c.slice(4, 6), 16) || 0;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
   const isDrag = window.libEditMode && libState.sort === 'custom';
@@ -8163,6 +8173,8 @@ function libFolderCardHTML(f) {
 
   let folderIconHtml = '';
   const colorVal = f.color || '#4a90d9';
+  const bgSoft = libHexToRgba(colorVal, 0.08);
+
   if (hasPreviews) {
     const firstRecipe = previewRecipes[0];
     let defaultPreviewHtml = '';
@@ -8172,12 +8184,12 @@ function libFolderCardHTML(f) {
       const hash = firstRecipe.id ? firstRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
       const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
       const grad = gradients[hash % gradients.length];
-      defaultPreviewHtml = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
+      defaultPreviewHtml = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
     }
 
     folderIconHtml = `
-      <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:24px; border-top-right-radius:24px; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02); transition: background 0.25s;">
-        <div class="folder-badge" style="position:absolute; top:12px; left:12px; width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.1); z-index: 3;">
+      <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:18px; border-top-right-radius:18px; border-bottom: 1.5px solid var(--border-card); background:rgba(0,0,0,0.01); transition: background 0.25s;">
+        <div class="folder-badge" style="position:absolute; top:10px; left:10px; width:28px; height:28px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-card); box-shadow:0 2px 6px rgba(0,0,0,0.06); z-index: 3;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.2" stroke="${colorVal}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
@@ -8191,8 +8203,8 @@ function libFolderCardHTML(f) {
     `;
   } else {
     folderIconHtml = `
-      <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:24px; border-top-right-radius:24px; border-bottom: 1.5px solid var(--border-card); background:rgba(20,20,50,0.02);">
-        <svg class="folder-base-svg" width="40" height="40" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+      <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:18px; border-top-right-radius:18px; border-bottom: 1.5px solid var(--border-card); background:${bgSoft};">
+        <svg class="folder-base-svg" width="36" height="36" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.03));">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
@@ -8200,31 +8212,30 @@ function libFolderCardHTML(f) {
   }
 
   return `
-    <div class="lib-folder-card bento-widget" id="libF_${f.id}"
-      style="background:${f.color || '#4a90d9'}; border-radius:24px; cursor:pointer;
-             position:relative; transition:transform 0.15s, box-shadow 0.15s;
-             box-shadow:var(--shadow-sm); height:100%; display:flex; flex-direction:column; box-sizing:border-box; padding:1.5rem;"
+    <div class="lib-folder-card" id="libF_${f.id}"
+      style="background:#fff; border: 2px solid var(--border-card); border-radius:20px; cursor:pointer;
+             position:relative; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.02); height:160px; display:flex; flex-direction:column; box-sizing:border-box; padding:12px 14px;"
       onclick="libOpenFolder('${f.id}')"
-      onmouseenter="window.startFolderSlideshow(this, '${f.id}')"
-      onmouseleave="window.stopFolderSlideshow(this, '${f.id}')"
+      onmouseenter="window.startFolderSlideshow(this, '${f.id}'); this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)';"
+      onmouseleave="window.stopFolderSlideshow(this, '${f.id}'); this.style.borderColor='var(--border-card)'; this.style.transform='';"
       ${isDrag ? `draggable="true" ondragstart="libOnDragStart(event,'folder','${f.id}')"` : ''}
       ondragover="libOnDragOver(event,'${f.id}')"
       ondrop="libOnDrop(event,'folder','${f.id}')"
       ondragleave="libOnDragLeave(event)">
       <!-- Actions menu -->
-      <div style="position:absolute;top:14px;right:14px;display:${window.libEditMode ? 'flex' : 'none'};gap:6px;z-index:10;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:10px;right:10px;display:${window.libEditMode ? 'flex' : 'none'};gap:4px;z-index:10;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
-          style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;"></i></button>
+          style="background:rgba(255,255,255,0.9);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;color:var(--text-heading);"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
-          style="background:rgba(255,255,255,0.7);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+          style="background:rgba(255,255,255,0.9);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="trash-2" style="width:12px;height:12px;color:#ef4444;"></i></button>
       </div>
       ${folderIconHtml}
       <div style="margin-top:auto;">
-        <div style="font-weight:900;font-size:0.95rem;color:rgba(20,20,50,0.85);word-break:break-word;line-height:1.3;">${f.name}</div>
-        <div style="font-size:0.72rem;font-weight:700;color:rgba(20,20,50,0.5);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
+        <div style="font-weight:900;font-size:0.85rem;color:var(--text-heading);word-break:break-word;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+        <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
       </div>
       ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;z-index:3;">⠿ drag</div>' : ''}
-    </div>`;
+    </div>';
 }
 
 function libRecipeCardHTML(r, folderId) {
@@ -8357,33 +8368,38 @@ function libRecipeCardHTML(r, folderId) {
       </div>`;
   }
 
-  // Compact layout
+  // Compact layout (Sleek modern row style)
   return `
     <div class="lib-recipe-card" id="libR_${r.id}"
-      style="background:#fff;border-radius:10px;border:2px solid var(--border-card);overflow:hidden;
-             cursor:pointer;transition:background 0.1s,border-color 0.1s;display:flex;align-items:center;padding:6px 12px;position:relative;"
+      style="background:#fff; border-radius:18px; border:2px solid var(--border-card); overflow:hidden;
+             cursor:pointer; transition:all 0.15s; display:flex; align-items:center; padding:12px 14px; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.02);"
       onclick="libOpenRecipe('${r.id}')"
       ${dragAttr}
-      onmouseenter="this.style.borderColor='var(--primary)';this.style.background='var(--bg-card-soft)';"
-      onmouseleave="this.style.borderColor='var(--border-card)';this.style.background='#fff';">
+      onmouseenter="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(74,144,217,0.08)';"
+      onmouseleave="this.style.borderColor='var(--border-card)'; this.style.transform=''; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.02)';"
+      style="display:flex; align-items:center; width:100%; box-sizing:border-box;">
       
-      <!-- Tiny thumbnail representation -->
-      <div style="width:36px;height:36px;border-radius:6px;background:#111;overflow:hidden;flex-shrink:0;margin-right:10px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <!-- Premium thumbnail preview -->
+      <div style="width:52px; height:52px; border-radius:10px; background:#111; overflow:hidden; flex-shrink:0; margin-right:12px; display:flex; align-items:center; justify-content:center; position:relative;">
         ${getCompactRecipeThumbnail(r)}
+        ${mins ? `<div style="position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.75); color:#fff; font-size:0.5rem; font-weight:800; padding:1px 4px; border-radius:3px;">${mins}</div>` : ''}
       </div>
 
-      <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-        <div style="min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <div style="font-weight:900;font-size:0.82rem;color:var(--text-heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;">${r.title || 'Untitled'}</div>
-          ${privBadge}
-          ${mins ? `<span style="font-size:0.65rem;color:var(--text-muted);font-weight:700;">(${mins})</span>` : ''}
+      <div style="flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div style="min-width:0; display:flex; flex-direction:column; gap:4px;">
+          <div style="font-weight:900; font-size:0.85rem; color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:320px;">${r.title || 'Untitled'}</div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:0.68rem; font-weight:700; color:var(--text-muted);">
+            ${privBadge}
+            <span>•</span>
+            <span>${date || 'Recently'}</span>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;" onclick="event.stopPropagation()">
           ${folderSelectHtml}
           ${deleteBtn}
           ${isDrag && !folderId
-            ? `<div style="font-size:0.75rem;color:var(--text-muted);cursor:grab;font-weight:700;padding:2px 6px;">⠿</div>`
-            : `<span style="font-size:0.8rem;color:var(--text-muted);padding:2px 6px;">›</span>`}
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); cursor:grab; font-weight:700; padding:2px 6px;">⠿</div>`
+            : `<span style="font-size:0.8rem; color:var(--text-muted); padding:2px 6px;">›</span>`}
         </div>
       </div>
     </div>`;
@@ -8443,7 +8459,7 @@ function libRenderFolderView(content) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
       <button onclick="libCloseFolder()"
         style="background:var(--bg-card-soft);border:2px solid var(--border-card);border-radius:9px;padding:7px 14px;font-family:var(--font);font-weight:900;font-size:0.85rem;cursor:pointer;">← Back</button>
-      <div style="width:36px;height:36px;border-radius:10px;background:${f.color};display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;"><i data-lucide="folder" style="width:16px;height:16px;"></i></div>
+      <div style="width:36px;height:36px;border-radius:10px;background:${libHexToRgba(f.color, 0.08)};display:flex;align-items:center;justify-content:center;color:${f.color || '#4a90d9'};flex-shrink:0;"><i data-lucide="folder" style="width:16px;height:16px;fill:${f.color || '#4a90d9'};fill-opacity:0.25;"></i></div>
       <div>
         <div style="font-weight:900;font-size:1.1rem;color:var(--text-heading);">${f.name}</div>
         <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;">${recipes.length} video${recipes.length!==1?'s':''}</div>
