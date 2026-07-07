@@ -3999,7 +3999,7 @@ function pubRenderYTRecipes(recipes) {
     const mediaHtml = getRecipeCardThumbnail(r);
 
     return `
-      <div class="yt-video-card" onclick="openPubLightbox(${idx})"
+      <div class="yt-video-card" onclick="window.pubOpenVideo('${r.id}')"
            onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
            onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
         <div class="yt-thumbnail-wrapper">
@@ -4049,7 +4049,7 @@ function pubRenderYTHome(recipes) {
     const cardMedia = getRecipeCardThumbnail(r);
 
     return `
-      <div class="yt-video-card" onclick="openPubLightbox(${idx})"
+      <div class="yt-video-card" onclick="window.pubOpenVideo('${r.id}')"
            onmouseenter="var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
            onmouseleave="var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
         <div class="yt-thumbnail-wrapper">
