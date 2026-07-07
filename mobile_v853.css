@@ -1485,7 +1485,7 @@ h1, h2, h3, h4, h5 {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   align-items: center !important;
   gap: 8px !important;
   overflow-x: auto !important;
