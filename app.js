@@ -914,13 +914,15 @@ function updateMuteUI() {
   if (!muteBtn) return;
 
   if (realVideo.muted) {
-    updateLucideIcon('playerMuteIcon', 'volume-x', '14px', '14px');
+    updateLucideIcon('playerMuteIcon', 'volume-x', '15px', '15px');
     muteBtn.title = 'Unmute';
-    muteBtn.style.color = '#f87171';
+    muteBtn.style.color = 'var(--red)';
+    muteBtn.style.background = 'rgba(224, 92, 92, 0.08)';
   } else {
-    updateLucideIcon('playerMuteIcon', 'volume-2', '14px', '14px');
+    updateLucideIcon('playerMuteIcon', 'volume-2', '15px', '15px');
     muteBtn.title = 'Mute';
-    muteBtn.style.color = '#ffffff';
+    muteBtn.style.color = '';
+    muteBtn.style.background = '';
   }
 }
 
@@ -1013,19 +1015,21 @@ function setPlaybackMode(mode) {
   // Update the new centered control-row cycle button
   const cycleBtn  = document.getElementById('playerModeCycleBtn');
   if (cycleBtn) {
-    cycleBtn.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
     if (mode === 'loop') {
-      cycleBtn.style.background = 'rgba(255, 255, 255, 0.25)';
-      cycleBtn.style.color = '#fff';
-      cycleBtn.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+      updateLucideIcon('playerModeCycleIcon', 'repeat', '15px', '15px');
+      cycleBtn.style.background = 'rgba(74, 144, 217, 0.1)';
+      cycleBtn.style.color = 'var(--primary)';
+      cycleBtn.style.borderColor = 'rgba(74, 144, 217, 0.2)';
     } else if (mode === 'wait') {
-      cycleBtn.style.background = 'rgba(224, 122, 32, 0.25)';
-      cycleBtn.style.color = '#fff';
-      cycleBtn.style.borderColor = 'rgba(224, 122, 32, 0.4)';
+      updateLucideIcon('playerModeCycleIcon', 'clock', '15px', '15px');
+      cycleBtn.style.background = 'rgba(224, 122, 32, 0.1)';
+      cycleBtn.style.color = '#e07a20';
+      cycleBtn.style.borderColor = 'rgba(224, 122, 32, 0.2)';
     } else if (mode === 'continuous') {
-      cycleBtn.style.background = 'rgba(92, 184, 92, 0.25)';
-      cycleBtn.style.color = '#fff';
-      cycleBtn.style.borderColor = 'rgba(92, 184, 92, 0.4)';
+      updateLucideIcon('playerModeCycleIcon', 'arrow-right-circle', '15px', '15px');
+      cycleBtn.style.background = 'rgba(92, 184, 92, 0.1)';
+      cycleBtn.style.color = 'var(--green)';
+      cycleBtn.style.borderColor = 'rgba(92, 184, 92, 0.2)';
     }
   }
   speakFeedback(mode + " mode activated.");
