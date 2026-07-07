@@ -4126,8 +4126,12 @@ window.pubLightboxWatch = function() {
 window.pubPlayHero  = window.pubLightboxWatch;
 window.pubOpenVideo = function(id) {
   if (!pubCurrentCreator || !pubCurrentCreator.recipes) return;
-  var idx = pubCurrentCreator.recipes.findIndex(function(r) { return r.id === id; });
-  if (idx >= 0) openPubLightbox(idx);
+  var r = pubCurrentCreator.recipes.find(function(rec) { return rec.id === id; });
+  if (r) {
+    pubHeroRecipe = r;
+    switchView('mobile-player');
+    if (typeof window.loadRecipeById === 'function') window.loadRecipeById(r.id);
+  }
 };
 
 // Reusable grocery list import helper
