@@ -3223,7 +3223,7 @@ a:focus-visible {
 .mobile-video-container {
   border-radius: 24px !important;
   overflow: hidden !important;
-  background: #000000 !important;
+  background: transparent !important;
   box-shadow: var(--shadow-md) !important;
 }
 
