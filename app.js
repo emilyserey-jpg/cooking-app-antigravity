@@ -9504,16 +9504,16 @@ function updateMultigridLayoutClass() {
           videoContainer.style.setProperty('align-self', 'center', 'important');
         } else {
           let h;
-          if (window.currentSplitLayoutActive) {
+          if (isPortrait) {
+            h = Math.min(320, Math.round(window.innerHeight * 0.45));
+            videoContainer.style.setProperty('width', '100%', 'important');
+            videoContainer.style.setProperty('margin', '0 auto', 'important');
+          } else if (window.currentSplitLayoutActive) {
             let splitWidth = w;
             if (splitWidth > 250) {
               splitWidth = Math.round(splitWidth * 0.40);
             }
             h = Math.round(splitWidth / aspect);
-            videoContainer.style.setProperty('width', '100%', 'important');
-            videoContainer.style.setProperty('margin', '0 auto', 'important');
-          } else if (isPortrait) {
-            h = Math.min(380, Math.round(window.innerHeight * 0.5));
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
           } else {
