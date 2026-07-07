@@ -9505,8 +9505,9 @@ function updateMultigridLayoutClass() {
         } else {
           let h;
           if (isPortrait) {
-            h = Math.min(320, Math.round(window.innerHeight * 0.45));
-            videoContainer.style.setProperty('width', '100%', 'important');
+            h = Math.min(420, Math.round(window.innerHeight * 0.52));
+            const targetW = Math.round(h * aspect);
+            videoContainer.style.setProperty('width', `${targetW}px`, 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
           } else if (window.currentSplitLayoutActive) {
             let splitWidth = w;
