@@ -3830,7 +3830,7 @@ function updateSubscribeUI(email) {
   }
 }
 
-window.openPublicProfile = async function(creatorEmail, fromView) {
+window.openPublicProfile = async function(creatorEmail, fromView, startInEditMode = false) {
   pubPreviousView = fromView || 'discover';
   pubFromTab      = (fromView === 'my-profile');
 
@@ -3936,8 +3936,13 @@ window.openPublicProfile = async function(creatorEmail, fromView) {
     pubRenderYTHome(list);
     pubRenderYTRecipes(list);
     
-    // Switch to Home tab by default
-    window.pubSwitchTab('home');
+    // Switch to Home tab by default or About if starting in edit mode
+    if (startInEditMode) {
+      window.pubSwitchTab('about');
+      window.toggleProfileEditMode(true);
+    } else {
+      window.pubSwitchTab('home');
+    }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -8873,14 +8878,8 @@ window.handleEditProfileClick = function(event) {
   // 1. Close user initials/spatula dropdown
   toggleUserDropdown(event);
   
-  // 2. Navigate straight to the My Profile page
-  switchView('my-profile');
-  
-  // 3. Switch to the "About" tab immediately so they see the descriptive box
-  window.pubSwitchTab('about');
-  
-  // 4. Activate inline editing
-  window.toggleProfileEditMode(true);
+  // 2. Open public profile in edit mode directly
+  openPublicProfile(currentUser.email, 'my-profile', true);
 };
 
 // ── Combined Options Dropdown ─────────────────────────────────────────────
