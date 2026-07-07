@@ -5827,29 +5827,20 @@ window.applySplitLayoutMobile = function() {
   }
 };
 
-// Video Zoom Crop (relieves side letterboxes by zooming 3.16x on landscape container)
-window.currentVideoZoomCropActive = (window.currentVideoFitMode === 'cover');
+// Video Zoom Crop (disabled to keep full aspect ratio contain mode)
+window.currentVideoZoomCropActive = false;
 
 window.toggleVideoZoomCrop = function() {
-  const nextMode = window.currentVideoFitMode === 'contain' ? 'cover' : 'contain';
-  window.setVideoFitMode(nextMode);
+  window.setVideoFitMode('contain');
 };
 
 window.applyVideoZoomCrop = function() {
-  const active = window.currentVideoZoomCropActive;
-  
-  // Select all potential players: mobile real video, mobile canvas, and desktop main player
+  // Always remove transform and scaling properties to prevent accidental cropping
   const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas, #uploadedVideoPlayer');
   players.forEach(player => {
-    if (active) {
-      player.style.setProperty('transform', 'scale3d(3.16, 3.16, 1)', 'important');
-      player.style.setProperty('transform-origin', 'center center', 'important');
-      player.style.setProperty('will-change', 'transform', 'important');
-    } else {
-      player.style.removeProperty('transform');
-      player.style.removeProperty('transform-origin');
-      player.style.removeProperty('will-change');
-    }
+    player.style.removeProperty('transform');
+    player.style.removeProperty('transform-origin');
+    player.style.removeProperty('will-change');
   });
 
   const placeholders = document.querySelectorAll('.mobile-video-placeholder, #workbenchVideoWrapper');
@@ -16733,19 +16724,13 @@ window.adjustWorkbenchVideoSize = function() {
 // Listen to window resize events to recalculate heights dynamically
 window.addEventListener('resize', window.adjustWorkbenchVideoSize);
 
-// Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped)
-let initialFitMode = 'contain';
-try {
-  initialFitMode = localStorage.getItem('cooking_gps_video_fit') || 'contain';
-} catch (e) {
-  console.warn('localStorage access failed:', e);
-}
-window.currentVideoFitMode = initialFitMode;
+// Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped) - Locked to contain/fit mode
+window.currentVideoFitMode = 'contain';
 
 window.setVideoFitMode = function(mode) {
-  window.currentVideoFitMode = mode;
+  window.currentVideoFitMode = 'contain';
   try {
-    localStorage.setItem('cooking_gps_video_fit', mode);
+    localStorage.setItem('cooking_gps_video_fit', 'contain');
   } catch (e) {
     console.warn('localStorage set failed:', e);
   }
@@ -16753,16 +16738,12 @@ window.setVideoFitMode = function(mode) {
   // Update video element styling on all loaded players (main and multigrid)
   const players = document.querySelectorAll('#uploadedVideoPlayer, #mobileRealVideo, [id^="playerMultigridVid_"]');
   players.forEach(player => {
-    player.style.setProperty('object-fit', mode, 'important');
-    if (mode === 'contain') {
-      player.style.setProperty('background', '#000', 'important');
-    } else {
-      player.style.setProperty('background', 'transparent', 'important');
-    }
+    player.style.setProperty('object-fit', 'contain', 'important');
+    player.style.setProperty('background', '#000', 'important');
   });
 
-  // Sync zoom crop active status to cover mode
-  window.currentVideoZoomCropActive = (mode === 'cover');
+  // Sync zoom crop active status to cover mode (disabled)
+  window.currentVideoZoomCropActive = false;
   if (typeof window.applyVideoZoomCrop === 'function') {
     window.applyVideoZoomCrop();
   }
