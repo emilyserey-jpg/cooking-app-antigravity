@@ -121,7 +121,7 @@
 
         <!-- User Dropdown Menu (on the right) -->
         <div id="userDropdownMenu" style="display:none; position:absolute; top:calc(100% + 6px); right:0; left:auto; width:160px; background:#fff; border:2px solid var(--border-card); border-radius:14px; box-shadow:var(--shadow-md); padding:6px; z-index:9999; flex-direction:column; gap:4px; box-sizing:border-box;">
-          <button id="editProfileMenuBtn" onclick="openEditProfileModal(); toggleUserDropdown(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
+          <button id="editProfileMenuBtn" onclick="window.handleEditProfileClick(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
             <i data-lucide="user-cog" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Edit Profile
           </button>
           <button id="editPageMenuBtn" onclick="window.handleEditLibraryClick(event);" style="display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; padding:8px 12px; border-radius:8px; color:var(--text-body); font-family:var(--font); font-size:0.8rem; font-weight:800; text-align:left; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='#f3f4f6';" onmouseleave="this.style.background='none';">
@@ -941,6 +941,21 @@
 
       <div class="channel-container">
         
+        <!-- Profile Edit Mode Active Banner -->
+        <div id="profileEditBanner" style="display:none; align-items:center; justify-content:space-between; padding:10px 16px; border-radius:12px; background:var(--primary-soft); border:1.5px solid var(--primary); margin-bottom:1.25rem; box-sizing:border-box; flex-shrink:0;">
+          <span style="font-size:0.82rem; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+            <i data-lucide="info" style="width:16px; height:16px;"></i> Editing Profile Page
+          </span>
+          <div style="display:flex; gap:8px;">
+            <button onclick="window.saveProfileEdits()" style="background:var(--primary); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-family:var(--font); font-weight:900; font-size:0.75rem; cursor:pointer;">
+              Save Changes
+            </button>
+            <button onclick="window.toggleProfileEditMode(false)" style="background:rgba(0,0,0,0.06); color:var(--text-muted); border:none; border-radius:8px; padding:6px 12px; font-family:var(--font); font-weight:800; font-size:0.75rem; cursor:pointer;">
+              Cancel
+            </button>
+          </div>
+        </div>
+
         <!-- Banner cover image -->
         <div class="channel-banner">
           <div class="channel-banner-overlay"></div>
@@ -955,9 +970,15 @@
             <div id="pubAvatar" class="channel-avatar">?</div>
           </div>
           <div class="channel-details">
-            <h1 id="pubName" class="channel-title">Loading…</h1>
-            <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
-            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator</div>
+            <div id="pubHeaderReadInfo" style="width:100%;">
+              <h1 id="pubName" class="channel-title">Loading…</h1>
+              <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
+              <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator</div>
+            </div>
+            <div id="pubHeaderEditInfo" style="display:none; flex-direction:column; gap:8px; margin-bottom:8px; width:100%; box-sizing:border-box;">
+              <input id="pubNameInput" type="text" placeholder="Display Name" style="width:100%; padding:8px 12px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:1.1rem; font-weight:900; outline:none; background:#fff; box-sizing:border-box;">
+              <input id="pubBioInput" type="text" placeholder="Tagline (e.g. Cooking creator)" style="width:100%; padding:8px 12px; border:2px solid var(--border-card); border-radius:10px; font-family:var(--font); font-size:0.8rem; font-weight:600; outline:none; background:#fff; box-sizing:border-box;">
+            </div>
             <div class="channel-actions">
               <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe">
                 Subscribe
@@ -1015,6 +1036,10 @@
               <div class="yt-about-bio-col" style="flex:1; width:100%;">
                 <h3 class="yt-about-title">Description</h3>
                 <div id="pubAboutBio" class="yt-about-text">Cooking creator</div>
+                <div id="pubAboutBioEditorWrapper" style="display:none; flex-direction:column; gap:8px; width:100%; flex-shrink:0; margin-top:8px;">
+                  <textarea id="pubAboutBioTextarea" placeholder="Describe yourself, your cooking style, and your channel..."
+                            style="width:100%; max-height:200px; overflow-y:auto; flex-shrink:0; padding:12px; border:2px solid var(--border-card); border-radius:14px; font-family:var(--font); font-size:0.82rem; font-weight:600; outline:none; background:#fff; box-sizing:border-box; resize:vertical;"></textarea>
+                </div>
               </div>
             </div>
           </div>

@@ -2017,6 +2017,11 @@ function switchView(viewId) {
       window.toggleLibEditMode(false);
     }
   }
+  if (viewId !== 'my-profile') {
+    if (window.profileEditMode) {
+      window.toggleProfileEditMode(false);
+    }
+  }
   if (viewId === 'my-profile') {
     // Load own public channel
     if (!currentUser) {
@@ -8795,6 +8800,98 @@ window.handleCustomizeLayoutClick = function(event) {
   window.toggleDashboardEditMode();
   // Close the user initials/spatula dropdown
   toggleUserDropdown(event);
+};
+
+// ── Profile Inline Edit Handlers ───────────────────────────────────────────
+window.profileEditMode = false;
+
+window.toggleProfileEditMode = function(active) {
+  window.profileEditMode = !!active;
+
+  // Toggle visibility of the Edit Profile banner
+  document.querySelectorAll('#profileEditBanner').forEach(banner => {
+    banner.style.display = window.profileEditMode ? 'flex' : 'none';
+  });
+
+  // Toggle visibility of read vs edit profile fields
+  document.querySelectorAll('#pubHeaderReadInfo').forEach(el => {
+    el.style.display = window.profileEditMode ? 'none' : 'block';
+  });
+  document.querySelectorAll('#pubHeaderEditInfo').forEach(el => {
+    el.style.display = window.profileEditMode ? 'flex' : 'none';
+  });
+  document.querySelectorAll('#pubAboutBio').forEach(el => {
+    el.style.display = window.profileEditMode ? 'none' : 'block';
+  });
+  document.querySelectorAll('#pubAboutBioEditorWrapper').forEach(el => {
+    el.style.display = window.profileEditMode ? 'flex' : 'none';
+  });
+
+  if (window.profileEditMode) {
+    // Populate form inputs
+    const data = mySpaceLoadData();
+    const defaultDisplayName = currentUser ? currentUser.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Creator';
+    
+    document.querySelectorAll('#pubNameInput').forEach(input => {
+      input.value = data.displayName || defaultDisplayName;
+    });
+    document.querySelectorAll('#pubBioInput').forEach(input => {
+      input.value = data.bio || data.category || '';
+    });
+    document.querySelectorAll('#pubAboutBioTextarea').forEach(textarea => {
+      textarea.value = data.aboutText || '';
+    });
+  }
+  
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.saveProfileEdits = function() {
+  const nameInput = document.getElementById('pubNameInput');
+  const bioInput = document.getElementById('pubBioInput');
+  const textarea = document.getElementById('pubAboutBioTextarea');
+
+  const data = mySpaceLoadData();
+  if (nameInput) data.displayName = nameInput.value.trim();
+  if (bioInput) {
+    data.bio = bioInput.value.trim();
+    // Also save category for compatibility
+    data.category = bioInput.value.trim();
+  }
+  if (textarea) data.aboutText = textarea.value.trim();
+
+  mySpaceSaveData(data);
+
+  // Turn off edit mode
+  window.toggleProfileEditMode(false);
+
+  // Re-render/reload the profile immediately
+  if (currentUser) {
+    openPublicProfile(currentUser.email, 'my-profile');
+  }
+  showTip('Profile updated successfully!');
+};
+
+window.handleEditProfileClick = function(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!currentUser) {
+    openAuthModal();
+    return;
+  }
+  // 1. Close user initials/spatula dropdown
+  toggleUserDropdown(event);
+  
+  // 2. Navigate straight to the My Profile page
+  switchView('my-profile');
+  
+  // 3. Switch to the "About" tab immediately so they see the descriptive box
+  window.pubSwitchTab('about');
+  
+  // 4. Activate inline editing
+  window.toggleProfileEditMode(true);
 };
 
 // ── Combined Options Dropdown ─────────────────────────────────────────────
