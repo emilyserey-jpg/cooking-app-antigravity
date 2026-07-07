@@ -9487,9 +9487,9 @@ function updateMultigridLayoutClass() {
             }
           } else {
             // Portrait
-            const maxAllowedHeight = Math.min(850, window.innerHeight * 0.82) * scale;
-            const minH = 440 * scale;
-            targetHeight = Math.max(minH, Math.min(maxAllowedHeight, 780 * scale));
+            const maxAllowedHeight = Math.min(480, window.innerHeight * 0.55) * scale;
+            const minH = 300 * scale;
+            targetHeight = Math.max(minH, maxAllowedHeight);
             targetWidth = targetHeight * aspect;
             if (targetWidth > leftColWidth) {
               targetWidth = leftColWidth;
@@ -9513,7 +9513,7 @@ function updateMultigridLayoutClass() {
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
           } else if (isPortrait) {
-            h = Math.min(460, Math.round(window.innerHeight * 0.6));
+            h = Math.min(380, Math.round(window.innerHeight * 0.5));
             videoContainer.style.setProperty('width', '100%', 'important');
             videoContainer.style.setProperty('margin', '0 auto', 'important');
           } else {
