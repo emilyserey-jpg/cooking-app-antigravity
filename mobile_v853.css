@@ -629,11 +629,15 @@ h1, h2, h3, h4, h5 {
   -webkit-overflow-scrolling: touch !important;
   gap: 8px;
   padding: 4px 2px;
-  scrollbar-width: thin !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE 10+ */
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
+}
+.chips-scroll-x::-webkit-scrollbar {
+  display: none !important; /* Safari and Chrome */
 }
 
 .step-chip {
