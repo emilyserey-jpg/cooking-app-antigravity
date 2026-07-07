@@ -16733,19 +16733,13 @@ window.adjustWorkbenchVideoSize = function() {
 // Listen to window resize events to recalculate heights dynamically
 window.addEventListener('resize', window.adjustWorkbenchVideoSize);
 
-// Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped)
-let initialFitMode = 'contain';
-try {
-  initialFitMode = localStorage.getItem('cooking_gps_video_fit') || 'contain';
-} catch (e) {
-  console.warn('localStorage access failed:', e);
-}
-window.currentVideoFitMode = initialFitMode;
+// Video Fit Mode (contain = Fit/YouTube, cover = Fill/Cropped) - Locked to contain/fit mode
+window.currentVideoFitMode = 'contain';
 
 window.setVideoFitMode = function(mode) {
-  window.currentVideoFitMode = mode;
+  window.currentVideoFitMode = 'contain';
   try {
-    localStorage.setItem('cooking_gps_video_fit', mode);
+    localStorage.setItem('cooking_gps_video_fit', 'contain');
   } catch (e) {
     console.warn('localStorage set failed:', e);
   }
@@ -16753,16 +16747,12 @@ window.setVideoFitMode = function(mode) {
   // Update video element styling on all loaded players (main and multigrid)
   const players = document.querySelectorAll('#uploadedVideoPlayer, #mobileRealVideo, [id^="playerMultigridVid_"]');
   players.forEach(player => {
-    player.style.setProperty('object-fit', mode, 'important');
-    if (mode === 'contain') {
-      player.style.setProperty('background', '#000', 'important');
-    } else {
-      player.style.setProperty('background', 'transparent', 'important');
-    }
+    player.style.setProperty('object-fit', 'contain', 'important');
+    player.style.setProperty('background', '#000', 'important');
   });
 
-  // Sync zoom crop active status to cover mode
-  window.currentVideoZoomCropActive = (mode === 'cover');
+  // Sync zoom crop active status to cover mode (disabled)
+  window.currentVideoZoomCropActive = false;
   if (typeof window.applyVideoZoomCrop === 'function') {
     window.applyVideoZoomCrop();
   }
