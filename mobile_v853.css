@@ -411,11 +411,8 @@ h1, h2, h3, h4, h5 {
 }
 
 .video-overlay-details {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 8px 12px;
+  position: relative;
+  padding: 4px 6px 0;
   background: transparent;
   font-size: 0.72rem;
   font-weight: 700;

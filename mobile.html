@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=9.88">
+  <link rel="stylesheet" href="mobile_v853.css?v=9.89">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -187,12 +187,7 @@
                   </div>
                 </div>
                 
-                <div class="video-overlay-details">
-                  <span id="videoTimeReadout">0:00 / 6:00</span>
-                  <span id="activeSpeedBadge">1.0x</span>
-                </div>
-
-                <!-- Multigrid Container (hidden by default) -->
+                 <!-- Multigrid Container (hidden by default) -->
                 <div id="playerMultigridContainer" style="display:none; position:absolute; inset:0; z-index:4; overflow-y:auto; background:#0f172a; padding: 48px 8px 8px 8px; box-sizing:border-box;">
                   <!-- Grid layout controls (Layout: Row | Quad) -->
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
@@ -221,6 +216,12 @@
                   <p id="videoErrorOverlayMsg" style="margin:0; font-size:0.72rem; color:rgba(255,255,255,0.85); line-height:1.4; max-width:85%;">This video was saved as a temporary local preview and has expired. Please edit the recipe to upload the video file permanently.</p>
                 </div>
               </div>
+            </div>
+            
+            <!-- Time and Speed Info Row -->
+            <div class="video-overlay-details">
+              <span id="videoTimeReadout">0:00 / 6:00</span>
+              <span id="activeSpeedBadge">1.0x</span>
             </div>
 
             <!-- Prominent Scrubber Timeline -->
