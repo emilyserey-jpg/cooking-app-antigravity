@@ -5954,6 +5954,12 @@ window.loadRecipeToEditor = function(recipe) {
   if (typeof window.updateEditorSaveButtonsUI === 'function') {
     window.updateEditorSaveButtonsUI();
   }
+  
+  const headerBackBtn = document.getElementById('editorHeaderBackBtn');
+  if (headerBackBtn) {
+    headerBackBtn.innerHTML = `<i data-lucide="arrow-left"></i> Back to Recipe`;
+    if (window.lucide) lucide.createIcons();
+  }
 
   // Load saved subtitles / transcription
   cachedSegments = recipe.text_overlays || [];
@@ -13724,6 +13730,12 @@ window.resetCreateView = function() {
 
   const clearBtn = document.getElementById('clearDraftBtn');
   if (clearBtn) clearBtn.remove();
+
+  const headerBackBtn = document.getElementById('editorHeaderBackBtn');
+  if (headerBackBtn) {
+    headerBackBtn.innerHTML = `<i data-lucide="arrow-left"></i> New Video`;
+    if (window.lucide) lucide.createIcons();
+  }
 
   editorPreviousView = null;
 };
