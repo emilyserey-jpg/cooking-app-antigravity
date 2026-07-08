@@ -15563,10 +15563,12 @@ window.setupResponsiveDrawers = function() {
       slideStops.appendChild(stopsSection);
     }
     
-    // Relocate #videoOverlayControls to be sibling of #workbenchVideoWrapper on mobile to fix iOS Safari touch swallowing
+    // Relocate #videoOverlayControls is disabled to keep controls floating directly on the video player card
+    /*
     if (videoWrapper && videoOverlayControls && videoOverlayControls.parentElement === videoWrapper) {
       videoWrapper.parentNode.insertBefore(videoOverlayControls, videoWrapper.nextSibling);
     }
+    */
     
     // Wire swipe scroll listeners
     window.setupCarouselListeners();
@@ -15635,10 +15637,12 @@ window.setupResponsiveDrawers = function() {
       }
     }
     
-    // Restore #videoOverlayControls back inside #workbenchVideoWrapper on desktop
+    // Restore #videoOverlayControls back inside #workbenchVideoWrapper is disabled
+    /*
     if (videoWrapper && videoOverlayControls && videoOverlayControls.parentElement !== videoWrapper) {
       videoWrapper.appendChild(videoOverlayControls);
     }
+    */
     
     if (typeof window.switchEditorTab === 'function') {
       window.switchEditorTab(window.activeEditorTab || 'stops');
