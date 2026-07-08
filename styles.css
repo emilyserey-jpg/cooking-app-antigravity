@@ -3578,20 +3578,21 @@ a:focus-visible {
 
 /* Condensed Editor Controls & Scrubber Layout */
 #editorScrubberCard {
-  padding: 5px 10px !important;
+  padding: 5px 10px 2px !important;
   margin-top: 2px !important;
+  margin-bottom: 0px !important;
 }
 #stepNavControlsRow {
   padding: 6px 10px !important;
   gap: 4px !important;
-  margin-top: 3px !important;
+  margin-top: -4px !important;
 }
 #stepNavControlsContent {
   gap: 4px !important;
 }
 #editorScrubberCard #videoScrubber {
   height: 6px !important;
-  margin: 6px 0 4px !important;
+  margin: 6px 0 0 !important;
 }
 #editorScrubberCard #videoThumb {
   width: 12px !important;
