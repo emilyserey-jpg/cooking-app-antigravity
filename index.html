@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=10.3">
+  <link rel="stylesheet" href="styles_v853.css?v=10.4">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1453,36 +1453,34 @@
               </div>
 
               <!-- Video Overlay Controls (Floating buttons overlay on video) -->
-              <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 32px); max-width: 330px; background: transparent; border: none; box-shadow: none; padding: 0; display: none !important; align-items: center; justify-content: space-between; gap: 6px; z-index: 100;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <!-- Loop Toggle / Preview -->
-                  <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn" class="control-btn" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Preview Step Loop">
-                    <i id="editorModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
-                  </button>
-                  <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn" class="control-btn" style="display:none; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" title="Stop Preview">
-                    <i data-lucide="square" style="width: 14px; height: 14px; fill: currentColor;"></i>
-                  </button>
+              <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; max-width: 340px; background: transparent; border: none; box-shadow: none; padding: 0; display: none !important; align-items: center; justify-content: center; gap: 8px; z-index: 100;">
+                <!-- Loop Toggle / Preview -->
+                <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn" class="control-btn" style="background: rgba(255, 255, 255, 0.95); color: var(--primary); border-color: var(--border-card); margin: 0;" title="Preview Step Loop">
+                  <i id="editorModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+                </button>
+                <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn" class="control-btn" style="display:none; background: rgba(255, 255, 255, 0.95); color: #ef4444; border-color: var(--border-card); margin: 0;" title="Stop Preview">
+                  <i data-lucide="square" style="width: 14px; height: 14px; fill: currentColor;"></i>
+                </button>
 
-                  <!-- Play/Pause -->
-                  <button onclick="toggleVideoPlay()" id="videoPlayBtn" class="control-btn play-btn" tabindex="-1" title="Play/Pause">
-                    <i id="videoPlayIconOverlay" data-lucide="play" style="width: 16px; height: 16px;"></i>
-                  </button>
+                <!-- Play/Pause -->
+                <button onclick="toggleVideoPlay()" id="videoPlayBtn" class="control-btn play-btn" tabindex="-1" title="Play/Pause" style="margin: 0;">
+                  <i id="videoPlayIconOverlay" data-lucide="play" style="width: 16px; height: 16px;"></i>
+                </button>
 
-                  <!-- Mute/Unmute -->
-                  <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlay" class="control-btn" tabindex="-1" title="Mute/Unmute">
-                    <i id="editorMuteIconOverlay" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
-                  </button>
+                <!-- Mute/Unmute -->
+                <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlay" class="control-btn" tabindex="-1" title="Mute/Unmute" style="margin: 0;">
+                  <i id="editorMuteIconOverlay" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+                </button>
 
-                  <!-- Speed Control Dropdown -->
-                  <div class="speed-dropdown-wrapper" style="position: relative; display: inline-block;">
-                    <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
-                      <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font); color: var(--primary);">1.0x</span>
-                    </button>
-                  </div>
+                <!-- Speed Control Dropdown -->
+                <div class="speed-dropdown-wrapper" style="position: relative; display: inline-block; margin: 0;">
+                  <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px; margin: 0;">
+                    <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font); color: var(--primary);">1.0x</span>
+                  </button>
                 </div>
 
                 <!-- Time Readout with glass bubble backplate -->
-                <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-card); box-shadow: var(--shadow-xs); height: 38px;">
+                <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-card); box-shadow: var(--shadow-xs); height: 38px; margin: 0;">
                   <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
                   <span style="color: var(--text-muted);">/</span>
                   <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
