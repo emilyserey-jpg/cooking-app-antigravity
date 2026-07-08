@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=11.5">
+  <link rel="stylesheet" href="styles_v853.css?v=11.6">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1482,14 +1482,6 @@
                   </button>
                 </div>
 
-                <!-- Time Readout with glass bubble backplate -->
-                <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-card); box-shadow: var(--shadow-xs); height: 38px; margin: 0;">
-                  <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
-                  <span style="color: var(--text-muted);">/</span>
-                  <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
-                  <span id="previewingLabel" style="font-size:0.6rem; font-weight:900; color:#7c3aed; display:none; background: rgba(124, 58, 237, 0.1); padding: 2px 4px; border-radius: 4px; margin-left: 4px;">Looping…</span>
-                </div>
-
                 <button onclick="window.openManualTimestampModal()" id="overlayTypeStopBtn"
                   style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 11px;color:#fff;cursor:pointer;font-size:0.72rem;font-weight:900;font-family:var(--font);white-space:nowrap;flex-shrink:0;display:none;">Type Stop</button>
                 <button onclick="doItAll()" id="overlayAiBtn"
@@ -1601,9 +1593,14 @@
               <!-- ── Chapter scrubber (OUTSIDE video, fully visible) ── -->
               <div id="editorScrubberCard" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:5px 10px 2px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;margin-bottom:0;">
                 <div style="min-width:460px;">
-                  <div style="display:none !important;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1.5px solid rgba(0,0,0,0.06);padding-bottom:6px;">
-                    <span style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);">Loop Stops — drag to adjust</span>
-                    <span style="font-size:0.6rem;color:var(--text-muted);font-weight:600;margin-left:4px;" id="chapterDurationLabel">0:00</span>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; padding:0 2px;">
+                    <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Timeline Scrubber</span>
+                    <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); margin: 0;">
+                      <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
+                      <span style="color: var(--text-muted);">/</span>
+                      <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
+                      <span id="previewingLabel" style="font-size:0.6rem; font-weight:900; color:#7c3aed; display:none; background: rgba(124, 58, 237, 0.1); padding: 2px 4px; border-radius: 4px; margin-left: 4px;">Looping…</span>
+                    </div>
                   </div>
                   <!-- Scrubber track — clean thin grey timeline rail -->
                   <div id="videoScrubber" onclick="videoScrubberSeek(event)"
@@ -2661,6 +2658,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=11.5"></script>
+  <script type="module" src="app.js?v=11.6"></script>
 </body>
 </html>
