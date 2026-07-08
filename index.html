@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=12.0">
+  <link rel="stylesheet" href="styles_v853.css?v=12.1">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1456,7 +1456,7 @@
               </div>
 
               <!-- Video Overlay Controls (Floating buttons overlay on video) -->
-              <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; max-width: 340px; background: transparent; border: none; box-shadow: none; padding: 0; display: none !important; align-items: center; justify-content: center; gap: 8px; z-index: 100;">
+              <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; max-width: 340px; background: transparent; border: none; box-shadow: none; padding: 0; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 100;">
                 <!-- Loop Toggle / Preview -->
                 <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn" class="control-btn" style="background: rgba(255, 255, 255, 0.95); color: var(--primary); border-color: var(--border-card); margin: 0;" title="Preview Step Loop">
                   <i id="editorModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
@@ -2661,6 +2661,6 @@
   </script>
   
   <!-- Main application script (ES module so it can import Supabase) -->
-  <script type="module" src="app.js?v=12.0"></script>
+  <script type="module" src="app.js?v=12.1"></script>
 </body>
 </html>

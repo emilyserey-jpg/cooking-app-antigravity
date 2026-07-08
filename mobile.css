@@ -1718,13 +1718,13 @@ a:focus-visible {
   }
   body.editor-split-view-active #editorScrubberCard {
     width: 100% !important;
-    order: 3 !important;
+    order: 4 !important;
     flex-shrink: 0 !important;
     margin-top: 6px !important;
   }
   body.editor-split-view-active #stepNavControlsRow {
     width: 100% !important;
-    order: 4 !important;
+    order: 5 !important;
     flex-shrink: 0 !important;
     margin-top: 6px !important;
   }
@@ -1760,6 +1760,7 @@ a:focus-visible {
     justify-content: center !important;
     gap: 12px !important;
     z-index: 10 !important;
+    order: 3 !important;
   }
   body.editor-split-view-active #videoOverlayControls .control-btn,
   body.editor-split-view-active #videoOverlayControls button {
