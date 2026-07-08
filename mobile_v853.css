@@ -1720,7 +1720,7 @@ a:focus-visible {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    background: #1e2235 !important;
+    background: #f4f9ff !important;
     border-top: 1.5px solid var(--border-card) !important;
     display: flex !important;
     align-items: center !important;
