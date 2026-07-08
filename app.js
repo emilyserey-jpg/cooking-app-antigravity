@@ -5831,11 +5831,32 @@ window.applySplitLayoutMobile = function() {
   }
 };
 
+window.syncVideoControlsParent = function() {
+  const isSplit = document.body.classList.contains('editor-split-view-active');
+  const overlayControls = document.getElementById('videoOverlayControls');
+  const videoWrapper = document.getElementById('workbenchVideoWrapper');
+  const splitLeft = document.getElementById('mobileSplitLeft');
+  
+  if (!overlayControls || !videoWrapper || !splitLeft) return;
+  
+  if (isSplit) {
+    if (overlayControls.parentElement !== splitLeft.parentNode) {
+      splitLeft.parentNode.insertBefore(overlayControls, splitLeft.nextSibling);
+    }
+  } else {
+    if (overlayControls.parentElement !== videoWrapper) {
+      videoWrapper.appendChild(overlayControls);
+    }
+  }
+};
+
 window.toggleMobileSplitView = function() {
   const body = document.body;
   const isSplit = body.classList.toggle('editor-split-view-active');
   localStorage.setItem('editor_split_view_active', isSplit ? 'true' : 'false');
   
+  window.syncVideoControlsParent();
+
   // Update all split view buttons (both in index.html and mobile.html)
   const btns = document.querySelectorAll('#editorMobileSplitBtn');
   btns.forEach(btn => {
@@ -5871,6 +5892,7 @@ window.initMobileSplitView = function() {
       window.lucide.createIcons();
     }
   }
+  window.syncVideoControlsParent();
 };
 
 // Video Zoom Crop (disabled to keep full aspect ratio contain mode)
