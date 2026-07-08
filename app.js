@@ -10284,8 +10284,8 @@ window.updateEditorMuteUI = function() {
     }
     if (overlayBtnMobile) {
       overlayBtnMobile.title = 'Unmute';
-      overlayBtnMobile.style.color = '#ef4444';
-      overlayBtnMobile.style.background = 'rgba(239, 68, 68, 0.2)';
+      overlayBtnMobile.style.color = 'var(--red)';
+      overlayBtnMobile.style.background = 'rgba(224, 92, 92, 0.08)';
     }
     if (toolbarBtn) {
       toolbarBtn.title = 'Unmute';
@@ -10303,7 +10303,7 @@ window.updateEditorMuteUI = function() {
     // Update Icons to Volume-2
     updateLucideIcon('editorMuteIconOverlay', 'volume-2', '14px', '14px');
     updateLucideIcon('editorMuteIconToolbar', 'volume-2', '15px', '15px');
-    updateLucideIcon('editorMuteIconOverlayMobile', 'volume-2', '14px', '14px');
+    updateLucideIcon('editorMuteIconOverlayMobile', 'volume-2', '15px', '15px');
     updateLucideIcon('editorMuteIconToolbarMobile', 'volume-2', '15px', '15px');
 
     // Title / Accessibility
@@ -10314,8 +10314,8 @@ window.updateEditorMuteUI = function() {
     }
     if (overlayBtnMobile) {
       overlayBtnMobile.title = 'Mute';
-      overlayBtnMobile.style.color = '#ffffff';
-      overlayBtnMobile.style.background = 'rgba(255, 255, 255, 0.2)';
+      overlayBtnMobile.style.color = '';
+      overlayBtnMobile.style.background = '';
     }
     if (toolbarBtn) {
       toolbarBtn.title = 'Mute';

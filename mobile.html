@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=9.96">
+  <link rel="stylesheet" href="mobile_v853.css?v=9.97">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1458,31 +1458,40 @@
           </div>
         </div>
 
+        <!-- Time Info Row for Editor -->
+        <div class="video-overlay-details" style="margin-top: 10px; margin-bottom: 2px; justify-content: center; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+          <span id="createCurrentTime" style="font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); font-variant-numeric: tabular-nums;">0:00</span>
+          <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted);">/</span>
+          <span id="timelineDuration" style="font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
+          <span id="previewingLabel" style="font-size:0.62rem; font-weight:800; color:#7c3aed; display:none; background: rgba(124, 58, 237, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Looping…</span>
+        </div>
+
         <!-- Video Overlay Controls (Sibling of player wrapper, fixes iOS touch swallowing) -->
-        <div id="videoOverlayControls" style="background:#1e2235; border-top:1.5px solid var(--border-card); display:flex; align-items:center; gap:8px; padding:5px 10px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; touch-action:pan-x; flex-shrink:0;">
-          <button onclick="toggleVideoPlay()" id="videoPlayBtn"
-            style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:1rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;"><i id="videoPlayIconOverlayMobile" data-lucide="play" style="width: 14px; height: 14px;"></i></button>
-          <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlayMobile"
-            style="background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:32px; height:32px; color:#fff; cursor:pointer; font-size:0.9rem; flex-shrink:0; display:flex; align-items:center; justify-content:center;"
-            title="Mute/Unmute">
-            <i id="editorMuteIconOverlayMobile" data-lucide="volume-x" style="width: 14px; height: 14px;"></i>
+        <div id="videoOverlayControls" class="player-controls-strip" style="background:#f4f9ff; border-top:1.5px solid var(--border-card); margin-top:6px; margin-bottom:2px; gap:6px; flex-shrink:0;">
+          <!-- Loop Toggle / Preview -->
+          <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn" class="control-btn" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Preview Step Loop">
+            <i id="editorModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
           </button>
-          <button onclick="window.cycleEditorSpeed()" id="editorSpeedBtn"
-            style="background:rgba(255,255,255,0.2); border:none; border-radius:18px; height:32px; padding:0 8px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:700; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:4px;"
-            title="Playback Speed">
-            <i data-lucide="gauge" style="width: 13px; height: 13px;"></i>
-            <span id="editorSpeedLabel">1.0x</span>
+          <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn" class="control-btn" style="display:none; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" title="Stop Preview">
+            <i data-lucide="square" style="width: 14px; height: 14px; fill: currentColor;"></i>
           </button>
-          <div style="flex:1;">
-            <span id="createCurrentTime" style="font-size:0.65rem; color:rgba(255,255,255,0.8); font-weight:700; font-variant-numeric:tabular-nums;">0:00</span>
-            <span style="font-size:0.65rem; color:rgba(255,255,255,0.4); font-weight:600;"> / </span>
-            <span id="timelineDuration" style="font-size:0.65rem; color:rgba(255,255,255,0.5); font-weight:600; font-variant-numeric:tabular-nums;">0:00</span>
-            <span id="previewingLabel" style="margin-left:8px; font-size:0.62rem; font-weight:700; color:#a78bfa; display:none;">Looping…</span>
+
+          <!-- Play/Pause -->
+          <button onclick="toggleVideoPlay()" id="videoPlayBtn" class="control-btn play-btn" tabindex="-1" title="Play/Pause">
+            <i id="videoPlayIconOverlayMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
+          </button>
+
+          <!-- Mute/Unmute -->
+          <button onclick="window.toggleEditorMute()" id="editorMuteBtnOverlayMobile" class="control-btn" tabindex="-1" title="Mute/Unmute">
+            <i id="editorMuteIconOverlayMobile" data-lucide="volume-2" style="width: 15px; height: 15px;"></i>
+          </button>
+
+          <!-- Speed Control Dropdown -->
+          <div class="speed-dropdown-wrapper" style="position: relative; display: inline-block;">
+            <button id="editorSpeedBtn" onclick="window.cycleEditorSpeed()" class="control-btn" tabindex="-1" title="Playback Speed" style="display:flex; align-items:center; justify-content:center; border-radius:999px; min-width:38px; width:auto; padding:0 6px;">
+              <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font); color: var(--primary);">1.0x</span>
+            </button>
           </div>
-          <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn"
-            style="background:rgba(255,255,255,0.25); border:1.5px solid rgba(255,255,255,0.4); border-radius:8px; padding:6px 11px; color:#fff; cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0;">Loop</button>
-          <button onclick="stopPreviewLoop()" id="overlayStopPreviewBtn"
-            style="display:none; background:#f0f4ff; border:none; border-radius:8px; padding:6px 11px; color:var(--primary); cursor:pointer; font-size:0.72rem; font-weight:900; font-family:var(--font); white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(240,244,255,0.4);">Stop</button>
         </div>
 
         <!-- Chapter Scrubber -->
