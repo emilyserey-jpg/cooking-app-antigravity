@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=11.7">
+  <link rel="stylesheet" href="mobile_v853.css?v=11.8">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1490,20 +1490,23 @@
                 <span id="editorSpeedLabel" style="font-size:0.62rem; font-weight:900; font-family:var(--font); color: var(--primary);">1.0x</span>
               </button>
             </div>
+
+            <!-- Time Readout with glass bubble backplate -->
+            <div id="videoOverlayTimeReadout" style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-card); box-shadow: var(--shadow-xs); height: 38px; margin: 0;">
+              <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
+              <span style="color: var(--text-muted);">/</span>
+              <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
+              <span id="previewingLabel" style="font-size:0.6rem; font-weight:900; color:#7c3aed; display:none; background: rgba(124, 58, 237, 0.1); padding: 2px 4px; border-radius: 4px; margin-left: 4px;">Looping…</span>
+            </div>
           </div>
         </div> <!-- Close workbenchVideoWrapper -->
       </div> <!-- Close mobileSplitLeft -->
 
         <!-- Chapter Scrubber -->
         <div id="editorScrubberCard" style="background:#fff; border-radius:12px; border:2px solid var(--border-card); padding:5px 10px 2px; flex-shrink:0; margin-top:2px; margin-bottom:0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; padding:0 2px;">
-            <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Timeline Scrubber</span>
-            <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); margin: 0;">
-              <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
-              <span style="color: var(--text-muted);">/</span>
-              <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
-              <span id="previewingLabel" style="font-size:0.6rem; font-weight:900; color:#7c3aed; display:none; background: rgba(124, 58, 237, 0.1); padding: 2px 4px; border-radius: 4px; margin-left: 4px;">Looping…</span>
-            </div>
+          <div style="display:none !important; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <span style="font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted);">Loop Stops — drag to adjust</span>
+            <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600;" id="chapterDurationLabel">0:00</span>
           </div>
           <div id="videoScrubber" onclick="videoScrubberSeek(event)"
             onmousemove="videoScrubberHover(event)" onmouseleave="document.getElementById('videoChapterLabel').style.display='none'"
@@ -2511,6 +2514,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=11.7"></script>
+  <script type="module" src="app.js?v=11.8"></script>
 </body>
 </html>

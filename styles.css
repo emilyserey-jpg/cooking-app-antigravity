@@ -4103,7 +4103,67 @@ body.editor-split-view-active #uploadedVideoPlayer {
   box-shadow: var(--shadow-md) !important;
 }
 body.editor-split-view-active #videoOverlayControls {
-  display: none !important;
+  display: flex !important;
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  background: #fff !important;
+  border: 2px solid var(--border-card) !important;
+  border-radius: 16px !important;
+  padding: 6px 12px !important;
+  margin: 8px 0 0 0 !important;
+  box-shadow: var(--shadow-sm) !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  z-index: 10 !important;
+}
+body.editor-split-view-active #videoOverlayControls .control-btn,
+body.editor-split-view-active #videoOverlayControls button {
+  padding: 0 !important;
+  height: 34px !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--border-card) !important;
+  background: #fff !important;
+  color: var(--primary) !important;
+  box-shadow: var(--shadow-xs) !important;
+  margin: 0 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+}
+body.editor-split-view-active #videoOverlayControls .play-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 10px var(--primary-glow) !important;
+}
+body.editor-split-view-active #videoOverlayControls i {
+  width: 15px !important;
+  height: 15px !important;
+}
+body.editor-split-view-active #videoOverlayTimeReadout {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-family: var(--font) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  color: var(--text-heading) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
 }
 body.editor-split-view-active #editorTabBarMobile {
   margin-top: 0 !important;
