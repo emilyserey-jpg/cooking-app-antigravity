@@ -3362,7 +3362,7 @@ a:focus-visible {
 
 /* Condensed Editor Controls & Scrubber Layout */
 #editorScrubberCard {
-  padding: 5px 10px 2px !important;
+  padding: 4px 10px 4px !important;
   margin-top: 2px !important;
   margin-bottom: 0px !important;
 }
@@ -3376,7 +3376,7 @@ a:focus-visible {
 }
 #editorScrubberCard #videoScrubber {
   height: 6px !important;
-  margin: 6px 0 0 !important;
+  margin: 2px 0 2px !important;
 }
 #editorScrubberCard #videoThumb {
   width: 12px !important;
