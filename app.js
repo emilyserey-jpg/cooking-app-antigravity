@@ -15727,6 +15727,9 @@ window.setupResponsiveDrawers = function() {
   if (typeof window.ensureStartOverButtonExists === 'function') {
     window.ensureStartOverButtonExists();
   }
+  if (typeof window.syncVideoControlsParent === 'function') {
+    window.syncVideoControlsParent();
+  }
 };
 
 let carouselScrolling = false;
