@@ -10390,10 +10390,10 @@ window.cycleEditorSpeed = function() {
   const speed = EDITOR_SPEEDS[editorPlaybackSpeedIndex];
   videoEl.playbackRate = speed;
 
-  const label = document.getElementById('editorSpeedLabel');
-  if (label) {
-    label.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
-  }
+  const labels = document.querySelectorAll('#editorSpeedLabel, .editor-speed-label');
+  labels.forEach(lbl => {
+    lbl.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
+  });
 };
 
 let videoDuration   = 0;
@@ -12985,10 +12985,15 @@ window.previewStepLoop = function(i) {
   const loopBtn = document.getElementById('previewLoopBtn');
   if (labelEl) labelEl.style.display  = 'inline';
   if (loopBtn) {
-    loopBtn.style.background = 'rgba(74, 144, 217, 0.15)';
-    loopBtn.style.color = 'var(--primary)';
-    loopBtn.style.borderColor = 'rgba(74, 144, 217, 0.3)';
+    loopBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+    loopBtn.style.color = '#ef4444';
+    loopBtn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
     loopBtn.title = 'Stop Loop Preview';
+    if (typeof updateLucideIcon === 'function') {
+      updateLucideIcon('previewLoopIcon', 'square', '15px', '15px');
+      const icon = document.getElementById('previewLoopIcon');
+      if (icon) icon.style.fill = 'currentColor';
+    }
   }
   if (stopBtn) stopBtn.style.display  = 'none';
 
@@ -13029,6 +13034,9 @@ window.stopPreviewLoop = function() {
     loopBtn.style.color = 'var(--text-body)';
     loopBtn.style.borderColor = 'var(--border-card)';
     loopBtn.title = 'Preview Loop Stop';
+    if (typeof updateLucideIcon === 'function') {
+      updateLucideIcon('previewLoopIcon', 'repeat', '15px', '15px');
+    }
   }
 
   const overlayStopBtn = document.getElementById('overlayStopPreviewBtn');
