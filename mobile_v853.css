@@ -1701,14 +1701,19 @@ a:focus-visible {
     flex: 0 0 calc(50% - 3px) !important;
     width: calc(50% - 3px) !important;
     order: 1 !important;
-    position: sticky !important;
-    top: 10px !important;
-    z-index: 100 !important;
+    position: relative !important;
+    top: auto !important;
+    z-index: 10 !important;
+    height: 290px !important;
   }
   body.editor-split-view-active #mobileSplitRight {
     flex: 0 0 calc(50% - 3px) !important;
     width: calc(50% - 3px) !important;
     order: 2 !important;
+    height: 290px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
   body.editor-split-view-active #editorScrubberCard {
     width: 100% !important;
@@ -1723,16 +1728,19 @@ a:focus-visible {
     margin-top: 4px !important;
   }
   body.editor-split-view-active #workbenchVideoWrapper {
-    height: auto !important;
-    aspect-ratio: 16/9 !important;
-    overflow: visible !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
     background: transparent !important;
-    box-shadow: none !important;
+    box-shadow: var(--shadow-md) !important;
     border: none !important;
+    border-radius: 20px !important;
   }
   body.editor-split-view-active #uploadedVideoPlayer {
+    height: 100% !important;
+    width: 100% !important;
+    object-fit: contain !important;
     border-radius: 20px !important;
-    box-shadow: var(--shadow-md) !important;
   }
   body.editor-split-view-active #videoOverlayControls {
     display: flex !important;
@@ -1812,6 +1820,30 @@ a:focus-visible {
   }
   body.editor-split-view-active #mobileEditorCarousel {
     margin-top: 0 !important;
+    flex: 1 !important;
+    height: calc(100% - 38px) !important;
+    overflow-y: hidden !important;
+    overflow-x: auto !important;
+  }
+  body.editor-split-view-active .carousel-slide {
+    height: 100% !important;
+    overflow-y: auto !important;
+    padding: 8px 10px !important;
+    box-sizing: border-box !important;
+  }
+  body.editor-split-view-active .loop-stop-card textarea {
+    height: 60px !important;
+    max-height: 60px !important;
+    resize: none !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
+  }
+  body.editor-split-view-active .loop-stop-card .form-group textarea {
+    height: 60px !important;
+    max-height: 60px !important;
+    resize: none !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
   }
 
   body.editor-split-view-active #workbenchGrid {
@@ -1819,9 +1851,9 @@ a:focus-visible {
   }
   body.editor-split-view-active #workbenchLeft {
     width: 50% !important;
-    position: sticky !important;
-    top: 10px !important;
-    z-index: 100 !important;
+    position: relative !important;
+    top: auto !important;
+    z-index: 10 !important;
   }
   body.editor-split-view-active #workbenchRight {
     width: 50% !important;
