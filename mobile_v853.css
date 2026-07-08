@@ -1719,15 +1719,15 @@ a:focus-visible {
   /* Floating video controls bar on top of the video card */
   #videoOverlayControls {
     position: absolute !important;
-    bottom: 12px !important;
-    left: 12px !important;
-    right: 12px !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    bottom: 16px !important;
+    left: 16px !important;
+    right: 16px !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
