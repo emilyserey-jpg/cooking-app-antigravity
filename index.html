@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=11.0">
+  <link rel="stylesheet" href="styles_v853.css?v=11.1">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1392,6 +1392,9 @@
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <button id="editorMobileSplitBtn" onclick="window.toggleMobileSplitView()" class="btn" style="font-size:0.78rem;padding:8px 12px;background:#f1f5f9;color:var(--text-heading);border:1.5px solid var(--border-card);display:inline-flex;align-items:center;gap:4px;font-weight:800;margin-right:4px;">
+              <i data-lucide="columns" style="width:14px;height:14px;"></i> Split View
+            </button>
             <button id="editorHeaderBackBtn" onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;flex-shrink:0;"><i data-lucide="arrow-left"></i> New Video</button>
           </div>
         </div>

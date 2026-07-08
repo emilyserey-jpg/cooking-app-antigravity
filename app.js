@@ -5827,6 +5827,31 @@ window.applySplitLayoutMobile = function() {
   }
 };
 
+window.toggleMobileSplitView = function() {
+  const body = document.body;
+  const isSplit = body.classList.toggle('editor-split-view-active');
+  
+  // Update all split view buttons (both in index.html and mobile.html)
+  const btns = document.querySelectorAll('#editorMobileSplitBtn');
+  btns.forEach(btn => {
+    if (isSplit) {
+      btn.innerHTML = '<i data-lucide="layout" style="width:14px;height:14px;"></i> Stacked View';
+      btn.style.background = 'var(--primary)';
+      btn.style.color = '#fff';
+    } else {
+      btn.innerHTML = '<i data-lucide="columns" style="width:14px;height:14px;"></i> Split View';
+      btn.style.background = '#f1f5f9';
+      btn.style.color = 'var(--text-heading)';
+    }
+  });
+
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  
+  window.dispatchEvent(new Event('resize'));
+};
+
 // Video Zoom Crop (disabled to keep full aspect ratio contain mode)
 window.currentVideoZoomCropActive = false;
 

@@ -3947,4 +3947,58 @@ a:focus-visible {
   justify-content: center !important;
 }
 
+/* Mobile Split Screen layout mode overrides */
+body.editor-split-view-active #mobileSplitLayoutWrapper {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  width: 100% !important;
+  align-items: flex-start !important;
+}
+body.editor-split-view-active #mobileSplitLeft {
+  flex: 1.1 1 0% !important;
+  width: 50% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 100 !important;
+}
+body.editor-split-view-active #mobileSplitRight {
+  flex: 0.9 1 0% !important;
+  width: 50% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+body.editor-split-view-active #workbenchVideoWrapper {
+  height: auto !important;
+  aspect-ratio: 16/9 !important;
+}
+body.editor-split-view-active #editorTabBarMobile {
+  margin-top: 0 !important;
+  padding: 0 0 6px !important;
+}
+body.editor-split-view-active #editorTabBarMobile button {
+  padding: 6px 4px !important;
+  font-size: 0.68rem !important;
+}
+body.editor-split-view-active #mobileEditorCarousel {
+  margin-top: 0 !important;
+}
+
+body.editor-split-view-active #workbenchGrid {
+  flex-direction: row !important;
+}
+body.editor-split-view-active #workbenchLeft {
+  width: 50% !important;
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 100 !important;
+}
+body.editor-split-view-active #workbenchRight {
+  width: 50% !important;
+}
+
 
