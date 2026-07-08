@@ -1698,27 +1698,35 @@ a:focus-visible {
   /* Mobile Split Screen layout mode overrides */
   body.editor-split-view-active #mobileSplitLayoutWrapper {
     display: flex !important;
-    flex-direction: row !important;
+    flex-flow: row wrap !important;
     gap: 12px !important;
     width: 100% !important;
     align-items: flex-start !important;
   }
   body.editor-split-view-active #mobileSplitLeft {
-    flex: 1.1 1 0% !important;
-    width: 50% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
+    flex: 0 0 calc(50% - 6px) !important;
+    width: calc(50% - 6px) !important;
+    order: 1 !important;
     position: sticky !important;
     top: 10px !important;
     z-index: 100 !important;
   }
   body.editor-split-view-active #mobileSplitRight {
-    flex: 0.9 1 0% !important;
-    width: 50% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
+    flex: 0 0 calc(50% - 6px) !important;
+    width: calc(50% - 6px) !important;
+    order: 2 !important;
+  }
+  body.editor-split-view-active #editorScrubberCard {
+    width: 100% !important;
+    order: 3 !important;
+    flex-shrink: 0 !important;
+    margin-top: 6px !important;
+  }
+  body.editor-split-view-active #stepNavControlsRow {
+    width: 100% !important;
+    order: 4 !important;
+    flex-shrink: 0 !important;
+    margin-top: 6px !important;
   }
   body.editor-split-view-active #workbenchVideoWrapper {
     height: auto !important;
