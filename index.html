@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="styles_v853.css?v=10.5">
+  <link rel="stylesheet" href="styles_v853.css?v=10.6">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1596,7 +1596,7 @@
                 </div>
               </div>
               <!-- ── Chapter scrubber (OUTSIDE video, fully visible) ── -->
-              <div id="editorScrubberCard" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:8px 12px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;">
+              <div id="editorScrubberCard" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:5px 10px 2px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;margin-bottom:0;">
                 <div style="min-width:460px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1.5px solid rgba(0,0,0,0.06);padding-bottom:6px;">
                     <span style="font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);">Loop Stops — drag to adjust</span>
@@ -1605,7 +1605,7 @@
                   <!-- Scrubber track — clean thin grey timeline rail -->
                   <div id="videoScrubber" onclick="videoScrubberSeek(event)"
                     onmousemove="videoScrubberHover(event)" onmouseleave="document.getElementById('videoChapterLabel').style.display='none'"
-                    style="height:10px;background:#cbd5e1;border-radius:999px;position:relative;cursor:pointer;overflow:visible;user-select:none;border:1px solid rgba(0,0,0,0.05);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);margin:12px 0 8px;">
+                    style="height:10px;background:#cbd5e1;border-radius:999px;position:relative;cursor:pointer;overflow:visible;user-select:none;border:1px solid rgba(0,0,0,0.05);box-shadow:inset 0 1px 2px rgba(0,0,0,0.1);margin:6px 0 0;">
                     <!-- Loop chapter bands + labels rendered by JS (overflow visible so labels aren't clipped) -->
                     <div id="videoMarkers" style="position:absolute;inset:0;border-radius:999px;overflow:visible;z-index:10;"></div>
                     <!-- Playback progress line -->
@@ -1620,7 +1620,7 @@
             </div>
 
             <!-- ── Nav controls bar ── -->
-            <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:9px 12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;">
+            <div id="stepNavControlsRow" style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:6px 10px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;overflow-x:auto;scrollbar-width:thin;margin-top:-4px;">
               <div style="min-width:460px;display:flex;flex-direction:column;gap:8px;">
                 <!-- Collapsible Section Header -->
                 <div class="collapsible-section-header">

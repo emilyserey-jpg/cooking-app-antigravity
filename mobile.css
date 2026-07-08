@@ -3369,7 +3369,7 @@ a:focus-visible {
 #stepNavControlsRow {
   padding: 6px 10px !important;
   gap: 4px !important;
-  margin-top: 2px !important;
+  margin-top: -4px !important;
 }
 #stepNavControlsContent {
   gap: 4px !important;
