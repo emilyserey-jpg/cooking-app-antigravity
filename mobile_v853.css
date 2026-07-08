@@ -1736,6 +1736,7 @@ a:focus-visible {
   }
   body.editor-split-view-active #videoOverlayControls {
     display: flex !important;
+    flex-wrap: wrap !important;
     position: relative !important;
     bottom: auto !important;
     left: auto !important;
@@ -1744,22 +1745,22 @@ a:focus-visible {
     max-width: 100% !important;
     background: #fff !important;
     border: 2px solid var(--border-card) !important;
-    border-radius: 16px !important;
-    padding: 6px 12px !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
     margin: 8px 0 0 0 !important;
     box-shadow: var(--shadow-sm) !important;
     box-sizing: border-box !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
+    justify-content: center !important;
+    gap: 6px 8px !important;
     z-index: 10 !important;
   }
   body.editor-split-view-active #videoOverlayControls .control-btn,
   body.editor-split-view-active #videoOverlayControls button {
     padding: 0 !important;
-    height: 34px !important;
-    width: 34px !important;
-    min-width: 34px !important;
+    height: 32px !important;
+    width: 32px !important;
+    min-width: 32px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1769,7 +1770,7 @@ a:focus-visible {
     color: var(--primary) !important;
     box-shadow: var(--shadow-xs) !important;
     margin: 0 !important;
-    font-size: 0.68rem !important;
+    font-size: 0.65rem !important;
     font-weight: 800 !important;
   }
   body.editor-split-view-active #videoOverlayControls .play-btn {
