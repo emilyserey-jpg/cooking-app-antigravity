@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=10.2">
+  <link rel="stylesheet" href="mobile_v853.css?v=10.3">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1457,8 +1457,8 @@
             <span style="background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-family: var(--font); font-size: 0.75rem; font-weight: 700; line-height: 1.4; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); max-width: 90%; word-break: break-word;"></span>
           </div>
 
-          <!-- Video Overlay Controls (Floating glass bar inside player card) -->
-          <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 32px); max-width: 330px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; border: 1.5px solid rgba(255,255,255,0.5); box-shadow: 0 8px 32px rgba(0,0,0,0.15); z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; gap: 6px;">
+          <!-- Video Overlay Controls (Floating buttons overlay on video) -->
+          <div id="videoOverlayControls" class="player-controls-strip" style="position: absolute; bottom: 16px; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 32px); max-width: 330px; background: transparent; border: none; box-shadow: none; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0; gap: 6px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <!-- Loop Toggle / Preview -->
               <button onclick="previewCurrentNavStep()" id="overlayPreviewLoopBtn" class="control-btn" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Preview Step Loop">
@@ -1486,8 +1486,8 @@
               </div>
             </div>
 
-            <!-- Time Readout -->
-            <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading);">
+            <!-- Time Readout with glass bubble backplate -->
+            <div style="display: flex; align-items: center; gap: 4px; font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: var(--text-heading); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-card); box-shadow: var(--shadow-xs); height: 38px;">
               <span id="createCurrentTime" style="font-variant-numeric: tabular-nums;">0:00</span>
               <span style="color: var(--text-muted);">/</span>
               <span id="timelineDuration" style="color: var(--text-muted); font-variant-numeric: tabular-nums;">0:00</span>
