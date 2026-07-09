@@ -5836,12 +5836,19 @@ window.syncVideoControlsParent = function() {
   const overlayControls = document.getElementById('videoOverlayControls');
   const videoWrapper = document.getElementById('workbenchVideoWrapper');
   const splitLeft = document.getElementById('mobileSplitLeft');
+  const workbenchLeft = document.getElementById('workbenchLeft');
   
-  if (!overlayControls || !videoWrapper || !splitLeft) return;
+  if (!overlayControls || !videoWrapper) return;
   
   if (isSplit) {
-    if (overlayControls.parentElement !== splitLeft.parentNode) {
-      splitLeft.parentNode.insertBefore(overlayControls, splitLeft.nextSibling);
+    if (splitLeft) {
+      if (overlayControls.parentElement !== splitLeft.parentNode) {
+        splitLeft.parentNode.insertBefore(overlayControls, splitLeft.nextSibling);
+      }
+    } else if (workbenchLeft) {
+      if (overlayControls.parentElement !== workbenchLeft) {
+        workbenchLeft.insertBefore(overlayControls, videoWrapper.nextSibling);
+      }
     }
   } else {
     if (overlayControls.parentElement !== videoWrapper) {
