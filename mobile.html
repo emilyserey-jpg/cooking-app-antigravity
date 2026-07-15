@@ -65,7 +65,7 @@
     })();
   </script>
   <title>In The Loop — Interactive UI Prototype</title>
-  <link rel="stylesheet" href="mobile_v853.css?v=12.8">
+  <link rel="stylesheet" href="mobile_v853.css?v=12.15">
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.395.0/dist/umd/lucide.min.js"></script>
   <!-- tus-js-client: resumable uploads to Cloudflare Stream -->
@@ -1456,7 +1456,7 @@
 
           <video id="uploadedVideoPlayer"
             style="width:100%; height:100%; object-fit:contain; display:block; background:#000; border-radius:24px;"
-            preload="auto" playsinline webkit-playsinline muted onloadedmetadata="onVideoLoaded()"
+            preload="auto" playsinline webkit-playsinline muted
             onclick="toggleVideoPlay()"></video>
 
           <!-- Subtitle Overlay -->
@@ -1663,6 +1663,47 @@
                       </svg>
                     </button>
                   </div>
+                  <!-- AI mode selector — segmented chips + one action. The legacy buttons below are hidden
+                       but still receive the clicks, so all existing generation logic keeps working. -->
+                  <div id="aiModeSeg" style="display:flex; background:#e8f0f9; border-radius:999px; padding:4px; gap:2px; width:100%; box-sizing:border-box;">
+                    <button type="button" onclick="window.setAiMode('auto',this)" data-aimode="auto" style="flex:1; border:none; background:#fff; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:#7c3aed; cursor:pointer; white-space:nowrap; box-shadow:0 1px 5px rgba(30,58,92,0.15);">Auto</button>
+                    <button type="button" onclick="window.setAiMode('video',this)" data-aimode="video" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">No audio</button>
+                    <button type="button" onclick="window.setAiMode('transcript',this)" data-aimode="transcript" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">Transcript</button>
+                    <button type="button" onclick="window.setAiMode('manual',this)" data-aimode="manual" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">Manual</button>
+                  </div>
+                  <p id="aiModeDesc" style="font-size:0.68rem; color:var(--text-muted); text-align:center; margin:4px 0 0; min-height:14px; line-height:1.35;">Full analysis — visuals, speech &amp; captions (recommended)</p>
+                  <div style="display:flex; gap:6px; width:100%; margin-top:6px;">
+                    <button id="aiGoBtn" onclick="window.aiGo()" style="flex:1; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:999px; padding:9px 8px; font-family:var(--font); font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 6px rgba(124,58,237,0.25); white-space:nowrap;">✨ Generate</button>
+                    <button id="aiRedoBtn" onclick="window.aiWriteStepDescriptions()" title="Re-generate step descriptions for current stops" style="flex:0 0 auto; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:999px; padding:0 14px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body); cursor:pointer;">↻ Steps</button>
+                  </div>
+                  <script>
+                    (function(){
+                      const MODES = {
+                        auto:       { desc: 'Full analysis — visuals, speech & captions (recommended)', target: 'aiLoopBtn',           label: '✨ Generate' },
+                        video:      { desc: 'Visuals only — for clips with music instead of narration', target: 'aiVideoOnlyBtn',      label: '✨ Generate' },
+                        transcript: { desc: 'Build steps from the spoken words & subtitles',            target: 'transcribeBtnMobile', label: '✨ Generate' },
+                        manual:     { desc: 'No AI — type your own timestamps & steps',                 target: 'createManualTimeBtn', label: '✏️ Input stops' }
+                      };
+                      let cur = 'auto';
+                      window.setAiMode = function(m, btn) {
+                        cur = m;
+                        document.querySelectorAll('#aiModeSeg [data-aimode]').forEach(b => {
+                          const on = b === btn;
+                          b.style.background = on ? '#fff' : 'transparent';
+                          b.style.color = on ? '#7c3aed' : 'var(--text-muted)';
+                          b.style.boxShadow = on ? '0 1px 5px rgba(30,58,92,0.15)' : 'none';
+                        });
+                        document.getElementById('aiModeDesc').textContent = MODES[m].desc;
+                        document.getElementById('aiGoBtn').textContent = MODES[m].label;
+                      };
+                      window.aiGo = function() {
+                        const t = document.getElementById(MODES[cur].target);
+                        if (t) t.click();
+                      };
+                    })();
+                  </script>
+                  <!-- Legacy AI buttons — hidden; the chips above delegate clicks to them -->
+                  <div id="aiLegacyButtons" style="display:none;">
                   <!-- Horizontal Scrollable Row for AI Buttons -->
                   <div id="aiButtonsRowMobile" style="display:flex; flex-direction:row; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; padding:4px 2px; width:100%;">
                     <!-- AI: Create Steps from Analyzing Video -->
@@ -1717,6 +1758,7 @@
                       <span>Generate Steps</span>
                     </button>
                   </div>
+                  </div><!-- /aiLegacyButtons -->
                 </div>
 
 
@@ -2514,6 +2556,6 @@
     lucide.createIcons();
   </script>
   
-  <script type="module" src="app.js?v=12.8"></script>
+  <script type="module" src="app.js?v=12.15"></script>
 </body>
 </html>
