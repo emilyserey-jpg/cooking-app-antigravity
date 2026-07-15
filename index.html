@@ -1805,7 +1805,48 @@
                 </div>
               </div>
               <div id="rightColStops" style="display:none;flex-direction:column;gap:12px;overflow-y:auto;max-height:100%;box-sizing:border-box;flex:1;width:100%;min-width:0;scrollbar-width:none;-ms-overflow-style:none;">
-              <!-- AI Generate buttons row above step tabs -->
+              <!-- AI mode selector — segmented chips + one action (matches mobile.html).
+                   The legacy buttons below are hidden but still receive delegated clicks,
+                   so all existing generation logic keeps working. -->
+              <div id="aiModeCluster" style="display:flex; flex-direction:column; gap:4px; flex-shrink:0; padding:4px 2px; max-width:430px; width:100%; box-sizing:border-box;">
+                <div id="aiModeSeg" style="display:flex; background:#e8f0f9; border-radius:999px; padding:4px; gap:2px; width:100%; box-sizing:border-box;">
+                  <button type="button" onclick="window.setAiMode('auto',this)" data-aimode="auto" style="flex:1; border:none; background:#fff; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:#7c3aed; cursor:pointer; white-space:nowrap; box-shadow:0 1px 5px rgba(30,58,92,0.15);">Auto</button>
+                  <button type="button" onclick="window.setAiMode('video',this)" data-aimode="video" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">No audio</button>
+                  <button type="button" onclick="window.setAiMode('transcript',this)" data-aimode="transcript" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">Transcript</button>
+                  <button type="button" onclick="window.setAiMode('manual',this)" data-aimode="manual" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">Manual</button>
+                </div>
+                <p id="aiModeDesc" style="font-size:0.68rem; color:var(--text-muted); text-align:center; margin:0; min-height:14px; line-height:1.35;">Full analysis — visuals, speech &amp; captions (recommended)</p>
+                <button id="aiGoBtn" onclick="window.aiGo()" style="width:100%; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:999px; padding:8px; font-family:var(--font); font-weight:900; font-size:0.72rem; cursor:pointer; box-shadow:0 2px 6px rgba(124,58,237,0.25); white-space:nowrap;">✨ Generate</button>
+              </div>
+              <script>
+                (function(){
+                  const MODES = {
+                    auto:       { desc: 'Full analysis — visuals, speech & captions (recommended)', target: 'aiLoopBtn',          label: '✨ Generate' },
+                    video:      { desc: 'Visuals only — for clips with music instead of narration', target: 'aiVideoOnlyBtn',     label: '✨ Generate' },
+                    transcript: { desc: 'Build steps from the spoken words & subtitles',            target: 'fixedTranscribeBtn', label: '✨ Generate' },
+                    manual:     { desc: 'No AI — type your own timestamps & steps',                 target: 'overlayTypeStopBtn', label: '✏️ Input stops' }
+                  };
+                  let cur = 'auto';
+                  window.setAiMode = function(m, btn) {
+                    cur = m;
+                    document.querySelectorAll('#aiModeSeg [data-aimode]').forEach(b => {
+                      const on = b === btn;
+                      b.style.background = on ? '#fff' : 'transparent';
+                      b.style.color = on ? '#7c3aed' : 'var(--text-muted)';
+                      b.style.boxShadow = on ? '0 1px 5px rgba(30,58,92,0.15)' : 'none';
+                    });
+                    document.getElementById('aiModeDesc').textContent = MODES[m].desc;
+                    document.getElementById('aiGoBtn').textContent = MODES[m].label;
+                  };
+                  window.aiGo = function() {
+                    if (cur === 'manual' && window.openManualTimestampModal) { window.openManualTimestampModal(); return; }
+                    const t = document.getElementById(MODES[cur].target);
+                    if (t) t.click();
+                  };
+                })();
+              </script>
+              <!-- Legacy AI buttons — hidden; the chips above delegate clicks to them -->
+              <div id="aiLegacyButtons" style="display:none;">
               <div id="aiButtonsRow" style="display:flex; flex-direction:row; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; padding:4px 2px;">
                 <button onclick="window.doItAll()" id="aiLoopBtn" class="btn" title="AI transcribes speech to detect precise loop stop timestamps and instructions" style="background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:var(--font); font-weight:900; font-size:0.7rem; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 8px rgba(124,58,237,0.25); flex-shrink:0; white-space:nowrap;">
                   AI: Create Steps (With Audio)
@@ -1814,6 +1855,7 @@
                   AI: Analyze Video Only (No Audio)
                 </button>
               </div>
+              </div><!-- /aiLegacyButtons -->
 
               <!-- Loop Stops Tabs Row (Fixed) -->
               <div id="createStepTabs" style="display:flex;flex-direction:row;gap:8px;overflow-x:auto;white-space:nowrap;padding:4px 2px;flex-shrink:0;scrollbar-width:none;-ms-overflow-style:none;"></div>
