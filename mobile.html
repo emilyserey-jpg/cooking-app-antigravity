@@ -1871,6 +1871,13 @@
                     height: calc(100vh - 330px) !important;
                     min-height: 290px !important;
                   }
+                  /* when the unsaved-draft banner is showing, give back its height so
+                     the timeline + control bar below stay completely on screen */
+                  body.editor-split-view-active:has(#autosaveBanner) #mobileSplitLayoutWrapper > #mobileSplitLeft,
+                  body.editor-split-view-active:has(#autosaveBanner) #mobileSplitLayoutWrapper > #mobileSplitRight {
+                    height: calc(100vh - 505px) !important;
+                    min-height: 200px !important;
+                  }
                   /* center the video vertically in its column instead of pinning it to the top */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft {
                     display: flex !important; flex-direction: column !important;
