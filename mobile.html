@@ -1882,6 +1882,78 @@
                   body.editor-split-view-active.split-focus #splitFocusPager {
                     flex: 0 0 auto !important; margin-bottom: 2px;
                   }
+                  /* ── B2 merged control system (split view) ──
+                     One control bar instead of two. The old playback overlay is hidden
+                     (its play/mute/speed/loop all exist in the step bar too); the step
+                     bar re-arranges into: loop · prev · [pin/play capsule] · next ·
+                     mute · speed — all real buttons, all original handlers. */
+                  body.editor-split-view-active #videoOverlayControls { display: none !important; }
+                  /* timeline strip: scrubber + time readout share one row */
+                  body.editor-split-view-active #editorScrubberCard {
+                    display: flex !important; align-items: center !important; gap: 10px !important;
+                    padding: 8px 12px !important;
+                  }
+                  body.editor-split-view-active #editorScrubberCard #videoScrubber { flex: 1 1 auto !important; margin: 0 !important; }
+                  body.editor-split-view-active #editorScrubberCard #videoOverlayTimeReadout {
+                    position: static !important; display: block !important; flex-shrink: 0 !important;
+                    font-size: 0.72rem !important; font-weight: 800 !important;
+                    color: var(--text-heading) !important; white-space: nowrap !important;
+                    font-variant-numeric: tabular-nums;
+                  }
+                  /* the step bar becomes the B2 grid: uniform 38px circles + tall capsule.
+                     The buttons live inside a wrapper div — that wrapper is the grid. */
+                  body.editor-split-view-active #stepNavControlsContent {
+                    display: block !important; width: 100% !important;
+                  }
+                  body.editor-split-view-active #stepNavControlsContent > *:not(:has(#navPrevBtn)) {
+                    display: none !important;   /* label row, stop-preview, ingredients extras */
+                  }
+                  body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) {
+                    display: grid !important;
+                    grid-template-columns: 38px 38px 46px 38px 38px 38px;
+                    grid-template-rows: 34px 40px;
+                    column-gap: 10px !important; row-gap: 0 !important;
+                    justify-content: center !important; align-items: stretch !important;
+                    width: 100% !important;
+                  }
+                  /* flatten the inner group divs so the buttons themselves are grid items */
+                  body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) > * {
+                    display: contents !important;
+                  }
+                  /* hide any button in the bar that isn't part of the B2 set */
+                  body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) button:not(#previewLoopBtn):not(#navPrevBtn):not(#navAddStopBtn):not(#toolbarPlayBtnMobile):not(#navNextBtn):not(#editorMuteBtnToolbarMobile):not(#editorSpeedBtn) {
+                    display: none !important;   /* keyboard-mode toggle and other extras */
+                  }
+                  body.editor-split-view-active #previewLoopBtn,
+                  body.editor-split-view-active #navPrevBtn,
+                  body.editor-split-view-active #navNextBtn,
+                  body.editor-split-view-active #stepNavControlsContent #editorMuteBtnToolbarMobile,
+                  body.editor-split-view-active #stepNavControlsContent #editorSpeedBtn {
+                    grid-row: 1 / span 2 !important; align-self: center !important; justify-self: center !important;
+                    width: 38px !important; height: 38px !important; min-width: 38px !important;
+                    border-radius: 50% !important; padding: 0 !important;
+                    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                  }
+                  body.editor-split-view-active #previewLoopBtn { grid-column: 1 !important; }
+                  body.editor-split-view-active #navPrevBtn { grid-column: 2 !important; }
+                  body.editor-split-view-active #navNextBtn { grid-column: 4 !important; }
+                  body.editor-split-view-active #stepNavControlsContent #editorMuteBtnToolbarMobile { grid-column: 5 !important; }
+                  body.editor-split-view-active #stepNavControlsContent #editorSpeedBtn { grid-column: 6 !important; }
+                  /* the dual capsule: pin on top, play below, visually one control */
+                  body.editor-split-view-active #navAddStopBtn {
+                    grid-column: 3 !important; grid-row: 1 !important;
+                    width: 46px !important; height: 34px !important; min-width: 46px !important;
+                    border-radius: 999px 999px 0 0 !important; padding: 0 !important; margin: 0 !important;
+                    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                    box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
+                  }
+                  body.editor-split-view-active #toolbarPlayBtnMobile {
+                    grid-column: 3 !important; grid-row: 2 !important;
+                    width: 46px !important; height: 40px !important; min-width: 46px !important;
+                    border-radius: 0 0 999px 999px !important; padding: 0 !important; margin: 0 !important;
+                    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+                    box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
+                  }
                   /* slide-in animation when swiping between steps in focus mode */
                   @keyframes stepSlideIn {
                     from { opacity: 0.25; transform: translateX(var(--slide-from, 16px)); }
@@ -1960,6 +2032,39 @@
                         sx = e.clientX; sy = e.clientY; tracking = true;
                       });
                       window.addEventListener('mouseup', e => endSwipe(e.clientX, e.clientY));
+                    });
+                  })();
+                </script>
+                <script>
+                  // B2 merged controls: the time readout lives on the timeline strip in
+                  // split view, and returns to the (hidden) overlay bar otherwise so
+                  // stacked view keeps working exactly as before.
+                  (function(){
+                    function relocateTimeReadout() {
+                      const ro = document.getElementById('videoOverlayTimeReadout');
+                      const strip = document.getElementById('editorScrubberCard');
+                      const overlay = document.getElementById('videoOverlayControls');
+                      if (!ro || !strip || !overlay) return;
+                      if (document.body.classList.contains('editor-split-view-active')) {
+                        if (ro.parentElement !== strip) strip.appendChild(ro);
+                      } else {
+                        if (ro.parentElement !== overlay) overlay.appendChild(ro);
+                      }
+                    }
+                    document.addEventListener('DOMContentLoaded', () => {
+                      relocateTimeReadout();
+                      // re-run whenever split view is toggled
+                      const orig = window.toggleMobileSplitView;
+                      if (typeof orig === 'function') {
+                        window.toggleMobileSplitView = function() {
+                          const r = orig.apply(this, arguments);
+                          setTimeout(relocateTimeReadout, 50);
+                          return r;
+                        };
+                      }
+                      // safety net: also watch the body class directly
+                      new MutationObserver(relocateTimeReadout)
+                        .observe(document.body, { attributes: true, attributeFilter: ['class'] });
                     });
                   })();
                 </script>
