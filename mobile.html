@@ -2074,6 +2074,31 @@
                       // safety net: also watch the body class directly
                       new MutationObserver(relocateTimeReadout)
                         .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+                      // ── true-to-size video (split view) ──
+                      // The stock sizing forces a fixed height, which letterboxes the
+                      // video with black bars. After it runs, let the frame take its
+                      // height from the video's own aspect ratio instead: width fills
+                      // the column, height follows naturally, no bars.
+                      const origAdjust = window.adjustWorkbenchVideoSize;
+                      if (typeof origAdjust === 'function') {
+                        window.adjustWorkbenchVideoSize = function() {
+                          const r = origAdjust.apply(this, arguments);
+                          if (window.innerWidth <= 768 &&
+                              document.body.classList.contains('editor-split-view-active')) {
+                            const w = document.getElementById('workbenchVideoWrapper');
+                            if (w) {
+                              w.style.setProperty('width', '100%', 'important');
+                              w.style.setProperty('height', 'auto', 'important');
+                              // aspect-ratio was set by the stock sizing from the
+                              // video's real dimensions; with height:auto it now rules.
+                            }
+                          }
+                          return r;
+                        };
+                        // re-apply for a video that already loaded before this ran
+                        try { window.adjustWorkbenchVideoSize(); } catch {}
+                      }
                     });
                   })();
                 </script>
