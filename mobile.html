@@ -1956,9 +1956,26 @@
                     height: auto !important; overflow: hidden !important;
                   }
                   /* every step card stands at full column height — consistent size
-                     no matter how much content it holds */
+                     no matter how much content it holds. The notes+ingredients row
+                     is the elastic one: it absorbs all spare height so the card's
+                     innards fill the frame instead of leaving gaps. */
                   body.editor-split-view-active #createStepsList .loop-stop-card {
                     min-height: 100% !important;
+                    grid-template-rows: auto auto 1fr auto auto !important;
+                    align-content: stretch !important;
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4),
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) {
+                    height: 100% !important; min-height: 0 !important;
+                    display: flex !important; flex-direction: column !important;
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea,
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) textarea {
+                    flex: 1 1 auto !important; height: auto !important;
+                    max-height: none !important; min-height: 56px !important;
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) label {
+                    flex: 0 0 auto !important;
                   }
                   body.editor-split-view-active #createStepsList {
                     flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important;
