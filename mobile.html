@@ -1968,12 +1968,13 @@
                      innards fill the frame instead of leaving gaps. */
                   body.editor-split-view-active #createStepsList .loop-stop-card {
                     min-height: 100% !important;
-                    grid-template-rows: auto auto 1fr auto auto !important;
-                    align-content: stretch !important;
                   }
+                  /* the two text sections are the elastic rows: they absorb spare
+                     height, full card width each */
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4),
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) {
-                    height: 100% !important; min-height: 0 !important;
+                    flex: 1 1 auto !important; min-height: 0 !important;
+                    width: 100% !important;
                     display: flex !important; flex-direction: column !important;
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea,
@@ -2083,20 +2084,13 @@
                     padding: 0 !important; scrollbar-width: none !important;
                   }
                   body.editor-split-view-active #createStepsList::-webkit-scrollbar { display: none; }
-                  /* ── notes + ingredients side by side inside the step card ──
-                     The card becomes a 2-column grid: header/time/options span both
-                     columns; the notes textarea takes the left cell and the
-                     ingredients box the right. */
+                  /* ── text sections span the FULL card width (stacked) ── */
                   body.editor-split-view-active #createStepsList .loop-stop-card {
-                    display: grid !important;
-                    grid-template-columns: 1fr 1fr;
-                    column-gap: 4px;
+                    display: flex !important;
+                    flex-direction: column !important;
                   }
-                  body.editor-split-view-active #createStepsList .loop-stop-card > * { grid-column: 1 / -1; }
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) { grid-column: 1; }
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) { grid-column: 2; }
                   body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on {
-                    display: grid !important;
+                    display: flex !important;
                   }
                   /* ── friendly empty state for the video frame ──
                      With no video loaded the frame was a stark black box; show a soft
