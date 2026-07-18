@@ -1978,8 +1978,11 @@
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea,
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) textarea {
-                    flex: 1 1 auto !important; height: auto !important;
-                    max-height: none !important; min-height: 56px !important;
+                    /* grow to fill spare card space, but never clip text: the
+                       content-fit min-height comes from script, so no floor here */
+                    flex: 1 1 auto !important;
+                    max-height: none !important;
+                    overflow-y: hidden !important;
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) label {
                     flex: 0 0 auto !important;
@@ -2194,10 +2197,26 @@
                           if (/step ingredients/i.test(l.textContent)) l.textContent = 'Ingredients';
                         });
                       };
+                      // text boxes always tall enough for ALL their text: min-height
+                      // follows content so nothing is ever clipped mid-sentence
+                      const fitTextareas = () => {
+                        if (!document.body.classList.contains('editor-split-view-active')) return;
+                        list.querySelectorAll('.loop-stop-card textarea').forEach(ta => {
+                          ta.style.minHeight = '0px';
+                          const needed = ta.scrollHeight;
+                          ta.style.minHeight = Math.max(56, needed) + 'px';
+                        });
+                      };
                       renameIngLabels();
+                      setTimeout(fitTextareas, 300);
+                      // refit when text changes while editing
+                      list.addEventListener('input', e => {
+                        if (e.target && e.target.tagName === 'TEXTAREA') fitTextareas();
+                      });
                       // re-apply whenever the app re-renders the step cards
                       new MutationObserver(() => {
                         renameIngLabels();
+                        setTimeout(fitTextareas, 150);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
