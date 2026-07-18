@@ -1803,6 +1803,15 @@
                     font-size: 0.62rem !important; padding: 3px 7px !important;
                     white-space: nowrap !important; flex-shrink: 0 !important;
                   }
+                  /* fill the phone screen: the split columns stretch to use all the
+                     height the viewport offers (instead of stopping at a fixed 290px),
+                     so the editor feels like a full-screen app. 330px ≈ nav + header +
+                     tab pills + timeline strip + control bar. */
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft,
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitRight {
+                    height: calc(100vh - 330px) !important;
+                    min-height: 290px !important;
+                  }
                   /* guard: the video can never overflow its column (portrait videos
                      used to force a 460px height into the 290px column) */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft { overflow: hidden !important; }
