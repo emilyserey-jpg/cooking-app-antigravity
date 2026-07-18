@@ -1419,8 +1419,29 @@
       <!-- STAGE 2: Editor (shown after upload completes) -->
       <div id="createStage2" style="display: none; flex-direction:column;">
 
-        <!-- Header row -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;flex-shrink:0;gap:8px;">
+        <!-- One-liner editor header (mobile) — back · Stops/Pages/Save tabs · ⋯ menu.
+             Replaces the title row + big buttons + tab pills on phones; the classic
+             header below stays for wide screens and as the delegation target. -->
+        <div id="oneLinerHeader" style="display:none; align-items:center; gap:8px; background:#fff; border-radius:999px; padding:6px 8px; box-shadow:0 2px 8px rgba(30,58,92,0.08); margin-bottom:8px; flex-shrink:0;">
+          <button onclick="resetCreateView()" title="Back to recipe"
+            style="width:30px; height:30px; border-radius:50%; border:none; background:#e8f0f9; color:#2f72b8; font-size:0.85rem; font-weight:800; cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">←</button>
+          <div style="flex:1; display:flex; background:#e8f0f9; border-radius:999px; padding:3px; gap:2px; min-width:0;">
+            <button id="olTabStops" onclick="window.olGoTab(0)" style="flex:1; border:none; background:#fff; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#2f72b8; cursor:pointer; box-shadow:0 1px 4px rgba(30,58,92,0.15);">Stops</button>
+            <button id="olTabPages" onclick="window.olGoTab(1)" style="flex:1; border:none; background:transparent; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#6b87a3; cursor:pointer;">Pages</button>
+            <button id="olTabSave" onclick="window.olGoTab(2)" style="flex:1; border:none; background:transparent; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#6b87a3; cursor:pointer;">Save</button>
+          </div>
+          <div style="position:relative; flex-shrink:0;">
+            <button id="olMenuBtn" onclick="window.olToggleMenu()" title="View &amp; layout options"
+              style="width:30px; height:30px; border-radius:50%; border:none; background:#e8f0f9; color:#2f72b8; font-size:0.9rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">⋯</button>
+            <div id="olMenu" style="display:none; position:absolute; right:0; top:36px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(20,35,55,0.25); padding:6px; z-index:99999; min-width:180px;">
+              <button onclick="document.getElementById('editorMobileSplitBtn').click(); window.olToggleMenu();" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; padding:9px 10px; border-radius:8px; font-family:var(--font); font-size:0.75rem; font-weight:800; color:#1e3a5c; cursor:pointer; text-align:left;">⧉&nbsp; Stacked / Split view</button>
+              <button onclick="if(window.toggleSplitLayoutMode) window.toggleSplitLayoutMode(); window.olToggleMenu();" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; padding:9px 10px; border-radius:8px; font-family:var(--font); font-size:0.75rem; font-weight:800; color:#1e3a5c; cursor:pointer; text-align:left;">≡&nbsp; List / Focus cards</button>
+              <button onclick="if(window.toggleSplitSwap) window.toggleSplitSwap(); window.olToggleMenu();" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; padding:9px 10px; border-radius:8px; font-family:var(--font); font-size:0.75rem; font-weight:800; color:#1e3a5c; cursor:pointer; text-align:left;">⇄&nbsp; Swap sides</button>
+            </div>
+          </div>
+        </div>
+        <!-- Header row (classic — hidden on phones, kept for wide screens & delegation) -->
+        <div id="editorClassicHeader" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;flex-shrink:0;gap:8px;">
           <h2 style="font-size:1.3rem;font-weight:900;color:var(--text-heading);margin:0;">Edit Video</h2>
           <div style="display:flex;gap:6px;">
             <button id="editorMobileSplitBtn" onclick="window.toggleMobileSplitView()" class="btn" style="font-size:0.78rem;padding:8px 12px;background:#f1f5f9;color:var(--text-heading);border:1.5px solid var(--border-card);display:inline-flex;align-items:center;gap:4px;font-weight:800;">
@@ -1429,6 +1450,40 @@
             <button id="editorHeaderBackBtn" onclick="resetCreateView()" class="btn" style="font-size:0.78rem;padding:8px 14px;"><i data-lucide="arrow-left"></i> New Video</button>
           </div>
         </div>
+        <style>
+          /* One-liner header: phones only — the classic rows hide, the bar shows */
+          @media (max-width: 768px) {
+            #oneLinerHeader { display: flex !important; }
+            #editorClassicHeader { display: none !important; }
+            #editorTabBarMobile { display: none !important; }
+          }
+        </style>
+        <script>
+          window.olToggleMenu = function() {
+            const m = document.getElementById('olMenu');
+            if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+          };
+          window.olGoTab = function(i) {
+            const ids = ['tabBtnStopsMobile', 'tabBtnPagesMobile', 'tabBtnSaveMobile'];
+            const t = document.getElementById(ids[i]);
+            if (t) t.click();
+            ['olTabStops', 'olTabPages', 'olTabSave'].forEach((id, j) => {
+              const b = document.getElementById(id);
+              if (!b) return;
+              b.style.background = j === i ? '#fff' : 'transparent';
+              b.style.color = j === i ? '#2f72b8' : '#6b87a3';
+              b.style.boxShadow = j === i ? '0 1px 4px rgba(30,58,92,0.15)' : 'none';
+            });
+          };
+          // close the ⋯ menu when tapping anywhere else
+          document.addEventListener('click', e => {
+            const m = document.getElementById('olMenu');
+            if (m && m.style.display === 'block' &&
+                !e.target.closest('#olMenu') && !e.target.closest('#olMenuBtn')) {
+              m.style.display = 'none';
+            }
+          });
+        </script>
 
         <!-- Main Mobile Workbench (Wrappable for Split Screen) -->
         <div id="mobileSplitLayoutWrapper" style="display: block; width: 100%;">
