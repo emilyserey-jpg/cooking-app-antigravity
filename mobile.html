@@ -1972,7 +1972,9 @@
                   /* the text carousel is the elastic row: notes and ingredients are
                      two full-width pages you swipe between sideways */
                   body.editor-split-view-active #createStepsList .card-text-carousel {
-                    flex: 1 1 auto !important; min-height: 0 !important; width: 100% !important;
+                    /* guaranteed floor: timers and other sections can never squeeze
+                       the text area below this — the card grows & scrolls instead */
+                    flex: 1 1 auto !important; min-height: 200px !important; width: 100% !important;
                     display: flex !important; flex-direction: row !important;
                     overflow-x: auto !important; overflow-y: hidden !important;
                     scroll-snap-type: x mandatory; scrollbar-width: none !important;
