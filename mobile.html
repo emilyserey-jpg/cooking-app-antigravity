@@ -2587,6 +2587,18 @@
                         // re-apply for a video that already loaded before this ran
                         try { window.adjustWorkbenchVideoSize(); } catch {}
                       }
+
+                      // ── re-size once the video's real shape arrives ──
+                      // On a slow connection the stock sizing can run before the
+                      // browser knows the video's dimensions; it then assumes 16:9
+                      // and a portrait video renders as a tiny letterboxed strip.
+                      // When the metadata (true width/height) arrives, size again.
+                      // Capture phase: loadedmetadata doesn't bubble.
+                      document.addEventListener('loadedmetadata', (e) => {
+                        if (e.target && e.target.id === 'uploadedVideoPlayer') {
+                          try { window.adjustWorkbenchVideoSize(); } catch {}
+                        }
+                      }, true);
                     });
                   })();
                 </script>
