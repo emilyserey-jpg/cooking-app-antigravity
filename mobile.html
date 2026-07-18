@@ -2353,15 +2353,34 @@
                       // timer) don't yank the list back to the top
                       let lastScrollTop = 0;
                       list.addEventListener('scroll', () => { lastScrollTop = list.scrollTop; }, { passive: true });
+                      // when the re-render was caused by "+ Add" timer, anchor the view
+                      // to that card's timers block so the new row is visible
+                      let timerAnchor = null;
+                      list.addEventListener('click', e => {
+                        const addBtn = e.target.closest('[onclick*="addStepTimer"]');
+                        if (addBtn) {
+                          const card = e.target.closest('.loop-stop-card');
+                          const m = card && /stepRow_(\d+)/.exec(card.id || '');
+                          if (m) timerAnchor = +m[1];
+                        }
+                      }, true);
+                      const restoreView = () => {
+                        if (timerAnchor !== null) {
+                          const card = list.querySelector('#stepRow_' + timerAnchor);
+                          const timers = card && card.children[2];
+                          if (timers) { timers.scrollIntoView({ block: 'nearest' }); return; }
+                        }
+                        list.scrollTop = lastScrollTop;
+                      };
                       // re-apply whenever the app re-renders the step cards
                       new MutationObserver(() => {
                         renameIngLabels();
                         setTimeout(() => {
                           wrapTextCarousel(); fitTextareas();
-                          list.scrollTop = lastScrollTop;
+                          restoreView();
                         }, 150);
-                        // second restore after late height adjustments settle
-                        setTimeout(() => { list.scrollTop = lastScrollTop; }, 500);
+                        // second pass after late height adjustments settle
+                        setTimeout(() => { restoreView(); timerAnchor = null; }, 500);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
