@@ -1643,6 +1643,11 @@
                     style="display:none; background:#eef4fb; color:#2f72b8; border:1.5px solid rgba(74,144,217,0.35); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; align-items:center; gap:3px;">
                     <span id="splitLayoutToggleLabel">≡ List</span>
                   </button>
+                  <!-- Swap which side the video and the step cards sit on -->
+                  <button id="splitSwapToggle" onclick="window.toggleSplitSwap()" title="Swap video and steps sides"
+                    style="display:none; background:#eef4fb; color:#2f72b8; border:1.5px solid rgba(74,144,217,0.35); border-radius:7px; padding:4px 8px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; align-items:center;">
+                    ⇄
+                  </button>
                   <button id="toggleAiToolsBtn" onclick="window.toggleAiToolsCollapse()" title="Toggle AI generation buttons"
                     style="background:#ede9ff; color:#7c3aed; border:1.5px solid rgba(124,58,237,0.3); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
                     AI Generator <span id="aiToolsChevron">▾</span>
@@ -1821,8 +1826,12 @@
                      used to force a 460px height into the 290px column) */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft { overflow: hidden !important; }
                   body.editor-split-view-active #workbenchVideoWrapper { max-height: 100% !important; }
-                  /* show the layout toggle only while split view is on */
+                  /* show the layout + swap toggles only while split view is on */
                   body.editor-split-view-active #splitLayoutToggle { display: inline-flex !important; }
+                  body.editor-split-view-active #splitSwapToggle { display: inline-flex !important; }
+                  /* swapped sides: video moves left, steps move right */
+                  body.editor-split-view-active.split-swap #mobileSplitLayoutWrapper > #mobileSplitLeft { order: 1 !important; }
+                  body.editor-split-view-active.split-swap #mobileSplitLayoutWrapper > #mobileSplitRight { order: 2 !important; }
                   /* Focus layout (option C): only the current card is visible + pager */
                   body.editor-split-view-active.split-focus #createStepsList .loop-stop-card { display: none !important; }
                   body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on { display: flex !important; }
@@ -2003,6 +2012,10 @@
                       try { localStorage.setItem(KEY, document.body.classList.contains('split-focus') ? 'focus' : 'list'); } catch {}
                       setLabel(); apply();
                     };
+                    window.toggleSplitSwap = function() {
+                      document.body.classList.toggle('split-swap');
+                      try { localStorage.setItem('editor_split_swap', document.body.classList.contains('split-swap') ? '1' : '0'); } catch {}
+                    };
                     window.focusStepMove = function(d) {
                       const n = cards().length; if (!n) return;
                       idx = (idx + d + n) % n; apply();
@@ -2016,6 +2029,7 @@
                     };
                     document.addEventListener('DOMContentLoaded', () => {
                       try { if (localStorage.getItem(KEY) === 'focus') document.body.classList.add('split-focus'); } catch {}
+                      try { if (localStorage.getItem('editor_split_swap') === '1') document.body.classList.add('split-swap'); } catch {}
                       setLabel(); apply();
                       const list = document.getElementById('createStepsList');
                       if (!list) return;
