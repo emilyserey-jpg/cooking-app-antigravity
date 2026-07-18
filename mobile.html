@@ -1789,6 +1789,10 @@
                     width: calc(60% - 6px) !important;
                     max-width: calc(60% - 6px) !important;
                   }
+                  /* guard: the video can never overflow its column (portrait videos
+                     used to force a 460px height into the 290px column) */
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft { overflow: hidden !important; }
+                  body.editor-split-view-active #workbenchVideoWrapper { max-height: 100% !important; }
                   /* show the layout toggle only while split view is on */
                   body.editor-split-view-active #splitLayoutToggle { display: inline-flex !important; }
                   /* Focus layout (option C): only the current card is visible + pager */
