@@ -149,6 +149,12 @@
         <div class="phone-notch"></div>
         
         <div class="phone-screen">
+          <!-- Layout pill: viewers flip between the three player layouts -->
+          <div id="playerLayoutPill" role="tablist" aria-label="Player layout">
+            <button data-pl="mirror" onclick="window.setPlayerLayout('mirror')" role="tab">Mirror</button>
+            <button data-pl="cook" onclick="window.setPlayerLayout('cook')" role="tab">Cook</button>
+            <button data-pl="flow" onclick="window.setPlayerLayout('flow')" role="tab">Flow</button>
+          </div>
           <div class="player-left-column">
             <!-- Recipe Title Display -->
             <div id="playerRecipeTitleContainer" style="padding: 10px 14px 8px; background: #fff; border-bottom: 1.5px solid rgba(0,0,0,0.05);">
@@ -3396,5 +3402,83 @@
   </script>
   
   <script type="module" src="app.js?v=12.15"></script>
+  <!-- ── Player layouts: Mirror / Cook / Flow ──
+       The pill floats top-center of the player. Flow = the split view as it
+       is today (video left). Mirror = the same split with the columns
+       swapped (steps left). Cook = the stacked single-column view, video
+       first. Split state itself is driven through the app's own
+       applySplitLayoutMobile machinery so nothing else changes. -->
+  <style>
+    #playerLayoutPill {
+      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 60; display: flex; gap: 2px; padding: 4px;
+      background: rgba(255,255,255,0.92); border: 1px solid rgba(74,144,217,0.14);
+      border-radius: 999px; box-shadow: 0 4px 14px rgba(26,58,92,0.10);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    #playerLayoutPill button {
+      border: none; background: transparent; border-radius: 999px; cursor: pointer;
+      font-family: var(--font); font-size: 0.6rem; font-weight: 900;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--text-muted); padding: 5px 10px; transition: all 0.18s ease;
+    }
+    #playerLayoutPill button.on { background: var(--primary); color: #fff; }
+
+    /* room for the pill in every layout */
+    .phone-screen.pl-ready { padding-top: 62px !important; }
+
+    /* MIRROR: split view with the columns swapped — steps left, video right */
+    .phone-screen.split-view-active.pl-mirror { flex-direction: row-reverse !important; }
+    .phone-screen.split-view-active.pl-mirror .player-left-column {
+      border-right: none !important;
+      border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+  </style>
+  <script>
+    (() => {
+      const KEY = 'cooking_gps_player_layout';
+      const NAMES = ['mirror', 'cook', 'flow'];
+
+      window.setPlayerLayout = function(name) {
+        if (!NAMES.includes(name)) name = 'cook';
+        localStorage.setItem(KEY, name);
+        // Cook is the stacked view; Mirror and Flow ride on the split view.
+        const wantSplit = name !== 'cook';
+        window.currentSplitLayoutActive = wantSplit;
+        localStorage.setItem('cooking_gps_split_layout', wantSplit);
+        if (typeof window.applySplitLayoutMobile === 'function') window.applySplitLayoutMobile();
+        document.querySelectorAll('.phone-screen').forEach(s => {
+          s.classList.toggle('pl-mirror', name === 'mirror');
+          s.classList.toggle('pl-cook', name === 'cook');
+          s.classList.toggle('pl-flow', name === 'flow');
+          s.classList.add('pl-ready');
+        });
+        const pill = document.getElementById('playerLayoutPill');
+        if (pill) pill.querySelectorAll('button').forEach(b =>
+          b.classList.toggle('on', b.dataset.pl === name));
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Returning viewers get their last choice; first-timers get Cook
+        // (or Flow if they had already turned the split view on).
+        let saved = localStorage.getItem(KEY);
+        if (!NAMES.includes(saved)) {
+          saved = localStorage.getItem('cooking_gps_split_layout') === 'true' ? 'flow' : 'cook';
+        }
+        window.setPlayerLayout(saved);
+
+        // The app re-applies its own split preference when the player opens;
+        // if that ever disagrees with the chosen layout, re-assert it.
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        if (screen) new MutationObserver(() => {
+          const name = localStorage.getItem(KEY) || 'cook';
+          const wantSplit = name !== 'cook';
+          if (screen.classList.contains('split-view-active') !== wantSplit) {
+            window.setPlayerLayout(name);
+          }
+        }).observe(screen, { attributes: true, attributeFilter: ['class'] });
+      });
+    })();
+  </script>
 </body>
 </html>
