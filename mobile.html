@@ -2356,12 +2356,15 @@
                       // when the re-render was caused by "+ Add" timer, anchor the view
                       // to that card's timers block so the new row is visible
                       let timerAnchor = null;
+                      list.style.transition = 'opacity 0.15s ease';
                       list.addEventListener('click', e => {
                         const addBtn = e.target.closest('[onclick*="addStepTimer"]');
                         if (addBtn) {
                           const card = e.target.closest('.loop-stop-card');
                           const m = card && /stepRow_(\d+)/.exec(card.id || '');
                           if (m) timerAnchor = +m[1];
+                          // soften the rebuild: dip the list while it re-renders
+                          list.style.opacity = '0.45';
                         }
                       }, true);
                       const restoreView = () => {
@@ -2372,15 +2375,17 @@
                         }
                         list.scrollTop = lastScrollTop;
                       };
-                      // re-apply whenever the app re-renders the step cards
+                      // re-apply whenever the app re-renders the step cards.
+                      // Wrap SYNCHRONOUSLY so no unstyled frame ever paints,
+                      // then settle passes catch late height adjustments.
                       new MutationObserver(() => {
                         renameIngLabels();
+                        wrapTextCarousel(); fitTextareas(); restoreView();
+                        setTimeout(() => { wrapTextCarousel(); fitTextareas(); restoreView(); }, 150);
                         setTimeout(() => {
-                          wrapTextCarousel(); fitTextareas();
-                          restoreView();
-                        }, 150);
-                        // second pass after late height adjustments settle
-                        setTimeout(() => { restoreView(); timerAnchor = null; }, 500);
+                          restoreView(); timerAnchor = null;
+                          list.style.opacity = '1';   // fade back in, fully settled
+                        }, 400);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
