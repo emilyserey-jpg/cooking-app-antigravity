@@ -1775,16 +1775,19 @@
                   <button type="button" onclick="window.focusStepMove(1)" style="border:none; background:#fff; color:#4a90d9; width:30px; height:30px; border-radius:50%; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15);">›</button>
                 </div>
                 <style>
-                  /* ── Split-view layout options: steps LEFT, video RIGHT ── */
-                  body.editor-split-view-active #mobileSplitLeft {
+                  /* ── Split-view layout options: steps LEFT, video RIGHT ──
+                     (extra-specific selectors so the 50/50 rules in mobile_v853.css lose) */
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft {
                     order: 2 !important;              /* video moves to the right */
-                    flex: 0 0 42% !important;
-                    width: 42% !important;
+                    flex: 0 0 40% !important;
+                    width: 40% !important;
+                    max-width: 40% !important;        /* old 50% cap must not win */
                   }
-                  body.editor-split-view-active #mobileSplitRight {
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitRight {
                     order: 1 !important;              /* steps move to the left */
-                    flex: 0 0 calc(58% - 6px) !important;
-                    width: calc(58% - 6px) !important;
+                    flex: 0 0 calc(60% - 6px) !important;
+                    width: calc(60% - 6px) !important;
+                    max-width: calc(60% - 6px) !important;
                   }
                   /* show the layout toggle only while split view is on */
                   body.editor-split-view-active #splitLayoutToggle { display: inline-flex !important; }
@@ -1825,6 +1828,41 @@
                   body.editor-split-view-active #createStepsList .loop-stop-card label,
                   body.editor-split-view-active #createStepsList .loop-stop-card span {
                     overflow-wrap: anywhere;
+                  }
+                  /* artifact card anatomy: badge + action buttons on row 1,
+                     the title drops to its own full-width line so it never truncates */
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(1) {
+                    flex-wrap: wrap !important;
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(1) > input {
+                    flex: 1 1 100% !important; order: 10; min-width: 100% !important;
+                    font-size: 0.8rem !important; padding-top: 2px !important;
+                  }
+                  /* focus mode: the single card shows in full (no inner clipping);
+                     the list area scrolls instead, and the pager stays pinned below.
+                     The whole container chain must be height-constrained or the
+                     pager gets pushed outside the clipped column. */
+                  body.editor-split-view-active.split-focus #mobileEditorCarousel,
+                  body.editor-split-view-active.split-focus #slideStops {
+                    height: 100% !important; max-height: 100% !important; min-height: 0 !important;
+                  }
+                  body.editor-split-view-active.split-focus #editorStopsCard {
+                    height: 100% !important; max-height: 100% !important; min-height: 0 !important;
+                    display: flex !important; flex-direction: column !important; overflow: hidden !important;
+                  }
+                  body.editor-split-view-active.split-focus #stopsBody {
+                    display: flex !important; flex-direction: column !important;
+                    flex: 1 1 auto !important; min-height: 0 !important;
+                    height: auto !important; overflow: hidden !important;
+                  }
+                  body.editor-split-view-active.split-focus #createStepsList {
+                    flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important;
+                  }
+                  body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on {
+                    max-height: none !important; overflow: visible !important;
+                  }
+                  body.editor-split-view-active.split-focus #splitFocusPager {
+                    flex: 0 0 auto !important; margin-bottom: 2px;
                   }
                   /* slide-in animation when swiping between steps in focus mode */
                   @keyframes stepSlideIn {
