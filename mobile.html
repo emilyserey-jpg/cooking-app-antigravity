@@ -3513,28 +3513,78 @@
     .phone-screen.pl-cook .player-left-column .step-nav-chips-container > div:not(.chips-scroll-x) {
       display: none !important;
     }
+
+    /* the capsule holds the pin above the play triangle */
+    #view-mobile-player #playerStripPlayPauseBtn {
+      display: flex !important; flex-direction: column !important;
+      align-items: center !important; justify-content: space-evenly !important;
+      padding: 8px 0 !important;
+    }
+    #view-mobile-player #playerStripPlayPauseBtn .pl-pin {
+      font-size: 1.05rem; line-height: 1; pointer-events: none;
+    }
+
+    /* COOK is one screen, no scrolling needed: chips, video, the docked
+       step card (relocated by JS), then the capsule bar */
+    .phone-screen.pl-cook .mobile-video-container {
+      height: 38vh !important; max-height: 38vh !important;
+      min-height: 220px !important; overflow: hidden !important;
+    }
+    .phone-screen.pl-cook .mobile-video-placeholder {
+      height: 100% !important; max-height: 100% !important;
+    }
+    .phone-screen.pl-cook .player-left-column .step-slider-viewport {
+      margin: 8px 10px 0 !important;
+      max-height: 165px !important; overflow: hidden !important;
+    }
+    /* like the mockup, Cook has no scrubber or time row — the video chip,
+       the chips, and the capsule bar carry navigation */
+    .phone-screen.pl-cook .video-overlay-details { display: none !important; }
+    .phone-screen.pl-cook .player-timeline-rail-container { display: none !important; }
+    .phone-screen.pl-cook #playerRecipeTitleContainer { padding: 0 16px 2px !important; }
+    .phone-screen.pl-cook #playerRecipeTitle { font-size: 0.82rem !important; }
   </style>
   <script>
     (() => {
       const KEY = 'cooking_gps_player_layout';
       const NAMES = ['mirror', 'cook', 'flow'];
 
-      // In Cook the timeline chips move to the top, above the video (and back
-      // to their normal spot in the body for Mirror / Flow) — same relocation
-      // pattern the app itself uses for the video's control buttons.
-      function relocateCookChips(cook) {
+      // In Cook two pieces relocate (and move back for Mirror / Flow) — the
+      // same pattern the app itself uses for the video's control buttons:
+      // the timeline chips go to the top above the video, and the step card
+      // slider docks between the video and the capsule bar.
+      function relocateCookPieces(cook) {
         const player = document.getElementById('view-mobile-player');
         if (!player) return;
         const chips = player.querySelector('.step-nav-chips-container');
+        const slider = player.querySelector('.step-slider-viewport');
+        const strip = player.querySelector('.player-controls-strip');
         const leftCol = player.querySelector('.player-left-column');
         const videoC = player.querySelector('.mobile-video-container');
         const body = player.querySelector('.mobile-player-body');
-        if (!chips || !leftCol || !videoC || !body) return;
+        if (!leftCol || !videoC || !body) return;
         if (cook) {
-          if (chips.parentElement !== leftCol) leftCol.insertBefore(chips, videoC);
-        } else if (chips.parentElement !== body) {
-          body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
+          if (chips && chips.parentElement !== leftCol) leftCol.insertBefore(chips, videoC);
+          if (slider && strip && slider.parentElement !== leftCol) leftCol.insertBefore(slider, strip);
+        } else {
+          if (chips && chips.parentElement !== body)
+            body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
+          if (slider && slider.parentElement !== body)
+            body.insertBefore(slider, document.getElementById('playerMultigridDescControls'));
         }
+      }
+
+      // The app rewrites the play button's contents on every play/pause;
+      // keep the capsule's pin in place whenever that happens.
+      function keepCapsulePin() {
+        const btn = document.getElementById('playerStripPlayPauseBtn');
+        if (!btn) return;
+        const add = () => {
+          if (!btn.querySelector('.pl-pin'))
+            btn.insertAdjacentHTML('afterbegin', '<span class="pl-pin">\u{1F4CD}</span>');
+        };
+        add();
+        new MutationObserver(add).observe(btn, { childList: true });
       }
 
       window.setPlayerLayout = function(name) {
@@ -3551,7 +3601,7 @@
           s.classList.toggle('pl-flow', name === 'flow');
           s.classList.add('pl-ready');
         });
-        relocateCookChips(name === 'cook');
+        relocateCookPieces(name === 'cook');
         const pill = document.getElementById('playerLayoutPill');
         if (pill) pill.querySelectorAll('button').forEach(b =>
           b.classList.toggle('on', b.dataset.pl === name));
@@ -3565,6 +3615,7 @@
           saved = localStorage.getItem('cooking_gps_split_layout') === 'true' ? 'flow' : 'cook';
         }
         window.setPlayerLayout(saved);
+        keepCapsulePin();
 
         // The app re-applies its own split preference when the player opens;
         // if that ever disagrees with the chosen layout, re-assert it.
