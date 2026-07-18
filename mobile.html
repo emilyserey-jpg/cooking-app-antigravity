@@ -1638,6 +1638,11 @@
                   Loop Stops <span id="createStepCount" style="color:var(--text-muted); font-weight:600;">(0)</span>
                 </div>
                 <div style="margin-left:auto; display:flex; align-items:center; gap:4px;">
+                  <!-- Split-view card layout toggle: List (all cards) vs Focus (one card + pager) -->
+                  <button id="splitLayoutToggle" onclick="window.toggleSplitLayoutMode()" title="Switch between all cards and one-step focus"
+                    style="display:none; background:#eef4fb; color:#2f72b8; border:1.5px solid rgba(74,144,217,0.35); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; align-items:center; gap:3px;">
+                    <span id="splitLayoutToggleLabel">≡ List</span>
+                  </button>
                   <button id="toggleAiToolsBtn" onclick="window.toggleAiToolsCollapse()" title="Toggle AI generation buttons"
                     style="background:#ede9ff; color:#7c3aed; border:1.5px solid rgba(124,58,237,0.3); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
                     AI Generator <span id="aiToolsChevron">▾</span>
@@ -1763,6 +1768,69 @@
 
 
                 <div id="createStepsList" style="margin-top:6px;"></div>
+                <!-- Focus-mode pager: shown only in split view + focus layout -->
+                <div id="splitFocusPager" style="display:none; align-items:center; justify-content:space-between; gap:8px; margin-top:8px;">
+                  <button type="button" onclick="window.focusStepMove(-1)" style="border:none; background:#fff; color:#4a90d9; width:30px; height:30px; border-radius:50%; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15);">‹</button>
+                  <span id="splitFocusLabel" style="font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-muted);">1 / 1</span>
+                  <button type="button" onclick="window.focusStepMove(1)" style="border:none; background:#fff; color:#4a90d9; width:30px; height:30px; border-radius:50%; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15);">›</button>
+                </div>
+                <style>
+                  /* ── Split-view layout options: steps LEFT, video RIGHT ── */
+                  body.editor-split-view-active #mobileSplitLeft {
+                    order: 2 !important;              /* video moves to the right */
+                    flex: 0 0 42% !important;
+                    width: 42% !important;
+                  }
+                  body.editor-split-view-active #mobileSplitRight {
+                    order: 1 !important;              /* steps move to the left */
+                    flex: 0 0 calc(58% - 6px) !important;
+                    width: calc(58% - 6px) !important;
+                  }
+                  /* show the layout toggle only while split view is on */
+                  body.editor-split-view-active #splitLayoutToggle { display: inline-flex !important; }
+                  /* Focus layout (option C): only the current card is visible + pager */
+                  body.editor-split-view-active.split-focus #createStepsList .loop-stop-card { display: none !important; }
+                  body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on { display: block !important; }
+                  body.editor-split-view-active.split-focus #splitFocusPager { display: flex !important; }
+                </style>
+                <script>
+                  (function(){
+                    const KEY = 'editor_split_layout';   // 'list' (A) or 'focus' (C)
+                    let idx = 0;
+                    const cards = () => document.querySelectorAll('#createStepsList .loop-stop-card');
+                    function apply() {
+                      const cs = cards();
+                      if (!cs.length) { const l = document.getElementById('splitFocusLabel'); if (l) l.textContent = '0 / 0'; return; }
+                      if (idx >= cs.length) idx = cs.length - 1;
+                      if (idx < 0) idx = 0;
+                      cs.forEach((c, i) => c.classList.toggle('focus-on', i === idx));
+                      const l = document.getElementById('splitFocusLabel');
+                      if (l) l.textContent = (idx + 1) + ' / ' + cs.length;
+                    }
+                    function setLabel() {
+                      const el = document.getElementById('splitLayoutToggleLabel');
+                      if (el) el.textContent = document.body.classList.contains('split-focus') ? '▭ Focus' : '≡ List';
+                    }
+                    window.toggleSplitLayoutMode = function() {
+                      document.body.classList.toggle('split-focus');
+                      try { localStorage.setItem(KEY, document.body.classList.contains('split-focus') ? 'focus' : 'list'); } catch {}
+                      setLabel(); apply();
+                    };
+                    window.focusStepMove = function(d) {
+                      const n = cards().length; if (!n) return;
+                      idx = (idx + d + n) % n; apply();
+                    };
+                    document.addEventListener('DOMContentLoaded', () => {
+                      try { if (localStorage.getItem(KEY) === 'focus') document.body.classList.add('split-focus'); } catch {}
+                      setLabel(); apply();
+                      // re-apply whenever the app re-renders the step cards
+                      const list = document.getElementById('createStepsList');
+                      if (list) new MutationObserver(() => {
+                        if (document.body.classList.contains('split-focus')) apply();
+                      }).observe(list, { childList: true });
+                    });
+                  })();
+                </script>
               </div>
             </div>
           </div>
