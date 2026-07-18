@@ -2420,13 +2420,21 @@
                           list.style.opacity = '0.45';
                         }
                       }, true);
-                      const restoreView = () => {
+                      const instantly = fn => {   // defeat any smooth-scroll setting
+                        const prev = list.style.scrollBehavior;
+                        list.style.scrollBehavior = 'auto';
+                        fn();
+                        list.style.scrollBehavior = prev;
+                      };
+                      const restoreView = final => {
                         if (timerAnchor !== null) {
+                          // while the dim is up, hold still; make ONE instant jump at the end
+                          if (!final) return;
                           const card = list.querySelector('#stepRow_' + timerAnchor);
                           const timers = card && card.children[2];
-                          if (timers) { timers.scrollIntoView({ block: 'nearest' }); return; }
+                          if (timers) { instantly(() => timers.scrollIntoView({ block: 'nearest' })); return; }
                         }
-                        list.scrollTop = lastScrollTop;
+                        instantly(() => { list.scrollTop = lastScrollTop; });
                       };
                       // re-apply whenever the app re-renders the step cards.
                       // Wrap SYNCHRONOUSLY so no unstyled frame ever paints,
@@ -2436,8 +2444,8 @@
                         wrapTextCarousel(); fitTextareas(); restoreView();
                         setTimeout(() => { wrapTextCarousel(); fitTextareas(); restoreView(); }, 150);
                         setTimeout(() => {
-                          restoreView(); timerAnchor = null;
-                          list.style.opacity = '1';   // fade back in, fully settled
+                          restoreView(true); timerAnchor = null;
+                          list.style.opacity = '1';   // fade back in, already in position
                         }, 400);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
