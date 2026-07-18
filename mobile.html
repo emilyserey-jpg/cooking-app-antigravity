@@ -2409,16 +2409,14 @@
                       // when the re-render was caused by "+ Add" timer, anchor the view
                       // to that card's timers block so the new row is visible
                       let timerAnchor = null;
-                      list.style.transition = 'opacity 0.15s ease';
                       list.addEventListener('click', e => {
-                        const addBtn = e.target.closest('[onclick*="addStepTimer"]');
-                        if (addBtn) {
+                        // adding OR deleting a timer anchors the view to that card's
+                        // timers block across the rebuild — no flash, no travel
+                        const btn = e.target.closest('[onclick*="addStepTimer"], [onclick*="removeStepTimer"]');
+                        if (btn) {
                           const card = e.target.closest('.loop-stop-card');
                           const m = card && /stepRow_(\d+)/.exec(card.id || '');
                           if (m) timerAnchor = +m[1];
-                          // near-blank blink: hide the repositioning entirely —
-                          // the list reappears already parked at the new timer
-                          list.style.opacity = '0.06';
                         }
                       }, true);
                       const instantly = fn => {   // defeat any smooth-scroll setting
@@ -2427,10 +2425,8 @@
                         fn();
                         list.style.scrollBehavior = prev;
                       };
-                      const restoreView = final => {
+                      const restoreView = () => {
                         if (timerAnchor !== null) {
-                          // while the dim is up, hold still; make ONE instant jump at the end
-                          if (!final) return;
                           const card = list.querySelector('#stepRow_' + timerAnchor);
                           const timers = card && card.children[2];
                           if (timers) { instantly(() => timers.scrollIntoView({ block: 'nearest' })); return; }
@@ -2438,19 +2434,15 @@
                         instantly(() => { list.scrollTop = lastScrollTop; });
                       };
                       // re-apply whenever the app re-renders the step cards.
-                      // Wrap SYNCHRONOUSLY so no unstyled frame ever paints,
-                      // then settle passes catch late height adjustments.
+                      // EVERYTHING — wrap, height fit, and scroll position — happens
+                      // synchronously before the browser paints, so the first visible
+                      // frame is already the final one: no flash, no travel.
                       new MutationObserver(() => {
                         renameIngLabels();
                         wrapTextCarousel(); fitTextareas(); restoreView();
+                        // silent settle passes (instant, usually no-ops)
                         setTimeout(() => { wrapTextCarousel(); fitTextareas(); restoreView(); }, 150);
-                        setTimeout(() => {
-                          restoreView(true);
-                          list.style.opacity = '1';   // fade back in, already in position
-                        }, 260);
-                        // silent late correction in case heights settled after the
-                        // fade-in (usually a no-op, never a visible journey)
-                        setTimeout(() => { restoreView(true); timerAnchor = null; }, 600);
+                        setTimeout(() => { restoreView(); timerAnchor = null; }, 600);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
