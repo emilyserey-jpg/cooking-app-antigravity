@@ -2437,12 +2437,31 @@
                       // EVERYTHING — wrap, height fit, and scroll position — happens
                       // synchronously before the browser paints, so the first visible
                       // frame is already the final one: no flash, no travel.
+                      let glueRunning = false;
+                      const glueToTimers = () => {
+                        // the app keeps adjusting textarea heights for ~a second after
+                        // each render, which shifts the layout; keep the timers block
+                        // pinned in view every frame until everything is truly settled
+                        if (glueRunning) return;
+                        glueRunning = true;
+                        const until = performance.now() + 1000;
+                        const loop = () => {
+                          if (timerAnchor === null || performance.now() > until) {
+                            glueRunning = false; timerAnchor = null; return;
+                          }
+                          const card = list.querySelector('#stepRow_' + timerAnchor);
+                          const timers = card && card.children[2];
+                          if (timers) instantly(() => timers.scrollIntoView({ block: 'nearest' }));
+                          requestAnimationFrame(loop);
+                        };
+                        requestAnimationFrame(loop);
+                      };
                       new MutationObserver(() => {
                         renameIngLabels();
                         wrapTextCarousel(); fitTextareas(); restoreView();
-                        // silent settle passes (instant, usually no-ops)
+                        // silent settle pass (instant, usually a no-op)
                         setTimeout(() => { wrapTextCarousel(); fitTextareas(); restoreView(); }, 150);
-                        setTimeout(() => { restoreView(); timerAnchor = null; }, 600);
+                        if (timerAnchor !== null) glueToTimers();
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
