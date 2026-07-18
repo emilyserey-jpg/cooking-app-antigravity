@@ -1812,6 +1812,11 @@
                     height: calc(100vh - 330px) !important;
                     min-height: 290px !important;
                   }
+                  /* center the video vertically in its column instead of pinning it to the top */
+                  body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft {
+                    display: flex !important; flex-direction: column !important;
+                    justify-content: center !important; align-items: center !important;
+                  }
                   /* guard: the video can never overflow its column (portrait videos
                      used to force a 460px height into the 290px column) */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft { overflow: hidden !important; }
