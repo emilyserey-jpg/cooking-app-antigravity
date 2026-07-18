@@ -3433,11 +3433,109 @@
       border-right: none !important;
       border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
+
+    /* ── the mockup's skin: airy gradient, frosted orbs, capsule play, glass cards ── */
+    #view-mobile-player .phone-screen {
+      background: linear-gradient(165deg, #eaf3fc 0%, #e9f7f0 100%) !important;
+    }
+
+    /* Back / Multigrid become frosted circular orbs, icon only */
+    #view-mobile-player .player-top-btn {
+      width: 40px !important; height: 40px !important; border-radius: 50% !important;
+      background: rgba(255,255,255,0.92) !important;
+      border: 1px solid rgba(74,144,217,0.14) !important;
+      box-shadow: 0 4px 14px rgba(26,58,92,0.10) !important;
+      color: var(--text-heading) !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      padding: 0 !important;
+    }
+    #view-mobile-player .player-top-btn .player-btn-text { display: none !important; }
+    #view-mobile-player .player-top-btn i,
+    #view-mobile-player .player-top-btn svg { width: 16px !important; height: 16px !important; }
+
+    /* control strip becomes the capsule bar: white glass card, round buttons,
+       big blue capsule play in the middle */
+    #view-mobile-player .player-controls-strip {
+      background: #fff !important;
+      border: 1px solid rgba(74,144,217,0.12) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 6px 22px rgba(26,58,92,0.07) !important;
+      padding: 10px 12px !important;
+      margin: 8px 10px 10px !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+    }
+    #view-mobile-player .player-controls-strip .control-btn {
+      width: 40px !important; height: 40px !important; border-radius: 50% !important;
+      background: #fff !important;
+      border: 1.5px solid rgba(74,144,217,0.12) !important;
+      color: var(--text-body) !important;
+      flex-shrink: 0 !important;
+    }
+    #view-mobile-player #playerStripPlayPauseBtn {
+      width: 52px !important; height: 76px !important; border-radius: 999px !important;
+      background: linear-gradient(180deg, #5a9de2, #4a90d9) !important;
+      border: none !important; color: #fff !important;
+      box-shadow: 0 8px 20px rgba(74,144,217,0.45) !important;
+    }
+    #view-mobile-player #playerStripPlayPauseBtn i,
+    #view-mobile-player #playerStripPlayPauseBtn svg {
+      width: 20px !important; height: 20px !important;
+    }
+
+    /* scrubber becomes a glass card */
+    #view-mobile-player .player-timeline-rail-container {
+      background: #fff !important;
+      border: 1px solid rgba(74,144,217,0.12) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 6px 22px rgba(26,58,92,0.07) !important;
+      margin: 8px 10px 0 !important;
+      padding: 14px !important;
+    }
+
+    /* COOK: the video is a rounded hero card, title floats on the gradient,
+       and the timeline chips sit right at the top (relocated by JS) */
+    .phone-screen.pl-cook .mobile-video-container {
+      margin: 4px 12px 0 !important;
+      border-radius: 16px !important; overflow: hidden !important;
+      box-shadow: 0 6px 22px rgba(26,58,92,0.12) !important;
+    }
+    .phone-screen.pl-cook #playerRecipeTitleContainer {
+      background: transparent !important;
+      border-bottom: none !important;
+      padding: 0 16px 6px !important;
+    }
+    .phone-screen.pl-cook .player-left-column .step-nav-chips-container {
+      background: transparent !important;
+      margin: 0 12px 4px !important; padding: 0 !important;
+      border: none !important; box-shadow: none !important;
+    }
+    /* at the top only the chips themselves show — no header or progress bar */
+    .phone-screen.pl-cook .player-left-column .step-nav-chips-container > div:not(.chips-scroll-x) {
+      display: none !important;
+    }
   </style>
   <script>
     (() => {
       const KEY = 'cooking_gps_player_layout';
       const NAMES = ['mirror', 'cook', 'flow'];
+
+      // In Cook the timeline chips move to the top, above the video (and back
+      // to their normal spot in the body for Mirror / Flow) — same relocation
+      // pattern the app itself uses for the video's control buttons.
+      function relocateCookChips(cook) {
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const chips = player.querySelector('.step-nav-chips-container');
+        const leftCol = player.querySelector('.player-left-column');
+        const videoC = player.querySelector('.mobile-video-container');
+        const body = player.querySelector('.mobile-player-body');
+        if (!chips || !leftCol || !videoC || !body) return;
+        if (cook) {
+          if (chips.parentElement !== leftCol) leftCol.insertBefore(chips, videoC);
+        } else if (chips.parentElement !== body) {
+          body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
+        }
+      }
 
       window.setPlayerLayout = function(name) {
         if (!NAMES.includes(name)) name = 'cook';
@@ -3453,6 +3551,7 @@
           s.classList.toggle('pl-flow', name === 'flow');
           s.classList.add('pl-ready');
         });
+        relocateCookChips(name === 'cook');
         const pill = document.getElementById('playerLayoutPill');
         if (pill) pill.querySelectorAll('button').forEach(b =>
           b.classList.toggle('on', b.dataset.pl === name));
