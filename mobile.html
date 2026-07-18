@@ -1867,6 +1867,7 @@
                      tab pills + timeline strip + control bar. */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft,
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitRight {
+                    /* 330px ≈ nav + header + timeline strip + control bar (measured) */
                     height: calc(100vh - 330px) !important;
                     min-height: 290px !important;
                   }
@@ -1932,24 +1933,27 @@
                     flex: 1 1 100% !important; order: 10; min-width: 100% !important;
                     font-size: 0.8rem !important; padding-top: 2px !important;
                   }
-                  /* focus mode: the single card shows in full (no inner clipping);
-                     the list area scrolls instead, and the pager stays pinned below.
-                     The whole container chain must be height-constrained or the
-                     pager gets pushed outside the clipped column. */
-                  body.editor-split-view-active.split-focus #mobileEditorCarousel,
-                  body.editor-split-view-active.split-focus #slideStops {
+                  /* container chain is height-constrained in BOTH card modes, so the
+                     cards area has a definite height and cards can fill it. */
+                  body.editor-split-view-active #mobileEditorCarousel,
+                  body.editor-split-view-active #slideStops {
                     height: 100% !important; max-height: 100% !important; min-height: 0 !important;
                   }
-                  body.editor-split-view-active.split-focus #editorStopsCard {
+                  body.editor-split-view-active #editorStopsCard {
                     height: 100% !important; max-height: 100% !important; min-height: 0 !important;
                     display: flex !important; flex-direction: column !important; overflow: hidden !important;
                   }
-                  body.editor-split-view-active.split-focus #stopsBody {
+                  body.editor-split-view-active #stopsBody {
                     display: flex !important; flex-direction: column !important;
                     flex: 1 1 auto !important; min-height: 0 !important;
                     height: auto !important; overflow: hidden !important;
                   }
-                  body.editor-split-view-active.split-focus #createStepsList {
+                  /* every step card stands at full column height — consistent size
+                     no matter how much content it holds */
+                  body.editor-split-view-active #createStepsList .loop-stop-card {
+                    min-height: 100% !important;
+                  }
+                  body.editor-split-view-active #createStepsList {
                     flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important;
                   }
                   body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on {
