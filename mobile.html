@@ -1983,9 +1983,16 @@
                     scroll-snap-align: center; box-sizing: border-box !important;
                     display: flex !important; flex-direction: column !important; min-height: 0 !important;
                   }
-                  .ctc-dots { display: flex; justify-content: center; gap: 4px; padding: 3px 0 1px; }
+                  .ctc-dots { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 3px 0 1px; }
                   .ctc-dots i { width: 5px; height: 5px; border-radius: 50%; background: #c3d6e8; cursor: pointer; }
                   .ctc-dots i.on { background: #4a90d9; width: 14px; border-radius: 3px; }
+                  .ctc-add { border: none; background: #e8f0f9; color: #2f72b8; width: 16px; height: 16px;
+                    border-radius: 50%; font-size: 0.65rem; font-weight: 800; cursor: pointer;
+                    line-height: 1; padding: 0; margin-left: 3px; font-family: var(--font); }
+                  .ctc-title { font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+                    letter-spacing: 0.04em; color: var(--text-muted); padding: 1px 3px;
+                    border-radius: 4px; outline: none; margin-bottom: 2px; cursor: text; }
+                  .ctc-title:focus { background: #eef4fb; color: #2f72b8; }
                   body.editor-split-view-active #createStepsList .card-text-carousel > div textarea {
                     /* grow to fill spare card space, but never clip text: the
                        content-fit min-height comes from script, so no floor here */
@@ -2209,7 +2216,44 @@
                           ta.style.minHeight = Math.max(56, needed) + 'px';
                         });
                       };
-                      // wrap notes + ingredients into a sideways swipe carousel
+                      // wrap notes + ingredients into a sideways swipe carousel, with
+                      // editable page titles and user-added custom sections
+                      const stepOf = card => {
+                        const m = /stepRow_(\d+)/.exec(card.id || '');
+                        return m && window.createStepsArr ? window.createStepsArr[+m[1]] : null;
+                      };
+                      const persistStep = card => {
+                        const m = /stepRow_(\d+)/.exec(card.id || '');
+                        if (m && window.createStepsArr && window.updateStepDescription) {
+                          const i = +m[1];
+                          try { window.updateStepDescription(i, window.createStepsArr[i].description || ''); } catch {}
+                        }
+                      };
+                      // put a card back to its pre-carousel structure so it can be rebuilt
+                      const unwrapCarousel = card => {
+                        const wrap = card.querySelector(':scope > .card-text-carousel');
+                        if (!wrap) return;
+                        const opts = card.querySelector(':scope > .card-options-dropdown');
+                        const notes = wrap.children[0], ings = wrap.children[1];
+                        [notes, ings].forEach(pg => {
+                          if (!pg) return;
+                          pg.querySelectorAll(':scope > .ctc-title').forEach(t => t.remove());
+                          card.insertBefore(pg, opts || null);
+                        });
+                        wrap.remove();
+                        card.querySelector(':scope > .ctc-dots')?.remove();
+                      };
+                      const mkTitle = (text, onSave) => {
+                        const t = document.createElement('div');
+                        t.className = 'ctc-title';
+                        t.textContent = text;
+                        t.contentEditable = 'true';
+                        t.spellcheck = false;
+                        t.title = 'Tap to rename this section';
+                        t.addEventListener('blur', () => onSave(t.textContent.trim() || text));
+                        t.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); t.blur(); } });
+                        return t;
+                      };
                       const wrapTextCarousel = () => {
                         if (!document.body.classList.contains('editor-split-view-active')) return;
                         list.querySelectorAll('.loop-stop-card').forEach(card => {
@@ -2218,19 +2262,74 @@
                           if (kids.length < 5) return;
                           const notes = kids[3], ings = kids[4];
                           if (!notes.querySelector('textarea') || !ings.querySelector('textarea')) return;
+                          const step = stepOf(card) || {};
                           const wrap = document.createElement('div');
                           wrap.className = 'card-text-carousel';
                           card.insertBefore(wrap, notes);
+                          // page 1: notes, with an editable title
+                          notes.insertBefore(
+                            mkTitle(step.notesTitle || 'Notes', v => { step.notesTitle = v; persistStep(card); }),
+                            notes.firstChild);
                           wrap.appendChild(notes);
+                          // page 2: ingredients — its existing label becomes the editable title
+                          const ingLabel = ings.querySelector('label');
+                          const ingTitle = mkTitle(step.ingredientsTitle || 'Ingredients',
+                            v => { step.ingredientsTitle = v; persistStep(card); });
+                          if (ingLabel) ingLabel.replaceWith(ingTitle);
+                          else ings.insertBefore(ingTitle, ings.firstChild);
                           wrap.appendChild(ings);
+                          // extra pages: user-defined titled sections
+                          (step.customSections || []).forEach((sec, si) => {
+                            const pg = document.createElement('div');
+                            const head = document.createElement('div');
+                            head.style.cssText = 'display:flex;align-items:center;gap:4px;';
+                            const t = mkTitle(sec.title || 'Section', v => { sec.title = v; persistStep(card); });
+                            t.style.flex = '1';
+                            const del = document.createElement('button');
+                            del.textContent = '×';
+                            del.title = 'Delete this section';
+                            del.style.cssText = 'border:none;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:6px;width:18px;height:18px;font-weight:800;cursor:pointer;flex-shrink:0;font-size:0.7rem;line-height:1;';
+                            del.addEventListener('click', () => {
+                              step.customSections.splice(si, 1); persistStep(card);
+                              unwrapCarousel(card);
+                              wrapTextCarousel(); fitTextareas();
+                            });
+                            head.appendChild(t); head.appendChild(del);
+                            const ta = document.createElement('textarea');
+                            ta.value = sec.text || '';
+                            ta.placeholder = 'Write anything for this section…';
+                            ta.style.cssText = 'width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:4px 6px;font-family:var(--font);font-size:0.72rem;font-weight:600;color:var(--text-body);resize:none;outline:none;line-height:1.4;';
+                            ta.addEventListener('change', () => { sec.text = ta.value; persistStep(card); });
+                            pg.appendChild(head); pg.appendChild(ta);
+                            wrap.appendChild(pg);
+                          });
+                          // dots + "add section" button
+                          const pages = wrap.children.length;
                           const dots = document.createElement('div');
                           dots.className = 'ctc-dots';
-                          dots.innerHTML = '<i class="on" title="Notes"></i><i title="Ingredients"></i>';
+                          for (let i = 0; i < pages; i++) {
+                            const d = document.createElement('i');
+                            if (i === 0) d.className = 'on';
+                            d.addEventListener('click', () => wrap.scrollTo({ left: i * wrap.clientWidth, behavior: 'smooth' }));
+                            dots.appendChild(d);
+                          }
+                          const add = document.createElement('button');
+                          add.className = 'ctc-add';
+                          add.textContent = '＋';
+                          add.title = 'Add a titled text section to this step';
+                          add.addEventListener('click', () => {
+                            step.customSections = step.customSections || [];
+                            step.customSections.push({ title: 'New section', text: '' });
+                            persistStep(card);
+                            unwrapCarousel(card);
+                            wrapTextCarousel(); fitTextareas();
+                            const w2 = card.querySelector(':scope > .card-text-carousel');
+                            if (w2) setTimeout(() => w2.scrollTo({ left: w2.scrollWidth, behavior: 'smooth' }), 100);
+                          });
+                          dots.appendChild(add);
                           wrap.after(dots);
-                          const goto = i => wrap.scrollTo({ left: i * wrap.clientWidth, behavior: 'smooth' });
-                          dots.querySelectorAll('i').forEach((d, i) => d.addEventListener('click', () => goto(i)));
                           wrap.addEventListener('scroll', () => {
-                            const i = wrap.scrollLeft > wrap.clientWidth / 2 ? 1 : 0;
+                            const i = Math.round(wrap.scrollLeft / Math.max(1, wrap.clientWidth));
                             dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === i));
                           }, { passive: true });
                         });
