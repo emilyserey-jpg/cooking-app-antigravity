@@ -1912,10 +1912,10 @@
                     scroll-snap-align: none !important;
                   }
                   /* text boxes stretch wide: slimmer inner paddings, tighter column gap */
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea {
+                  body.editor-split-view-active #createStepsList .card-text-carousel > div:first-child textarea {
                     padding: 6px 22px 6px 6px !important;   /* right side still clears the AI button */
                   }
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) textarea {
+                  body.editor-split-view-active #createStepsList .card-text-carousel > div:last-child textarea {
                     padding: 4px 6px !important;
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > * {
@@ -1969,16 +1969,24 @@
                   body.editor-split-view-active #createStepsList .loop-stop-card {
                     min-height: 100% !important;
                   }
-                  /* the two text sections are the elastic rows: they absorb spare
-                     height, full card width each */
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4),
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) {
-                    flex: 1 1 auto !important; min-height: 0 !important;
-                    width: 100% !important;
-                    display: flex !important; flex-direction: column !important;
+                  /* the text carousel is the elastic row: notes and ingredients are
+                     two full-width pages you swipe between sideways */
+                  body.editor-split-view-active #createStepsList .card-text-carousel {
+                    flex: 1 1 auto !important; min-height: 0 !important; width: 100% !important;
+                    display: flex !important; flex-direction: row !important;
+                    overflow-x: auto !important; overflow-y: hidden !important;
+                    scroll-snap-type: x mandatory; scrollbar-width: none !important;
                   }
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea,
-                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) textarea {
+                  body.editor-split-view-active #createStepsList .card-text-carousel::-webkit-scrollbar { display: none; }
+                  body.editor-split-view-active #createStepsList .card-text-carousel > div {
+                    flex: 0 0 100% !important; width: 100% !important; min-width: 100% !important;
+                    scroll-snap-align: center; box-sizing: border-box !important;
+                    display: flex !important; flex-direction: column !important; min-height: 0 !important;
+                  }
+                  .ctc-dots { display: flex; justify-content: center; gap: 4px; padding: 3px 0 1px; }
+                  .ctc-dots i { width: 5px; height: 5px; border-radius: 50%; background: #c3d6e8; cursor: pointer; }
+                  .ctc-dots i.on { background: #4a90d9; width: 14px; border-radius: 3px; }
+                  body.editor-split-view-active #createStepsList .card-text-carousel > div textarea {
                     /* grow to fill spare card space, but never clip text: the
                        content-fit min-height comes from script, so no floor here */
                     flex: 1 1 auto !important;
@@ -2201,8 +2209,34 @@
                           ta.style.minHeight = Math.max(56, needed) + 'px';
                         });
                       };
+                      // wrap notes + ingredients into a sideways swipe carousel
+                      const wrapTextCarousel = () => {
+                        if (!document.body.classList.contains('editor-split-view-active')) return;
+                        list.querySelectorAll('.loop-stop-card').forEach(card => {
+                          if (card.querySelector(':scope > .card-text-carousel')) return;
+                          const kids = card.children;
+                          if (kids.length < 5) return;
+                          const notes = kids[3], ings = kids[4];
+                          if (!notes.querySelector('textarea') || !ings.querySelector('textarea')) return;
+                          const wrap = document.createElement('div');
+                          wrap.className = 'card-text-carousel';
+                          card.insertBefore(wrap, notes);
+                          wrap.appendChild(notes);
+                          wrap.appendChild(ings);
+                          const dots = document.createElement('div');
+                          dots.className = 'ctc-dots';
+                          dots.innerHTML = '<i class="on" title="Notes"></i><i title="Ingredients"></i>';
+                          wrap.after(dots);
+                          const goto = i => wrap.scrollTo({ left: i * wrap.clientWidth, behavior: 'smooth' });
+                          dots.querySelectorAll('i').forEach((d, i) => d.addEventListener('click', () => goto(i)));
+                          wrap.addEventListener('scroll', () => {
+                            const i = wrap.scrollLeft > wrap.clientWidth / 2 ? 1 : 0;
+                            dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === i));
+                          }, { passive: true });
+                        });
+                      };
                       renameIngLabels();
-                      setTimeout(fitTextareas, 300);
+                      setTimeout(() => { wrapTextCarousel(); fitTextareas(); }, 300);
                       // refit when text changes while editing
                       list.addEventListener('input', e => {
                         if (e.target && e.target.tagName === 'TEXTAREA') fitTextareas();
@@ -2210,7 +2244,7 @@
                       // re-apply whenever the app re-renders the step cards
                       new MutationObserver(() => {
                         renameIngLabels();
-                        setTimeout(fitTextareas, 150);
+                        setTimeout(() => { wrapTextCarousel(); fitTextareas(); }, 150);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
