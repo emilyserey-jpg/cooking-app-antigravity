@@ -2416,8 +2416,9 @@
                           const card = e.target.closest('.loop-stop-card');
                           const m = card && /stepRow_(\d+)/.exec(card.id || '');
                           if (m) timerAnchor = +m[1];
-                          // soften the rebuild: dip the list while it re-renders
-                          list.style.opacity = '0.45';
+                          // near-blank blink: hide the repositioning entirely —
+                          // the list reappears already parked at the new timer
+                          list.style.opacity = '0.06';
                         }
                       }, true);
                       const instantly = fn => {   // defeat any smooth-scroll setting
@@ -2444,9 +2445,12 @@
                         wrapTextCarousel(); fitTextareas(); restoreView();
                         setTimeout(() => { wrapTextCarousel(); fitTextareas(); restoreView(); }, 150);
                         setTimeout(() => {
-                          restoreView(true); timerAnchor = null;
+                          restoreView(true);
                           list.style.opacity = '1';   // fade back in, already in position
-                        }, 400);
+                        }, 260);
+                        // silent late correction in case heights settled after the
+                        // fade-in (usually a no-op, never a visible journey)
+                        setTimeout(() => { restoreView(true); timerAnchor = null; }, 600);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
