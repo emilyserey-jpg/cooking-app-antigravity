@@ -2250,8 +2250,15 @@
                         t.contentEditable = 'true';
                         t.spellcheck = false;
                         t.title = 'Tap to rename this section';
+                        // shield taps/focus from the card's own select-and-rerender
+                        // handlers, or editing gets interrupted before it starts
+                        ['click', 'mousedown', 'touchstart', 'focusin', 'pointerdown'].forEach(ev =>
+                          t.addEventListener(ev, e => e.stopPropagation()));
                         t.addEventListener('blur', () => onSave(t.textContent.trim() || text));
-                        t.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); t.blur(); } });
+                        t.addEventListener('keydown', e => {
+                          if (e.key === 'Enter') { e.preventDefault(); t.blur(); }
+                          e.stopPropagation();   // keystrokes stay in the title
+                        });
                         return t;
                       };
                       const wrapTextCarousel = () => {
