@@ -2030,6 +2030,21 @@
                     display: inline-flex !important; align-items: center !important; justify-content: center !important;
                     box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
                   }
+                  /* ── notes + ingredients side by side inside the step card ──
+                     The card becomes a 2-column grid: header/time/options span both
+                     columns; the notes textarea takes the left cell and the
+                     ingredients box the right. */
+                  body.editor-split-view-active #createStepsList .loop-stop-card {
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr;
+                    column-gap: 6px;
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > * { grid-column: 1 / -1; }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) { grid-column: 1; }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) { grid-column: 2; }
+                  body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.focus-on {
+                    display: grid !important;
+                  }
                   /* ── friendly empty state for the video frame ──
                      With no video loaded the frame was a stark black box; show a soft
                      branded placeholder instead until a video arrives. */
@@ -2123,8 +2138,16 @@
                       setLabel(); apply();
                       const list = document.getElementById('createStepsList');
                       if (!list) return;
+                      // friendlier label: "Step Ingredients (one per line)" -> "Ingredients"
+                      const renameIngLabels = () => {
+                        list.querySelectorAll('label').forEach(l => {
+                          if (/step ingredients/i.test(l.textContent)) l.textContent = 'Ingredients';
+                        });
+                      };
+                      renameIngLabels();
                       // re-apply whenever the app re-renders the step cards
                       new MutationObserver(() => {
+                        renameIngLabels();
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
