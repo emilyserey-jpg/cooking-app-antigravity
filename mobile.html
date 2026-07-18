@@ -2349,10 +2349,19 @@
                       list.addEventListener('input', e => {
                         if (e.target && e.target.tagName === 'TEXTAREA') fitTextareas();
                       });
+                      // remember the scroll position so re-renders (e.g. adding a
+                      // timer) don't yank the list back to the top
+                      let lastScrollTop = 0;
+                      list.addEventListener('scroll', () => { lastScrollTop = list.scrollTop; }, { passive: true });
                       // re-apply whenever the app re-renders the step cards
                       new MutationObserver(() => {
                         renameIngLabels();
-                        setTimeout(() => { wrapTextCarousel(); fitTextareas(); }, 150);
+                        setTimeout(() => {
+                          wrapTextCarousel(); fitTextareas();
+                          list.scrollTop = lastScrollTop;
+                        }, 150);
+                        // second restore after late height adjustments settle
+                        setTimeout(() => { list.scrollTop = lastScrollTop; }, 500);
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
                       // ── swipe navigation (focus mode): swipe the card left/right ──
