@@ -1458,6 +1458,10 @@
             #oneLinerHeader { display: block !important; }
             #editorClassicHeader { display: none !important; }
             #editorTabBarMobile { display: none !important; }
+            /* scrollbars: functional but invisible throughout the editor —
+               touch scrolling is unaffected, the bars just never draw */
+            #createStage2, #createStage2 * { scrollbar-width: none !important; }
+            #createStage2::-webkit-scrollbar, #createStage2 *::-webkit-scrollbar { display: none !important; }
           }
           /* swipe between areas: the slides snap like pages under the finger */
           @media (max-width: 768px) {
