@@ -1422,18 +1422,22 @@
         <!-- One-liner editor header (mobile) — back · Stops/Pages/Save tabs · ⋯ menu.
              Replaces the title row + big buttons + tab pills on phones; the classic
              header below stays for wide screens and as the delegation target. -->
-        <div id="oneLinerHeader" style="display:none; align-items:center; gap:8px; background:#fff; border-radius:999px; padding:6px 8px; box-shadow:0 2px 8px rgba(30,58,92,0.08); margin-bottom:8px; flex-shrink:0;">
+        <!-- Barless editor controls: no header row at all. Back and the layout
+             menu float over the content on frosted glass; a tiny dots pill shows
+             (and switches) the current area: Stops / Pages / Save. -->
+        <div id="oneLinerHeader" style="display:none; position:relative; z-index:40; height:0; overflow:visible; pointer-events:none;">
           <button onclick="resetCreateView()" title="Back to recipe"
-            style="width:30px; height:30px; border-radius:50%; border:none; background:#e8f0f9; color:#2f72b8; font-size:0.85rem; font-weight:800; cursor:pointer; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">←</button>
-          <div style="flex:1; display:flex; background:#e8f0f9; border-radius:999px; padding:3px; gap:2px; min-width:0;">
-            <button id="olTabStops" onclick="window.olGoTab(0)" style="flex:1; border:none; background:#fff; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#2f72b8; cursor:pointer; box-shadow:0 1px 4px rgba(30,58,92,0.15);">Stops</button>
-            <button id="olTabPages" onclick="window.olGoTab(1)" style="flex:1; border:none; background:transparent; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#6b87a3; cursor:pointer;">Pages</button>
-            <button id="olTabSave" onclick="window.olGoTab(2)" style="flex:1; border:none; background:transparent; border-radius:999px; padding:6px 2px; font-family:var(--font); font-size:0.7rem; font-weight:800; color:#6b87a3; cursor:pointer;">Save</button>
+            style="pointer-events:auto; position:absolute; top:4px; left:10px; width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); color:#1e3a5c; font-size:0.85rem; font-weight:800; cursor:pointer; box-shadow:0 2px 10px rgba(30,58,92,0.22); display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">←</button>
+          <div id="olAreaDots" style="pointer-events:auto; position:absolute; top:7px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); border-radius:999px; padding:5px 10px; box-shadow:0 2px 10px rgba(30,58,92,0.18);">
+            <i onclick="window.olGoTab(0)" style="width:15px; height:6px; border-radius:4px; background:#4a90d9; cursor:pointer;"></i>
+            <i onclick="window.olGoTab(1)" style="width:6px; height:6px; border-radius:50%; background:#c3d6e8; cursor:pointer;"></i>
+            <i onclick="window.olGoTab(2)" style="width:6px; height:6px; border-radius:50%; background:#c3d6e8; cursor:pointer;"></i>
+            <span id="olAreaLbl" style="font-size:0.58rem; font-weight:800; letter-spacing:0.08em; color:#2f72b8; font-family:var(--font);">STOPS</span>
           </div>
-          <div style="position:relative; flex-shrink:0;">
+          <div style="pointer-events:auto; position:absolute; top:4px; right:10px;">
             <button id="olMenuBtn" onclick="window.olToggleMenu()" title="View &amp; layout options"
-              style="width:30px; height:30px; border-radius:50%; border:none; background:#e8f0f9; color:#2f72b8; font-size:0.9rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">⋯</button>
-            <div id="olMenu" style="display:none; position:absolute; right:0; top:36px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(20,35,55,0.25); padding:6px; z-index:99999; min-width:180px;">
+              style="width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); color:#1e3a5c; font-size:0.9rem; font-weight:800; cursor:pointer; box-shadow:0 2px 10px rgba(30,58,92,0.22); display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">⋯</button>
+            <div id="olMenu" style="display:none; position:absolute; right:0; top:38px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(20,35,55,0.25); padding:6px; z-index:99999; min-width:180px;">
               <button onclick="document.getElementById('editorMobileSplitBtn').click(); window.olToggleMenu();" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; padding:9px 10px; border-radius:8px; font-family:var(--font); font-size:0.75rem; font-weight:800; color:#1e3a5c; cursor:pointer; text-align:left;">⧉&nbsp; Stacked / Split view</button>
             </div>
           </div>
@@ -1449,11 +1453,26 @@
           </div>
         </div>
         <style>
-          /* One-liner header: phones only — the classic rows hide, the bar shows */
+          /* Barless editor: phones only — classic rows hide, floats show */
           @media (max-width: 768px) {
-            #oneLinerHeader { display: flex !important; }
+            #oneLinerHeader { display: block !important; }
             #editorClassicHeader { display: none !important; }
             #editorTabBarMobile { display: none !important; }
+            /* clearance so the floating controls don't cover content */
+            #mobileSplitLayoutWrapper { margin-top: 42px !important; }
+          }
+          /* swipe between areas: the slides snap like pages under the finger */
+          @media (max-width: 768px) {
+            body.editor-split-view-active #mobileEditorCarousel {
+              display: flex !important; flex-direction: row !important;
+              overflow-x: auto !important; overflow-y: hidden !important;
+              scroll-snap-type: x mandatory !important; scrollbar-width: none !important;
+            }
+            body.editor-split-view-active #mobileEditorCarousel::-webkit-scrollbar { display: none; }
+            body.editor-split-view-active #mobileEditorCarousel > .carousel-slide {
+              flex: 0 0 100% !important; min-width: 100% !important; max-width: 100% !important;
+              scroll-snap-align: center !important;
+            }
           }
         </style>
         <script>
@@ -1461,18 +1480,44 @@
             const m = document.getElementById('olMenu');
             if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
           };
+          window.olSetAreaPill = function(i) {
+            const names = ['STOPS', 'PAGES', 'SAVE'];
+            const dots = document.querySelectorAll('#olAreaDots i');
+            dots.forEach((d, j) => {
+              const on = j === i;
+              d.style.width = on ? '15px' : '6px';
+              d.style.borderRadius = on ? '4px' : '50%';
+              d.style.background = on ? '#4a90d9' : '#c3d6e8';
+            });
+            const l = document.getElementById('olAreaLbl');
+            if (l) l.textContent = names[i] || '';
+          };
           window.olGoTab = function(i) {
             const ids = ['tabBtnStopsMobile', 'tabBtnPagesMobile', 'tabBtnSaveMobile'];
             const t = document.getElementById(ids[i]);
             if (t) t.click();
-            ['olTabStops', 'olTabPages', 'olTabSave'].forEach((id, j) => {
-              const b = document.getElementById(id);
-              if (!b) return;
-              b.style.background = j === i ? '#fff' : 'transparent';
-              b.style.color = j === i ? '#2f72b8' : '#6b87a3';
-              b.style.boxShadow = j === i ? '0 1px 4px rgba(30,58,92,0.15)' : 'none';
-            });
+            window.olSetAreaPill(i);
           };
+          // keep the pill in sync when the user SWIPES between areas
+          document.addEventListener('DOMContentLoaded', () => {
+            const car = document.getElementById('mobileEditorCarousel');
+            if (car) car.addEventListener('scroll', () => {
+              if (car.clientWidth > 0) {
+                window.olSetAreaPill(Math.round(car.scrollLeft / car.clientWidth));
+              }
+            }, { passive: true });
+            // measure the draft banner's real height so the split columns yield
+            // exactly that much space (0 when absent or collapsed)
+            const updateBannerVar = () => {
+              const b = document.getElementById('autosaveBanner');
+              const h = b ? Math.max(0, Math.round(b.getBoundingClientRect().height)) : 0;
+              document.body.style.setProperty('--banner-h', (h ? h + 10 : 0) + 'px');
+            };
+            updateBannerVar();
+            const vc = document.getElementById('view-create');
+            if (vc) new MutationObserver(updateBannerVar).observe(vc, { childList: true });
+            window.addEventListener('resize', updateBannerVar);
+          });
           // close the ⋯ menu when tapping anywhere else
           document.addEventListener('click', e => {
             const m = document.getElementById('olMenu');
@@ -1867,15 +1912,10 @@
                      tab pills + timeline strip + control bar. */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft,
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitRight {
-                    /* 330px ≈ nav + header + timeline strip + control bar (measured) */
-                    height: calc(100vh - 330px) !important;
-                    min-height: 290px !important;
-                  }
-                  /* when the unsaved-draft banner is showing, give back its height so
-                     the timeline + control bar below stay completely on screen */
-                  body.editor-split-view-active:has(#autosaveBanner) #mobileSplitLayoutWrapper > #mobileSplitLeft,
-                  body.editor-split-view-active:has(#autosaveBanner) #mobileSplitLayoutWrapper > #mobileSplitRight {
-                    height: calc(100vh - 505px) !important;
+                    /* 318px = the proven 330px chrome budget, minus the deleted
+                       header bar (-54px), plus float clearance (+42px); --banner-h is
+                       the LIVE height of the unsaved-draft banner, set by script */
+                    height: calc(100vh - 318px - var(--banner-h, 0px)) !important;
                     min-height: 200px !important;
                   }
                   /* center the video vertically in its column instead of pinning it to the top */
