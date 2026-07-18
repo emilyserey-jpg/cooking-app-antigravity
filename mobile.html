@@ -1789,6 +1789,20 @@
                     width: calc(60% - 6px) !important;
                     max-width: calc(60% - 6px) !important;
                   }
+                  /* narrow column: let the Loop Stops header wrap to two lines so the
+                     List/Focus and AI Generator buttons are never cut off */
+                  body.editor-split-view-active #editorStopsCard > div:first-child {
+                    flex-wrap: wrap !important; row-gap: 4px !important;
+                    padding: 8px 10px !important; gap: 6px !important;
+                  }
+                  body.editor-split-view-active #editorStopsCard > div:first-child > div:last-child {
+                    margin-left: 0 !important; flex-wrap: wrap !important; row-gap: 4px !important;
+                  }
+                  body.editor-split-view-active #splitLayoutToggle,
+                  body.editor-split-view-active #toggleAiToolsBtn {
+                    font-size: 0.62rem !important; padding: 3px 7px !important;
+                    white-space: nowrap !important; flex-shrink: 0 !important;
+                  }
                   /* guard: the video can never overflow its column (portrait videos
                      used to force a 460px height into the 290px column) */
                   body.editor-split-view-active #mobileSplitLayoutWrapper > #mobileSplitLeft { overflow: hidden !important; }
