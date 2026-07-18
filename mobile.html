@@ -1907,9 +1907,16 @@
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card {
                     width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-                    flex: 0 0 auto !important; padding: 9px 10px !important;
+                    flex: 0 0 auto !important; padding: 8px 6px !important;
                     border-radius: 12px !important; gap: 5px !important;
                     scroll-snap-align: none !important;
+                  }
+                  /* text boxes stretch wide: slimmer inner paddings, tighter column gap */
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) textarea {
+                    padding: 6px 22px 6px 6px !important;   /* right side still clears the AI button */
+                  }
+                  body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(5) textarea {
+                    padding: 4px 6px !important;
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > * {
                     min-width: 0 !important;
@@ -2080,7 +2087,7 @@
                   body.editor-split-view-active #createStepsList .loop-stop-card {
                     display: grid !important;
                     grid-template-columns: 1fr 1fr;
-                    column-gap: 6px;
+                    column-gap: 4px;
                   }
                   body.editor-split-view-active #createStepsList .loop-stop-card > * { grid-column: 1 / -1; }
                   body.editor-split-view-active #createStepsList .loop-stop-card > div:nth-child(4) { grid-column: 1; }
