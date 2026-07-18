@@ -1826,6 +1826,17 @@
                   body.editor-split-view-active #createStepsList .loop-stop-card span {
                     overflow-wrap: anywhere;
                   }
+                  /* slide-in animation when swiping between steps in focus mode */
+                  @keyframes stepSlideIn {
+                    from { opacity: 0.25; transform: translateX(var(--slide-from, 16px)); }
+                    to   { opacity: 1;    transform: none; }
+                  }
+                  body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.slide-anim {
+                    animation: stepSlideIn 0.22s ease;
+                  }
+                  @media (prefers-reduced-motion: reduce) {
+                    body.editor-split-view-active.split-focus #createStepsList .loop-stop-card.slide-anim { animation: none; }
+                  }
                 </style>
                 <script>
                   (function(){
@@ -1853,15 +1864,46 @@
                     window.focusStepMove = function(d) {
                       const n = cards().length; if (!n) return;
                       idx = (idx + d + n) % n; apply();
+                      // little slide-in so the direction reads visually
+                      const c = cards()[idx];
+                      if (c) {
+                        c.classList.remove('slide-anim'); void c.offsetWidth;
+                        c.style.setProperty('--slide-from', d > 0 ? '16px' : '-16px');
+                        c.classList.add('slide-anim');
+                      }
                     };
                     document.addEventListener('DOMContentLoaded', () => {
                       try { if (localStorage.getItem(KEY) === 'focus') document.body.classList.add('split-focus'); } catch {}
                       setLabel(); apply();
-                      // re-apply whenever the app re-renders the step cards
                       const list = document.getElementById('createStepsList');
-                      if (list) new MutationObserver(() => {
+                      if (!list) return;
+                      // re-apply whenever the app re-renders the step cards
+                      new MutationObserver(() => {
                         if (document.body.classList.contains('split-focus')) apply();
                       }).observe(list, { childList: true });
+                      // ── swipe navigation (focus mode): swipe the card left/right ──
+                      let sx = 0, sy = 0, tracking = false;
+                      const endSwipe = (x, y) => {
+                        if (!tracking) return; tracking = false;
+                        const dx = x - sx, dy = y - sy;
+                        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                          window.focusStepMove(dx < 0 ? 1 : -1);   // swipe left = next step
+                        }
+                      };
+                      list.addEventListener('touchstart', e => {
+                        if (!document.body.classList.contains('split-focus')) return;
+                        const t = e.touches[0]; sx = t.clientX; sy = t.clientY; tracking = true;
+                      }, { passive: true });
+                      list.addEventListener('touchend', e => {
+                        const t = e.changedTouches[0]; endSwipe(t.clientX, t.clientY);
+                      }, { passive: true });
+                      // mouse-drag fallback so it also works with a trackpad/mouse
+                      list.addEventListener('mousedown', e => {
+                        if (!document.body.classList.contains('split-focus')) return;
+                        if (e.target.closest('input, textarea, button')) return;  // don't hijack editing
+                        sx = e.clientX; sy = e.clientY; tracking = true;
+                      });
+                      window.addEventListener('mouseup', e => endSwipe(e.clientX, e.clientY));
                     });
                   })();
                 </script>
