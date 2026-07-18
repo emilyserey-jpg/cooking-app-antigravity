@@ -2030,6 +2030,27 @@
                     display: inline-flex !important; align-items: center !important; justify-content: center !important;
                     box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
                   }
+                  /* ── friendly empty state for the video frame ──
+                     With no video loaded the frame was a stark black box; show a soft
+                     branded placeholder instead until a video arrives. */
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer:not([src])),
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer[src=""]) {
+                    background: linear-gradient(150deg, #e8f0f9, #d6e5f5) !important;
+                    min-height: 180px !important; position: relative !important;
+                  }
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer:not([src]))::after,
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer[src=""])::after {
+                    content: "🎬  Your video appears here";
+                    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+                    font-family: var(--font); font-size: 0.72rem; font-weight: 800; color: #6b87a3;
+                    text-align: center; padding: 0 14px; pointer-events: none;
+                  }
+                  body.editor-split-view-active #workbenchVideoWrapper #uploadedVideoPlayer:not([src]),
+                  body.editor-split-view-active #workbenchVideoWrapper #uploadedVideoPlayer[src=""],
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer:not([src])) #mobileVideoCanvas,
+                  body.editor-split-view-active #workbenchVideoWrapper:has(#uploadedVideoPlayer[src=""]) #mobileVideoCanvas {
+                    opacity: 0 !important;
+                  }
                   /* ── Pages panel: keep its header buttons inside the narrow column ──
                      The generated "Page Details / Add Page / Delete Page" row uses
                      no-wrap buttons that overflow the split column; let rows wrap
