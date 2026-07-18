@@ -1995,6 +1995,14 @@
                     letter-spacing: 0.04em; color: var(--text-muted); padding: 1px 3px;
                     border-radius: 4px; outline: none; margin-bottom: 2px; cursor: text; }
                   .ctc-title:focus { background: #eef4fb; color: #2f72b8; }
+                  .ctc-hidden { display: none !important; }
+                  .ctc-menu { position: absolute; bottom: 22px; right: 0; background: #fff;
+                    border-radius: 10px; box-shadow: 0 8px 24px rgba(20,35,55,0.25);
+                    padding: 5px; z-index: 99999; min-width: 150px; }
+                  .ctc-menu button { display: flex; width: 100%; border: none; background: transparent;
+                    padding: 8px 10px; border-radius: 7px; font-family: var(--font);
+                    font-size: 0.72rem; font-weight: 800; color: #1e3a5c; cursor: pointer; text-align: left; }
+                  .ctc-menu button:hover { background: #eef4fb; }
                   body.editor-split-view-active #createStepsList .card-text-carousel > div textarea {
                     /* grow to fill spare card space, but never clip text: the
                        content-fit min-height comes from script, so no floor here */
@@ -2239,7 +2247,8 @@
                         const notes = wrap.children[0], ings = wrap.children[1];
                         [notes, ings].forEach(pg => {
                           if (!pg) return;
-                          pg.querySelectorAll(':scope > .ctc-title').forEach(t => t.remove());
+                          pg.querySelectorAll(':scope > .ctc-title, :scope > .ctc-head').forEach(t => t.remove());
+                          pg.classList.remove('ctc-hidden');
                           card.insertBefore(pg, opts || null);
                         });
                         wrap.remove();
@@ -2275,17 +2284,39 @@
                           const wrap = document.createElement('div');
                           wrap.className = 'card-text-carousel';
                           card.insertBefore(wrap, notes);
-                          // page 1: notes, with an editable title
+                          const rebuild = () => { unwrapCarousel(card); wrapTextCarousel(); fitTextareas(); };
+                          const mkDel = onDel => {
+                            const d = document.createElement('button');
+                            d.textContent = '×';
+                            d.title = 'Remove this section';
+                            d.style.cssText = 'border:none;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:6px;width:18px;height:18px;font-weight:800;cursor:pointer;flex-shrink:0;font-size:0.7rem;line-height:1;';
+                            d.addEventListener('click', e => { e.stopPropagation(); onDel(); persistStep(card); rebuild(); });
+                            return d;
+                          };
+                          const mkHead = (titleEl, onDel) => {
+                            const h = document.createElement('div');
+                            h.className = 'ctc-head';
+                            h.style.cssText = 'display:flex;align-items:center;gap:4px;';
+                            titleEl.style.flex = '1';
+                            h.appendChild(titleEl);
+                            h.appendChild(mkDel(onDel));
+                            return h;
+                          };
+                          // page 1: notes — editable title + removable
                           notes.insertBefore(
-                            mkTitle(step.notesTitle || 'Notes', v => { step.notesTitle = v; persistStep(card); }),
+                            mkHead(mkTitle(step.notesTitle || 'Notes', v => { step.notesTitle = v; persistStep(card); }),
+                                   () => { step.hideNotes = true; }),
                             notes.firstChild);
+                          if (step.hideNotes) notes.classList.add('ctc-hidden');
                           wrap.appendChild(notes);
-                          // page 2: ingredients — its existing label becomes the editable title
+                          // page 2: ingredients — editable title + removable
                           const ingLabel = ings.querySelector('label');
-                          const ingTitle = mkTitle(step.ingredientsTitle || 'Ingredients',
-                            v => { step.ingredientsTitle = v; persistStep(card); });
-                          if (ingLabel) ingLabel.replaceWith(ingTitle);
-                          else ings.insertBefore(ingTitle, ings.firstChild);
+                          const ingHead = mkHead(mkTitle(step.ingredientsTitle || 'Ingredients',
+                              v => { step.ingredientsTitle = v; persistStep(card); }),
+                            () => { step.hideIngredients = true; });
+                          if (ingLabel) ingLabel.replaceWith(ingHead);
+                          else ings.insertBefore(ingHead, ings.firstChild);
+                          if (step.hideIngredients) ings.classList.add('ctc-hidden');
                           wrap.appendChild(ings);
                           // extra pages: user-defined titled sections
                           (step.customSections || []).forEach((sec, si) => {
@@ -2312,8 +2343,8 @@
                             pg.appendChild(head); pg.appendChild(ta);
                             wrap.appendChild(pg);
                           });
-                          // dots + "add section" button
-                          const pages = wrap.children.length;
+                          // dots (visible pages only) + "add section" button
+                          const pages = [...wrap.children].filter(c => !c.classList.contains('ctc-hidden')).length;
                           const dots = document.createElement('div');
                           dots.className = 'ctc-dots';
                           for (let i = 0; i < pages; i++) {
@@ -2325,15 +2356,37 @@
                           const add = document.createElement('button');
                           add.className = 'ctc-add';
                           add.textContent = '＋';
-                          add.title = 'Add a titled text section to this step';
-                          add.addEventListener('click', () => {
-                            step.customSections = step.customSections || [];
-                            step.customSections.push({ title: 'New section', text: '' });
-                            persistStep(card);
-                            unwrapCarousel(card);
-                            wrapTextCarousel(); fitTextareas();
-                            const w2 = card.querySelector(':scope > .card-text-carousel');
-                            if (w2) setTimeout(() => w2.scrollTo({ left: w2.scrollWidth, behavior: 'smooth' }), 100);
+                          add.title = 'Add a section (or restore a removed one)';
+                          add.addEventListener('click', e => {
+                            e.stopPropagation();
+                            const doNew = () => {
+                              step.customSections = step.customSections || [];
+                              step.customSections.push({ title: 'New section', text: '' });
+                              persistStep(card); rebuild();
+                              const w2 = card.querySelector(':scope > .card-text-carousel');
+                              if (w2) setTimeout(() => w2.scrollTo({ left: w2.scrollWidth, behavior: 'smooth' }), 100);
+                            };
+                            const restorables = [];
+                            if (step.hideNotes) restorables.push([step.notesTitle || 'Notes', () => { step.hideNotes = false; }]);
+                            if (step.hideIngredients) restorables.push([step.ingredientsTitle || 'Ingredients', () => { step.hideIngredients = false; }]);
+                            if (!restorables.length) { doNew(); return; }
+                            document.querySelector('.ctc-menu')?.remove();
+                            const menu = document.createElement('div');
+                            menu.className = 'ctc-menu';
+                            const mkItem = (label, fn) => {
+                              const b = document.createElement('button');
+                              b.textContent = label;
+                              b.addEventListener('click', ev => { ev.stopPropagation(); menu.remove(); fn(); });
+                              menu.appendChild(b);
+                            };
+                            restorables.forEach(([n, fn]) =>
+                              mkItem('↩ Restore ' + n, () => { fn(); persistStep(card); rebuild(); }));
+                            mkItem('＋ New section', doNew);
+                            dots.style.position = 'relative';
+                            dots.appendChild(menu);
+                            setTimeout(() => document.addEventListener('click', function closeMenu(ev) {
+                              if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+                            }), 0);
                           });
                           dots.appendChild(add);
                           wrap.after(dots);
