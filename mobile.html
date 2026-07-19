@@ -3625,7 +3625,7 @@
       box-shadow: 0 10px 28px rgba(26, 58, 92, 0.18); z-index: 40;
     }
     .phone-screen.plr-has-band .player-left-column,
-    .phone-screen.plr-has-band .mobile-player-body { padding-bottom: 78px !important; }
+    .phone-screen.plr-has-band .mobile-player-body { padding-bottom: 126px !important; }
 
     /* the Route replaces the old plain scrubber and time row in the
        split layout too (Cook already hides them) */
@@ -3888,6 +3888,16 @@
       display: none !important;
     }
 
+    /* the step chips ride inside the timeline card: road, chips, clock */
+    #playerRouteCard .step-nav-chips-container {
+      background: transparent !important; border: none !important;
+      box-shadow: none !important; margin: 4px 0 0 !important; padding: 0 !important;
+    }
+    #playerRouteCard .step-nav-chips-container > div:not(.chips-scroll-x) {
+      display: none !important;
+    }
+    #playerRouteCard .chips-scroll-x { padding: 2px 2px 4px !important; }
+
     /* "Add a tip" chip on every step card - comment where you read */
     .plc-addtip {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
@@ -3968,7 +3978,6 @@
         const optionsWrap = player.querySelector('.actions-dropdown-wrapper');
         const titleC = document.getElementById('playerRecipeTitleContainer');
         if (cook) {
-          if (chips && chips.parentElement !== leftCol) leftCol.insertBefore(chips, videoC);
           // the control strip floats over the video's bottom edge (negative
           // top margin in CSS), with the step card docking right after it
           if (strip) leftCol.appendChild(strip);
@@ -3978,8 +3987,6 @@
           if (optionsWrap && titleC && optionsWrap.parentElement !== titleC)
             titleC.appendChild(optionsWrap);
         } else {
-          if (chips && chips.parentElement !== body)
-            body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
           if (slider && slider.parentElement !== body)
             body.insertBefore(slider, document.getElementById('playerMultigridDescControls'));
           // in Split the strip sits directly after the video so its negative
@@ -4472,16 +4479,17 @@
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
         card.querySelector('#plrSwapBtn').style.display = name === 'cook' ? 'none' : '';
         if (name === 'cook') {
-          // top zone, right above the chips
-          const chips = player.querySelector('.step-nav-chips-container');
-          if (chips && chips.parentElement === leftCol) leftCol.insertBefore(card, chips);
-          else leftCol.insertBefore(card, player.querySelector('.mobile-video-container'));
+          leftCol.insertBefore(card, player.querySelector('.mobile-video-container'));
         } else if (band) {
           screen.appendChild(card);
         } else {
           // in-column: under the video, where the old scrubber used to sit
           leftCol.insertBefore(card, player.querySelector('.player-timeline-rail-container'));
         }
+        // the chips join the card: road on top, chips beneath, clock row last
+        const chipsC = player.querySelector('.step-nav-chips-container');
+        const metaRow = card.querySelector('.plr-meta');
+        if (chipsC && metaRow && chipsC.parentElement !== card) card.insertBefore(chipsC, metaRow);
         relocateSplitUtilities(name === 'split');
         relocateCookRail(name === 'cook');
         updateRoute();
