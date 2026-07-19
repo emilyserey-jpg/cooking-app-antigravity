@@ -3820,6 +3820,33 @@
       max-height: 0 !important; opacity: 0;
     }
 
+    /* the mockup's door: a floating chat pill riding the video's corner */
+    #playerCmtTab {
+      position: absolute; right: 18px; z-index: 45;
+      background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(74, 144, 217, 0.12);
+      border-radius: 999px; box-shadow: 0 6px 16px rgba(26, 58, 92, 0.18);
+      font-family: var(--font); font-size: 0.7rem; font-weight: 900;
+      color: var(--text-heading); padding: 6px 12px; cursor: pointer;
+    }
+    .phone-screen.cmt-open #playerCmtTab { display: none; }
+
+    /* the All view reads like the recipe: comments grouped under step chips */
+    .plc-glbl {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.56rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--primary); background: #f4f9ff; border-radius: 999px; padding: 2px 8px;
+      margin: 8px 0 4px; align-self: flex-start;
+    }
+    #playerCommentsList > .plc-glbl:first-child { margin-top: 0; }
+
+    /* the composer says where the tip will pin */
+    #plcToChip {
+      flex-shrink: 0; align-self: center; font-size: 0.56rem; font-weight: 900;
+      color: var(--primary); background: #f4f9ff;
+      border: 1px solid rgba(74, 144, 217, 0.12); border-radius: 999px; padding: 3px 8px;
+      white-space: nowrap; font-family: var(--font);
+    }
+
     /* "Add a tip" chip on every step card - comment where you read */
     .plc-addtip {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
@@ -3940,7 +3967,6 @@
           '<div class="plr-meta">' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
-            '<button id="plrCmtBtn" title="Open comments">\u{1F4AC}<span class="plr-lbl"> Comments</span> <span id="plrCmtCount">0</span></button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
         const route = card.querySelector('#plrRoute');
@@ -3976,7 +4002,6 @@
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
         });
-        card.querySelector('#plrCmtBtn').addEventListener('click', () => openCmtSheet('all', null));
         return card;
       }
 
@@ -4000,7 +4025,8 @@
       var cmtStop = 0;
       function stopTag(i) { return '[Stop ' + (i + 1) + ']'; }
       function commentNodes() {
-        return [...document.querySelectorAll('#playerCommentsList > *')];
+        return [...document.querySelectorAll('#playerCommentsList > *')]
+          .filter(n => !(n.classList && n.classList.contains('plc-glbl')));
       }
       function stopCommentCounts(nStops) {
         const counts = new Array(nStops).fill(0);
@@ -4071,7 +4097,9 @@
         if (screen) screen.appendChild(sheet);
         return sheet;
       }
+      var plcMuteObserver = false;
       function renderCmtSheet() {
+        plcMuteObserver = true;
         const sheet = ensureCmtSheet();
         const nodes = commentNodes();
         // one tab per step (plus All), each with its live count
@@ -4107,11 +4135,37 @@
           if (show) visible++;
         });
         const title = sheet.querySelector('#plcTitle');
+        const list = document.getElementById('playerCommentsList');
+        if (list) list.querySelectorAll('.plc-glbl').forEach(l => l.remove());
         if (cmtMode === 'stop') {
           const t = document.querySelectorAll('#stepCardsSlider .step-card-title')[cmtStop];
           title.textContent = 'On ' + (t ? t.textContent : 'Stop ' + (cmtStop + 1)) + ' · ' + visible;
         } else {
           title.textContent = 'Comments · ' + nodes.length;
+          // group the thread by stop, like the mockup: each group under a chip
+          if (list && nodes.length) {
+            const grouped = [];
+            stops.forEach((st, i) => {
+              const mine = nodes.filter(n => (n.textContent || '').indexOf(stopTag(i)) !== -1);
+              if (mine.length) grouped.push({ label: (i + 1) + ' · ' + (titles[i] || 'Stop ' + (i + 1)), items: mine });
+            });
+            const tagged = grouped.flatMap(g => g.items);
+            const general = nodes.filter(n => tagged.indexOf(n) === -1);
+            if (general.length) grouped.push({ label: 'General', items: general });
+            grouped.forEach(g => {
+              const lbl = document.createElement('div');
+              lbl.className = 'plc-glbl';
+              lbl.textContent = g.label;
+              list.appendChild(lbl);
+              g.items.forEach(n => list.appendChild(n));
+            });
+          }
+        }
+        // the composer always says where a new tip will pin
+        const toChip = document.getElementById('plcToChip');
+        if (toChip) {
+          const target = cmtMode === 'stop' ? cmtStop : currentStopIndex();
+          toChip.textContent = '→ Stop ' + (target + 1);
         }
         const empty = sheet.querySelector('#plcEmpty');
         if (empty) empty.style.display = visible === 0 ? '' : 'none';
@@ -4131,6 +4185,31 @@
         // below the video instead of climbing over it
         screen.style.minHeight = (top + 248) + 'px';
       }
+      // the floating chat pill by the video - the one door into comments
+      function ensureCmtTab() {
+        let tab = document.getElementById('playerCmtTab');
+        if (tab) return tab;
+        tab = document.createElement('button');
+        tab.id = 'playerCmtTab';
+        tab.title = 'Open comments';
+        tab.innerHTML = '\u{1F4AC} <span id="plrCmtCount">0</span>';
+        tab.addEventListener('click', () => openCmtSheet('all', null));
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        if (screen) screen.appendChild(tab);
+        return tab;
+      }
+      function placeCmtTab() {
+        const tab = ensureCmtTab();
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        if (!tab || !screen || !vidC) return;
+        const sr = screen.getBoundingClientRect();
+        const vr = vidC.getBoundingClientRect();
+        if (vr.height < 40) return;
+        tab.style.top = Math.max(60, Math.round(vr.bottom - sr.top - 44)) + 'px';
+      }
+      window.addEventListener('resize', placeCmtTab);
+
       window.addEventListener('resize', () => {
         const sheet = document.getElementById('playerCmtSheet');
         if (sheet && sheet.classList.contains('open')) placeCmtSheet();
@@ -4145,6 +4224,12 @@
         const sec = document.getElementById('playerCommentsSection');
         const host = sheet.querySelector('.plc-list');
         if (sec && sec.parentElement !== host) host.appendChild(sec);
+        const wrap = document.getElementById('playerAddCommentWrap');
+        if (wrap && !document.getElementById('plcToChip')) {
+          const chip = document.createElement('span');
+          chip.id = 'plcToChip';
+          wrap.insertBefore(chip, wrap.firstChild);
+        }
         renderCmtSheet();
         sheet.classList.add('open');
         if (screen) screen.classList.add('cmt-open');
@@ -4183,6 +4268,10 @@
         // the comment block goes home so Split's Comments tab keeps working
         const sec = document.getElementById('playerCommentsSection');
         const body = document.querySelector('#view-mobile-player .mobile-player-body');
+        const chip = document.getElementById('plcToChip');
+        if (chip) chip.remove();
+        const list2 = document.getElementById('playerCommentsList');
+        if (list2) list2.querySelectorAll('.plc-glbl').forEach(l => l.remove());
         if (sec && body && sec.parentElement !== body) {
           commentNodes().forEach(n => { n.style.display = ''; });
           body.appendChild(sec);
@@ -4255,6 +4344,8 @@
         }
         relocateSplitUtilities(name === 'split');
         updateRoute();
+        placeCmtTab();
+        setTimeout(placeCmtTab, 400);
       }
 
       // Option B: in Split, repeat / mute / speed leave the strip and become
@@ -4367,6 +4458,7 @@
         // new comments refresh the bubbles, the total, and the open sheet
         const cmtList = document.getElementById('playerCommentsList');
         if (cmtList) new MutationObserver(() => {
+          if (plcMuteObserver) { plcMuteObserver = false; return; }
           updateRoute();
           const sheet = document.getElementById('playerCmtSheet');
           if (sheet && sheet.classList.contains('open')) renderCmtSheet();
