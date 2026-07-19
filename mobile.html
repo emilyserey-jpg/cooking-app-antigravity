@@ -3730,18 +3730,26 @@
 
     /* ── TikTok-style comments: the sheet slides up, the video keeps its
        proportions but scales down and keeps playing, the step card folds ── */
+    /* the sheet's top edge is anchored by JS to the shrunken video's
+       bottom edge, so the video is always fully visible above it */
     #playerCmtSheet {
-      position: absolute; left: 8px; right: 8px; bottom: -110%; z-index: 60;
+      position: absolute; left: 8px; right: 8px; top: 55%; bottom: 8px; z-index: 60;
       background: #fff; border-radius: 18px 18px 14px 14px;
       border: 1px solid rgba(74, 144, 217, 0.12);
       box-shadow: 0 -10px 40px rgba(26, 58, 92, 0.28);
-      padding: 8px 14px 12px; height: 45%;
+      padding: 8px 14px 12px;
       display: flex; flex-direction: column;
       font-family: var(--font);
-      transition: bottom 0.3s ease;
+      transform: translateY(130%);
+      transition: transform 0.3s ease, top 0.3s ease;
+      pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) { #playerCmtSheet { transition: none; } }
-    #playerCmtSheet.open { bottom: 8px; }
+    #playerCmtSheet.open { transform: translateY(0); pointer-events: auto; }
+    /* the mic steps aside while comments are open */
+    body:has(.phone-screen.cmt-open) #phoneMicBtn {
+      opacity: 0 !important; pointer-events: none !important;
+    }
     #playerCmtSheet .plc-grab { width: 34px; height: 4px; border-radius: 999px; background: #d6e4f2; margin: 0 auto 8px; cursor: pointer; flex-shrink: 0; }
     #playerCmtSheet .plc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-shrink: 0; }
     #playerCmtSheet .plc-head h4 { margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading); }
@@ -4027,6 +4035,26 @@
         const empty = sheet.querySelector('#plcEmpty');
         if (empty) empty.style.display = visible === 0 ? '' : 'none';
       }
+      // the sheet starts exactly where the shrunken video ends - measured
+      // live, so no window size can make it cover the footage
+      function placeCmtSheet() {
+        const sheet = document.getElementById('playerCmtSheet');
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        if (!sheet || !screen || !vidC) return;
+        const sr = screen.getBoundingClientRect();
+        const vr = vidC.getBoundingClientRect();
+        const top = Math.max(80, Math.round(vr.bottom - sr.top + 6));
+        sheet.style.top = top + 'px';
+        // the screen grows if needed so the sheet always gets real room
+        // below the video instead of climbing over it
+        screen.style.minHeight = (top + 248) + 'px';
+      }
+      window.addEventListener('resize', () => {
+        const sheet = document.getElementById('playerCmtSheet');
+        if (sheet && sheet.classList.contains('open')) placeCmtSheet();
+      });
+
       function openCmtSheet(mode, stopIdx) {
         const sheet = ensureCmtSheet();
         const screen = document.querySelector('#view-mobile-player .phone-screen');
@@ -4039,12 +4067,16 @@
         renderCmtSheet();
         sheet.classList.add('open');
         if (screen) screen.classList.add('cmt-open');
+        // anchor under the video: once now, and again after the shrink lands
+        placeCmtSheet();
+        setTimeout(placeCmtSheet, 120);
+        setTimeout(placeCmtSheet, 380);
       }
       function closeCmtSheet() {
         const sheet = document.getElementById('playerCmtSheet');
         const screen = document.querySelector('#view-mobile-player .phone-screen');
         if (sheet) sheet.classList.remove('open');
-        if (screen) screen.classList.remove('cmt-open');
+        if (screen) { screen.classList.remove('cmt-open'); screen.style.minHeight = ''; }
         // the comment block goes home so Split's Comments tab keeps working
         const sec = document.getElementById('playerCommentsSection');
         const body = document.querySelector('#view-mobile-player .mobile-player-body');
