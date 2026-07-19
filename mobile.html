@@ -3847,6 +3847,32 @@
       white-space: nowrap; font-family: var(--font);
     }
 
+    /* option A "Right Rail": mic, comments, mute, speed stack in a smoked
+       rail on the video's right edge in Cook; the scrim keeps transport */
+    #playerCookRail {
+      position: absolute; z-index: 45;
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+    }
+    .phone-screen.cmt-open #playerCookRail { display: none; }
+    #playerCookRail .control-btn,
+    #playerCookRail #playerCmtTab,
+    #playerCookRail #phoneMicBtn {
+      position: static !important; width: 34px !important; height: 34px !important;
+      min-width: 0 !important; border-radius: 50% !important; padding: 0 !important;
+      background: rgba(15, 23, 32, 0.42) !important; color: #fff !important;
+      border: none !important; box-shadow: none !important; margin: 0 !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      font-family: var(--font) !important; font-size: 0.66rem !important; font-weight: 900 !important;
+      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+      filter: none !important; opacity: 1 !important;
+    }
+    #playerCookRail #playerCmtTab { width: auto !important; padding: 0 9px !important; border-radius: 999px !important; }
+    #playerCookRail .control-btn i, #playerCookRail .control-btn svg,
+    #playerCookRail #phoneMicBtn i, #playerCookRail #phoneMicBtn svg {
+      width: 15px !important; height: 15px !important;
+    }
+    #playerCookRail .speed-dropdown-wrapper { position: relative !important; margin: 0 !important; }
+
     /* "Add a tip" chip on every step card - comment where you read */
     .plc-addtip {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
@@ -4185,6 +4211,60 @@
         // below the video instead of climbing over it
         screen.style.minHeight = (top + 248) + 'px';
       }
+      // option A: the Cook right rail (mic / comments / mute / speed).
+      // Elements relocate in; everything returns home when leaving Cook.
+      var micHome = null, micNext = null;
+      function ensureCookRail() {
+        let rail = document.getElementById('playerCookRail');
+        if (rail) return rail;
+        rail = document.createElement('div');
+        rail.id = 'playerCookRail';
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        if (screen) screen.appendChild(rail);
+        return rail;
+      }
+      function relocateCookRail(cook) {
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const rail = ensureCookRail();
+        const strip = player.querySelector('.player-controls-strip');
+        const mic = document.getElementById('phoneMicBtn');
+        const mute = document.getElementById('playerMuteBtn');
+        const speed = player.querySelector('.speed-dropdown-wrapper');
+        const cmtTab = document.getElementById('playerCmtTab');
+        if (cook) {
+          if (mic && mic.parentElement !== rail) {
+            if (!micHome) { micHome = mic.parentElement; micNext = mic.nextSibling; }
+            rail.appendChild(mic);
+          }
+          if (cmtTab && cmtTab.parentElement !== rail) rail.appendChild(cmtTab);
+          if (mute && mute.parentElement !== rail) rail.appendChild(mute);
+          if (speed && speed.parentElement !== rail) rail.appendChild(speed);
+          rail.style.display = '';
+        } else {
+          if (mic && micHome && mic.parentElement === rail) micHome.insertBefore(mic, micNext);
+          if (cmtTab && cmtTab.parentElement === rail) {
+            const screen = player.querySelector('.phone-screen');
+            if (screen) screen.appendChild(cmtTab);
+          }
+          if (mute && strip && mute.parentElement === rail) strip.appendChild(mute);
+          if (speed && strip && speed.parentElement === rail) strip.appendChild(speed);
+          rail.style.display = 'none';
+        }
+      }
+      function placeCookRail() {
+        const rail = document.getElementById('playerCookRail');
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        if (!rail || !screen || !vidC || rail.style.display === 'none') return;
+        const sr = screen.getBoundingClientRect();
+        const vr = vidC.getBoundingClientRect();
+        if (vr.height < 60) return;
+        rail.style.left = Math.round(vr.right - sr.left - 42) + 'px';
+        rail.style.top = Math.max(60, Math.round(vr.bottom - sr.top - 92 - rail.offsetHeight)) + 'px';
+      }
+      window.addEventListener('resize', placeCookRail);
+
       // the floating chat pill by the video - the one door into comments
       function ensureCmtTab() {
         let tab = document.getElementById('playerCmtTab');
@@ -4200,6 +4280,9 @@
       }
       function placeCmtTab() {
         const tab = ensureCmtTab();
+        if (tab.parentElement && tab.parentElement.id === 'playerCookRail') {
+          tab.style.top = ''; return;
+        }
         const screen = document.querySelector('#view-mobile-player .phone-screen');
         const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
         if (!tab || !screen || !vidC) return;
@@ -4343,9 +4426,20 @@
           leftCol.insertBefore(card, player.querySelector('.player-timeline-rail-container'));
         }
         relocateSplitUtilities(name === 'split');
+        relocateCookRail(name === 'cook');
         updateRoute();
         placeCmtTab();
-        setTimeout(placeCmtTab, 400);
+        placeCookRail();
+        // the app may have sized the video mid-relocation; once the layout
+        // settles, ask it to measure again, then place the floaters
+        setTimeout(() => {
+          if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
+          setTimeout(() => { placeCmtTab(); placeCookRail(); placeCmtSheetIfOpen(); }, 80);
+        }, 400);
+      }
+      function placeCmtSheetIfOpen() {
+        const sheet = document.getElementById('playerCmtSheet');
+        if (sheet && sheet.classList.contains('open')) placeCmtSheet();
       }
 
       // Option B: in Split, repeat / mute / speed leave the strip and become
@@ -4447,8 +4541,12 @@
         // re-classify the strip buttons and refresh the route once that happens
         document.addEventListener('loadedmetadata', (e) => {
           if (e.target && e.target.id === 'mobileRealVideo') {
-            setTimeout(markCookStripOverlap, 100);
-            setTimeout(updateRoute, 120);
+            setTimeout(() => {
+              if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
+            }, 80);
+            setTimeout(markCookStripOverlap, 180);
+            setTimeout(updateRoute, 200);
+            setTimeout(() => { placeCmtTab(); placeCookRail(); placeCmtSheetIfOpen(); }, 220);
           }
         }, true);
         // the pin travels with the real video clock
