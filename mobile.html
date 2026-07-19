@@ -3708,6 +3708,8 @@
     #view-mobile-player .phone-screen.pl-cook.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
     /* ...and so do the floating rail buttons — the panel's dock takes over */
     #view-mobile-player .phone-screen.pl-cook.multigrid-active #playerCookRail { display: none !important; }
+    /* the description header starts clear of the video's bottom corner */
+    #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 14px !important; padding: 0 12px !important; }
     /* Split keeps its one-screen frame with the panel open: the columns scroll
        inside, so long card lists (Vertical descriptions) never push the route
        band further down the page */

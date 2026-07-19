@@ -1135,11 +1135,13 @@ window.renderMultigridDescriptions = function() {
   if (!container || !recipeData || !recipeData.steps) return;
 
   // The descriptions (and their Horizontal/Vertical toggle) are always
-  // available. Panel closed: they sit alongside the classic step card.
-  // Panel open: they replace it, as before.
+  // available. In Cook they ARE the step display (the docked classic card
+  // would repeat them); in Split the classic card keeps its richer content
+  // (ingredients, tips) and the descriptions ride along panel-closed.
   if (ctrlContainer) ctrlContainer.style.display = 'flex';
   container.style.display = 'flex';
-  if (activeCard) activeCard.style.display = isPlayerMultigridActive ? 'none' : 'block';
+  const hideClassic = isPlayerMultigridActive || !window.currentSplitLayoutActive;
+  if (activeCard) activeCard.style.display = hideClassic ? 'none' : 'block';
 
   // Apply visual button active states
   const rowBtn = document.getElementById('descViewRowBtn');
@@ -9700,33 +9702,33 @@ function updateMultigridLayoutClass() {
     }
 
     // Cook hides the right column, so the description-card carousel — and its
-    // Horizontal/Vertical toggle bar — ride in the left column whenever Cook
-    // is active (panel open or not); they return home for Split
+    // Horizontal/Vertical toggle bar — take over the docked classic card's
+    // slot (the card itself hides in Cook, and its slot already clears the
+    // floating capsule). They return home for Split. Re-asserted every pass,
+    // because Cook's own relocations keep re-ordering the column around us.
     const wantLeft = !window.currentSplitLayoutActive;
-    const leftColEl = document.querySelector('#view-mobile-player .player-left-column');
-    [document.getElementById('playerMultigridDescControls'),
-     document.getElementById('playerMultigridDescriptions')].forEach(node => {
-      if (!node) return;
-      if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
-      if (wantLeft && leftColEl && node.parentElement !== leftColEl) {
-        // land BELOW the transport strip — in Cook it floats up over the
-        // video's bottom edge, and anything placed between gets covered
-        const strip = leftColEl.querySelector('.player-controls-strip');
-        const anchor = strip || leftColEl.querySelector('.mobile-video-container');
-        if (anchor && anchor.nextSibling) leftColEl.insertBefore(node, anchor.nextSibling);
-        else leftColEl.appendChild(node);
-      } else if (!wantLeft && node._homeParent && node.parentElement !== node._homeParent) {
-        if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
-        else node._homeParent.appendChild(node);
-      }
-    });
-    // controls sit above the cards: inserting each after the video container
-    // reverses their order, so put the toggle bar back on top
-    if (wantLeft && leftColEl) {
-      const ctrl = document.getElementById('playerMultigridDescControls');
-      const descEl = document.getElementById('playerMultigridDescriptions');
-      if (ctrl && descEl && descEl.parentElement === leftColEl && ctrl.parentElement === leftColEl) {
-        leftColEl.insertBefore(ctrl, descEl);
+    const descCtrl = document.getElementById('playerMultigridDescControls');
+    const descList = document.getElementById('playerMultigridDescriptions');
+    if (descCtrl && descList) {
+      [descCtrl, descList].forEach(node => {
+        if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
+      });
+      const classicVp = document.querySelector('.step-slider-viewport');
+      if (wantLeft && classicVp && classicVp.parentElement) {
+        const misplaced = descList.nextElementSibling !== classicVp ||
+                          descCtrl.nextElementSibling !== descList ||
+                          descCtrl.parentElement !== classicVp.parentElement;
+        if (misplaced) {
+          classicVp.parentElement.insertBefore(descCtrl, classicVp);
+          classicVp.parentElement.insertBefore(descList, classicVp);
+        }
+      } else if (!wantLeft) {
+        [descCtrl, descList].forEach(node => {
+          if (node._homeParent && node.parentElement !== node._homeParent) {
+            if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
+            else node._homeParent.appendChild(node);
+          }
+        });
       }
     }
 
