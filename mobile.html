@@ -149,11 +149,10 @@
         <div class="phone-notch"></div>
         
         <div class="phone-screen">
-          <!-- Layout pill: viewers flip between the three player layouts -->
+          <!-- Layout pill: viewers flip between the two player layouts -->
           <div id="playerLayoutPill" role="tablist" aria-label="Player layout">
-            <button data-pl="mirror" onclick="window.setPlayerLayout('mirror')" role="tab">Mirror</button>
             <button data-pl="cook" onclick="window.setPlayerLayout('cook')" role="tab">Cook</button>
-            <button data-pl="flow" onclick="window.setPlayerLayout('flow')" role="tab">Flow</button>
+            <button data-pl="split" onclick="window.setPlayerLayout('split')" role="tab">Split</button>
           </div>
           <div class="player-left-column">
             <!-- Recipe Title Display -->
@@ -3427,9 +3426,9 @@
     /* room for the pill in every layout */
     .phone-screen.pl-ready { padding-top: 62px !important; }
 
-    /* MIRROR: split view with the columns swapped — steps left, video right */
-    .phone-screen.split-view-active.pl-mirror { flex-direction: row-reverse !important; }
-    .phone-screen.split-view-active.pl-mirror .player-left-column {
+    /* SPLIT with sides swapped (steps left, video right) — the old Mirror */
+    .phone-screen.split-view-active.pl-split.pl-swap { flex-direction: row-reverse !important; }
+    .phone-screen.split-view-active.pl-split.pl-swap .player-left-column {
       border-right: none !important;
       border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
@@ -3600,12 +3599,12 @@
       position: absolute; top: -9px; margin-left: -8px; font-size: 0.95rem; z-index: 3;
       filter: drop-shadow(0 2px 3px rgba(26, 58, 92, 0.35)); pointer-events: none;
     }
-    .plr-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 1px; }
+    .plr-meta { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
     .plr-meta #plrClock {
       font-size: 0.6rem; font-weight: 900; color: var(--text-muted);
       font-variant-numeric: tabular-nums; margin-left: auto;
     }
-    .plr-meta #plrWidthBtn {
+    .plr-meta button {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
       border-radius: 6px; font-family: var(--font); font-size: 0.72rem; font-weight: 900;
       padding: 1px 8px; cursor: pointer;
@@ -3629,11 +3628,9 @@
     .phone-screen.plr-has-band .mobile-player-body { padding-bottom: 78px !important; }
 
     /* the Route replaces the old plain scrubber and time row in the
-       split layouts too (Cook already hides them) */
-    .phone-screen.pl-mirror .player-timeline-rail-container,
-    .phone-screen.pl-flow .player-timeline-rail-container,
-    .phone-screen.pl-mirror .video-overlay-details,
-    .phone-screen.pl-flow .video-overlay-details { display: none !important; }
+       split layout too (Cook already hides them) */
+    .phone-screen.pl-split .player-timeline-rail-container,
+    .phone-screen.pl-split .video-overlay-details { display: none !important; }
 
     /* Cook: the route card sits above the chips; trim the video slightly
        to keep the whole layout on one screen */
@@ -3694,17 +3691,25 @@
       width: 44px !important; height: 44px !important; bottom: auto !important;
     }
     body:has(.phone-screen.pl-cook) #phoneMicBtn,
-    body:has(.phone-screen.pl-mirror) #phoneMicBtn {
+    body:has(.phone-screen.pl-split.pl-swap) #phoneMicBtn {
       top: 232px !important; right: 22px !important; left: auto !important;
     }
-    body:has(.phone-screen.pl-flow) #phoneMicBtn {
+    body:has(.phone-screen.pl-split:not(.pl-swap)) #phoneMicBtn {
       top: 232px !important; left: 22px !important; right: auto !important;
     }
   </style>
   <script>
     (() => {
       const KEY = 'cooking_gps_player_layout';
-      const NAMES = ['mirror', 'cook', 'flow'];
+      const SIDES = 'cooking_gps_split_sides';
+      const NAMES = ['cook', 'split'];
+      // Mirror and Flow were mirror images; they merged into one Split
+      // layout with a sides toggle. Old saved choices map onto it.
+      function normalizeLayout(name) {
+        if (name === 'mirror') { localStorage.setItem(SIDES, 'video-right'); return 'split'; }
+        if (name === 'flow') { localStorage.setItem(SIDES, 'video-left'); return 'split'; }
+        return NAMES.includes(name) ? name : 'cook';
+      }
 
       // In Cook two pieces relocate (and move back for Mirror / Flow) — the
       // same pattern the app itself uses for the video's control buttons:
@@ -3749,6 +3754,7 @@
             '<span class="plr-flag">\u{1F3C1}</span><span class="plr-pin">\u{1F4CD}</span>' +
           '</div>' +
           '<div class="plr-meta">' +
+            '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4 sides</button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194 width</button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
@@ -3779,6 +3785,11 @@
           const cur = localStorage.getItem('cooking_gps_route_width') || 'full';
           localStorage.setItem('cooking_gps_route_width', cur === 'full' ? 'column' : 'full');
           placeRouteCard();
+        });
+        card.querySelector('#plrSwapBtn').addEventListener('click', () => {
+          const cur = localStorage.getItem(SIDES) || 'video-left';
+          localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
+          window.setPlayerLayout('split');
         });
         return card;
       }
@@ -3844,6 +3855,7 @@
         card.classList.toggle('plr-band', band);
         screen.classList.toggle('plr-has-band', band);
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
+        card.querySelector('#plrSwapBtn').style.display = name === 'cook' ? 'none' : '';
         if (name === 'cook') {
           // top zone, right above the chips
           const chips = player.querySelector('.step-nav-chips-container');
@@ -3894,17 +3906,18 @@
       }
 
       window.setPlayerLayout = function(name) {
-        if (!NAMES.includes(name)) name = 'cook';
+        name = normalizeLayout(name);
         localStorage.setItem(KEY, name);
-        // Cook is the stacked view; Mirror and Flow ride on the split view.
+        // Cook is the stacked view; Split rides on the app's split view.
         const wantSplit = name !== 'cook';
         window.currentSplitLayoutActive = wantSplit;
         localStorage.setItem('cooking_gps_split_layout', wantSplit);
         if (typeof window.applySplitLayoutMobile === 'function') window.applySplitLayoutMobile();
+        const swap = (localStorage.getItem(SIDES) || 'video-left') === 'video-right';
         document.querySelectorAll('.phone-screen').forEach(s => {
-          s.classList.toggle('pl-mirror', name === 'mirror');
           s.classList.toggle('pl-cook', name === 'cook');
-          s.classList.toggle('pl-flow', name === 'flow');
+          s.classList.toggle('pl-split', name === 'split');
+          s.classList.toggle('pl-swap', name === 'split' && swap);
           s.classList.add('pl-ready');
         });
         relocateCookPieces(name === 'cook');
@@ -3919,11 +3932,12 @@
       };
 
       document.addEventListener('DOMContentLoaded', () => {
-        // Returning viewers get their last choice; first-timers get Cook
-        // (or Flow if they had already turned the split view on).
+        // Returning viewers get their last choice (legacy mirror/flow values
+        // migrate to Split); first-timers get Cook, or Split if they had
+        // already turned the split view on.
         let saved = localStorage.getItem(KEY);
-        if (!NAMES.includes(saved)) {
-          saved = localStorage.getItem('cooking_gps_split_layout') === 'true' ? 'flow' : 'cook';
+        if (!saved) {
+          saved = localStorage.getItem('cooking_gps_split_layout') === 'true' ? 'split' : 'cook';
         }
         window.setPlayerLayout(saved);
         keepCapsulePin();
