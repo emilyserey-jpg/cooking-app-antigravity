@@ -1182,8 +1182,10 @@ window.renderMultigridDescriptions = function() {
     setTimeout(() => window.containSplitMultigridFrame(), 150);
   }
 
-  // Render cards for only the selected steps
-  const selectedIndices = Array.from(playerSelectedSteps).sort((a, b) => a - b);
+  // Panel open: cards follow the SHOW dots. Panel closed: every step shows.
+  const selectedIndices = isPlayerMultigridActive
+    ? Array.from(playerSelectedSteps).sort((a, b) => a - b)
+    : recipeData.steps.map((_, i) => i);
   
   if (selectedIndices.length === 0) {
     container.innerHTML = `<div style="color:rgba(255,255,255,0.6); font-family:var(--font); font-size:0.75rem; font-style:italic; padding:12px; width:100%; text-align:center;">No steps selected. Check steps in the header to view descriptions.</div>`;
@@ -9707,8 +9709,11 @@ function updateMultigridLayoutClass() {
       if (!node) return;
       if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
       if (wantLeft && leftColEl && node.parentElement !== leftColEl) {
-        const vc = leftColEl.querySelector('.mobile-video-container');
-        if (vc && vc.nextSibling) leftColEl.insertBefore(node, vc.nextSibling);
+        // land BELOW the transport strip — in Cook it floats up over the
+        // video's bottom edge, and anything placed between gets covered
+        const strip = leftColEl.querySelector('.player-controls-strip');
+        const anchor = strip || leftColEl.querySelector('.mobile-video-container');
+        if (anchor && anchor.nextSibling) leftColEl.insertBefore(node, anchor.nextSibling);
         else leftColEl.appendChild(node);
       } else if (!wantLeft && node._homeParent && node.parentElement !== node._homeParent) {
         if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
