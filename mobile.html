@@ -3728,6 +3728,59 @@
     /* the layout pill owns layout switching now - the old menu item bows out */
     .phone-screen.pl-ready .split-layout-toggle-btn { display: none !important; }
 
+    /* ── TikTok-style comments: the sheet slides up, the video keeps its
+       proportions but scales down and keeps playing, the step card folds ── */
+    #playerCmtSheet {
+      position: absolute; left: 8px; right: 8px; bottom: -110%; z-index: 60;
+      background: #fff; border-radius: 18px 18px 14px 14px;
+      border: 1px solid rgba(74, 144, 217, 0.12);
+      box-shadow: 0 -10px 40px rgba(26, 58, 92, 0.28);
+      padding: 8px 14px 12px; height: 45%;
+      display: flex; flex-direction: column;
+      font-family: var(--font);
+      transition: bottom 0.3s ease;
+    }
+    @media (prefers-reduced-motion: reduce) { #playerCmtSheet { transition: none; } }
+    #playerCmtSheet.open { bottom: 8px; }
+    #playerCmtSheet .plc-grab { width: 34px; height: 4px; border-radius: 999px; background: #d6e4f2; margin: 0 auto 8px; cursor: pointer; flex-shrink: 0; }
+    #playerCmtSheet .plc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-shrink: 0; }
+    #playerCmtSheet .plc-head h4 { margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading); }
+    #playerCmtSheet .plc-scope { display: flex; gap: 3px; background: #f4f9ff; border-radius: 999px; padding: 3px; }
+    #playerCmtSheet .plc-scope button {
+      border: none; background: transparent; color: var(--text-muted); border-radius: 999px;
+      font-family: var(--font); font-size: 0.58rem; font-weight: 900; padding: 3px 9px; cursor: pointer;
+    }
+    #playerCmtSheet .plc-scope button.on { background: var(--primary); color: #fff; }
+    #playerCmtSheet .plc-list { overflow-y: auto; min-height: 0; flex: 1; }
+    #playerCmtSheet .plc-empty { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); padding: 10px 2px; }
+    /* the app's own comment section adapts to life inside the sheet */
+    #playerCmtSheet #playerCommentsSection {
+      display: flex !important; margin: 0 !important; padding: 0 !important;
+      border: none !important; box-shadow: none !important; background: transparent !important;
+    }
+    #playerCmtSheet #playerCommentsSection > div:first-child { display: none !important; }
+    #playerCmtSheet #playerCommentsList { max-height: none !important; flex: 1; }
+
+    /* the shrink: same shape, smaller, still playing */
+    .phone-screen .mobile-video-container { transition: max-height 0.3s ease; }
+    .phone-screen.cmt-open.pl-cook .mobile-video-container {
+      max-height: 24vh !important; min-height: 150px !important;
+    }
+    .phone-screen.cmt-open.pl-split .mobile-video-container { max-height: 22vh !important; }
+    .phone-screen.pl-cook .player-left-column .step-slider-viewport { transition: max-height 0.25s ease, opacity 0.2s ease; }
+    .phone-screen.cmt-open.pl-cook .player-left-column .step-slider-viewport {
+      max-height: 0 !important; opacity: 0;
+    }
+
+    /* door 1: waypoint bubbles under the route dots */
+    .plr-cb {
+      position: absolute; top: 22px; margin-left: -10px; z-index: 4;
+      background: #f4f9ff; border: 1px solid rgba(74, 144, 217, 0.12); border-radius: 999px;
+      font-size: 0.5rem; font-weight: 900; color: var(--primary); padding: 0 5px; height: 13px;
+      display: flex; align-items: center; gap: 2px; cursor: pointer; font-family: var(--font);
+    }
+    #playerRouteCard.plr-slim .plr-cb { top: 18px; height: 12px; font-size: 0.46rem; }
+
     /* ── Cook cleanup: everything gets its own room, nothing overlaps ── */
     /* nothing peeks up from below the capsule bar */
     .phone-screen.pl-cook .mobile-player-body { display: none !important; }
@@ -3841,6 +3894,7 @@
           '<div class="plr-meta">' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
+            '<button id="plrCmtBtn" title="All comments">\u{1F4AC}<span id="plrCmtCount">0</span></button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
         const route = card.querySelector('#plrRoute');
@@ -3876,6 +3930,7 @@
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
         });
+        card.querySelector('#plrCmtBtn').addEventListener('click', () => openCmtSheet('all', null));
         return card;
       }
 
@@ -3890,6 +3945,113 @@
           const parts = b.textContent.split(/[–—-]/);
           return { start: toSec(parts[0] || '0:00'), end: toSec(parts[1] != null ? parts[1] : parts[0]) };
         });
+      }
+
+      // ── TikTok-style comments: one sheet, two doors ──
+      // Per-stop pinning rides on a visible [Stop N] tag the composer adds,
+      // so the app's existing comment store needs no changes.
+      var cmtMode = 'all';
+      var cmtStop = 0;
+      var plrBubbleKey = '';
+      function stopTag(i) { return '[Stop ' + (i + 1) + ']'; }
+      function commentNodes() {
+        return [...document.querySelectorAll('#playerCommentsList > *')];
+      }
+      function stopCommentCounts(nStops) {
+        const counts = new Array(nStops).fill(0);
+        commentNodes().forEach(node => {
+          const t = node.textContent || '';
+          for (let i = 0; i < nStops; i++) {
+            if (t.indexOf(stopTag(i)) !== -1) { counts[i]++; break; }
+          }
+        });
+        return counts;
+      }
+      function currentStopIndex() {
+        const v = document.getElementById('mobileRealVideo');
+        const t = v ? v.currentTime : 0;
+        const stops = parseStops();
+        for (let i = 0; i < stops.length; i++) {
+          if (t >= stops[i].start && t < stops[i].end) return i;
+        }
+        return Math.max(0, stops.length - 1);
+      }
+      function ensureCmtSheet() {
+        let sheet = document.getElementById('playerCmtSheet');
+        if (sheet) return sheet;
+        sheet = document.createElement('div');
+        sheet.id = 'playerCmtSheet';
+        sheet.innerHTML =
+          '<div class="plc-grab" title="Close comments"></div>' +
+          '<div class="plc-head"><h4 id="plcTitle">Comments</h4>' +
+          '<div class="plc-scope">' +
+            '<button data-plc-scope="stop">This stop</button>' +
+            '<button data-plc-scope="all" class="on">All</button>' +
+          '</div></div>' +
+          '<div class="plc-list"><div class="plc-empty" id="plcEmpty" style="display:none;">' +
+            'No comments here yet — be the first to leave a tip.</div></div>';
+        sheet.querySelector('.plc-grab').addEventListener('click', closeCmtSheet);
+        sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
+          b.addEventListener('click', () => { cmtMode = b.dataset.plcScope; renderCmtSheet(); }));
+        // posting in This-stop mode stamps the stop's tag onto the comment
+        sheet.addEventListener('click', (ev) => {
+          if (cmtMode !== 'stop') return;
+          const wrap = document.getElementById('playerAddCommentWrap');
+          if (!wrap || !wrap.contains(ev.target) || ev.target.tagName !== 'BUTTON') return;
+          const inp = wrap.querySelector('input, textarea');
+          if (inp && inp.value && inp.value.indexOf(stopTag(cmtStop)) !== 0)
+            inp.value = stopTag(cmtStop) + ' ' + inp.value;
+        }, true);
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        if (screen) screen.appendChild(sheet);
+        return sheet;
+      }
+      function renderCmtSheet() {
+        const sheet = ensureCmtSheet();
+        const nodes = commentNodes();
+        sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
+          b.classList.toggle('on', b.dataset.plcScope === cmtMode));
+        let visible = 0;
+        nodes.forEach(node => {
+          const show = cmtMode === 'all' || (node.textContent || '').indexOf(stopTag(cmtStop)) !== -1;
+          node.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        const title = sheet.querySelector('#plcTitle');
+        if (cmtMode === 'stop') {
+          const t = document.querySelectorAll('#stepCardsSlider .step-card-title')[cmtStop];
+          title.textContent = 'On ' + (t ? t.textContent : 'Stop ' + (cmtStop + 1)) + ' · ' + visible;
+        } else {
+          title.textContent = 'Comments · ' + nodes.length;
+        }
+        const empty = sheet.querySelector('#plcEmpty');
+        if (empty) empty.style.display = visible === 0 ? '' : 'none';
+      }
+      function openCmtSheet(mode, stopIdx) {
+        const sheet = ensureCmtSheet();
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        cmtMode = mode;
+        cmtStop = stopIdx != null ? stopIdx : currentStopIndex();
+        // the app's whole comment block (list + composer) moves into the sheet
+        const sec = document.getElementById('playerCommentsSection');
+        const host = sheet.querySelector('.plc-list');
+        if (sec && sec.parentElement !== host) host.appendChild(sec);
+        renderCmtSheet();
+        sheet.classList.add('open');
+        if (screen) screen.classList.add('cmt-open');
+      }
+      function closeCmtSheet() {
+        const sheet = document.getElementById('playerCmtSheet');
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        if (sheet) sheet.classList.remove('open');
+        if (screen) screen.classList.remove('cmt-open');
+        // the comment block goes home so Split's Comments tab keeps working
+        const sec = document.getElementById('playerCommentsSection');
+        const body = document.querySelector('#view-mobile-player .mobile-player-body');
+        if (sec && body && sec.parentElement !== body) {
+          commentNodes().forEach(n => { n.style.display = ''; });
+          body.appendChild(sec);
+        }
       }
 
       function updateRoute() {
@@ -3922,6 +4084,25 @@
         const pct = dur ? t / dur * 100 : 0;
         route.querySelector('.plr-done-line').style.width = pct + '%';
         route.querySelector('.plr-pin').style.left = Math.max(2, Math.min(98, pct)) + '%';
+        // waypoint comment bubbles (rebuilt only when the counts change)
+        const counts = stopCommentCounts(stops.length);
+        const bubbleKey = counts.join(',') + '|' + stops.length + '|' + Math.round(dur);
+        if (bubbleKey !== plrBubbleKey) {
+          plrBubbleKey = bubbleKey;
+          route.querySelectorAll('.plr-cb').forEach(b => b.remove());
+          counts.forEach((n, i) => {
+            if (!n) return;
+            const b = document.createElement('button');
+            b.className = 'plr-cb';
+            b.style.left = (dur ? Math.max(2.5, stops[i].start / dur * 100) : 2.5 + i * 10) + '%';
+            b.textContent = '💬' + n;
+            b.addEventListener('pointerdown', ev => ev.stopPropagation());
+            b.addEventListener('click', ev => { ev.stopPropagation(); openCmtSheet('stop', i); });
+            route.insertBefore(b, route.querySelector('.plr-flag'));
+          });
+        }
+        const cc = document.getElementById('plrCmtCount');
+        if (cc) cc.textContent = String(commentNodes().length);
         const fmt = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
         card.querySelector('#plrClock').textContent = fmt(t) + ' / ' + fmt(dur);
       }
@@ -4063,6 +4244,14 @@
         document.addEventListener('timeupdate', (e) => {
           if (e.target && e.target.id === 'mobileRealVideo') updateRoute();
         }, true);
+        // new comments refresh the bubbles, the total, and the open sheet
+        const cmtList = document.getElementById('playerCommentsList');
+        if (cmtList) new MutationObserver(() => {
+          plrBubbleKey = '';
+          updateRoute();
+          const sheet = document.getElementById('playerCmtSheet');
+          if (sheet && sheet.classList.contains('open')) renderCmtSheet();
+        }).observe(cmtList, { childList: true });
 
         // The app re-applies its own split preference when the player opens;
         // if that ever disagrees with the chosen layout, re-assert it.
