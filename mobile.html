@@ -3757,8 +3757,18 @@
     #playerCmtSheet .plc-grab::after {
       content: ""; width: 34px; height: 4px; border-radius: 999px; background: #d6e4f2;
     }
-    #playerCmtSheet .plc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
-    #playerCmtSheet .plc-head h4 { margin: 0 auto 0 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading); }
+    #playerCmtSheet .plc-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+    #playerCmtSheet .plc-head h4 {
+      margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+    #playerCmtSheet .plc-scope { margin-left: auto; }
+    #playerCmtSheet .plc-nav {
+      border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+      font-family: var(--font); font-size: 0.85rem; font-weight: 900; line-height: 1;
+      display: flex; align-items: center; justify-content: center; padding: 0 0 2px;
+    }
     #playerCmtSheet .plc-close {
       border: none; background: #f4f9ff; color: var(--text-muted);
       width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
@@ -4011,7 +4021,10 @@
         sheet.id = 'playerCmtSheet';
         sheet.innerHTML =
           '<div class="plc-grab" title="Close comments"></div>' +
-          '<div class="plc-head"><h4 id="plcTitle">Comments</h4>' +
+          '<div class="plc-head">' +
+          '<button class="plc-nav" id="plcPrev" title="Comments on the previous stop">‹</button>' +
+          '<h4 id="plcTitle">Comments</h4>' +
+          '<button class="plc-nav" id="plcNext" title="Comments on the next stop">›</button>' +
           '<div class="plc-scope">' +
             '<button data-plc-scope="stop">This stop</button>' +
             '<button data-plc-scope="all" class="on">All</button>' +
@@ -4021,6 +4034,16 @@
             'No comments here yet — be the first to leave a tip.</div></div>';
         sheet.querySelector('.plc-grab').addEventListener('click', closeCmtSheet);
         sheet.querySelector('.plc-close').addEventListener('click', closeCmtSheet);
+        // page back and forth between the stops' threads without closing
+        const stepStop = (dir) => {
+          const n = parseStops().length;
+          if (!n) return;
+          cmtMode = 'stop';
+          cmtStop = (cmtStop + dir + n) % n;
+          renderCmtSheet();
+        };
+        sheet.querySelector('#plcPrev').addEventListener('click', () => stepStop(-1));
+        sheet.querySelector('#plcNext').addEventListener('click', () => stepStop(1));
         sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
           b.addEventListener('click', () => { cmtMode = b.dataset.plcScope; renderCmtSheet(); }));
         // TikTok gesture: tapping the video (or anywhere outside the sheet
@@ -4051,6 +4074,9 @@
         const nodes = commentNodes();
         sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
           b.classList.toggle('on', b.dataset.plcScope === cmtMode));
+        // the stop-pager arrows only make sense per stop
+        sheet.querySelectorAll('.plc-nav').forEach(b =>
+          b.style.display = cmtMode === 'stop' ? '' : 'none');
         let visible = 0;
         nodes.forEach(node => {
           const show = cmtMode === 'all' || (node.textContent || '').indexOf(stopTag(cmtStop)) !== -1;
