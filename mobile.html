@@ -3716,8 +3716,17 @@
        the chips, and the capsule bar carry navigation */
     .phone-screen.pl-cook .video-overlay-details { display: none !important; }
     .phone-screen.pl-cook .player-timeline-rail-container { display: none !important; }
-    .phone-screen.pl-cook #playerRecipeTitleContainer { padding: 0 16px 2px !important; }
-    .phone-screen.pl-cook #playerRecipeTitle { font-size: 0.82rem !important; }
+    .phone-screen.pl-cook #playerRecipeTitleContainer {
+      padding: 0 16px 2px !important;
+      display: flex !important; align-items: center !important;
+      justify-content: space-between !important; gap: 8px !important;
+    }
+    .phone-screen.pl-cook #playerRecipeTitle { font-size: 0.82rem !important; min-width: 0; }
+    .phone-screen.pl-cook #playerRecipeTitleContainer .actions-dropdown-wrapper {
+      flex-shrink: 0 !important; margin-left: 0 !important;
+    }
+    /* the layout pill owns layout switching now - the old menu item bows out */
+    .phone-screen.pl-ready .split-layout-toggle-btn { display: none !important; }
 
     /* ── Cook cleanup: everything gets its own room, nothing overlaps ── */
     /* nothing peeks up from below the capsule bar */
@@ -3789,12 +3798,18 @@
         const placeholder = player.querySelector('.mobile-video-placeholder');
         const body = player.querySelector('.mobile-player-body');
         if (!leftCol || !videoC || !body) return;
+        const optionsWrap = player.querySelector('.actions-dropdown-wrapper');
+        const titleC = document.getElementById('playerRecipeTitleContainer');
         if (cook) {
           if (chips && chips.parentElement !== leftCol) leftCol.insertBefore(chips, videoC);
           // the control strip floats over the video's bottom edge (negative
           // top margin in CSS), with the step card docking right after it
           if (strip) leftCol.appendChild(strip);
           if (slider) leftCol.appendChild(slider);
+          // the Options menu docks into the title row (its home, the tabs
+          // bar, is hidden in Cook)
+          if (optionsWrap && titleC && optionsWrap.parentElement !== titleC)
+            titleC.appendChild(optionsWrap);
         } else {
           if (chips && chips.parentElement !== body)
             body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
@@ -3804,6 +3819,10 @@
           // margin pulls it onto the video's scrim (option B)
           const details = player.querySelector('.video-overlay-details');
           if (strip) leftCol.insertBefore(strip, details);
+          // the Options menu returns to its home in the tabs bar
+          const tabs = document.getElementById('playerMainTabsContainer');
+          if (optionsWrap && tabs && optionsWrap.parentElement !== tabs)
+            tabs.appendChild(optionsWrap);
         }
       }
 
