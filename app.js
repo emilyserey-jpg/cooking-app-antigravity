@@ -1134,17 +1134,12 @@ window.renderMultigridDescriptions = function() {
   const activeCard = document.querySelector('.step-slider-viewport');
   if (!container || !recipeData || !recipeData.steps) return;
 
-  if (!isPlayerMultigridActive) {
-    container.style.display = 'none';
-    if (ctrlContainer) ctrlContainer.style.display = 'none';
-    if (activeCard) activeCard.style.display = 'block';
-    return;
-  }
-
-  // Display the layout controls
+  // The descriptions (and their Horizontal/Vertical toggle) are always
+  // available. Panel closed: they sit alongside the classic step card.
+  // Panel open: they replace it, as before.
   if (ctrlContainer) ctrlContainer.style.display = 'flex';
   container.style.display = 'flex';
-  if (activeCard) activeCard.style.display = 'none';
+  if (activeCard) activeCard.style.display = isPlayerMultigridActive ? 'none' : 'block';
 
   // Apply visual button active states
   const rowBtn = document.getElementById('descViewRowBtn');
@@ -9424,7 +9419,7 @@ window.togglePlayerMultigridMode = function() {
 window.containSplitMultigridFrame = function() {
   const rightCol = document.querySelector('#view-mobile-player .mobile-player-body');
   if (!rightCol) return;
-  if (!(isPlayerMultigridActive && window.currentSplitLayoutActive)) {
+  if (!window.currentSplitLayoutActive) {
     rightCol.style.removeProperty('max-height');
     return;
   }
@@ -9703,9 +9698,9 @@ function updateMultigridLayoutClass() {
     }
 
     // Cook hides the right column, so the description-card carousel — and its
-    // Horizontal/Vertical toggle bar — ride in the left column right under the
-    // panel; they return home for Split/off
-    const wantLeft = isPlayerMultigridActive && !window.currentSplitLayoutActive;
+    // Horizontal/Vertical toggle bar — ride in the left column whenever Cook
+    // is active (panel open or not); they return home for Split
+    const wantLeft = !window.currentSplitLayoutActive;
     const leftColEl = document.querySelector('#view-mobile-player .player-left-column');
     [document.getElementById('playerMultigridDescControls'),
      document.getElementById('playerMultigridDescriptions')].forEach(node => {
