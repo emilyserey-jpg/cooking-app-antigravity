@@ -1134,14 +1134,21 @@ window.renderMultigridDescriptions = function() {
   const activeCard = document.querySelector('.step-slider-viewport');
   if (!container || !recipeData || !recipeData.steps) return;
 
-  // The descriptions (and their Horizontal/Vertical toggle) are always
-  // available. In Cook they ARE the step display (the docked classic card
-  // would repeat them); in Split the classic card keeps its richer content
-  // (ingredients, tips) and the descriptions ride along panel-closed.
+  // The toggle is always available, and exactly one step display shows:
+  // - panel open, or Cook: the description cards ARE the display
+  // - Split panel-closed: the toggle CHOOSES — Horizontal keeps the classic
+  //   swipeable card (ingredients, tips, full height), Vertical swaps in the
+  //   stacked all-steps list. Never both, so nothing overlaps or repeats.
   if (ctrlContainer) ctrlContainer.style.display = 'flex';
-  container.style.display = 'flex';
-  const hideClassic = isPlayerMultigridActive || !window.currentSplitLayoutActive;
-  if (activeCard) activeCard.style.display = hideClassic ? 'none' : 'block';
+  const splitClosed = window.currentSplitLayoutActive && !isPlayerMultigridActive;
+  if (splitClosed && playerDescLayoutMode === 'row') {
+    container.style.display = 'none';
+    if (activeCard) activeCard.style.display = 'block';
+    // still refresh the toggle's active state below before leaving
+  } else {
+    container.style.display = 'flex';
+    if (activeCard) activeCard.style.display = 'none';
+  }
 
   // Apply visual button active states
   const rowBtn = document.getElementById('descViewRowBtn');
@@ -9723,12 +9730,17 @@ function updateMultigridLayoutClass() {
           classicVp.parentElement.insertBefore(descList, classicVp);
         }
       } else if (!wantLeft) {
-        [descCtrl, descList].forEach(node => {
-          if (node._homeParent && node.parentElement !== node._homeParent) {
-            if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
-            else node._homeParent.appendChild(node);
-          }
-        });
+        // Split: the toggle sits at the top of the column, right under the
+        // tabs row (above the classic card); the cards list keeps its home
+        // slot after the card
+        if (classicVp && classicVp.parentElement &&
+            (descCtrl.nextElementSibling !== classicVp || descCtrl.parentElement !== classicVp.parentElement)) {
+          classicVp.parentElement.insertBefore(descCtrl, classicVp);
+        }
+        if (descList._homeParent && descList.parentElement !== descList._homeParent) {
+          if (descList._homeNext && descList._homeNext.parentElement === descList._homeParent) descList._homeParent.insertBefore(descList, descList._homeNext);
+          else descList._homeParent.appendChild(descList);
+        }
       }
     }
 
