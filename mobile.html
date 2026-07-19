@@ -3635,6 +3635,40 @@
     /* Cook: the route card sits above the chips; trim the video slightly
        to keep the whole layout on one screen */
     .phone-screen.pl-cook #playerRouteCard { margin: 0 12px 2px; }
+
+    /* ── Split column cleanup: everything in the video column gets room ── */
+    /* slim route card: icon-only buttons, clock on the same tidy row */
+    #playerRouteCard.plr-slim .plr-meta { gap: 4px; }
+    #playerRouteCard.plr-slim .plr-meta button { font-size: 0.66rem; padding: 1px 6px; }
+    #playerRouteCard.plr-slim .plr-lbl { display: none; }
+    #playerRouteCard.plr-slim #plrClock { font-size: 0.56rem; white-space: nowrap; }
+
+    /* the control strip in the narrow column: two tidy centered rows -
+       transport (prev / capsule / next) on top, utilities below */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip {
+      margin: 4px 6px 8px !important; padding: 6px 4px !important;
+      flex-wrap: wrap !important; gap: 4px !important;
+      justify-content: center !important;
+      width: auto !important;
+    }
+    #view-mobile-player .phone-screen.pl-split .player-controls-strip .control-btn {
+      width: 32px !important; height: 32px !important;
+    }
+    #view-mobile-player .phone-screen.pl-split #playerStripPlayPauseBtn {
+      width: 42px !important; height: 58px !important;
+    }
+    #view-mobile-player .phone-screen.pl-split #playerKbToggleBtn { display: none !important; }
+    #view-mobile-player .phone-screen.pl-split #playerCombinedPrevBtn { order: 1; }
+    #view-mobile-player .phone-screen.pl-split #playerStripPlayPauseBtn { order: 2; }
+    #view-mobile-player .phone-screen.pl-split #playerCombinedNextBtn { order: 3; }
+    #view-mobile-player .phone-screen.pl-split #playerModeCycleBtn { order: 4; }
+    #view-mobile-player .phone-screen.pl-split #playerMuteBtn { order: 5; }
+    #view-mobile-player .phone-screen.pl-split .speed-dropdown-wrapper { order: 6; }
+
+    /* the old green progress header duplicates the Route now */
+    .phone-screen.pl-split .step-nav-chips-container > div:not(.chips-scroll-x) {
+      display: none !important;
+    }
     #view-mobile-player .phone-screen.pl-cook .player-left-column #playerStripPlayPauseBtn {
       width: 44px !important; height: 62px !important;
     }
@@ -3690,12 +3724,17 @@
     body:has(.phone-screen.pl-ready) #phoneMicBtn {
       width: 44px !important; height: 44px !important; bottom: auto !important;
     }
-    body:has(.phone-screen.pl-cook) #phoneMicBtn,
-    body:has(.phone-screen.pl-split.pl-swap) #phoneMicBtn {
+    body:has(.phone-screen.pl-cook) #phoneMicBtn {
       top: 232px !important; right: 22px !important; left: auto !important;
     }
+    /* in Split the mic is smaller and sits well below the corner orbs */
+    body:has(.phone-screen.pl-split.pl-swap) #phoneMicBtn {
+      width: 40px !important; height: 40px !important;
+      top: 296px !important; right: 22px !important; left: auto !important;
+    }
     body:has(.phone-screen.pl-split:not(.pl-swap)) #phoneMicBtn {
-      top: 232px !important; left: 22px !important; right: auto !important;
+      width: 40px !important; height: 40px !important;
+      top: 296px !important; left: 22px !important; right: auto !important;
     }
   </style>
   <script>
@@ -3754,8 +3793,8 @@
             '<span class="plr-flag">\u{1F3C1}</span><span class="plr-pin">\u{1F4CD}</span>' +
           '</div>' +
           '<div class="plr-meta">' +
-            '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4 sides</button>' +
-            '<button id="plrWidthBtn" title="Switch timeline width">\u2194 width</button>' +
+            '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
+            '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
         const route = card.querySelector('#plrRoute');
