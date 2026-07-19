@@ -3783,11 +3783,18 @@
       display: flex; flex-direction: column;
       font-family: var(--font);
       transform: translateY(130%);
-      transition: transform 0.3s ease, top 0.3s ease;
+      /* closed: invisible once the slide-down finishes — the frame no longer
+         clips it while the step-videos panel lets the screen overflow */
+      visibility: hidden;
+      transition: transform 0.3s ease, top 0.3s ease, visibility 0s linear 0.3s;
       pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) { #playerCmtSheet { transition: none; } }
-    #playerCmtSheet.open { transform: translateY(0); pointer-events: auto; }
+    #playerCmtSheet.open {
+      transform: translateY(0); pointer-events: auto;
+      visibility: visible;
+      transition: transform 0.3s ease, top 0.3s ease;
+    }
     /* the mic steps aside while comments are open */
     body:has(.phone-screen.cmt-open) #phoneMicBtn {
       opacity: 0 !important; pointer-events: none !important;
