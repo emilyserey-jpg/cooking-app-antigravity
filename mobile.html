@@ -3762,7 +3762,25 @@
       margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
     }
-    #playerCmtSheet .plc-scope { margin-left: auto; }
+    /* one tab per step inside the sheet - jump straight to any thread */
+    #playerCmtSheet .plc-tabs {
+      display: flex; gap: 5px; margin-bottom: 8px; flex-shrink: 0;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    #playerCmtSheet .plc-tabs::-webkit-scrollbar { display: none; }
+    #playerCmtSheet .plc-tab {
+      border: 1.5px solid rgba(74, 144, 217, 0.12); background: #fff; color: var(--text-muted);
+      border-radius: 999px; padding: 4px 10px; cursor: pointer; white-space: nowrap;
+      font-family: var(--font); font-size: 0.6rem; font-weight: 900;
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    #playerCmtSheet .plc-tab .ct {
+      background: #f4f9ff; color: var(--primary); border-radius: 999px;
+      padding: 0 5px; font-size: 0.54rem;
+    }
+    #playerCmtSheet .plc-tab.on { background: #1fb6ff; border-color: #1fb6ff; color: #fff; }
+    #playerCmtSheet .plc-tab.on .ct { background: rgba(255, 255, 255, 0.3); color: #fff; }
+    #playerCmtSheet .plc-head h4 { flex: 1; }
     #playerCmtSheet .plc-nav {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
       width: 22px; height: 22px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
@@ -4025,11 +4043,8 @@
           '<button class="plc-nav" id="plcPrev" title="Comments on the previous stop">‹</button>' +
           '<h4 id="plcTitle">Comments</h4>' +
           '<button class="plc-nav" id="plcNext" title="Comments on the next stop">›</button>' +
-          '<div class="plc-scope">' +
-            '<button data-plc-scope="stop">This stop</button>' +
-            '<button data-plc-scope="all" class="on">All</button>' +
-          '</div>' +
           '<button class="plc-close" title="Close comments">✕</button></div>' +
+          '<div class="plc-tabs" id="plcTabs"></div>' +
           '<div class="plc-list"><div class="plc-empty" id="plcEmpty" style="display:none;">' +
             'No comments here yet — be the first to leave a tip.</div></div>';
         sheet.querySelector('.plc-grab').addEventListener('click', closeCmtSheet);
@@ -4044,8 +4059,6 @@
         };
         sheet.querySelector('#plcPrev').addEventListener('click', () => stepStop(-1));
         sheet.querySelector('#plcNext').addEventListener('click', () => stepStop(1));
-        sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
-          b.addEventListener('click', () => { cmtMode = b.dataset.plcScope; renderCmtSheet(); }));
         // TikTok gesture: tapping the video (or anywhere outside the sheet
         // that isn't a control) tucks the comments away
         document.addEventListener('click', (ev) => {
@@ -4072,8 +4085,29 @@
       function renderCmtSheet() {
         const sheet = ensureCmtSheet();
         const nodes = commentNodes();
-        sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
-          b.classList.toggle('on', b.dataset.plcScope === cmtMode));
+        // one tab per step (plus All), each with its live count
+        const tabs = sheet.querySelector('#plcTabs');
+        const stops = parseStops();
+        const counts = stopCommentCounts(stops.length);
+        const titles = [...document.querySelectorAll('#stepCardsSlider .step-card-title')].map(t => t.textContent);
+        tabs.innerHTML = '';
+        const mkTab = (label, count, on, onTap) => {
+          const b = document.createElement('button');
+          b.className = 'plc-tab' + (on ? ' on' : '');
+          b.appendChild(document.createTextNode(label));
+          const ct = document.createElement('span');
+          ct.className = 'ct'; ct.textContent = count;
+          b.appendChild(ct);
+          b.addEventListener('click', onTap);
+          tabs.appendChild(b);
+        };
+        mkTab('All', nodes.length, cmtMode === 'all',
+          () => { cmtMode = 'all'; renderCmtSheet(); });
+        stops.forEach((s, i) => {
+          mkTab(String(i + 1) + ' ' + (titles[i] || 'Stop ' + (i + 1)), counts[i],
+            cmtMode === 'stop' && cmtStop === i,
+            () => { cmtMode = 'stop'; cmtStop = i; renderCmtSheet(); });
+        });
         // the stop-pager arrows only make sense per stop
         sheet.querySelectorAll('.plc-nav').forEach(b =>
           b.style.display = cmtMode === 'stop' ? '' : 'none');
