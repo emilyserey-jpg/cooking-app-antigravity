@@ -3820,16 +3820,6 @@
       max-height: 0 !important; opacity: 0;
     }
 
-    /* door 1: waypoint bubbles under the route dots */
-    .plr-cb {
-      position: absolute; top: 22px; margin-left: -10px; z-index: 4;
-      background: #f4f9ff; border: 1px solid rgba(74, 144, 217, 0.12); border-radius: 999px;
-      font-size: 0.5rem; font-weight: 900; color: var(--primary); padding: 0 5px; height: 13px;
-      display: flex; align-items: center; gap: 2px; cursor: pointer; font-family: var(--font);
-    }
-    #playerRouteCard.plr-slim .plr-cb { top: 18px; height: 12px; font-size: 0.46rem; }
-    .plr-cb.empty { opacity: 0.65; }
-
     /* "Add a tip" chip on every step card - comment where you read */
     .plc-addtip {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
@@ -4008,7 +3998,6 @@
       // so the app's existing comment store needs no changes.
       var cmtMode = 'all';
       var cmtStop = 0;
-      var plrBubbleKey = '';
       function stopTag(i) { return '[Stop ' + (i + 1) + ']'; }
       function commentNodes() {
         return [...document.querySelectorAll('#playerCommentsList > *')];
@@ -4230,23 +4219,8 @@
         const pct = dur ? t / dur * 100 : 0;
         route.querySelector('.plr-done-line').style.width = pct + '%';
         route.querySelector('.plr-pin').style.left = Math.max(2, Math.min(98, pct)) + '%';
-        // waypoint comment bubbles (rebuilt only when the counts change)
-        const counts = stopCommentCounts(stops.length);
-        const bubbleKey = counts.join(',') + '|' + stops.length + '|' + Math.round(dur);
-        if (bubbleKey !== plrBubbleKey) {
-          plrBubbleKey = bubbleKey;
-          route.querySelectorAll('.plr-cb').forEach(b => b.remove());
-          counts.forEach((n, i) => {
-            const b = document.createElement('button');
-            b.className = 'plr-cb' + (n ? '' : ' empty');
-            b.style.left = (dur ? Math.max(2.5, stops[i].start / dur * 100) : 2.5 + i * 10) + '%';
-            b.textContent = n ? '💬' + n : '💬+';
-            b.title = n ? 'Comments on this stop' : 'Be the first to comment on this stop';
-            b.addEventListener('pointerdown', ev => ev.stopPropagation());
-            b.addEventListener('click', ev => { ev.stopPropagation(); openCmtSheet('stop', i); });
-            route.insertBefore(b, route.querySelector('.plr-flag'));
-          });
-        }
+        // per-stop entry lives in the sheet's step tabs and the cards'
+        // Add-a-tip chips now; the road itself stays clean
         const cc = document.getElementById('plrCmtCount');
         if (cc) cc.textContent = String(commentNodes().length);
         const fmt = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
@@ -4393,7 +4367,6 @@
         // new comments refresh the bubbles, the total, and the open sheet
         const cmtList = document.getElementById('playerCommentsList');
         if (cmtList) new MutationObserver(() => {
-          plrBubbleKey = '';
           updateRoute();
           const sheet = document.getElementById('playerCmtSheet');
           if (sheet && sheet.classList.contains('open')) renderCmtSheet();
