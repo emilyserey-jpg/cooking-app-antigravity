@@ -3643,27 +3643,51 @@
     #playerRouteCard.plr-slim .plr-lbl { display: none; }
     #playerRouteCard.plr-slim #plrClock { font-size: 0.56rem; white-space: nowrap; }
 
-    /* the control strip in the narrow column: two tidy centered rows -
-       transport (prev / capsule / next) on top, utilities below */
+    /* option B "On the Video": the transport (prev / capsule / next)
+       floats on a scrim at the video's bottom edge; the stacked dock
+       below the video is gone entirely */
+    .phone-screen.pl-split .mobile-video-placeholder { position: relative !important; }
+    .phone-screen.pl-split .mobile-video-placeholder::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
+      z-index: 3; pointer-events: none;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 20, 0.55) 85%);
+    }
     #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip {
-      margin: 4px 6px 8px !important; padding: 6px 4px !important;
-      flex-wrap: wrap !important; gap: 4px !important;
-      justify-content: center !important;
+      position: relative !important; z-index: 6 !important;
+      margin: -58px 6px 2px !important; padding: 0 !important;
+      background: transparent !important; border: none !important;
+      box-shadow: none !important; border-radius: 0 !important;
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      flex-wrap: nowrap !important; gap: 0 !important;
+      display: flex !important; align-items: center !important;
+      justify-content: space-evenly !important;
       width: auto !important;
     }
     #view-mobile-player .phone-screen.pl-split .player-controls-strip .control-btn {
-      width: 32px !important; height: 32px !important;
+      width: 34px !important; height: 34px !important;
+      background: transparent !important; border: none !important; color: #fff !important;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
     }
     #view-mobile-player .phone-screen.pl-split #playerStripPlayPauseBtn {
-      width: 42px !important; height: 58px !important;
+      width: 36px !important; height: 50px !important;
+      filter: none;
     }
     #view-mobile-player .phone-screen.pl-split #playerKbToggleBtn { display: none !important; }
-    #view-mobile-player .phone-screen.pl-split #playerCombinedPrevBtn { order: 1; }
-    #view-mobile-player .phone-screen.pl-split #playerStripPlayPauseBtn { order: 2; }
-    #view-mobile-player .phone-screen.pl-split #playerCombinedNextBtn { order: 3; }
-    #view-mobile-player .phone-screen.pl-split #playerModeCycleBtn { order: 4; }
-    #view-mobile-player .phone-screen.pl-split #playerMuteBtn { order: 5; }
-    #view-mobile-player .phone-screen.pl-split .speed-dropdown-wrapper { order: 6; }
+
+    /* repeat / mute / speed live as minis on the route card in Split */
+    #playerRouteCard .plr-meta { flex-wrap: wrap; }
+    #playerRouteCard .plr-meta .control-btn,
+    #playerRouteCard .plr-meta .speed-dropdown-wrapper .control-btn {
+      width: 26px !important; height: 21px !important; min-width: 0 !important;
+      border-radius: 7px !important; border: none !important;
+      background: rgba(74, 144, 217, 0.08) !important; color: var(--primary) !important;
+      padding: 0 !important; font-size: 0.58rem !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      filter: none !important;
+    }
+    #playerRouteCard .plr-meta .control-btn i,
+    #playerRouteCard .plr-meta .control-btn svg { width: 12px !important; height: 12px !important; }
+    #playerRouteCard .plr-meta .speed-dropdown-wrapper { display: inline-block; }
 
     /* the old green progress header duplicates the Route now */
     .phone-screen.pl-split .step-nav-chips-container > div:not(.chips-scroll-x) {
@@ -3776,7 +3800,10 @@
             body.insertBefore(chips, document.getElementById('playerIngredientsPanel'));
           if (slider && slider.parentElement !== body)
             body.insertBefore(slider, document.getElementById('playerMultigridDescControls'));
-          if (strip && strip.parentElement !== leftCol) leftCol.appendChild(strip);
+          // in Split the strip sits directly after the video so its negative
+          // margin pulls it onto the video's scrim (option B)
+          const details = player.querySelector('.video-overlay-details');
+          if (strip) leftCol.insertBefore(strip, details);
         }
       }
 
@@ -3906,7 +3933,32 @@
           // in-column: under the video, where the old scrubber used to sit
           leftCol.insertBefore(card, player.querySelector('.player-timeline-rail-container'));
         }
+        relocateSplitUtilities(name === 'split');
         updateRoute();
+      }
+
+      // Option B: in Split, repeat / mute / speed leave the strip and become
+      // minis on the route card, next to the sides and width buttons. They
+      // return to their exact strip positions for Cook.
+      function relocateSplitUtilities(split) {
+        const player = document.getElementById('view-mobile-player');
+        const strip = player && player.querySelector('.player-controls-strip');
+        const meta = document.querySelector('#playerRouteCard .plr-meta');
+        const clock = document.getElementById('plrClock');
+        if (!strip || !meta || !clock) return;
+        const mode = document.getElementById('playerModeCycleBtn');
+        const mute = document.getElementById('playerMuteBtn');
+        const speed = player.querySelector('.speed-dropdown-wrapper');
+        if (split) {
+          [mode, mute, speed].forEach(el => {
+            if (el && el.parentElement !== meta) meta.insertBefore(el, clock);
+          });
+        } else {
+          if (mode && mode.parentElement !== strip)
+            strip.insertBefore(mode, document.getElementById('playerCombinedPrevBtn'));
+          if (mute && mute.parentElement !== strip) strip.appendChild(mute);
+          if (speed && speed.parentElement !== strip) strip.appendChild(speed);
+        }
       }
 
       // D2: buttons whose center sits over the video get the bare-icon
