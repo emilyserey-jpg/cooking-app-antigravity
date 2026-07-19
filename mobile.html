@@ -3536,21 +3536,38 @@
        disappears entirely. The app sizes the video container itself
        true-to-aspect (inline styles), so the pill anchors to the column
        and overlaps upward instead. */
+    /* D2 "Full Row, Smart Scrim": no pill at all - a bare full-width row.
+       Buttons over the video sit on its scrim as bare white icons; buttons
+       that land on the pale background wear small smoked circles (the
+       pl-over-video class is set by JS from real geometry). */
     #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip {
       position: relative !important; z-index: 6 !important;
-      margin: -78px 14px 0 !important; padding: 6px 8px !important;
-      background: rgba(255, 255, 255, 0.55) !important;
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.55) !important;
-      border-radius: 999px !important;
-      box-shadow: 0 6px 18px rgba(26, 58, 92, 0.18) !important;
+      margin: -78px 4px 0 !important; padding: 0 !important;
+      background: transparent !important;
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      border: none !important; border-radius: 0 !important;
+      box-shadow: none !important;
       flex-wrap: nowrap !important;
-      display: flex !important; align-items: center !important; justify-content: center !important;
+      display: flex !important; align-items: center !important; justify-content: space-evenly !important;
       width: auto !important;
     }
     #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .control-btn {
       width: 36px !important; height: 36px !important;
-      background: rgba(255, 255, 255, 0.9) !important;
+      background: rgba(15, 23, 32, 0.34) !important;
+      border: none !important; color: #fff !important;
+      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .control-btn.pl-over-video {
+      background: transparent !important;
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+    }
+    /* the scrim lives inside the video only */
+    .phone-screen.pl-cook .mobile-video-placeholder { position: relative !important; }
+    .phone-screen.pl-cook .mobile-video-placeholder::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 110px;
+      z-index: 3; pointer-events: none;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 20, 0.55) 85%);
     }
     #view-mobile-player .phone-screen.pl-cook .player-left-column #playerStripPlayPauseBtn {
       width: 44px !important; height: 62px !important;
@@ -3650,6 +3667,28 @@
         }
       }
 
+      // D2: buttons whose center sits over the video get the bare-icon
+      // style; buttons on the pale background keep their smoked circle.
+      // Measured from real geometry so wide videos (all buttons over
+      // footage) and portrait ones both classify correctly.
+      function markCookStripOverlap() {
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const screen = player.querySelector('.phone-screen');
+        const vid = player.querySelector('.mobile-video-placeholder');
+        const strip = player.querySelector('.player-controls-strip');
+        if (!screen || !screen.classList.contains('pl-cook') || !vid || !strip) return;
+        const vr = vid.getBoundingClientRect();
+        if (vr.width < 10) return;
+        strip.querySelectorAll('.control-btn').forEach(b => {
+          if (b.id === 'playerStripPlayPauseBtn') return;
+          const r = b.getBoundingClientRect();
+          const cx = r.left + r.width / 2;
+          b.classList.toggle('pl-over-video', cx > vr.left + 6 && cx < vr.right - 6 && r.top < vr.bottom);
+        });
+      }
+      window.addEventListener('resize', markCookStripOverlap);
+
       // The app rewrites the play button's contents on every play/pause;
       // keep the capsule's pin in place whenever that happens.
       function keepCapsulePin() {
@@ -3681,6 +3720,9 @@
         const pill = document.getElementById('playerLayoutPill');
         if (pill) pill.querySelectorAll('button').forEach(b =>
           b.classList.toggle('on', b.dataset.pl === name));
+        // classify strip buttons once layout settles (the app sizes the
+        // video container a beat later, so measure again after it lands)
+        if (name === 'cook') { setTimeout(markCookStripOverlap, 60); setTimeout(markCookStripOverlap, 500); }
       };
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -3692,6 +3734,11 @@
         }
         window.setPlayerLayout(saved);
         keepCapsulePin();
+        // the video container resizes when a new video's dimensions arrive;
+        // re-classify the strip buttons once that happens
+        document.addEventListener('loadedmetadata', (e) => {
+          if (e.target && e.target.id === 'mobileRealVideo') setTimeout(markCookStripOverlap, 100);
+        }, true);
 
         // The app re-applies its own split preference when the player opens;
         // if that ever disagrees with the chosen layout, re-assert it.
