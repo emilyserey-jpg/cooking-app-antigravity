@@ -3873,6 +3873,21 @@
     }
     #playerCookRail .speed-dropdown-wrapper { position: relative !important; margin: 0 !important; }
 
+    /* Split cleanup: the video is a rounded floating card again, the
+       column glass goes clear, and the old inline comments block retires
+       (the sheet owns comments; the pill on the video is the door) */
+    .phone-screen.pl-split .player-left-column {
+      background: transparent !important; border: none !important;
+    }
+    .phone-screen.pl-split .mobile-video-container {
+      border-radius: 14px !important; overflow: hidden !important;
+      margin: 4px 6px !important;
+      box-shadow: 0 6px 18px rgba(26, 58, 92, 0.16) !important;
+    }
+    .phone-screen.pl-split .mobile-player-body #playerCommentsSection {
+      display: none !important;
+    }
+
     /* "Add a tip" chip on every step card - comment where you read */
     .plc-addtip {
       border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
@@ -4235,6 +4250,9 @@
         if (cook) {
           if (mic && mic.parentElement !== rail) {
             if (!micHome) { micHome = mic.parentElement; micNext = mic.nextSibling; }
+            mic.style.removeProperty('top');
+            mic.style.removeProperty('left');
+            mic.style.removeProperty('right');
             rail.appendChild(mic);
           }
           if (cmtTab && cmtTab.parentElement !== rail) rail.appendChild(cmtTab);
@@ -4281,7 +4299,7 @@
       function placeCmtTab() {
         const tab = ensureCmtTab();
         if (tab.parentElement && tab.parentElement.id === 'playerCookRail') {
-          tab.style.top = ''; return;
+          tab.style.top = ''; tab.style.left = ''; tab.style.right = ''; return;
         }
         const screen = document.querySelector('#view-mobile-player .phone-screen');
         const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
@@ -4289,8 +4307,47 @@
         const sr = screen.getBoundingClientRect();
         const vr = vidC.getBoundingClientRect();
         if (vr.height < 40) return;
-        tab.style.top = Math.max(60, Math.round(vr.bottom - sr.top - 44)) + 'px';
+        // pin to the video's own lower-right corner, above the transport
+        tab.style.right = 'auto';
+        tab.style.left = Math.max(8, Math.round(vr.right - sr.left - tab.offsetWidth - 8)) + 'px';
+        tab.style.top = Math.max(60, Math.round(vr.bottom - sr.top - 100)) + 'px';
       }
+      // the app sizes portrait video to phone width even in Split's narrow
+      // column, so the footage bleeds under the right column. Re-fit it to
+      // the column it actually lives in.
+      function fixSplitVideoSize() {
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        const leftCol = document.querySelector('#view-mobile-player .player-left-column');
+        if (!screen || !vidC || !leftCol || !screen.classList.contains('pl-split')) return;
+        const colW = leftCol.getBoundingClientRect().width;
+        if (colW < 60) return;
+        const v = document.getElementById('mobileRealVideo');
+        let aspect = 9 / 16;
+        if (v && v.videoWidth && v.videoHeight) aspect = v.videoWidth / v.videoHeight;
+        const w = Math.round(colW - 12);
+        const h = Math.round(Math.min(w / aspect, 440));
+        vidC.style.setProperty('width', w + 'px', 'important');
+        vidC.style.setProperty('height', h + 'px', 'important');
+        vidC.style.setProperty('margin', '4px auto', 'important');
+      }
+
+      // in Split the mic rides the video's top-right corner (fixed element,
+      // so viewport coordinates; re-pinned on scroll and resize)
+      function placeSplitMic() {
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const mic = document.getElementById('phoneMicBtn');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        if (!screen || !mic || !vidC) return;
+        if (!screen.classList.contains('pl-split') || mic.parentElement.id === 'playerCookRail') return;
+        const vr = vidC.getBoundingClientRect();
+        if (vr.height < 60) return;
+        mic.style.setProperty('top', Math.round(vr.top + 8) + 'px', 'important');
+        mic.style.setProperty('left', Math.round(vr.right - 48) + 'px', 'important');
+        mic.style.setProperty('right', 'auto', 'important');
+      }
+      window.addEventListener('scroll', placeSplitMic, { passive: true });
+      window.addEventListener('resize', () => { fixSplitVideoSize(); placeSplitMic(); });
       window.addEventListener('resize', placeCmtTab);
 
       window.addEventListener('resize', () => {
@@ -4434,7 +4491,7 @@
         // settles, ask it to measure again, then place the floaters
         setTimeout(() => {
           if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
-          setTimeout(() => { placeCmtTab(); placeCookRail(); placeCmtSheetIfOpen(); }, 80);
+          setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 80);
         }, 400);
       }
       function placeCmtSheetIfOpen() {
@@ -4546,7 +4603,7 @@
             }, 80);
             setTimeout(markCookStripOverlap, 180);
             setTimeout(updateRoute, 200);
-            setTimeout(() => { placeCmtTab(); placeCookRail(); placeCmtSheetIfOpen(); }, 220);
+            setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 220);
           }
         }, true);
         // the pin travels with the real video clock
