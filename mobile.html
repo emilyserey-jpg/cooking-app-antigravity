@@ -3527,8 +3527,8 @@
     /* COOK is one screen, no scrolling needed: chips, video (with the
        controls floating over its bottom edge), then the docked step card */
     .phone-screen.pl-cook .mobile-video-container {
-      height: 50vh !important; max-height: 50vh !important;
-      min-height: 280px !important; overflow: hidden !important;
+      height: 42vh !important; max-height: 42vh !important;
+      min-height: 240px !important; overflow: hidden !important;
     }
 
     /* the control strip lives ON the video: a full-width frosted pill
@@ -3569,6 +3569,75 @@
       z-index: 3; pointer-events: none;
       background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 20, 0.55) 85%);
     }
+
+    /* ── the Route: the GPS timeline that replaces the plain scrubber ──
+       Numbered stop dots at their true times, the pin as the playhead,
+       solid road behind, dashed ahead, flag at the finish. Tap or drag
+       the road to seek. Cook gets it full-size in the top zone; Mirror
+       and Flow choose between a full-width band and an in-column slim
+       version via the small width toggle (remembered per device). */
+    #playerRouteCard {
+      background: #fff; border: 1px solid rgba(74, 144, 217, 0.12);
+      border-radius: 12px; box-shadow: 0 4px 14px rgba(26, 58, 92, 0.07);
+      padding: 8px 10px 3px; margin: 0 12px 4px; z-index: 6;
+    }
+    .plr-route { position: relative; height: 32px; margin: 0 8px; cursor: pointer; touch-action: none; }
+    .plr-line, .plr-done-line { position: absolute; top: 14px; height: 4px; border-radius: 999px; }
+    .plr-line { left: 0; right: 0; background: repeating-linear-gradient(90deg, #c9dcee 0 6px, transparent 6px 11px); }
+    .plr-done-line { left: 0; width: 0%; background: linear-gradient(90deg, #22c55e, #1fb6ff); }
+    .plr-dot {
+      position: absolute; top: 5px; width: 22px; height: 22px; margin-left: -11px;
+      border-radius: 50%; background: #fff; border: 2.5px solid #c9dcee;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.56rem; font-weight: 900; color: var(--text-muted); z-index: 2;
+      transition: all 0.2s ease; pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) { .plr-dot { transition: none; } }
+    .plr-dot.done { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .plr-dot.now { border-color: #1fb6ff; color: #0b93d4; box-shadow: 0 0 0 3.5px rgba(31, 182, 255, 0.25); }
+    .plr-flag { position: absolute; top: 6px; right: -4px; font-size: 0.78rem; z-index: 1; pointer-events: none; }
+    .plr-pin {
+      position: absolute; top: -9px; margin-left: -8px; font-size: 0.95rem; z-index: 3;
+      filter: drop-shadow(0 2px 3px rgba(26, 58, 92, 0.35)); pointer-events: none;
+    }
+    .plr-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 1px; }
+    .plr-meta #plrClock {
+      font-size: 0.6rem; font-weight: 900; color: var(--text-muted);
+      font-variant-numeric: tabular-nums; margin-left: auto;
+    }
+    .plr-meta #plrWidthBtn {
+      border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
+      border-radius: 6px; font-family: var(--font); font-size: 0.72rem; font-weight: 900;
+      padding: 1px 8px; cursor: pointer;
+    }
+
+    /* slim in-column variant (Mirror / Flow, width pref = column) */
+    #playerRouteCard.plr-slim { margin: 4px 6px; padding: 6px 8px 2px; }
+    #playerRouteCard.plr-slim .plr-route { height: 26px; margin: 0 6px; }
+    #playerRouteCard.plr-slim .plr-line, #playerRouteCard.plr-slim .plr-done-line { top: 11px; height: 3px; }
+    #playerRouteCard.plr-slim .plr-dot { top: 4px; width: 17px; height: 17px; margin-left: -8.5px; font-size: 0.48rem; border-width: 2px; }
+    #playerRouteCard.plr-slim .plr-pin { top: -8px; font-size: 0.8rem; }
+    #playerRouteCard.plr-slim .plr-flag { top: 4px; font-size: 0.68rem; }
+
+    /* full-width band variant (Mirror / Flow, width pref = full):
+       pinned across the bottom of the screen, columns pad to make room */
+    #playerRouteCard.plr-band {
+      position: absolute; left: 8px; right: 8px; bottom: 12px; margin: 0;
+      box-shadow: 0 10px 28px rgba(26, 58, 92, 0.18); z-index: 40;
+    }
+    .phone-screen.plr-has-band .player-left-column,
+    .phone-screen.plr-has-band .mobile-player-body { padding-bottom: 78px !important; }
+
+    /* the Route replaces the old plain scrubber and time row in the
+       split layouts too (Cook already hides them) */
+    .phone-screen.pl-mirror .player-timeline-rail-container,
+    .phone-screen.pl-flow .player-timeline-rail-container,
+    .phone-screen.pl-mirror .video-overlay-details,
+    .phone-screen.pl-flow .video-overlay-details { display: none !important; }
+
+    /* Cook: the route card sits above the chips; trim the video slightly
+       to keep the whole layout on one screen */
+    .phone-screen.pl-cook #playerRouteCard { margin: 0 12px 2px; }
     #view-mobile-player .phone-screen.pl-cook .player-left-column #playerStripPlayPauseBtn {
       width: 44px !important; height: 62px !important;
     }
@@ -3667,6 +3736,128 @@
         }
       }
 
+      // ── the Route timeline ──
+      // Built once, then moved to wherever the current layout wants it.
+      function ensureRouteCard() {
+        let card = document.getElementById('playerRouteCard');
+        if (card) return card;
+        card = document.createElement('div');
+        card.id = 'playerRouteCard';
+        card.innerHTML =
+          '<div class="plr-route" id="plrRoute">' +
+            '<div class="plr-line"></div><div class="plr-done-line"></div>' +
+            '<span class="plr-flag">\u{1F3C1}</span><span class="plr-pin">\u{1F4CD}</span>' +
+          '</div>' +
+          '<div class="plr-meta">' +
+            '<button id="plrWidthBtn" title="Switch timeline width">\u2194 width</button>' +
+            '<span id="plrClock">0:00 / 0:00</span>' +
+          '</div>';
+        const route = card.querySelector('#plrRoute');
+        function seek(ev) {
+          const x = ev.touches ? ev.touches[0].clientX : ev.clientX;
+          // go through the app's own seek path so its step/loop state follows
+          // (a raw currentTime write gets snapped back by the loop logic)
+          if (typeof window.playerTimelineClick === 'function') {
+            window.playerTimelineClick({ currentTarget: route, clientX: x });
+          } else {
+            const v = document.getElementById('mobileRealVideo');
+            if (!v || !isFinite(v.duration) || v.duration <= 0) return;
+            const r = route.getBoundingClientRect();
+            v.currentTime = Math.min(v.duration, Math.max(0, (x - r.left) / r.width * v.duration));
+          }
+          updateRoute();
+        }
+        let drag = false;
+        route.addEventListener('pointerdown', ev => {
+          drag = true;
+          try { route.setPointerCapture(ev.pointerId); } catch (e) { /* synthetic pointers */ }
+          seek(ev);
+        });
+        route.addEventListener('pointermove', ev => { if (drag) seek(ev); });
+        route.addEventListener('pointerup', () => { drag = false; });
+        card.querySelector('#plrWidthBtn').addEventListener('click', () => {
+          const cur = localStorage.getItem('cooking_gps_route_width') || 'full';
+          localStorage.setItem('cooking_gps_route_width', cur === 'full' ? 'column' : 'full');
+          placeRouteCard();
+        });
+        return card;
+      }
+
+      // Stop boundaries come from the rendered step cards' own time badges,
+      // so the route always matches whatever recipe is open.
+      function parseStops() {
+        const toSec = str => {
+          const m = String(str).trim().match(/(\d+):(\d+)/);
+          return m ? (+m[1]) * 60 + (+m[2]) : 0;
+        };
+        return [...document.querySelectorAll('#stepCardsSlider .step-duration-badge')].map(b => {
+          const parts = b.textContent.split(/[–—-]/);
+          return { start: toSec(parts[0] || '0:00'), end: toSec(parts[1] != null ? parts[1] : parts[0]) };
+        });
+      }
+
+      function updateRoute() {
+        const card = document.getElementById('playerRouteCard');
+        if (!card || !card.isConnected) return;
+        const v = document.getElementById('mobileRealVideo');
+        const route = card.querySelector('#plrRoute');
+        const dur = (v && isFinite(v.duration) && v.duration > 0) ? v.duration : 0;
+        const t = v ? v.currentTime : 0;
+        const stops = parseStops();
+        let dots = route.querySelectorAll('.plr-dot');
+        if (dots.length !== stops.length) {
+          dots.forEach(d => d.remove());
+          stops.forEach((s, i) => {
+            const d = document.createElement('span');
+            d.className = 'plr-dot';
+            d.dataset.i = i;
+            route.insertBefore(d, route.querySelector('.plr-flag'));
+          });
+          dots = route.querySelectorAll('.plr-dot');
+        }
+        dots.forEach((d, i) => {
+          const s = stops[i];
+          d.style.left = (dur ? Math.max(2.5, s.start / dur * 100) : 2.5 + i * 10) + '%';
+          const done = dur > 0 && t >= s.end - 0.05;
+          d.classList.toggle('done', done);
+          d.classList.toggle('now', dur > 0 && t >= s.start && t < s.end);
+          d.innerHTML = done ? '&check;' : String(i + 1);
+        });
+        const pct = dur ? t / dur * 100 : 0;
+        route.querySelector('.plr-done-line').style.width = pct + '%';
+        route.querySelector('.plr-pin').style.left = Math.max(2, Math.min(98, pct)) + '%';
+        const fmt = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
+        card.querySelector('#plrClock').textContent = fmt(t) + ' / ' + fmt(dur);
+      }
+
+      function placeRouteCard() {
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const card = ensureRouteCard();
+        const screen = player.querySelector('.phone-screen');
+        const leftCol = player.querySelector('.player-left-column');
+        if (!screen || !leftCol) return;
+        const name = localStorage.getItem(KEY) || 'cook';
+        const width = localStorage.getItem('cooking_gps_route_width') || 'full';
+        const band = name !== 'cook' && width === 'full';
+        card.classList.toggle('plr-slim', name !== 'cook' && width === 'column');
+        card.classList.toggle('plr-band', band);
+        screen.classList.toggle('plr-has-band', band);
+        card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
+        if (name === 'cook') {
+          // top zone, right above the chips
+          const chips = player.querySelector('.step-nav-chips-container');
+          if (chips && chips.parentElement === leftCol) leftCol.insertBefore(card, chips);
+          else leftCol.insertBefore(card, player.querySelector('.mobile-video-container'));
+        } else if (band) {
+          screen.appendChild(card);
+        } else {
+          // in-column: under the video, where the old scrubber used to sit
+          leftCol.insertBefore(card, player.querySelector('.player-timeline-rail-container'));
+        }
+        updateRoute();
+      }
+
       // D2: buttons whose center sits over the video get the bare-icon
       // style; buttons on the pale background keep their smoked circle.
       // Measured from real geometry so wide videos (all buttons over
@@ -3723,6 +3914,8 @@
         // classify strip buttons once layout settles (the app sizes the
         // video container a beat later, so measure again after it lands)
         if (name === 'cook') { setTimeout(markCookStripOverlap, 60); setTimeout(markCookStripOverlap, 500); }
+        // the Route follows the layout
+        setTimeout(placeRouteCard, 80);
       };
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -3735,9 +3928,16 @@
         window.setPlayerLayout(saved);
         keepCapsulePin();
         // the video container resizes when a new video's dimensions arrive;
-        // re-classify the strip buttons once that happens
+        // re-classify the strip buttons and refresh the route once that happens
         document.addEventListener('loadedmetadata', (e) => {
-          if (e.target && e.target.id === 'mobileRealVideo') setTimeout(markCookStripOverlap, 100);
+          if (e.target && e.target.id === 'mobileRealVideo') {
+            setTimeout(markCookStripOverlap, 100);
+            setTimeout(updateRoute, 120);
+          }
+        }, true);
+        // the pin travels with the real video clock
+        document.addEventListener('timeupdate', (e) => {
+          if (e.target && e.target.id === 'mobileRealVideo') updateRoute();
         }, true);
 
         // The app re-applies its own split preference when the player opens;
