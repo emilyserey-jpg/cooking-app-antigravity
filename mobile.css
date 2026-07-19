@@ -4133,3 +4133,8 @@ body.editor-split-view-active #workbenchLeft {
 body.editor-split-view-active #workbenchRight {
   width: 50% !important;
 }
+
+/* Step-videos spotlight carousel: swipeable, no visible scrollbar */
+#playerMultigridSpot::-webkit-scrollbar {
+  display: none;
+}

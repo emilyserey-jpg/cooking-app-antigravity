@@ -194,24 +194,50 @@
                 
                  <!-- Multigrid Container (hidden by default) -->
                 <div id="playerMultigridContainer" style="display:none; position:absolute; inset:0; z-index:4; overflow-y:auto; background:#0f172a; padding: 48px 8px 8px 8px; box-sizing:border-box;">
-                  <!-- Grid layout controls (Layout: Row | Quad) -->
+                  <!-- Header: STEP VIDEOS label + layout pill (Cook only) + expand (Split only) + close -->
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
-                    <div style="display:inline-flex; background:rgba(255,255,255,0.08); padding:2px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);">
-                      <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:transparent; color:rgba(255,255,255,0.6);">Row Layout</button>
-                      <button onclick="window.setPlayerGridLayout('quad')" id="playerLayoutQuadBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:var(--primary); color:#fff;">Quad Layout</button>
+                    <span style="font-size:0.62rem; font-weight:800; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.08em; font-family:var(--font);">Step Videos</span>
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <div id="playerMultigridLayoutPill" style="display:inline-flex; background:rgba(255,255,255,0.08); padding:2px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);">
+                        <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:transparent; color:rgba(255,255,255,0.6);">Row Layout</button>
+                        <button onclick="window.setPlayerGridLayout('quad')" id="playerLayoutQuadBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:var(--primary); color:#fff;">Quad Layout</button>
+                      </div>
+                      <button id="playerMultigridExpandBtn" onclick="window.openMultigridSheet()" title="Expand step videos" style="display:none; background:rgba(255,255,255,0.12); border:none; border-radius:50%; width:28px; height:28px; align-items:center; justify-content:center; color:#fff; font-size:0.8rem; cursor:pointer; font-family:var(--font);">&#x2922;</button>
+                      <button onclick="window.togglePlayerMultigridMode()" title="Close step videos" style="background:rgba(255,255,255,0.12); border:none; border-radius:50%; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; cursor:pointer; font-family:var(--font);">&#x2715;</button>
                     </div>
                   </div>
-                  <!-- Pick Sections (Horizontal scroll list of step checkboxes) -->
+                  <!-- Pick Sections (numbered step dots) -->
                   <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;">
-                    <span style="font-size:0.62rem; font-weight:800; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.05em; margin-right:4px;">Show steps:</span>
+                    <span style="font-size:0.62rem; font-weight:800; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.05em; margin-right:4px; font-family:var(--font);">Show</span>
                     <div id="playerMultigridSelectorList" style="display:inline-flex; gap:6px;">
                       <!-- Dynamic check toggles -->
                     </div>
                   </div>
-                  <!-- Grid of video tiles -->
+                  <!-- Split view: one big spotlight video + tap-to-switch preview strip -->
+                  <div id="playerMultigridSpotWrap" style="display:none; flex-direction:column; gap:6px;">
+                    <div id="playerMultigridSpot"></div>
+                    <div id="playerMultigridStrip" style="display:flex; gap:5px;"></div>
+                  </div>
+                  <!-- Grid of video tiles (Cook view) -->
                   <div id="playerMultigridTiles" style="display:grid; gap:8px; grid-template-columns: 1fr;">
                     <!-- Dynamically generated video tiles -->
                   </div>
+                  <!-- Utility dock: comments, mute-all, loop speed for the whole panel -->
+                  <div id="playerMultigridDock" style="display:flex; justify-content:center; align-items:center; gap:8px; padding-top:8px; margin-top:4px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <button onclick="var t=document.getElementById('playerCmtTab'); if (t) t.click();" title="Open comments" style="background:rgba(255,255,255,0.12); border:none; border-radius:999px; height:26px; padding:0 12px; display:inline-flex; align-items:center; gap:4px; color:#fff; font-size:0.66rem; font-weight:800; cursor:pointer; font-family:var(--font);">&#x1F4AC;</button>
+                    <button id="playerMultigridMuteAllBtn" onclick="window.toggleMultigridMuteAll()" title="Mute or unmute all step videos" style="background:rgba(255,255,255,0.12); border:none; border-radius:999px; height:26px; padding:0 12px; display:inline-flex; align-items:center; gap:4px; color:#fff; font-size:0.66rem; font-weight:800; cursor:pointer; font-family:var(--font);">&#x1F507; All</button>
+                    <button id="playerMultigridSpeedBtn" onclick="window.toggleMultigridSpeed()" title="Loop speed for all step videos" style="background:rgba(255,255,255,0.12); border:none; border-radius:999px; height:26px; padding:0 12px; display:inline-flex; align-items:center; color:#fff; font-size:0.66rem; font-weight:800; cursor:pointer; font-family:var(--font);">1.0x</button>
+                  </div>
+                </div>
+
+                <!-- Multigrid full-screen sheet (Split view expand) -->
+                <div id="playerMultigridSheet" style="position:fixed; left:0; right:0; bottom:0; top:10%; background:#0f172a; border-radius:20px 20px 0 0; z-index:10050; display:none; flex-direction:column; gap:8px; padding:12px; box-sizing:border-box; box-shadow:0 -12px 30px rgba(0,0,0,0.4); transform:translateY(105%); transition:transform 0.3s ease; pointer-events:none;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <span style="color:#fff; font-weight:800; font-size:0.85rem; font-family:var(--font);">Step videos</span>
+                    <div id="playerMultigridSheetDots" style="display:inline-flex; gap:6px; overflow-x:auto;"></div>
+                    <button onclick="window.closeMultigridSheet()" title="Done" style="background:rgba(255,255,255,0.12); border:none; border-radius:50%; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:0.8rem; cursor:pointer; flex-shrink:0; font-family:var(--font);">&#x2715;</button>
+                  </div>
+                  <div id="playerMultigridSheetGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; overflow-y:auto; -webkit-overflow-scrolling:touch; align-content:start;"></div>
                 </div>
                 
                 <!-- Video Error Overlay -->
@@ -3529,6 +3555,10 @@
       height: 42vh !important; max-height: 42vh !important;
       min-height: 240px !important; overflow: hidden !important;
     }
+    /* Step-videos panel open: the frame grows to fit every tile, no clipping */
+    .phone-screen.pl-cook .mobile-video-container.multigrid-active {
+      height: auto !important; max-height: none !important; overflow: visible !important;
+    }
 
     /* the control strip lives ON the video: a full-width frosted pill
        pulled up over the video's bottom edge, so the bar below it
@@ -3673,6 +3703,18 @@
       filter: none;
     }
     #view-mobile-player .phone-screen.pl-split #playerKbToggleBtn { display: none !important; }
+    /* Step-videos panel open: the single video (and its overlaid transport) rests */
+    #view-mobile-player .phone-screen.pl-split.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
+    #view-mobile-player .phone-screen.pl-cook.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
+    /* ...and so do the floating rail buttons — the panel's dock takes over */
+    #view-mobile-player .phone-screen.pl-cook.multigrid-active #playerCookRail { display: none !important; }
+    /* Split keeps its one-screen frame with the panel open: the columns scroll
+       inside, so long card lists (Vertical descriptions) never push the route
+       band further down the page */
+    #view-mobile-player .player-mobile-wrapper.multigrid-active:has(.phone-screen.pl-split) { height: 100% !important; overflow: hidden !important; }
+    #view-mobile-player .phone-screen.pl-split.multigrid-active { height: 100% !important; overflow: hidden !important; }
+    #view-mobile-player .phone-screen.pl-split.multigrid-active .mobile-player-body { height: 100% !important; max-height: 100% !important; overflow-y: auto !important; }
+    #view-mobile-player .phone-screen.pl-split.multigrid-active .player-left-column { overflow-y: auto !important; }
 
     /* repeat / mute / speed live as minis on the route card in Split */
     #playerRouteCard .plr-meta { flex-wrap: wrap; }
@@ -4311,6 +4353,9 @@
         const screen = document.querySelector('#view-mobile-player .phone-screen');
         const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
         if (!tab || !screen || !vidC) return;
+        // step videos panel open: the single video is hidden, so the pill rests
+        if (vidC.classList.contains('multigrid-active')) { tab.style.display = 'none'; return; }
+        tab.style.display = '';
         const sr = screen.getBoundingClientRect();
         const vr = vidC.getBoundingClientRect();
         if (vr.height < 40) return;
@@ -4333,6 +4378,13 @@
         let aspect = 9 / 16;
         if (v && v.videoWidth && v.videoHeight) aspect = v.videoWidth / v.videoHeight;
         const w = Math.round(colW - 12);
+        // Multigrid panel flows to its own height — never clamp it to the video's
+        if (vidC.classList.contains('multigrid-active')) {
+          vidC.style.setProperty('width', w + 'px', 'important');
+          vidC.style.setProperty('height', 'auto', 'important');
+          vidC.style.setProperty('margin', '4px auto', 'important');
+          return;
+        }
         const h = Math.round(Math.min(w / aspect, 440));
         vidC.style.setProperty('width', w + 'px', 'important');
         vidC.style.setProperty('height', h + 'px', 'important');
@@ -4347,6 +4399,9 @@
         const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
         if (!screen || !mic || !vidC) return;
         if (!screen.classList.contains('pl-split') || mic.parentElement.id === 'playerCookRail') return;
+        // step videos panel open: tuck the mic away so the panel header breathes
+        if (vidC.classList.contains('multigrid-active')) { mic.style.setProperty('display', 'none', 'important'); return; }
+        mic.style.removeProperty('display');
         const vr = vidC.getBoundingClientRect();
         if (vr.height < 60) return;
         mic.style.setProperty('top', Math.round(vr.top + 8) + 'px', 'important');
@@ -4590,6 +4645,9 @@
         if (name === 'cook') { setTimeout(markCookStripOverlap, 60); setTimeout(markCookStripOverlap, 500); }
         // the Route follows the layout
         setTimeout(placeRouteCard, 80);
+        // multigrid re-renders for the new layout (spotlight in Split, grid in Cook)
+        if (typeof window.refreshMultigridForLayout === 'function')
+          setTimeout(window.refreshMultigridForLayout, 100);
       };
 
       document.addEventListener('DOMContentLoaded', () => {

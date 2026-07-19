@@ -1182,6 +1182,11 @@ window.renderMultigridDescriptions = function() {
     container.style.webkitOverflowScrolling = '';
   }
 
+  // card-list growth must not push the route band below the fold (Split)
+  if (typeof window.containSplitMultigridFrame === 'function') {
+    setTimeout(() => window.containSplitMultigridFrame(), 150);
+  }
+
   // Render cards for only the selected steps
   const selectedIndices = Array.from(playerSelectedSteps).sort((a, b) => a - b);
   
@@ -6955,6 +6960,7 @@ window.handlePlayerFolderChange = function(targetFolderId) {
 // ── Universal recipe launcher — used by Library, My Profile, Discover ──────
 window.loadRecipeById = async function(id) {
   if (!id) return;
+  if (typeof window.resetPlayerMultigrid === 'function') window.resetPlayerMultigrid();
   switchView('mobile-player');
   await window.loadPlayerRecipe(id);
 };
@@ -6963,6 +6969,7 @@ window.loadRecipeById = async function(id) {
 // PLAYER COMMENTS SECTION & BACK NAVIGATION LOGIC
 // ----------------------------------------------------
 window.playerGoBack = function() {
+  if (typeof window.resetPlayerMultigrid === 'function') window.resetPlayerMultigrid();
   const prev = playerPreviousView || 'create';
   switchView(prev);
 };
@@ -9341,6 +9348,10 @@ window.desktopPlayerPrev     = function() {
 // ============================================================
 let isPlayerMultigridActive = false;
 let playerGridLayout = 'quad'; // 'row' | 'quad'
+let playerSpotlightStep = null;   // Split view: which step sits in the big spotlight
+let isMultigridSheetOpen = false; // Split view: full-screen sheet state
+let playerMultigridMuted = true;  // dock: master mute across every panel video
+let playerMultigridRate = 1;      // dock: shared loop speed (1 or 0.5)
 let playerSelectedSteps = new Set();
 let playerDescLayoutMode = 'row'; // 'row' | 'column'
 let playerMultigridIntervals = {};
@@ -9385,9 +9396,14 @@ window.togglePlayerMultigridMode = function() {
   } else {
     // Stop grid loops
     stopAllPlayerMultigridLoops();
-    
+
     // Hide grid
     if (container) container.style.display = 'none';
+
+    // Drop the split-view sheet if it was open
+    isMultigridSheetOpen = false;
+    const mgSheet = document.getElementById('playerMultigridSheet');
+    if (mgSheet) { mgSheet.style.transform = 'translateY(105%)'; mgSheet.style.pointerEvents = 'none'; mgSheet.style.display = 'none'; }
     
     // Restore single player
     if (recipeData.video_url && realVideo) {
@@ -9399,6 +9415,65 @@ window.togglePlayerMultigridMode = function() {
     updateMultigridLayoutClass();
     showTip("Returned to Single Player ");
   }
+};
+
+// Split + panel open: keep the whole frame within one screen. Long card
+// lists (Vertical descriptions) would otherwise grow the page and push the
+// route band below the fold — instead the right column gives up the excess
+// height and scrolls internally.
+window.containSplitMultigridFrame = function() {
+  const rightCol = document.querySelector('#view-mobile-player .mobile-player-body');
+  if (!rightCol) return;
+  if (!(isPlayerMultigridActive && window.currentSplitLayoutActive)) {
+    rightCol.style.removeProperty('max-height');
+    return;
+  }
+  const playerView = document.getElementById('view-mobile-player');
+  if (!playerView || getComputedStyle(playerView).display === 'none') return;
+  rightCol.style.removeProperty('max-height');
+  const overshoot = document.documentElement.scrollHeight - window.innerHeight;
+  if (overshoot > 8) {
+    const cur = rightCol.getBoundingClientRect().height;
+    rightCol.style.setProperty('max-height', Math.max(220, Math.round(cur - overshoot)) + 'px', 'important');
+    rightCol.style.setProperty('overflow-y', 'auto', 'important');
+  }
+  // widths may have shifted — re-snap the carousel to the chosen step so the
+  // visible slide and the highlighted preview always agree
+  const spotHost = document.getElementById('playerMultigridSpot');
+  if (spotHost) {
+    const slides = Array.from(spotHost.querySelectorAll('.multigrid-slide'));
+    const pos = slides.findIndex(s => Number(s.dataset.stepIdx) === playerSpotlightStep);
+    if (pos >= 0) spotHost.scrollLeft = pos * (spotHost.clientWidth + 6);
+  }
+};
+
+// Silent teardown: panel off, body-parked sheet closed, single player restored.
+// Runs whenever the player is left or a new recipe opens, so stale multigrid
+// state can never hide the transport/mic/comment controls or trap a full-screen
+// sheet over the rest of the app.
+window.resetPlayerMultigrid = function() {
+  isMultigridSheetOpen = false;
+  const sheet = document.getElementById('playerMultigridSheet');
+  if (sheet) { sheet.style.transform = 'translateY(105%)'; sheet.style.pointerEvents = 'none'; sheet.style.display = 'none'; }
+  const rc = document.querySelector('#view-mobile-player .mobile-player-body');
+  if (rc) rc.style.removeProperty('max-height');
+  playerMultigridMuted = true;
+  playerMultigridRate = 1;
+  if (!isPlayerMultigridActive) return;
+  isPlayerMultigridActive = false;
+  stopAllPlayerMultigridLoops();
+  const container = document.getElementById('playerMultigridContainer');
+  if (container) container.style.display = 'none';
+  const toggleBtn = document.getElementById('playerMultigridToggleBtn');
+  if (toggleBtn) { toggleBtn.style.background = 'rgba(0,0,0,0.5)'; toggleBtn.style.color = '#fff'; }
+  const realVideo = document.getElementById('mobileRealVideo');
+  const canvas = document.getElementById('mobileVideoCanvas');
+  if (recipeData && recipeData.video_url && realVideo) {
+    realVideo.style.display = 'block';
+  } else if (canvas) {
+    canvas.style.display = 'block';
+  }
+  updateMultigridLayoutClass();
 };
 
 window.setPlayerGridLayout = function(layout) {
@@ -9503,7 +9578,7 @@ function updateMultigridLayoutClass() {
     }
 
     if (screen) {
-      if (isPlayerMultigridActive && playerGridLayout === 'row') {
+      if (isPlayerMultigridActive && playerGridLayout === 'row' && !window.currentSplitLayoutActive) {
         screen.classList.add('multigrid-row-mode');
       } else {
         screen.classList.remove('multigrid-row-mode');
@@ -9627,6 +9702,34 @@ function updateMultigridLayoutClass() {
       }
     }
 
+    // Cook hides the right column, so the description-card carousel — and its
+    // Horizontal/Vertical toggle bar — ride in the left column right under the
+    // panel; they return home for Split/off
+    const wantLeft = isPlayerMultigridActive && !window.currentSplitLayoutActive;
+    const leftColEl = document.querySelector('#view-mobile-player .player-left-column');
+    [document.getElementById('playerMultigridDescControls'),
+     document.getElementById('playerMultigridDescriptions')].forEach(node => {
+      if (!node) return;
+      if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
+      if (wantLeft && leftColEl && node.parentElement !== leftColEl) {
+        const vc = leftColEl.querySelector('.mobile-video-container');
+        if (vc && vc.nextSibling) leftColEl.insertBefore(node, vc.nextSibling);
+        else leftColEl.appendChild(node);
+      } else if (!wantLeft && node._homeParent && node.parentElement !== node._homeParent) {
+        if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
+        else node._homeParent.appendChild(node);
+      }
+    });
+    // controls sit above the cards: inserting each after the video container
+    // reverses their order, so put the toggle bar back on top
+    if (wantLeft && leftColEl) {
+      const ctrl = document.getElementById('playerMultigridDescControls');
+      const descEl = document.getElementById('playerMultigridDescriptions');
+      if (ctrl && descEl && descEl.parentElement === leftColEl && ctrl.parentElement === leftColEl) {
+        leftColEl.insertBefore(ctrl, descEl);
+      }
+    }
+
     // Render descriptions
     if (typeof renderMultigridDescriptions === 'function') {
       renderMultigridDescriptions();
@@ -9700,136 +9803,413 @@ window.toggleMultigridTilePlayback = function(event, idx) {
   }
 };
 
+function multigridTileRatio() {
+  const mainVideo = document.getElementById('mobileRealVideo') || document.getElementById('uploadedVideoPlayer');
+  if (mainVideo && mainVideo.videoWidth && mainVideo.videoHeight) {
+    return `${mainVideo.videoWidth} / ${mainVideo.videoHeight}`;
+  }
+  return '16/9';
+}
+
+// One step tile (video or simulation) — used by the Cook grid and the Split sheet
+function buildMultigridTile(container, idx, videoUrl, tileWidth) {
+  const startTime = recipeData.loops[idx] || 0;
+  const endTime = recipeData.loops[idx + 1] || recipeData.duration;
+
+  const tile = document.createElement('div');
+  tile.className = 'multigrid-tile';
+  tile.style.cssText = `
+    position: relative;
+    background: #0f172a;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    aspect-ratio: ${multigridTileRatio()};
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    cursor: pointer;
+  `;
+  tile.style.width = tileWidth;
+  tile.onclick = (event) => window.toggleMultigridTilePlayback(event, idx);
+
+  if (videoUrl) {
+    tile.innerHTML = `
+      <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:${window.currentVideoFitMode || 'contain'}; display:block;"></video>
+      <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
+
+      <!-- Close button (x) to remove step -->
+      <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
+        <i data-lucide="x" style="width:12px; height:12px;"></i>
+      </button>
+
+      <!-- Mute/Unmute floating button -->
+      <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+        <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
+      </button>
+
+      <!-- Step info badge -->
+      <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
+        Step ${idx + 1}
+      </div>
+    `;
+    container.appendChild(tile);
+    if (window.lucide) lucide.createIcons();
+
+    const video = tile.querySelector('video');
+    setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime);
+  } else {
+    // Simulation mode fallback
+    tile.innerHTML = `
+      <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:contain; display:block;"></canvas>
+
+      <!-- Close button (x) to remove step -->
+      <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
+        <i data-lucide="x" style="width:12px; height:12px;"></i>
+      </button>
+
+      <!-- Step info badge -->
+      <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
+        Step ${idx + 1}
+      </div>
+    `;
+    container.appendChild(tile);
+
+    const canvas = tile.querySelector('canvas');
+    setupMultigridTileSimulation(idx, canvas);
+  }
+}
+
 function renderPlayerMultigrid() {
   const tilesContainer = document.getElementById('playerMultigridTiles');
   const selectorList = document.getElementById('playerMultigridSelectorList');
   if (!tilesContainer || !recipeData || !recipeData.steps) return;
-  
-  updateMultigridLayoutClass();
-  
-  // Render selector checkboxes
-  if (selectorList) {
-    selectorList.innerHTML = recipeData.steps.map((step, idx) => {
-      const isSelected = playerSelectedSteps.has(idx);
-      const checked = isSelected ? 'checked' : '';
-      const bg = isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.08)';
-      const color = isSelected ? '#fff' : 'rgba(255,255,255,0.7)';
-      const border = isSelected ? '1.5px solid transparent' : '1.5px solid rgba(255,255,255,0.15)';
-      
-      return `
-        <label style="display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; font-family:var(--font); font-size:0.75rem; font-weight:800; border-radius:50%; cursor:pointer; user-select:none; transition:all 0.2s; background:${bg}; color:${color}; border:${border};">
-          <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="display: none;" />
-          ${idx + 1}
-        </label>
-      `;
-    }).join('');
-  }
 
-  // Clean up existing loops
+  updateMultigridLayoutClass();
+  syncMultigridDockUi();
+
+  const isSplit = !!window.currentSplitLayoutActive;
+
+  // Header chrome: Row/Quad pill only makes sense at full width (Cook);
+  // the expand-to-sheet button only exists in Split
+  const layoutPill = document.getElementById('playerMultigridLayoutPill');
+  if (layoutPill) layoutPill.style.display = isSplit ? 'none' : 'inline-flex';
+  const expandBtn = document.getElementById('playerMultigridExpandBtn');
+  if (expandBtn) expandBtn.style.display = isSplit ? 'inline-flex' : 'none';
+
+  // Numbered step dots (panel header, mirrored into the sheet while it is open)
+  const dotHtml = recipeData.steps.map((step, idx) => {
+    const isSelected = playerSelectedSteps.has(idx);
+    const checked = isSelected ? 'checked' : '';
+    const bg = isSelected ? 'var(--primary)' : 'rgba(255,255,255,0.08)';
+    const color = isSelected ? '#fff' : 'rgba(255,255,255,0.7)';
+    const border = isSelected ? '1.5px solid transparent' : '1.5px solid rgba(255,255,255,0.15)';
+
+    return `
+      <label style="display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; font-family:var(--font); font-size:0.75rem; font-weight:800; border-radius:50%; cursor:pointer; user-select:none; transition:all 0.2s; background:${bg}; color:${color}; border:${border};">
+        <input type="checkbox" ${checked} onchange="window.togglePlayerMultigridStep(${idx})" style="display: none;" />
+        ${idx + 1}
+      </label>
+    `;
+  }).join('');
+  if (selectorList) selectorList.innerHTML = dotHtml;
+  const sheetDots = document.getElementById('playerMultigridSheetDots');
+  if (sheetDots) sheetDots.innerHTML = (isSplit && isMultigridSheetOpen) ? dotHtml : '';
+
+  // Clean up existing loops and hosts
   stopAllPlayerMultigridLoops();
   tilesContainer.innerHTML = '';
-  
-  // Apply layout styles
-  if (playerGridLayout === 'row') {
-    tilesContainer.style.display = 'flex';
-    tilesContainer.style.flexDirection = 'row';
-    tilesContainer.style.overflowX = 'auto';
-    tilesContainer.style.overflowY = 'hidden';
-    tilesContainer.style.flexWrap = 'nowrap';
-    tilesContainer.style.scrollSnapType = 'x mandatory';
-  } else {
-    tilesContainer.style.display = 'grid';
-    tilesContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
-    tilesContainer.style.overflowX = 'hidden';
-    tilesContainer.style.overflowY = 'visible';
-    tilesContainer.style.height = 'auto';
-  }
+  const spotWrap = document.getElementById('playerMultigridSpotWrap');
+  const spotHost = document.getElementById('playerMultigridSpot');
+  const stripHost = document.getElementById('playerMultigridStrip');
+  const sheetGrid = document.getElementById('playerMultigridSheetGrid');
+  if (spotHost) spotHost.innerHTML = '';
+  if (stripHost) stripHost.innerHTML = '';
+  if (sheetGrid) sheetGrid.innerHTML = '';
 
   const videoUrl = recipeData.video_url || (playerCurrentRecipe && playerCurrentRecipe.video_url);
+  const selectedIdxs = recipeData.steps.map((_, idx) => idx).filter(idx => playerSelectedSteps.has(idx));
 
-  recipeData.steps.forEach((step, idx) => {
-    if (!playerSelectedSteps.has(idx)) return;
-    
-    const startTime = recipeData.loops[idx] || 0;
-    const endTime = recipeData.loops[idx + 1] || recipeData.duration;
-    
-    const mainVideo = document.getElementById('mobileRealVideo') || document.getElementById('uploadedVideoPlayer');
-    let tileRatio = '16/9';
-    if (mainVideo && mainVideo.videoWidth && mainVideo.videoHeight) {
-      tileRatio = `${mainVideo.videoWidth} / ${mainVideo.videoHeight}`;
-    }
+  if (!isSplit) {
+    // ---- Cook view: classic Row / Quad grid ----
+    if (spotWrap) spotWrap.style.display = 'none';
 
-    const tile = document.createElement('div');
-    tile.className = 'multigrid-tile';
-    tile.style.cssText = `
-      position: relative;
-      background: #0f172a;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1.5px solid rgba(255,255,255,0.1);
-      aspect-ratio: ${tileRatio};
-      flex-shrink: 0;
-      scroll-snap-align: start;
-      cursor: pointer;
-    `;
     if (playerGridLayout === 'row') {
-      tile.style.width = '360px';
+      tilesContainer.style.display = 'flex';
+      tilesContainer.style.flexDirection = 'row';
+      tilesContainer.style.overflowX = 'auto';
+      tilesContainer.style.overflowY = 'hidden';
+      tilesContainer.style.flexWrap = 'nowrap';
+      tilesContainer.style.scrollSnapType = 'x mandatory';
     } else {
-      tile.style.width = '100%';
+      tilesContainer.style.display = 'grid';
+      tilesContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
+      tilesContainer.style.overflowX = 'hidden';
+      tilesContainer.style.overflowY = 'visible';
+      tilesContainer.style.height = 'auto';
     }
-    tile.onclick = (event) => window.toggleMultigridTilePlayback(event, idx);
 
-    if (videoUrl) {
-      tile.innerHTML = `
-        <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:${window.currentVideoFitMode || 'contain'}; display:block;"></video>
-        <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
-        
-        <!-- Close button (x) to remove step -->
-        <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
-          <i data-lucide="x" style="width:12px; height:12px;"></i>
-        </button>
+    selectedIdxs.forEach(idx => {
+      buildMultigridTile(tilesContainer, idx, videoUrl, playerGridLayout === 'row' ? '360px' : '100%');
+    });
+    return;
+  }
 
-        <!-- Mute/Unmute floating button -->
-        <button onclick="window.togglePlayerMultigridMute(event, ${idx})" id="playerMultigridMuteBtn_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
-          <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
-        </button>
+  // ---- Split view: spotlight + preview strip, or the full-screen sheet ----
+  tilesContainer.style.display = 'none';
 
-        <!-- Step info badge -->
-        <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
-          Step ${idx + 1}
-        </div>
-      `;
-      tilesContainer.appendChild(tile);
-      if (window.lucide) lucide.createIcons();
+  // Keep the spotlight pointing at a step that is actually shown
+  if (playerSpotlightStep === null || !playerSelectedSteps.has(playerSpotlightStep)) {
+    playerSpotlightStep = playerSelectedSteps.has(activeStepIndex) ? activeStepIndex : selectedIdxs[0];
+  }
 
-      const video = tile.querySelector('video');
-      setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime);
-    } else {
-      // Simulation mode fallback
-      tile.innerHTML = `
-        <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; object-fit:contain; display:block;"></canvas>
-        
-        <!-- Close button (x) to remove step -->
-        <button onclick="event.stopPropagation(); window.togglePlayerMultigridStep(${idx})" style="position:absolute; top:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.6)'" title="Hide video">
-          <i data-lucide="x" style="width:12px; height:12px;"></i>
-        </button>
+  if (isMultigridSheetOpen && sheetGrid) {
+    if (spotWrap) spotWrap.style.display = 'none';
+    selectedIdxs.forEach(idx => buildMultigridTile(sheetGrid, idx, videoUrl, '100%'));
+    return;
+  }
 
-        <!-- Step info badge -->
-        <div style="position:absolute; top:6px; left:6px; z-index:4; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:999px; font-family:var(--font); font-size:0.6rem; font-weight:800; color:#fff; pointer-events:none;">
-          Step ${idx + 1}
-        </div>
-      `;
-      tilesContainer.appendChild(tile);
-      
-      const canvas = tile.querySelector('canvas');
-      setupMultigridTileSimulation(idx, canvas);
+  if (spotWrap) spotWrap.style.display = 'flex';
+
+  // Spotlight carousel: every selected step is a full-width slide — swipe
+  // sideways to move between them; the preview strip mirrors the position
+  if (spotHost) {
+    spotHost.style.cssText = 'display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:6px; border-radius:10px; -webkit-overflow-scrolling:touch; scrollbar-width:none;';
+
+    selectedIdxs.forEach(idx => {
+      const slide = document.createElement('div');
+      slide.className = 'multigrid-slide';
+      slide.dataset.stepIdx = idx;
+      slide.style.cssText = `flex:0 0 100%; min-width:0; scroll-snap-align:start; position:relative; background:#0f172a; border-radius:10px; overflow:hidden; border:1.5px solid rgba(255,255,255,0.12); aspect-ratio:${multigridTileRatio()}; cursor:pointer;`;
+      slide.onclick = (event) => window.toggleMultigridSlidePlayback(event, idx);
+
+      if (videoUrl) {
+        slide.innerHTML = `
+          <video id="playerMultigridVid_slide_${idx}" playsinline muted style="width:100%; height:100%; object-fit:${window.currentVideoFitMode || 'contain'}; display:block;"></video>
+          <div id="playerMultigridOverlay_slide_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.6rem; font-family:var(--font); z-index:2;">Loading...</div>
+          <button onclick="window.toggleMultigridSlideMute(event, ${idx})" id="playerMultigridMuteBtn_slide_${idx}" style="position:absolute; bottom:6px; right:6px; z-index:5; background:rgba(0,0,0,0.6); border:none; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+            <i data-lucide="volume-x" style="width:12px; height:12px;"></i>
+          </button>
+        `;
+      } else {
+        slide.innerHTML = `
+          <canvas id="playerMultigridCanvas_slide_${idx}" style="width:100%; height:100%; object-fit:contain; display:block;"></canvas>
+        `;
+      }
+      spotHost.appendChild(slide);
+
+      const startTime = recipeData.loops[idx] || 0;
+      const endTime = recipeData.loops[idx + 1] || recipeData.duration;
+      if (videoUrl) {
+        setupMultigridTileVideo(`slide_${idx}`, slide.querySelector('video'), videoUrl, startTime, endTime);
+      } else {
+        setupMultigridTileSimulation(`slide_${idx}`, slide.querySelector('canvas'));
+      }
+    });
+    if (window.lucide) lucide.createIcons();
+
+    // land on the current spotlight step once the slides have a width
+    const startPos = Math.max(0, selectedIdxs.indexOf(playerSpotlightStep));
+    if (startPos > 0) {
+      setTimeout(() => { spotHost.scrollLeft = startPos * (spotHost.clientWidth + 6); }, 60);
     }
+
+    // swiping updates the spotlight step and the strip highlight
+    spotHost.onscroll = () => {
+      clearTimeout(spotHost._syncT);
+      spotHost._syncT = setTimeout(() => {
+        const i = Math.round(spotHost.scrollLeft / Math.max(1, spotHost.clientWidth + 6));
+        const idx = selectedIdxs[Math.max(0, Math.min(i, selectedIdxs.length - 1))];
+        if (idx !== undefined && idx !== playerSpotlightStep) {
+          playerSpotlightStep = idx;
+          syncMultigridSpotlightUi();
+        }
+      }, 90);
+    };
+
+    // once the slides have laid out, make sure the frame still fits the screen
+    setTimeout(() => window.containSplitMultigridFrame(), 150);
+  }
+
+  // Preview strip: tap a small tile to slide the carousel to that step
+  if (stripHost && selectedIdxs.length > 1) {
+    selectedIdxs.forEach(idx => {
+      const isSpot = idx === playerSpotlightStep;
+      const thumb = document.createElement('button');
+      thumb.className = 'multigrid-thumb';
+      thumb.dataset.stepIdx = idx;
+      thumb.style.cssText = `flex:1 1 0; min-width:0; max-width:33%; aspect-ratio:3/4; border-radius:8px; overflow:hidden; position:relative; padding:0; background:#16213a; cursor:pointer; border:2px solid ${isSpot ? 'var(--primary)' : 'rgba(255,255,255,0.12)'};`;
+      thumb.onclick = () => window.setMultigridSpotlight(idx);
+      thumb.title = `Show step ${idx + 1} large`;
+
+      if (videoUrl) {
+        thumb.innerHTML = `
+          <video id="playerMultigridVid_${idx}" playsinline muted style="width:100%; height:100%; object-fit:cover; display:block; pointer-events:none;"></video>
+          <div id="playerMultigridOverlay_${idx}" style="position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.55rem; font-family:var(--font); z-index:2; pointer-events:none;">...</div>
+          <span style="position:absolute; bottom:3px; left:3px; z-index:3; background:rgba(0,0,0,0.65); min-width:14px; padding:1px 5px; border-radius:999px; font-family:var(--font); font-size:0.58rem; font-weight:800; color:#fff; pointer-events:none;">${idx + 1}</span>
+        `;
+      } else {
+        thumb.innerHTML = `
+          <canvas id="playerMultigridCanvas_${idx}" style="width:100%; height:100%; display:block; pointer-events:none;"></canvas>
+          <span style="position:absolute; bottom:3px; left:3px; z-index:3; background:rgba(0,0,0,0.65); min-width:14px; padding:1px 5px; border-radius:999px; font-family:var(--font); font-size:0.58rem; font-weight:800; color:#fff; pointer-events:none;">${idx + 1}</span>
+        `;
+      }
+      stripHost.appendChild(thumb);
+
+      const startTime = recipeData.loops[idx] || 0;
+      const endTime = recipeData.loops[idx + 1] || recipeData.duration;
+      if (videoUrl) {
+        setupMultigridTileVideo(idx, thumb.querySelector('video'), videoUrl, startTime, endTime);
+      } else {
+        setupMultigridTileSimulation(idx, thumb.querySelector('canvas'));
+      }
+    });
+  }
+}
+
+// Lightweight sync after a swipe: strip highlight follows, no rebuild
+function syncMultigridSpotlightUi() {
+  document.querySelectorAll('#playerMultigridStrip .multigrid-thumb').forEach(th => {
+    const isSpot = Number(th.dataset.stepIdx) === playerSpotlightStep;
+    th.style.border = `2px solid ${isSpot ? 'var(--primary)' : 'rgba(255,255,255,0.12)'}`;
   });
 }
+
+window.setMultigridSpotlight = function(idx) {
+  if (!playerSelectedSteps.has(idx)) return;
+  playerSpotlightStep = idx;
+  const spotHost = document.getElementById('playerMultigridSpot');
+  if (spotHost) {
+    const slides = Array.from(spotHost.querySelectorAll('.multigrid-slide'));
+    const pos = slides.findIndex(s => Number(s.dataset.stepIdx) === idx);
+    if (pos >= 0) spotHost.scrollTo({ left: pos * (spotHost.clientWidth + 6), behavior: 'smooth' });
+  }
+  syncMultigridSpotlightUi();
+};
+
+window.toggleMultigridSlidePlayback = function(event, idx) {
+  if (event) event.stopPropagation();
+  const video = document.getElementById(`playerMultigridVid_slide_${idx}`);
+  if (video) {
+    if (video.paused) {
+      video.play().catch(() => {});
+      showTip(`Step ${idx + 1} playing`);
+    } else {
+      video.pause();
+      showTip(`Step ${idx + 1} paused`);
+    }
+    return;
+  }
+  const canvas = document.getElementById(`playerMultigridCanvas_slide_${idx}`);
+  if (canvas) {
+    if (playerMultigridIntervals[`slide_${idx}`]) {
+      clearInterval(playerMultigridIntervals[`slide_${idx}`]);
+      playerMultigridIntervals[`slide_${idx}`] = null;
+      showTip(`Step ${idx + 1} simulation paused`);
+    } else {
+      setupMultigridTileSimulation(`slide_${idx}`, canvas);
+      showTip(`Step ${idx + 1} simulation playing`);
+    }
+  }
+};
+
+window.toggleMultigridSlideMute = function(event, idx) {
+  if (event) event.stopPropagation();
+  const video = document.getElementById(`playerMultigridVid_slide_${idx}`);
+  const btn = document.getElementById(`playerMultigridMuteBtn_slide_${idx}`);
+  if (!video || !btn) return;
+  video.muted = !video.muted;
+  if (video.muted) {
+    btn.innerHTML = `<i data-lucide="volume-x" style="width:12px; height:12px;"></i>`;
+  } else {
+    // one voice at a time: everything else in the panel goes quiet
+    document.querySelectorAll('#playerMultigridSpot video, #playerMultigridStrip video').forEach(v => {
+      if (v !== video) v.muted = true;
+    });
+    document.querySelectorAll('#playerMultigridSpot [id^="playerMultigridMuteBtn_slide_"]').forEach(b => {
+      if (b !== btn) b.innerHTML = `<i data-lucide="volume-x" style="width:12px; height:12px;"></i>`;
+    });
+    btn.innerHTML = `<i data-lucide="volume-2" style="width:12px; height:12px;"></i>`;
+  }
+  if (window.lucide) lucide.createIcons();
+};
+
+window.openMultigridSheet = function() {
+  isMultigridSheetOpen = true;
+  const sheet = document.getElementById('playerMultigridSheet');
+  if (sheet) {
+    // position:fixed is measured against any transformed ancestor, and the
+    // player has several — parking the sheet on <body> keeps it truly full-screen
+    if (sheet.parentElement !== document.body) document.body.appendChild(sheet);
+    sheet.style.display = 'flex';
+    sheet.style.pointerEvents = 'auto';
+    // force a layout pass at the off-screen position so the slide-up animates
+    void sheet.offsetHeight;
+    sheet.style.transform = 'translateY(0)';
+  }
+  renderPlayerMultigrid();
+};
+
+window.closeMultigridSheet = function() {
+  isMultigridSheetOpen = false;
+  const sheet = document.getElementById('playerMultigridSheet');
+  if (sheet) {
+    sheet.style.transform = 'translateY(105%)';
+    sheet.style.pointerEvents = 'none';
+    setTimeout(() => { if (!isMultigridSheetOpen) sheet.style.display = 'none'; }, 320);
+  }
+  renderPlayerMultigrid();
+};
+
+// Every video the panel owns, wherever it currently lives
+function allMultigridVideos() {
+  return Array.from(document.querySelectorAll('#playerMultigridContainer video, #playerMultigridSheet video'));
+}
+
+// Dock: one tap silences (or wakes) every step video at once
+window.toggleMultigridMuteAll = function() {
+  playerMultigridMuted = !playerMultigridMuted;
+  allMultigridVideos().forEach(v => { v.muted = playerMultigridMuted; });
+  const icon = playerMultigridMuted ? 'volume-x' : 'volume-2';
+  document.querySelectorAll('[id^="playerMultigridMuteBtn_"]').forEach(b => {
+    b.innerHTML = `<i data-lucide="${icon}" style="width:12px; height:12px;"></i>`;
+  });
+  syncMultigridDockUi();
+  if (window.lucide) lucide.createIcons();
+  showTip(playerMultigridMuted ? 'All step videos muted' : 'All step videos unmuted');
+};
+
+// Dock: shared loop speed — slow every loop to study a technique
+window.toggleMultigridSpeed = function() {
+  playerMultigridRate = playerMultigridRate === 1 ? 0.5 : 1;
+  allMultigridVideos().forEach(v => { v.playbackRate = playerMultigridRate; });
+  syncMultigridDockUi();
+  showTip(playerMultigridRate === 1 ? 'Loops at normal speed' : 'Loops at half speed');
+};
+
+function syncMultigridDockUi() {
+  const muteBtn = document.getElementById('playerMultigridMuteAllBtn');
+  if (muteBtn) muteBtn.innerHTML = (playerMultigridMuted ? '\u{1F507}' : '\u{1F50A}') + ' All';
+  const speedBtn = document.getElementById('playerMultigridSpeedBtn');
+  if (speedBtn) speedBtn.textContent = playerMultigridRate === 1 ? '1.0x' : '0.5x';
+}
+
+// Called by the layout pill (Cook <-> Split) so the panel re-shapes itself
+window.refreshMultigridForLayout = function() {
+  if (!isPlayerMultigridActive) return;
+  if (isMultigridSheetOpen && !window.currentSplitLayoutActive) {
+    window.closeMultigridSheet();
+    return;
+  }
+  renderPlayerMultigrid();
+};
 
 function setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime) {
   const overlay = document.getElementById(`playerMultigridOverlay_${idx}`);
   if (!video || !videoUrl) return;
+
+  // new tiles obey the dock's current master mute and loop speed
+  video.muted = playerMultigridMuted;
+  video.playbackRate = playerMultigridRate;
 
   // Listen to loadedmetadata to set actual video aspect ratio on the card and adjust width in row layout if vertical
   video.addEventListener('loadedmetadata', () => {
@@ -9838,7 +10218,8 @@ function setupMultigridTileVideo(idx, video, videoUrl, startTime, endTime) {
       tile.style.aspectRatio = `${video.videoWidth} / ${video.videoHeight}`;
       
       // If we are in row layout, adjust the tile width dynamically based on orientation
-      if (playerGridLayout === 'row') {
+      // (only for the Cook grid — sheet tiles stay at their grid width)
+      if (playerGridLayout === 'row' && tile.parentElement && tile.parentElement.id === 'playerMultigridTiles') {
         if (video.videoWidth < video.videoHeight) {
           tile.style.width = '200px';
         } else {
