@@ -3800,6 +3800,14 @@
       display: flex; align-items: center; gap: 2px; cursor: pointer; font-family: var(--font);
     }
     #playerRouteCard.plr-slim .plr-cb { top: 18px; height: 12px; font-size: 0.46rem; }
+    .plr-cb.empty { opacity: 0.65; }
+
+    /* "Add a tip" chip on every step card - comment where you read */
+    .plc-addtip {
+      border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
+      border-radius: 999px; font-family: var(--font); font-size: 0.6rem; font-weight: 900;
+      padding: 3px 9px; cursor: pointer; align-self: flex-start; margin-top: 6px;
+    }
 
     /* ── Cook cleanup: everything gets its own room, nothing overlaps ── */
     /* nothing peeks up from below the capsule bar */
@@ -4095,6 +4103,28 @@
         placeCmtSheet();
         setTimeout(placeCmtSheet, 120);
         setTimeout(placeCmtSheet, 380);
+        // in This-stop mode the composer is ready to type into
+        if (mode === 'stop') setTimeout(() => {
+          const inp = document.querySelector('#playerAddCommentWrap input, #playerAddCommentWrap textarea');
+          if (inp) inp.focus();
+        }, 420);
+      }
+
+      // every step card carries its own "Add a tip" chip; cards re-render
+      // on step changes, so the chips are (re)injected when needed
+      function injectAddTipChips() {
+        document.querySelectorAll('#stepCardsSlider .step-slider-card').forEach(card => {
+          if (card.querySelector('.plc-addtip')) return;
+          const col = card.querySelector('div');
+          if (!col) return;
+          const idx = parseInt((card.id || '').replace('stepSliderCard-', ''), 10);
+          if (isNaN(idx)) return;
+          const b = document.createElement('button');
+          b.className = 'plc-addtip';
+          b.textContent = '💬 Add a tip';
+          b.addEventListener('click', ev => { ev.stopPropagation(); openCmtSheet('stop', idx); });
+          col.appendChild(b);
+        });
       }
       function closeCmtSheet() {
         const sheet = document.getElementById('playerCmtSheet');
@@ -4147,11 +4177,11 @@
           plrBubbleKey = bubbleKey;
           route.querySelectorAll('.plr-cb').forEach(b => b.remove());
           counts.forEach((n, i) => {
-            if (!n) return;
             const b = document.createElement('button');
-            b.className = 'plr-cb';
+            b.className = 'plr-cb' + (n ? '' : ' empty');
             b.style.left = (dur ? Math.max(2.5, stops[i].start / dur * 100) : 2.5 + i * 10) + '%';
-            b.textContent = '💬' + n;
+            b.textContent = n ? '💬' + n : '💬+';
+            b.title = n ? 'Comments on this stop' : 'Be the first to comment on this stop';
             b.addEventListener('pointerdown', ev => ev.stopPropagation());
             b.addEventListener('click', ev => { ev.stopPropagation(); openCmtSheet('stop', i); });
             route.insertBefore(b, route.querySelector('.plr-flag'));
@@ -4308,6 +4338,12 @@
           const sheet = document.getElementById('playerCmtSheet');
           if (sheet && sheet.classList.contains('open')) renderCmtSheet();
         }).observe(cmtList, { childList: true });
+        // step cards re-render as steps change; keep their Add-a-tip chips
+        const cardHost = document.getElementById('stepCardsSlider');
+        if (cardHost) {
+          injectAddTipChips();
+          new MutationObserver(injectAddTipChips).observe(cardHost, { childList: true });
+        }
 
         // The app re-applies its own split preference when the player opens;
         // if that ever disagrees with the chosen layout, re-assert it.
