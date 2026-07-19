@@ -3750,9 +3750,21 @@
     body:has(.phone-screen.cmt-open) #phoneMicBtn {
       opacity: 0 !important; pointer-events: none !important;
     }
-    #playerCmtSheet .plc-grab { width: 34px; height: 4px; border-radius: 999px; background: #d6e4f2; margin: 0 auto 8px; cursor: pointer; flex-shrink: 0; }
-    #playerCmtSheet .plc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-shrink: 0; }
-    #playerCmtSheet .plc-head h4 { margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading); }
+    #playerCmtSheet .plc-grab {
+      width: 120px; height: 20px; margin: -6px auto 2px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; background: transparent; border: none;
+    }
+    #playerCmtSheet .plc-grab::after {
+      content: ""; width: 34px; height: 4px; border-radius: 999px; background: #d6e4f2;
+    }
+    #playerCmtSheet .plc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+    #playerCmtSheet .plc-head h4 { margin: 0 auto 0 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading); }
+    #playerCmtSheet .plc-close {
+      border: none; background: #f4f9ff; color: var(--text-muted);
+      width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+      font-family: var(--font); font-size: 0.7rem; font-weight: 900; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
     #playerCmtSheet .plc-scope { display: flex; gap: 3px; background: #f4f9ff; border-radius: 999px; padding: 3px; }
     #playerCmtSheet .plc-scope button {
       border: none; background: transparent; color: var(--text-muted); border-radius: 999px;
@@ -3995,12 +4007,24 @@
           '<div class="plc-scope">' +
             '<button data-plc-scope="stop">This stop</button>' +
             '<button data-plc-scope="all" class="on">All</button>' +
-          '</div></div>' +
+          '</div>' +
+          '<button class="plc-close" title="Close comments">✕</button></div>' +
           '<div class="plc-list"><div class="plc-empty" id="plcEmpty" style="display:none;">' +
             'No comments here yet — be the first to leave a tip.</div></div>';
         sheet.querySelector('.plc-grab').addEventListener('click', closeCmtSheet);
+        sheet.querySelector('.plc-close').addEventListener('click', closeCmtSheet);
         sheet.querySelectorAll('[data-plc-scope]').forEach(b =>
           b.addEventListener('click', () => { cmtMode = b.dataset.plcScope; renderCmtSheet(); }));
+        // TikTok gesture: tapping the video (or anywhere outside the sheet
+        // that isn't a control) tucks the comments away
+        document.addEventListener('click', (ev) => {
+          const s = document.getElementById('playerCmtSheet');
+          if (!s || !s.classList.contains('open')) return;
+          const t = ev.target;
+          if (s.contains(t)) return;
+          if (t.closest && (t.closest('button') || t.closest('#playerLayoutPill'))) return;
+          closeCmtSheet();
+        }, true);
         // posting in This-stop mode stamps the stop's tag onto the comment
         sheet.addEventListener('click', (ev) => {
           if (cmtMode !== 'stop') return;
