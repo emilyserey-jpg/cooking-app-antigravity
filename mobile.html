@@ -3646,8 +3646,9 @@
        reads uninterrupted. Tuck keeps the horizontal road and gives the step
        name its own full line; Stack turns the road upright so every step name
        fits without trimming. Preference: cooking_gps_route_layout. */
-    #playerRouteCard.plr-tuck, #playerRouteCard.plr-stack { display: flex; flex-direction: column; }
-    #playerRouteCard.plr-tuck .plr-meta, #playerRouteCard.plr-stack .plr-meta {
+    /* every compact layout, Road included, wears its controls across the top */
+    #playerRouteCard.plr-slim { display: flex; flex-direction: column; }
+    #playerRouteCard.plr-slim .plr-meta {
       order: -1; margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(74, 144, 217, 0.16);
     }
     /* the current step gets its own line, so it never has to share width */
@@ -3660,12 +3661,15 @@
        The app sets inline display on some of these as it relocates them
        between the strip and the card, so these hides have to be !important. */
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
-    /* scoped to :not(.plr-open) so opening simply stops the hide from matching —
-       a competing show rule would lose, since :not(#id) carries ID specificity */
-    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrLayoutSeg) { display: none !important; }
-    #playerRouteCard.plr-tuck.plr-open .plr-meta { flex-wrap: wrap; }
+    /* closed, the strip is just the menu button and the clock; opening reveals
+       the rest, layout picker included. Scoped to :not(.plr-open) so opening
+       stops the hide matching — a competing show rule would lose, since
+       :not(#id) carries ID specificity */
+    #playerRouteCard.plr-slim:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn) { display: none !important; }
+    #playerRouteCard.plr-slim.plr-open .plr-meta { flex-wrap: wrap; }
     #plrMoreBtn { display: none; }
-    #playerRouteCard.plr-tuck #plrMoreBtn { display: inline-flex; }
+    #playerRouteCard.plr-slim #plrMoreBtn { display: inline-flex; }
+    #playerRouteCard.plr-slim.plr-open #plrMoreBtn { background: var(--primary); color: #fff; }
     /* the route layout picker: one tight pill, leading the control row,
        so all three layouts are one tap away without opening a menu */
     #plrLayoutSeg { display: none; }
@@ -4708,7 +4712,7 @@
         const routeLayout = slim ? (localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT) : 'road';
         card.classList.toggle('plr-tuck', routeLayout === 'tuck');
         card.classList.toggle('plr-stack', routeLayout === 'stack');
-        if (routeLayout !== 'tuck') card.classList.remove('plr-open');
+        if (!slim) card.classList.remove('plr-open');
         syncRouteLayoutMenu();
         screen.classList.toggle('plr-has-band', band);
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
