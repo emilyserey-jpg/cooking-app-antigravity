@@ -3650,9 +3650,16 @@
     #playerRouteCard.plr-slim { display: flex; flex-direction: column; position: relative; }
     #plrBar { display: none; }
     #playerRouteCard.plr-slim #plrBar {
-      order: -1; display: flex; align-items: center; gap: 6px;
+      order: -1; display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
       margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(74, 144, 217, 0.16);
     }
+    /* loop / sound / speed ride in the strip, sized like the card's own minis */
+    #plrBar .control-btn, #plrBar .speed-dropdown-wrapper > .control-btn {
+      width: 26px !important; height: 21px !important; min-width: 0 !important;
+      padding: 0 !important; border-radius: 6px;
+    }
+    #plrBar .speed-dropdown-wrapper { position: relative; display: inline-flex; flex: none; }
+    #plrBar .speed-dropdown-wrapper > .control-btn { width: auto !important; padding: 0 6px !important; }
     #plrBarClock {
       margin-left: auto; font-size: 0.56rem; font-weight: 900; color: var(--text-muted);
       font-variant-numeric: tabular-nums; white-space: nowrap;
@@ -4735,6 +4742,25 @@
         updateCompactLayouts(card, stops, t, dur);
       }
 
+      // Loop / sound / speed belong on the card itself, not in the menu.
+      // relocateSplitUtilities puts them into .plr-meta (which is now the
+      // dropdown panel), so this runs straight after it and lifts them into
+      // the visible strip. Only in the narrow column — everywhere else the
+      // app's own placement stands.
+      function hoistPlayerControls(slim) {
+        const bar = document.getElementById('plrBar');
+        const barClock = document.getElementById('plrBarClock');
+        if (!bar || !barClock || !slim) return;
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const mode = document.getElementById('playerModeCycleBtn');
+        const mute = document.getElementById('playerMuteBtn');
+        const speed = player.querySelector('.speed-dropdown-wrapper');
+        [mode, mute, speed].forEach(el => {
+          if (el && el.parentElement !== bar) bar.insertBefore(el, barClock);
+        });
+      }
+
       // Step names for the compact layouts come from the same chips the player
       // already renders, so they track whatever recipe is open.
       function routeStopNames() {
@@ -4830,6 +4856,7 @@
         const metaRow = card.querySelector('.plr-meta');
         if (chipsC && metaRow && chipsC.parentElement !== card) card.insertBefore(chipsC, metaRow);
         relocateSplitUtilities(name === 'split');
+        hoistPlayerControls(slim);
         relocateCookRail(name === 'cook');
         updateRoute();
         placeCmtTab();
