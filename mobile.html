@@ -357,11 +357,24 @@
                       <span>Split Layout</span>
                     </button>
 
-                    <!-- Route layout: how the timeline draws in the narrow column -->
-                    <button id="plrLayoutMenuBtn" onclick="window.cycleRouteLayout();" class="dropdown-item" tabindex="-1">
-                      <i data-lucide="list" style="width: 14px; height: 14px;"></i>
-                      <span>Route layout<span id="plrLayoutMenuValue" style="opacity: 0.6; font-weight: 700;"></span></span>
-                    </button>
+                    <!-- Route layout: how the timeline draws in the narrow column.
+                         Three explicit choices rather than one cycling item, so the
+                         one you want is one tap away and you can see which is on. -->
+                    <div class="plr-layout-group" style="border-top: 1px solid rgba(0,0,0,0.06); margin-top: 4px; padding-top: 4px;">
+                      <div style="font-size: 0.62rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); padding: 4px 12px 2px;">Route layout</div>
+                      <button class="dropdown-item plr-layout-opt" data-layout="road" onclick="window.setRouteLayout('road');" tabindex="-1">
+                        <i data-lucide="minus" style="width: 14px; height: 14px;"></i>
+                        <span>Road</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
+                      </button>
+                      <button class="dropdown-item plr-layout-opt" data-layout="tuck" onclick="window.setRouteLayout('tuck');" tabindex="-1">
+                        <i data-lucide="rows-2" style="width: 14px; height: 14px;"></i>
+                        <span>Compact</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
+                      </button>
+                      <button class="dropdown-item plr-layout-opt" data-layout="stack" onclick="window.setRouteLayout('stack');" tabindex="-1">
+                        <i data-lucide="list" style="width: 14px; height: 14px;"></i>
+                        <span>Standing up</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
+                      </button>
+                    </div>
                    
                    <!-- Embed Video -->
                    <button onclick="window.closePlayerActionsDropdown(); window.openPlayerEmbedModal();" class="dropdown-item" tabindex="-1">
@@ -4067,18 +4080,21 @@
       // The Options menu owns this choice — the card's own row is already
       // full at 144px, and a seventh button there pushed it to three lines.
       function syncRouteLayoutMenu() {
-        const label = document.getElementById('plrLayoutMenuValue');
-        if (!label) return;
         const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
-        label.textContent = ' · ' + (ROUTE_LAYOUT_NAMES[cur] || cur);
+        document.querySelectorAll('.plr-layout-opt').forEach(btn => {
+          const on = btn.dataset.layout === cur;
+          const tick = btn.querySelector('.plr-layout-tick');
+          if (tick) tick.textContent = on ? '✓' : '';
+          btn.style.color = on ? 'var(--primary)' : '';
+        });
       }
-      window.cycleRouteLayout = function () {
-        const order = ['tuck', 'stack', 'road'];
-        const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
-        localStorage.setItem(ROUTE_LAYOUT, order[(order.indexOf(cur) + 1) % order.length]);
+      window.setRouteLayout = function (name) {
+        if (!ROUTE_LAYOUT_NAMES[name]) return;
+        localStorage.setItem(ROUTE_LAYOUT, name);
         const card = document.getElementById('playerRouteCard');
         if (card) card.classList.remove('plr-open');
         placeRouteCard();
+        if (typeof window.closePlayerActionsDropdown === 'function') window.closePlayerActionsDropdown();
       };
       const NAMES = ['cook', 'split'];
       // Mirror and Flow were mirror images; they merged into one Split
