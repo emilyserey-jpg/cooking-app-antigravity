@@ -356,6 +356,12 @@
                       <i data-lucide="columns-2" style="width: 14px; height: 14px;"></i>
                       <span>Split Layout</span>
                     </button>
+
+                    <!-- Route layout: how the timeline draws in the narrow column -->
+                    <button id="plrLayoutMenuBtn" onclick="window.cycleRouteLayout();" class="dropdown-item" tabindex="-1">
+                      <i data-lucide="list" style="width: 14px; height: 14px;"></i>
+                      <span>Route layout<span id="plrLayoutMenuValue" style="opacity: 0.6; font-weight: 700;"></span></span>
+                    </button>
                    
                    <!-- Embed Video -->
                    <button onclick="window.closePlayerActionsDropdown(); window.openPlayerEmbedModal();" class="dropdown-item" tabindex="-1">
@@ -3661,13 +3667,10 @@
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
     /* scoped to :not(.plr-open) so opening simply stops the hide from matching —
        a competing show rule would lose, since :not(#id) carries ID specificity */
-    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrLayoutBtn) { display: none !important; }
+    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn) { display: none !important; }
     #playerRouteCard.plr-tuck.plr-open .plr-meta { flex-wrap: wrap; }
     #plrMoreBtn { display: none; }
     #playerRouteCard.plr-tuck #plrMoreBtn { display: inline-flex; }
-    /* the layout switch only means anything in the narrow column */
-    #plrLayoutBtn { display: none; }
-    #playerRouteCard.plr-slim #plrLayoutBtn { display: inline-flex; }
 
     /* Stack: the road stands upright, stops running down the card */
     #playerRouteCard.plr-stack .plr-route,
@@ -4058,6 +4061,25 @@
       const KEY = 'cooking_gps_player_layout';
       const SIDES = 'cooking_gps_split_sides';
       const ROUTE_LAYOUT = 'cooking_gps_route_layout';  // 'road' | 'tuck' | 'stack'
+      const ROUTE_LAYOUT_DEFAULT = 'tuck';
+      const ROUTE_LAYOUT_NAMES = { road: 'Road', tuck: 'Tuck', stack: 'Stack' };
+
+      // The Options menu owns this choice — the card's own row is already
+      // full at 144px, and a seventh button there pushed it to three lines.
+      function syncRouteLayoutMenu() {
+        const label = document.getElementById('plrLayoutMenuValue');
+        if (!label) return;
+        const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
+        label.textContent = ' · ' + (ROUTE_LAYOUT_NAMES[cur] || cur);
+      }
+      window.cycleRouteLayout = function () {
+        const order = ['tuck', 'stack', 'road'];
+        const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
+        localStorage.setItem(ROUTE_LAYOUT, order[(order.indexOf(cur) + 1) % order.length]);
+        const card = document.getElementById('playerRouteCard');
+        if (card) card.classList.remove('plr-open');
+        placeRouteCard();
+      };
       const NAMES = ['cook', 'split'];
       // Mirror and Flow were mirror images; they merged into one Split
       // layout with a sides toggle. Old saved choices map onto it.
@@ -4124,7 +4146,6 @@
           '<div class="plr-meta">' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
-            '<button id="plrLayoutBtn" title="Switch compact layout">\u2261<span class="plr-lbl"> layout</span></button>' +
             '<button id="plrMoreBtn" title="Show the rest of the controls">\u22ef</button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
@@ -4160,14 +4181,6 @@
           const cur = localStorage.getItem(SIDES) || 'video-left';
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
-        });
-        // road → tuck → stack → road, remembered per device like the width pref
-        card.querySelector('#plrLayoutBtn').addEventListener('click', () => {
-          const order = ['road', 'tuck', 'stack'];
-          const cur = localStorage.getItem(ROUTE_LAYOUT) || 'road';
-          localStorage.setItem(ROUTE_LAYOUT, order[(order.indexOf(cur) + 1) % order.length]);
-          card.classList.remove('plr-open');
-          placeRouteCard();
         });
         card.querySelector('#plrMoreBtn').addEventListener('click', () => {
           card.classList.toggle('plr-open');
@@ -4673,10 +4686,11 @@
         card.classList.toggle('plr-slim', slim);
         card.classList.toggle('plr-band', band);
         // the compact layouts only apply in the narrow column
-        const routeLayout = slim ? (localStorage.getItem(ROUTE_LAYOUT) || 'road') : 'road';
+        const routeLayout = slim ? (localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT) : 'road';
         card.classList.toggle('plr-tuck', routeLayout === 'tuck');
         card.classList.toggle('plr-stack', routeLayout === 'stack');
         if (routeLayout !== 'tuck') card.classList.remove('plr-open');
+        syncRouteLayoutMenu();
         screen.classList.toggle('plr-has-band', band);
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
         card.querySelector('#plrSwapBtn').style.display = name === 'cook' ? 'none' : '';
