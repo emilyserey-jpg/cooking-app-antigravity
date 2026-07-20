@@ -3640,6 +3640,61 @@
       padding: 1px 8px; cursor: pointer;
     }
 
+    /* ── compact layouts (slim only): Tuck and Stack ──
+       Both move the controls to a strip across the top so the route below
+       reads uninterrupted. Tuck keeps the horizontal road and gives the step
+       name its own full line; Stack turns the road upright so every step name
+       fits without trimming. Preference: cooking_gps_route_layout. */
+    #playerRouteCard.plr-tuck, #playerRouteCard.plr-stack { display: flex; flex-direction: column; }
+    #playerRouteCard.plr-tuck .plr-meta, #playerRouteCard.plr-stack .plr-meta {
+      order: -1; margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(74, 144, 217, 0.16);
+    }
+    /* the current step gets its own line, so it never has to share width */
+    #plrNow {
+      display: none; font-size: 0.66rem; font-weight: 900; color: var(--text-heading);
+      padding: 3px 2px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #playerRouteCard.plr-tuck #plrNow { display: block; }
+    /* Tuck: chips strip stands down, extra controls hide behind the ⋯.
+       The app sets inline display on some of these as it relocates them
+       between the strip and the card, so these hides have to be !important. */
+    #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
+    /* scoped to :not(.plr-open) so opening simply stops the hide from matching —
+       a competing show rule would lose, since :not(#id) carries ID specificity */
+    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrLayoutBtn) { display: none !important; }
+    #playerRouteCard.plr-tuck.plr-open .plr-meta { flex-wrap: wrap; }
+    #plrMoreBtn { display: none; }
+    #playerRouteCard.plr-tuck #plrMoreBtn { display: inline-flex; }
+    /* the layout switch only means anything in the narrow column */
+    #plrLayoutBtn { display: none; }
+    #playerRouteCard.plr-slim #plrLayoutBtn { display: inline-flex; }
+
+    /* Stack: the road stands upright, stops running down the card */
+    #playerRouteCard.plr-stack .plr-route,
+    #playerRouteCard.plr-stack .step-nav-chips-container { display: none !important; }
+    #plrStack { display: none; flex-direction: column; }
+    #playerRouteCard.plr-stack #plrStack { display: flex; }
+    .plr-stop { display: grid; grid-template-columns: 18px 1fr; gap: 7px; align-items: start; position: relative; padding-bottom: 9px; cursor: pointer; }
+    .plr-stop:last-child { padding-bottom: 2px; }
+    .plr-stop::before {
+      content: ""; position: absolute; left: 8px; top: 17px; bottom: -1px; width: 2px;
+      background: repeating-linear-gradient(180deg, #c9dcee 0 4px, transparent 4px 8px);
+    }
+    .plr-stop:last-child::before { display: none; }
+    .plr-stop.done::before { background: #22c55e; }
+    .plr-vdot {
+      width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 2px solid #c9dcee;
+      display: flex; align-items: center; justify-content: center; font-size: 0.48rem;
+      font-weight: 900; color: var(--text-muted); z-index: 2; box-sizing: border-box;
+    }
+    .plr-stop.done .plr-vdot { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .plr-stop.now .plr-vdot { border-color: #1fb6ff; color: #0b93d4; box-shadow: 0 0 0 3px rgba(31, 182, 255, 0.25); }
+    .plr-vname { font-size: 0.66rem; font-weight: 800; color: var(--text-muted); line-height: 1.3; padding-top: 1px; }
+    .plr-stop.now .plr-vname {
+      background: #1fb6ff; color: #fff; font-weight: 900; border-radius: 999px;
+      padding: 2px 8px; justify-self: start; margin-top: -1px;
+    }
+
     /* slim in-column variant (Mirror / Flow, width pref = column) */
     #playerRouteCard.plr-slim { margin: 4px 6px; padding: 6px 8px 2px; }
     #playerRouteCard.plr-slim .plr-route { height: 26px; margin: 0 6px; }
@@ -4002,6 +4057,7 @@
     (() => {
       const KEY = 'cooking_gps_player_layout';
       const SIDES = 'cooking_gps_split_sides';
+      const ROUTE_LAYOUT = 'cooking_gps_route_layout';  // 'road' | 'tuck' | 'stack'
       const NAMES = ['cook', 'split'];
       // Mirror and Flow were mirror images; they merged into one Split
       // layout with a sides toggle. Old saved choices map onto it.
@@ -4063,9 +4119,13 @@
             '<div class="plr-line"></div><div class="plr-done-line"></div>' +
             '<span class="plr-flag">\u{1F3C1}</span><span class="plr-pin">\u{1F4CD}</span>' +
           '</div>' +
+          '<div id="plrStack"></div>' +
+          '<div id="plrNow"></div>' +
           '<div class="plr-meta">' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
+            '<button id="plrLayoutBtn" title="Switch compact layout">\u2261<span class="plr-lbl"> layout</span></button>' +
+            '<button id="plrMoreBtn" title="Show the rest of the controls">\u22ef</button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
         const route = card.querySelector('#plrRoute');
@@ -4100,6 +4160,17 @@
           const cur = localStorage.getItem(SIDES) || 'video-left';
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
+        });
+        // road → tuck → stack → road, remembered per device like the width pref
+        card.querySelector('#plrLayoutBtn').addEventListener('click', () => {
+          const order = ['road', 'tuck', 'stack'];
+          const cur = localStorage.getItem(ROUTE_LAYOUT) || 'road';
+          localStorage.setItem(ROUTE_LAYOUT, order[(order.indexOf(cur) + 1) % order.length]);
+          card.classList.remove('plr-open');
+          placeRouteCard();
+        });
+        card.querySelector('#plrMoreBtn').addEventListener('click', () => {
+          card.classList.toggle('plr-open');
         });
         return card;
       }
@@ -4525,6 +4596,67 @@
         if (cc) cc.textContent = String(commentNodes().length);
         const fmt = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
         card.querySelector('#plrClock').textContent = fmt(t) + ' / ' + fmt(dur);
+        updateCompactLayouts(card, stops, t, dur);
+      }
+
+      // Step names for the compact layouts come from the same chips the player
+      // already renders, so they track whatever recipe is open.
+      function routeStopNames() {
+        return [...document.querySelectorAll('.chips-scroll-x .step-chip')].map(chip => {
+          const num = chip.querySelector('.step-chip-num');
+          const box = chip.querySelector('.step-chip-checkbox');
+          let text = '';
+          chip.childNodes.forEach(n => {
+            if (n === num || n === box) return;
+            text += (n.textContent || '');
+          });
+          return text.replace(/\s+/g, ' ').trim();
+        });
+      }
+
+      // Tuck shows the current step on its own line; Stack draws the whole
+      // route upright. Both read the same stops the road does.
+      function updateCompactLayouts(card, stops, t, dur) {
+        const tuck = card.classList.contains('plr-tuck');
+        const stack = card.classList.contains('plr-stack');
+        if (!tuck && !stack) return;
+        const names = routeStopNames();
+        const current = stops.findIndex(s => dur > 0 && t >= s.start && t < s.end);
+        const idx = current === -1 ? (dur > 0 && stops.length && t >= stops[stops.length - 1].end ? stops.length - 1 : 0) : current;
+
+        if (tuck) {
+          const now = card.querySelector('#plrNow');
+          if (now) now.textContent = names[idx] || '';
+          return;
+        }
+
+        const box = card.querySelector('#plrStack');
+        if (!box) return;
+        if (box.children.length !== stops.length) {
+          box.innerHTML = '';
+          stops.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.className = 'plr-stop';
+            row.dataset.i = i;
+            row.innerHTML = '<span class="plr-vdot"></span><span class="plr-vname"></span>';
+            row.addEventListener('click', () => {
+              const vid = document.getElementById('mobileRealVideo');
+              if (vid && isFinite(vid.duration)) vid.currentTime = stops[i].start;
+              updateRoute();
+            });
+            box.appendChild(row);
+          });
+        }
+        [...box.children].forEach((row, i) => {
+          const s = stops[i];
+          const done = dur > 0 && t >= s.end - 0.05;
+          row.classList.toggle('done', done);
+          row.classList.toggle('now', i === idx && dur > 0);
+          row.querySelector('.plr-vdot').innerHTML = done ? '&check;' : String(i + 1);
+          const nameEl = row.querySelector('.plr-vname');
+          const label = names[i] || ('Step ' + (i + 1));
+          if (nameEl.textContent !== label) nameEl.textContent = label;
+        });
       }
 
       function placeRouteCard() {
@@ -4537,8 +4669,14 @@
         const name = localStorage.getItem(KEY) || 'cook';
         const width = localStorage.getItem('cooking_gps_route_width') || 'full';
         const band = name !== 'cook' && width === 'full';
-        card.classList.toggle('plr-slim', name !== 'cook' && width === 'column');
+        const slim = name !== 'cook' && width === 'column';
+        card.classList.toggle('plr-slim', slim);
         card.classList.toggle('plr-band', band);
+        // the compact layouts only apply in the narrow column
+        const routeLayout = slim ? (localStorage.getItem(ROUTE_LAYOUT) || 'road') : 'road';
+        card.classList.toggle('plr-tuck', routeLayout === 'tuck');
+        card.classList.toggle('plr-stack', routeLayout === 'stack');
+        if (routeLayout !== 'tuck') card.classList.remove('plr-open');
         screen.classList.toggle('plr-has-band', band);
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
         card.querySelector('#plrSwapBtn').style.display = name === 'cook' ? 'none' : '';
