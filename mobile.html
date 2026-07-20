@@ -3680,10 +3680,15 @@
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
     /* scoped to :not(.plr-open) so opening simply stops the hide from matching —
        a competing show rule would lose, since :not(#id) carries ID specificity */
-    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn) { display: none !important; }
+    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrFlipBtn) { display: none !important; }
     #playerRouteCard.plr-tuck.plr-open .plr-meta { flex-wrap: wrap; }
     #plrMoreBtn { display: none; }
     #playerRouteCard.plr-tuck #plrMoreBtn { display: inline-flex; }
+    /* one-tap flip between the two compact layouts; never shown on Road,
+       so today's card keeps the row it has always had */
+    #plrFlipBtn { display: none; }
+    #playerRouteCard.plr-tuck #plrFlipBtn,
+    #playerRouteCard.plr-stack #plrFlipBtn { display: inline-flex; }
 
     /* Stack: the road stands upright, stops running down the card */
     #playerRouteCard.plr-stack .plr-route,
@@ -4087,6 +4092,8 @@
           if (tick) tick.textContent = on ? '✓' : '';
           btn.style.color = on ? 'var(--primary)' : '';
         });
+        const flip = document.getElementById('plrFlipBtn');
+        if (flip) flip.title = cur === 'stack' ? 'Switch to Compact' : 'Switch to Standing up';
       }
       window.setRouteLayout = function (name) {
         if (!ROUTE_LAYOUT_NAMES[name]) return;
@@ -4162,6 +4169,7 @@
           '<div class="plr-meta">' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
+            '<button id="plrFlipBtn" title="Switch between Compact and Standing up">\u21c5</button>' +
             '<button id="plrMoreBtn" title="Show the rest of the controls">\u22ef</button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
@@ -4197,6 +4205,10 @@
           const cur = localStorage.getItem(SIDES) || 'video-left';
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
+        });
+        card.querySelector('#plrFlipBtn').addEventListener('click', () => {
+          const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
+          window.setRouteLayout(cur === 'stack' ? 'tuck' : 'stack');
         });
         card.querySelector('#plrMoreBtn').addEventListener('click', () => {
           card.classList.toggle('plr-open');
