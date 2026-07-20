@@ -3646,11 +3646,72 @@
        reads uninterrupted. Tuck keeps the horizontal road and gives the step
        name its own full line; Stack turns the road upright so every step name
        fits without trimming. Preference: cooking_gps_route_layout. */
-    /* every compact layout, Road included, wears its controls across the top */
-    #playerRouteCard.plr-slim { display: flex; flex-direction: column; }
-    #playerRouteCard.plr-slim .plr-meta {
-      order: -1; margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(74, 144, 217, 0.16);
+    /* every compact layout, Road included, wears its strip across the top */
+    #playerRouteCard.plr-slim { display: flex; flex-direction: column; position: relative; }
+    #plrBar { display: none; }
+    #playerRouteCard.plr-slim #plrBar {
+      order: -1; display: flex; align-items: center; gap: 6px;
+      margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(74, 144, 217, 0.16);
     }
+    #plrBarClock {
+      margin-left: auto; font-size: 0.56rem; font-weight: 900; color: var(--text-muted);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    #plrBar #plrMoreBtn {
+      border: none; background: rgba(74, 144, 217, 0.10); color: var(--primary);
+      border-radius: 6px; font-family: var(--font); font-size: 0.66rem; font-weight: 900;
+      padding: 2px 8px; cursor: pointer; line-height: 1.4;
+    }
+    #playerRouteCard.plr-open #plrBar #plrMoreBtn { background: var(--primary); color: #fff; }
+
+    /* ── the dropdown: .plr-meta becomes a real menu panel under the button ──
+       The app's own code relocates the loop / mute / speed controls into
+       .plr-meta and inserts them before #plrClock, so both stay put here and
+       are restyled as menu rows rather than moved. */
+    #playerRouteCard.plr-slim .plr-meta { display: none; }
+    /* fixed, not absolute: the left column is overflow:auto and would clip the
+       panel at its own bottom edge, and the comment tab sits in a stacking
+       context this cannot outrank from inside. JS places it under the button. */
+    #playerRouteCard.plr-slim.plr-open .plr-meta {
+      display: flex; flex-direction: column; align-items: stretch; gap: 1px;
+      position: fixed; z-index: 9999; width: 170px;
+      background: #fff; border: 1px solid rgba(74, 144, 217, 0.18); border-radius: 10px;
+      box-shadow: 0 12px 30px rgba(26, 58, 92, 0.22); padding: 4px; margin: 0;
+      overflow-y: auto;
+    }
+    /* .plr-slim included to outrank the card's own
+       "#playerRouteCard .plr-meta .control-btn { width: 26px !important }" —
+       equal specificity would lose on source order */
+    #playerRouteCard.plr-slim.plr-open .plr-meta > * {
+      display: flex !important; align-items: center; justify-content: flex-start; gap: 8px;
+      width: 100% !important; min-width: 0 !important; height: auto !important;
+      padding: 7px 9px !important; border-radius: 6px;
+      font-size: 0.7rem; font-weight: 800; background: transparent; color: var(--text-heading);
+      text-align: left;
+    }
+    #playerRouteCard.plr-open .plr-meta > *:hover { background: var(--bg-card-soft); }
+    #playerRouteCard.plr-open .plr-meta #plrClock { display: none !important; }
+    /* the hidden ' sides' / ' width' labels the card already carries come back */
+    #playerRouteCard.plr-open .plr-meta .plr-lbl { display: inline !important; }
+    /* the app's icon-only controls get names in the menu */
+    #playerRouteCard.plr-open .plr-meta #playerModeCycleBtn::after { content: "Loop mode"; }
+    #playerRouteCard.plr-open .plr-meta #playerMuteBtn::after { content: "Sound"; }
+    #playerRouteCard.plr-open .plr-meta .speed-dropdown-wrapper::after { content: "Speed"; }
+    /* the layout picker unrolls into three named rows */
+    #playerRouteCard.plr-open #plrLayoutSeg {
+      flex-direction: column; align-items: stretch; gap: 1px;
+      background: transparent; border-radius: 0; padding: 0;
+      border-bottom: 1px solid rgba(74, 144, 217, 0.14); margin-bottom: 3px; padding-bottom: 3px;
+    }
+    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg {
+      display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+      width: 100%; padding: 7px 9px; border-radius: 6px; font-size: 0.7rem; text-align: left;
+    }
+    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg::after { content: attr(title); font-weight: 800; }
+    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg[aria-pressed="true"]::before {
+      content: "✓"; position: absolute; right: 12px; font-weight: 900;
+    }
+    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg { position: relative; }
     /* the current step gets its own line, so it never has to share width */
     #plrNow {
       display: none; font-size: 0.66rem; font-weight: 900; color: var(--text-heading);
@@ -3661,15 +3722,6 @@
        The app sets inline display on some of these as it relocates them
        between the strip and the card, so these hides have to be !important. */
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
-    /* closed, the strip is just the menu button and the clock; opening reveals
-       the rest, layout picker included. Scoped to :not(.plr-open) so opening
-       stops the hide matching — a competing show rule would lose, since
-       :not(#id) carries ID specificity */
-    #playerRouteCard.plr-slim:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn) { display: none !important; }
-    #playerRouteCard.plr-slim.plr-open .plr-meta { flex-wrap: wrap; }
-    #plrMoreBtn { display: none; }
-    #playerRouteCard.plr-slim #plrMoreBtn { display: inline-flex; }
-    #playerRouteCard.plr-slim.plr-open #plrMoreBtn { background: var(--primary); color: #fff; }
     /* the route layout picker: one tight pill, leading the control row,
        so all three layouts are one tap away without opening a menu */
     #plrLayoutSeg { display: none; }
@@ -4156,6 +4208,12 @@
           '</div>' +
           '<div id="plrStack"></div>' +
           '<div id="plrNow"></div>' +
+          // the always-visible strip: the menu button and the clock. Everything
+          // else lives in the dropdown that .plr-meta becomes when open.
+          '<div id="plrBar">' +
+            '<button id="plrMoreBtn" title="Route options" aria-haspopup="true" aria-expanded="false">⋯</button>' +
+            '<span id="plrBarClock">0:00 / 0:00</span>' +
+          '</div>' +
           '<div class="plr-meta">' +
             // the three route layouts live in the card itself, leading the
             // row, so picking one never means opening a menu
@@ -4166,7 +4224,6 @@
             '</span>' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
-            '<button id="plrMoreBtn" title="Show the rest of the controls">\u22ef</button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
           '</div>';
         const route = card.querySelector('#plrRoute');
@@ -4205,8 +4262,49 @@
         card.querySelectorAll('#plrLayoutSeg .plr-seg').forEach(seg => {
           seg.addEventListener('click', () => window.setRouteLayout(seg.dataset.layout));
         });
-        card.querySelector('#plrMoreBtn').addEventListener('click', () => {
-          card.classList.toggle('plr-open');
+        const moreBtn = card.querySelector('#plrMoreBtn');
+        // the panel is position:fixed, so it gets placed under the button by
+        // hand — and flipped above it when there is no room below
+        function placeMenu() {
+          const panel = card.querySelector('.plr-meta');
+          if (!panel || !card.classList.contains('plr-open')) return;
+          const b = moreBtn.getBoundingClientRect();
+          const w = panel.offsetWidth || 170;
+          const margin = 8;
+          // #view-mobile-player carries a transform, which makes it the
+          // containing block for position:fixed — so viewport coordinates have
+          // to be shifted into its space or the panel lands in the wrong place
+          const cb = panel.offsetParent;
+          const o = cb ? cb.getBoundingClientRect() : { top: 0, left: 0 };
+          const left = Math.min(Math.max(margin, b.left), window.innerWidth - w - margin);
+          const below = window.innerHeight - b.bottom - margin;
+          const above = b.top - margin;
+          let top;
+          if (below >= 160 || below >= above) {
+            top = b.bottom + 4;
+            panel.style.maxHeight = Math.max(120, below - 4) + 'px';
+          } else {
+            const h = Math.min(panel.scrollHeight + 8, above - 4);
+            top = Math.max(margin, b.top - h - 4);
+            panel.style.maxHeight = h + 'px';
+          }
+          panel.style.left = (left - o.left) + 'px';
+          panel.style.top = (top - o.top) + 'px';
+        }
+        moreBtn.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const open = card.classList.toggle('plr-open');
+          moreBtn.setAttribute('aria-expanded', String(open));
+          if (open) placeMenu();
+        });
+        window.addEventListener('resize', placeMenu);
+        window.addEventListener('scroll', placeMenu, true);
+        // clicking anywhere else closes the menu, the way a dropdown should
+        document.addEventListener('click', ev => {
+          if (!card.classList.contains('plr-open')) return;
+          if (card.contains(ev.target)) return;
+          card.classList.remove('plr-open');
+          moreBtn.setAttribute('aria-expanded', 'false');
         });
         return card;
       }
@@ -4632,6 +4730,8 @@
         if (cc) cc.textContent = String(commentNodes().length);
         const fmt = x => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
         card.querySelector('#plrClock').textContent = fmt(t) + ' / ' + fmt(dur);
+        const barClock = card.querySelector('#plrBarClock');
+        if (barClock) barClock.textContent = fmt(t) + ' / ' + fmt(dur);
         updateCompactLayouts(card, stops, t, dur);
       }
 
