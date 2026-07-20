@@ -357,24 +357,6 @@
                       <span>Split Layout</span>
                     </button>
 
-                    <!-- Route layout: how the timeline draws in the narrow column.
-                         Three explicit choices rather than one cycling item, so the
-                         one you want is one tap away and you can see which is on. -->
-                    <div class="plr-layout-group" style="border-top: 1px solid rgba(0,0,0,0.06); margin-top: 4px; padding-top: 4px;">
-                      <div style="font-size: 0.62rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); padding: 4px 12px 2px;">Route layout</div>
-                      <button class="dropdown-item plr-layout-opt" data-layout="road" onclick="window.setRouteLayout('road');" tabindex="-1">
-                        <i data-lucide="minus" style="width: 14px; height: 14px;"></i>
-                        <span>Road</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
-                      </button>
-                      <button class="dropdown-item plr-layout-opt" data-layout="tuck" onclick="window.setRouteLayout('tuck');" tabindex="-1">
-                        <i data-lucide="rows-2" style="width: 14px; height: 14px;"></i>
-                        <span>Compact</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
-                      </button>
-                      <button class="dropdown-item plr-layout-opt" data-layout="stack" onclick="window.setRouteLayout('stack');" tabindex="-1">
-                        <i data-lucide="list" style="width: 14px; height: 14px;"></i>
-                        <span>Standing up</span><span class="plr-layout-tick" style="margin-left: auto; font-weight: 900;"></span>
-                      </button>
-                    </div>
                    
                    <!-- Embed Video -->
                    <button onclick="window.closePlayerActionsDropdown(); window.openPlayerEmbedModal();" class="dropdown-item" tabindex="-1">
@@ -3680,15 +3662,24 @@
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
     /* scoped to :not(.plr-open) so opening simply stops the hide from matching —
        a competing show rule would lose, since :not(#id) carries ID specificity */
-    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrFlipBtn) { display: none !important; }
+    #playerRouteCard.plr-tuck:not(.plr-open) .plr-meta > *:not(#plrClock):not(#plrMoreBtn):not(#plrLayoutSeg) { display: none !important; }
     #playerRouteCard.plr-tuck.plr-open .plr-meta { flex-wrap: wrap; }
     #plrMoreBtn { display: none; }
     #playerRouteCard.plr-tuck #plrMoreBtn { display: inline-flex; }
-    /* one-tap flip between the two compact layouts; never shown on Road,
-       so today's card keeps the row it has always had */
-    #plrFlipBtn { display: none; }
-    #playerRouteCard.plr-tuck #plrFlipBtn,
-    #playerRouteCard.plr-stack #plrFlipBtn { display: inline-flex; }
+    /* the route layout picker: one tight pill, leading the control row,
+       so all three layouts are one tap away without opening a menu */
+    #plrLayoutSeg { display: none; }
+    #playerRouteCard.plr-slim #plrLayoutSeg {
+      display: inline-flex; align-items: center; gap: 0;
+      background: rgba(74, 144, 217, 0.08); border-radius: 999px; padding: 1px; flex: none;
+    }
+    /* size and padding come from the card's own .plr-meta button rules, which
+       are more specific — only the segmented look is set here */
+    #plrLayoutSeg .plr-seg {
+      border: none; background: transparent; color: var(--primary);
+      border-radius: 999px; cursor: pointer; line-height: 1;
+    }
+    #plrLayoutSeg .plr-seg[aria-pressed="true"] { background: var(--primary); color: #fff; }
 
     /* Stack: the road stands upright, stops running down the card */
     #playerRouteCard.plr-stack .plr-route,
@@ -4086,14 +4077,9 @@
       // full at 144px, and a seventh button there pushed it to three lines.
       function syncRouteLayoutMenu() {
         const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
-        document.querySelectorAll('.plr-layout-opt').forEach(btn => {
-          const on = btn.dataset.layout === cur;
-          const tick = btn.querySelector('.plr-layout-tick');
-          if (tick) tick.textContent = on ? '✓' : '';
-          btn.style.color = on ? 'var(--primary)' : '';
+        document.querySelectorAll('#plrLayoutSeg .plr-seg').forEach(seg => {
+          seg.setAttribute('aria-pressed', String(seg.dataset.layout === cur));
         });
-        const flip = document.getElementById('plrFlipBtn');
-        if (flip) flip.title = cur === 'stack' ? 'Switch to Compact' : 'Switch to Standing up';
       }
       window.setRouteLayout = function (name) {
         if (!ROUTE_LAYOUT_NAMES[name]) return;
@@ -4167,9 +4153,13 @@
           '<div id="plrStack"></div>' +
           '<div id="plrNow"></div>' +
           '<div class="plr-meta">' +
-            // flip leads the row in every layout, so it sits in the same
-            // place whether you are in Compact or Standing up
-            '<button id="plrFlipBtn" title="Switch between Compact and Standing up">\u21c5</button>' +
+            // the three route layouts live in the card itself, leading the
+            // row, so picking one never means opening a menu
+            '<span id="plrLayoutSeg" role="group" aria-label="Route layout">' +
+              '<button class="plr-seg" data-layout="road" title="Road" aria-label="Road layout">\u2014</button>' +
+              '<button class="plr-seg" data-layout="tuck" title="Compact" aria-label="Compact layout">\u25a4</button>' +
+              '<button class="plr-seg" data-layout="stack" title="Standing up" aria-label="Standing up layout">\u2630</button>' +
+            '</span>' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
             '<button id="plrMoreBtn" title="Show the rest of the controls">\u22ef</button>' +
@@ -4208,9 +4198,8 @@
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
         });
-        card.querySelector('#plrFlipBtn').addEventListener('click', () => {
-          const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
-          window.setRouteLayout(cur === 'stack' ? 'tuck' : 'stack');
+        card.querySelectorAll('#plrLayoutSeg .plr-seg').forEach(seg => {
+          seg.addEventListener('click', () => window.setRouteLayout(seg.dataset.layout));
         });
         card.querySelector('#plrMoreBtn').addEventListener('click', () => {
           card.classList.toggle('plr-open');
