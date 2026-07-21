@@ -5276,5 +5276,121 @@
       });
     })();
   </script>
+
+  <!-- ── My Space: drag-to-rearrange for the bento dashboard ──
+       The dashboard (add / remove / resize widgets) already lives in app.js.
+       This adds the one missing piece — reordering widgets by dragging, iPhone
+       home-screen style — entirely from here, so app.js is untouched. On mobile
+       the grid is a single column, so it's a vertical-list sort. Order persists
+       in cooking_gps_widget_order and is re-applied whenever the dashboard
+       re-renders (refreshWidgetsVisibility). -->
+  <style>
+    /* jiggle while editing (skip the one being dragged) */
+    #profileBentoGrid.dashboard-editing .bento-widget:not(.dragging) {
+      animation: bentoJiggle 0.34s ease-in-out infinite;
+    }
+    #profileBentoGrid.dashboard-editing .bento-widget:nth-child(2n):not(.dragging) { animation-delay: -0.17s; }
+    #profileBentoGrid.dashboard-editing .bento-widget:nth-child(3n):not(.dragging) { animation-delay: -0.09s; }
+    @keyframes bentoJiggle { 0%,100% { transform: rotate(-0.55deg); } 50% { transform: rotate(0.55deg); } }
+    /* the widget being dragged floats; a placeholder holds its spot */
+    #profileBentoGrid.dashboard-editing .bento-widget { touch-action: none; }
+    #profileBentoGrid .bento-widget.dragging {
+      box-shadow: 0 14px 34px rgba(26,58,92,0.32) !important; opacity: 0.97; animation: none !important;
+    }
+    #profileBentoGrid .bento-placeholder {
+      background: rgba(74,144,217,0.08) !important; border: 2px dashed rgba(74,144,217,0.32) !important;
+      box-shadow: none !important; animation: none !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #profileBentoGrid.dashboard-editing .bento-widget { animation: none; }
+    }
+  </style>
+  <script>
+    (() => {
+      const GRID = 'profileBentoGrid';
+      const ORDER_KEY = 'cooking_gps_widget_order';
+      const grid = () => document.getElementById(GRID);
+      const widgets = g => [...g.querySelectorAll('.bento-widget')].filter(w => !w.classList.contains('bento-placeholder'));
+
+      const getOrder = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || []; } catch (e) { return []; } };
+      function saveOrder() {
+        const g = grid(); if (!g) return;
+        localStorage.setItem(ORDER_KEY, JSON.stringify(widgets(g).map(w => w.id).filter(Boolean)));
+      }
+      // reorder the grid's children to the saved order; ids not in it keep their
+      // relative position at the end (new widgets land last, as expected)
+      function applyOrder() {
+        const g = grid(); if (!g) return;
+        const order = getOrder(); if (!order.length) return;
+        const rank = {}; order.forEach((id, i) => rank[id] = i);
+        const ws = widgets(g);
+        ws.map((w, i) => [w, w.id in rank ? rank[w.id] : order.length + i])
+          .sort((a, b) => a[1] - b[1])
+          .forEach(([w]) => g.appendChild(w));
+      }
+
+      // ── pointer-based vertical sortable (mouse + touch) ──
+      let drag = null;
+      function onDown(e) {
+        const g = grid();
+        if (!g || !g.classList.contains('dashboard-editing')) return;
+        const w = e.target.closest('.bento-widget');
+        if (!w || !g.contains(w) || e.target.closest('button, a, input, select, textarea')) return;
+        e.preventDefault();
+        const r = w.getBoundingClientRect();
+        const ph = document.createElement('div');
+        ph.className = w.className + ' bento-placeholder';
+        ph.style.height = r.height + 'px';
+        g.insertBefore(ph, w);
+        drag = { w, ph, g, offY: e.clientY - r.top, left: r.left, width: r.width };
+        Object.assign(w.style, { position: 'fixed', width: r.width + 'px', left: r.left + 'px', top: (e.clientY - drag.offY) + 'px', zIndex: '1000', pointerEvents: 'none', margin: '0' });
+        w.classList.add('dragging');
+        try { w.setPointerCapture(e.pointerId); } catch (_) {}
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+      }
+      function onMove(e) {
+        if (!drag) return;
+        drag.w.style.top = (e.clientY - drag.offY) + 'px';
+        const sibs = [...drag.g.querySelectorAll('.bento-widget:not(.dragging):not(.bento-placeholder)')];
+        let placed = false;
+        for (const s of sibs) {
+          const r = s.getBoundingClientRect();
+          if (e.clientY < r.top + r.height / 2) { drag.g.insertBefore(drag.ph, s); placed = true; break; }
+        }
+        if (!placed) drag.g.appendChild(drag.ph);
+      }
+      function onUp() {
+        if (!drag) return;
+        const { w, ph, g } = drag;
+        g.insertBefore(w, ph); ph.remove();
+        ['position', 'width', 'left', 'top', 'zIndex', 'pointerEvents', 'margin', 'transform'].forEach(p => w.style.removeProperty(p.replace(/[A-Z]/g, m => '-' + m.toLowerCase())));
+        w.classList.remove('dragging');
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        drag = null;
+        saveOrder();
+      }
+
+      // re-apply the saved order every time the dashboard re-renders
+      function hookRefresh() {
+        if (window.refreshWidgetsVisibility && !window.refreshWidgetsVisibility._orderHooked) {
+          const orig = window.refreshWidgetsVisibility;
+          window.refreshWidgetsVisibility = function () { const out = orig.apply(this, arguments); try { applyOrder(); } catch (e) {} return out; };
+          window.refreshWidgetsVisibility._orderHooked = true;
+          return true;
+        }
+        return false;
+      }
+
+      document.addEventListener('pointerdown', onDown);
+      const boot = () => { hookRefresh(); if (grid()) applyOrder(); };
+      if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+      // app.js defines refreshWidgetsVisibility after its module loads; keep trying briefly
+      let tries = 0; const t = setInterval(() => { if (hookRefresh() || ++tries > 40) { if (grid()) applyOrder(); clearInterval(t); } }, 150);
+    })();
+  </script>
 </body>
 </html>
