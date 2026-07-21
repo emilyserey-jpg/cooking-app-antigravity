@@ -4775,6 +4775,50 @@
         vidC.style.setProperty('margin', '4px auto', 'important');
       }
 
+      // Cook gave the video a fixed 42vh box and cropped whatever didn't fit.
+      // Instead, size the frame to the video's real aspect within that height and
+      // the column width — a tall video simply gets narrower and centres, never
+      // cropped. Same idea as fixSplitVideoSize, different bounds.
+      function fixCookVideoSize() {
+        const screen = document.querySelector('#view-mobile-player .phone-screen');
+        const vidC = document.querySelector('#view-mobile-player .mobile-video-container');
+        const leftCol = document.querySelector('#view-mobile-player .player-left-column');
+        if (!screen || !vidC || !leftCol) return;
+        const strip = leftCol.querySelector('.player-controls-strip');
+        const clear = () => {
+          ['width', 'height', 'max-height', 'min-height', 'margin'].forEach(p => vidC.style.removeProperty(p));
+          if (strip) ['width', 'margin-left', 'margin-right'].forEach(p => strip.style.removeProperty(p));
+        };
+        // not Cook, or the step-videos panel is flowing on its own: drop the
+        // inline sizing and let that layout's own CSS take over
+        if (!screen.classList.contains('pl-cook') || vidC.classList.contains('multigrid-active')) {
+          clear();
+          return;
+        }
+        const colW = leftCol.getBoundingClientRect().width;
+        if (colW < 60) return;
+        const v = document.getElementById('mobileRealVideo');
+        let aspect = 9 / 16;
+        if (v && v.videoWidth && v.videoHeight) aspect = v.videoWidth / v.videoHeight;
+        const maxW = Math.round(colW - 24);                       // 12px card margin each side
+        const maxH = Math.round((window.innerHeight || 800) * 0.42);
+        let w = maxW, h = Math.round(w / aspect);
+        if (h > maxH) { h = maxH; w = Math.round(h * aspect); }    // too tall: cap height, narrow it
+        vidC.style.setProperty('width', w + 'px', 'important');
+        vidC.style.setProperty('height', h + 'px', 'important');
+        vidC.style.setProperty('max-height', 'none', 'important');
+        vidC.style.setProperty('min-height', '0', 'important');
+        vidC.style.setProperty('margin', '4px auto 0', 'important');
+        // the transport (prev / play / next) floats over the video's bottom edge,
+        // so match it to the (now narrower) video width and centre it too — the
+        // CSS keeps the negative top margin that lifts it onto the video
+        if (strip) {
+          strip.style.setProperty('width', w + 'px', 'important');
+          strip.style.setProperty('margin-left', 'auto', 'important');
+          strip.style.setProperty('margin-right', 'auto', 'important');
+        }
+      }
+
       // in Split the mic rides the video's top-right corner (fixed element,
       // so viewport coordinates; re-pinned on scroll and resize)
       function placeSplitMic() {
@@ -4793,7 +4837,7 @@
         mic.style.setProperty('right', 'auto', 'important');
       }
       window.addEventListener('scroll', placeSplitMic, { passive: true });
-      window.addEventListener('resize', () => { fixSplitVideoSize(); placeSplitMic(); });
+      window.addEventListener('resize', () => { fixCookVideoSize(); fixSplitVideoSize(); placeSplitMic(); placeCookRail(); placeCmtTab(); });
       window.addEventListener('resize', placeCmtTab);
 
       window.addEventListener('resize', () => {
@@ -5031,7 +5075,7 @@
         // settles, ask it to measure again, then place the floaters
         setTimeout(() => {
           if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
-          setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); dockCollapsedBand(); }, 80);
+          setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); dockCollapsedBand(); }, 80);
         }, 400);
       }
       function placeCmtSheetIfOpen() {
@@ -5146,7 +5190,7 @@
             }, 80);
             setTimeout(markCookStripOverlap, 180);
             setTimeout(updateRoute, 200);
-            setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 220);
+            setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 220);
           }
         }, true);
         // the pin travels with the real video clock
