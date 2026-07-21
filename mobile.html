@@ -3641,6 +3641,38 @@
       padding: 1px 8px; cursor: pointer;
     }
 
+    /* ── collapse the Route ──
+       The caret leads the controls strip (.plr-meta). Tapping it folds away the
+       road and the step chips — everything above the strip — leaving the strip
+       itself (speed, mute, clock and the caret) as the always-visible handle, so
+       there is always a way back. State lives in cooking_gps_route_collapsed,
+       per device. The folding rows animate their own max-height; the strip never
+       folds. */
+    #plrRoute, #plrStack, #plrNow,
+    #playerRouteCard .step-nav-chips-container {
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    }
+    .plr-folded {
+      max-height: 0 !important; opacity: 0; overflow: hidden; pointer-events: none;
+      margin-top: 0 !important; margin-bottom: 0 !important;
+      padding-top: 0 !important; padding-bottom: 0 !important;
+    }
+    /* the caret sits in the controls strip; the more specific selector beats the
+       generic `.plr-meta button` styling so it keeps its rounded-square look */
+    .plr-meta .plr-collapse-btn {
+      flex: none; width: 24px; height: 24px; border-radius: 7px; padding: 0; cursor: pointer;
+      border: 1px solid rgba(74, 144, 217, 0.22); background: rgba(74, 144, 217, 0.06);
+      color: var(--primary); display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .plr-meta .plr-collapse-btn:hover { background: rgba(74, 144, 217, 0.14); }
+    .plr-meta .plr-collapse-btn svg {
+      width: 14px; height: 14px; display: block; fill: none; stroke: currentColor;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .plr-meta .plr-collapse-btn.is-collapsed svg { transform: rotate(-90deg); }
+
     /* ── compact layouts (slim only): Tuck and Stack ──
        Both move the controls to a strip across the top so the route below
        reads uninterrupted. Tuck keeps the horizontal road and gives the step
@@ -3785,7 +3817,14 @@
       box-shadow: 0 10px 28px rgba(26, 58, 92, 0.18); z-index: 40;
     }
     .phone-screen.plr-has-band .player-left-column,
-    .phone-screen.plr-has-band .mobile-player-body { padding-bottom: 126px !important; }
+    .phone-screen.plr-has-band .mobile-player-body {
+      padding-bottom: 126px !important;
+      transition: padding-bottom 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    /* collapsed: the band is just the thin controls strip, so reserve only
+       enough for it — the content drops down and the gap above the strip closes */
+    .phone-screen.plr-has-band.route-collapsed .player-left-column,
+    .phone-screen.plr-has-band.route-collapsed .mobile-player-body { padding-bottom: 60px !important; }
 
     /* the Route replaces the old plain scrubber and time row in the
        split layout too (Cook already hides them) */
@@ -4136,6 +4175,120 @@
       const ROUTE_LAYOUT_DEFAULT = 'tuck';
       const ROUTE_LAYOUT_NAMES = { road: 'Road', tuck: 'Tuck', stack: 'Stack' };
 
+      // ── collapse the Route ──
+      // The caret in the controls strip folds away every card row EXCEPT the
+      // strip itself (.plr-meta) — the road and the step chips — so the strip
+      // stays as the always-visible handle. State is per device.
+      // reflectRouteCollapsed(false) snaps to the saved state (on load and after
+      // every relayout); (true) runs the slide. Each folding row animates its own
+      // max-height off its measured scrollHeight, so any layout or step count
+      // collapses cleanly without a magic number.
+      const ROUTE_COLLAPSED = 'cooking_gps_route_collapsed';
+      function isRouteCollapsed() { return localStorage.getItem(ROUTE_COLLAPSED) === 'true'; }
+      // every visible card row that is not the controls strip
+      function foldingRows(card) {
+        return Array.prototype.filter.call(card.children, el =>
+          !el.classList.contains('plr-meta') && getComputedStyle(el).display !== 'none');
+      }
+      function reflectRouteCollapsed(animate) {
+        const collapsed = isRouteCollapsed();
+        const btn = document.getElementById('plrCollapseBtn');
+        if (btn) {
+          btn.classList.toggle('is-collapsed', collapsed);
+          btn.setAttribute('aria-expanded', String(!collapsed));
+          btn.setAttribute('aria-label', collapsed ? 'Show steps' : 'Hide steps');
+          btn.title = collapsed ? 'Show steps' : 'Hide steps';
+        }
+        // in the full-width band, the columns reserve room for the expanded band;
+        // this flag shrinks that reserve so the collapsed strip rises to the
+        // content instead of leaving a gap above it
+        document.querySelectorAll('.phone-screen').forEach(s => s.classList.toggle('route-collapsed', collapsed));
+        const card = document.getElementById('playerRouteCard');
+        if (!card) return;
+        foldingRows(card).forEach(row => {
+          if (!animate) {
+            row.classList.toggle('plr-folded', collapsed);
+            row.style.maxHeight = collapsed ? '0px' : '';
+            return;
+          }
+          if (collapsed) {
+            row.style.maxHeight = row.scrollHeight + 'px';
+            void row.offsetHeight;                     // lock the start height
+            row.classList.add('plr-folded');
+            row.style.maxHeight = '0px';
+          } else {
+            row.classList.remove('plr-folded');
+            row.style.maxHeight = '0px';
+            void row.offsetHeight;
+            row.style.maxHeight = row.scrollHeight + 'px';
+            const done = (e) => {
+              if (e.propertyName !== 'max-height') return; // release the cap so nothing clips
+              row.style.maxHeight = '';
+              row.removeEventListener('transitionend', done);
+            };
+            row.addEventListener('transitionend', done);
+          }
+        });
+        // content sizes can still be resolving when this runs on load, which
+        // would measure maxBottom as 0 and skip; re-dock on the next frame and
+        // shortly after so the strip lands under the settled content either way
+        dockCollapsedBand();
+        requestAnimationFrame(dockCollapsedBand);
+        setTimeout(dockCollapsedBand, 160);
+      }
+      // In the full-width band, a collapsed strip left at the screen bottom leaves
+      // a gap above it (the step column doesn't stretch to the edge). This docks
+      // the strip just below the tallest column of real content instead, clamped
+      // so it never runs past the bottom edge. Only the band cares; every other
+      // placement clears the inline offsets and falls back to the CSS bottom anchor.
+      // A ResizeObserver re-docks as content settles, so progressive layout (the
+      // step slider and video size in over several frames) can't strand the strip.
+      const DOCK_CONTENT = ['.mobile-video-container', '.step-slider-viewport', '.step-slider-card', '.player-controls-strip'];
+      let dockObserver = null;
+      function dockActive() {
+        const card = document.getElementById('playerRouteCard');
+        return !!card && card.classList.contains('plr-band') && isRouteCollapsed();
+      }
+      function positionDockedBand() {
+        const card = document.getElementById('playerRouteCard');
+        if (!dockActive()) return;
+        const screen = card.closest('.phone-screen') || document.querySelector('.phone-screen');
+        if (!screen) return;
+        const sr = screen.getBoundingClientRect();
+        let maxBottom = 0;
+        DOCK_CONTENT.forEach(sel => {
+          const el = screen.querySelector(sel);
+          if (el && el.getBoundingClientRect().height > 0)
+            maxBottom = Math.max(maxBottom, el.getBoundingClientRect().bottom - sr.top);
+        });
+        if (maxBottom <= 0) return;
+        const stripH = card.getBoundingClientRect().height || 42;
+        card.style.top = Math.round(Math.min(maxBottom + 8, sr.height - stripH - 12)) + 'px';
+        card.style.bottom = 'auto';
+      }
+      function dockCollapsedBand() {
+        const card = document.getElementById('playerRouteCard');
+        if (!card) return;
+        if (!dockActive()) {
+          card.style.top = ''; card.style.bottom = '';
+          if (dockObserver) { dockObserver.disconnect(); dockObserver = null; }
+          return;
+        }
+        const screen = card.closest('.phone-screen') || document.querySelector('.phone-screen');
+        if (screen && window.ResizeObserver && !dockObserver) {
+          dockObserver = new ResizeObserver(() => positionDockedBand());
+          DOCK_CONTENT.concat('.player-left-column', '.mobile-player-body').forEach(sel => {
+            const el = screen.querySelector(sel);
+            if (el) dockObserver.observe(el);
+          });
+        }
+        positionDockedBand();
+      }
+      window.toggleRouteCollapsed = function () {
+        localStorage.setItem(ROUTE_COLLAPSED, String(!isRouteCollapsed()));
+        reflectRouteCollapsed(true);
+      };
+
       // The Options menu owns this choice — the card's own row is already
       // full at 144px, and a seventh button there pushed it to three lines.
       function syncRouteLayoutMenu() {
@@ -4188,12 +4341,18 @@
           if (optionsWrap && titleC && optionsWrap.parentElement !== titleC)
             titleC.appendChild(optionsWrap);
         } else {
-          if (slider && slider.parentElement !== body)
-            body.insertBefore(slider, document.getElementById('playerMultigridDescControls'));
+          if (slider && slider.parentElement !== body) {
+            // the reference node may not be a child of body in every state;
+            // insertBefore throws in that case, which aborts the whole layout
+            // switch (setPlayerLayout never reaches placeRouteCard, so the band
+            // is never built). Fall back to appending when the ref isn't valid.
+            const sliderRef = document.getElementById('playerMultigridDescControls');
+            body.insertBefore(slider, sliderRef && sliderRef.parentElement === body ? sliderRef : null);
+          }
           // in Split the strip sits directly after the video so its negative
           // margin pulls it onto the video's scrim (option B)
           const details = player.querySelector('.video-overlay-details');
-          if (strip) leftCol.insertBefore(strip, details);
+          if (strip) leftCol.insertBefore(strip, details && details.parentElement === leftCol ? details : null);
           // the Options menu returns to its home in the tabs bar
           const tabs = document.getElementById('playerMainTabsContainer');
           if (optionsWrap && tabs && optionsWrap.parentElement !== tabs)
@@ -4222,6 +4381,10 @@
             '<span id="plrBarClock">0:00 / 0:00</span>' +
           '</div>' +
           '<div class="plr-meta">' +
+            // the collapse caret leads the controls strip; this strip is the
+            // one row that stays when the road and chips fold away, so it holds
+            // the only way back
+            '<button id="plrCollapseBtn" class="plr-collapse-btn" onclick="toggleRouteCollapsed()" aria-label="Hide steps" aria-expanded="true" title="Hide steps"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"></path></svg></button>' +
             // the three route layouts live in the card itself, leading the
             // row, so picking one never means opening a menu
             '<span id="plrLayoutSeg" role="group" aria-label="Route layout">' +
@@ -4855,6 +5018,9 @@
         const chipsC = player.querySelector('.step-nav-chips-container');
         const metaRow = card.querySelector('.plr-meta');
         if (chipsC && metaRow && chipsC.parentElement !== card) card.insertBefore(chipsC, metaRow);
+        // the card was just (re)placed and reshaped — re-assert the saved
+        // collapsed state without animating the relayout itself
+        reflectRouteCollapsed(false);
         relocateSplitUtilities(name === 'split');
         hoistPlayerControls(slim);
         relocateCookRail(name === 'cook');
@@ -4865,7 +5031,7 @@
         // settles, ask it to measure again, then place the floaters
         setTimeout(() => {
           if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
-          setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 80);
+          setTimeout(() => { fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); dockCollapsedBand(); }, 80);
         }, 400);
       }
       function placeCmtSheetIfOpen() {
