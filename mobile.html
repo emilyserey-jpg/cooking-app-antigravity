@@ -3460,9 +3460,19 @@
       border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* ── the mockup's skin: airy gradient, frosted orbs, capsule play, glass cards ── */
+    /* ── the mockup's skin: airy ground, frosted orbs, capsule play, glass cards ──
+       Flat light-blue rather than a blue→green fade: the gradient's green foot
+       pooled around the route card and read as a cutout edge. */
     #view-mobile-player .phone-screen {
-      background: linear-gradient(165deg, #eaf3fc 0%, #e9f7f0 100%) !important;
+      background: #eaf3fc !important;
+    }
+    /* the app body carries a blue→green radial ground (styles.css); its green
+       foot at the bottom-right showed through below the player and read as a
+       cutout. Keep the blue radials, drop the green one. */
+    body {
+      background-image:
+        radial-gradient(ellipse at 10% 0%, #c8e6ff 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, #eaf4ff 0%, transparent 80%) !important;
     }
 
     /* Back / Multigrid become frosted circular orbs, icon only */
@@ -4103,6 +4113,35 @@
       border-radius: 14px !important; overflow: hidden !important;
       margin: 4px 6px !important;
       box-shadow: 0 6px 18px rgba(26, 58, 92, 0.16) !important;
+    }
+
+    /* ── video-first: the nav buttons ride a scrim on the video ──
+       Back and grid sit on the video's top corners (in Split too, not just
+       Cook), over a soft top scrim, with a matching bottom scrim under the
+       transport. The scrim keeps them legible over the footage's own drifting
+       watermark. Placed after the base .player-top-btn rule so the glass wins. */
+    #view-mobile-player .mobile-video-container::before,
+    #view-mobile-player .mobile-video-container::after {
+      content: ""; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none;
+    }
+    #view-mobile-player .mobile-video-container::before {
+      top: 0; height: 54px; background: linear-gradient(to bottom, rgba(8,16,26,0.5), transparent);
+    }
+    #view-mobile-player .mobile-video-container::after {
+      bottom: 0; height: 62px; background: linear-gradient(to top, rgba(8,16,26,0.5), transparent);
+    }
+    #view-mobile-player .mobile-video-placeholder .player-top-controls-wrapper {
+      position: absolute !important; top: 8px !important; left: 8px !important; right: 8px !important;
+      bottom: auto !important; width: auto !important; z-index: 6 !important;
+      display: flex !important; justify-content: space-between !important; align-items: center !important;
+      padding: 0 !important; margin: 0 !important; pointer-events: none !important;
+    }
+    #view-mobile-player .mobile-video-placeholder .player-top-controls-wrapper > * { pointer-events: auto; }
+    #view-mobile-player .player-top-btn {
+      width: 30px !important; height: 30px !important;
+      background: rgba(16,32,50,0.42) !important; color: #fff !important;
+      border: none !important; box-shadow: 0 1px 6px rgba(0,0,0,0.28) !important;
+      backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(7px) !important;
     }
     .phone-screen.pl-split .mobile-player-body #playerCommentsSection {
       display: none !important;
@@ -4837,8 +4876,20 @@
         mic.style.setProperty('right', 'auto', 'important');
       }
       window.addEventListener('scroll', placeSplitMic, { passive: true });
-      window.addEventListener('resize', () => { fixCookVideoSize(); fixSplitVideoSize(); placeSplitMic(); placeCookRail(); placeCmtTab(); });
+      window.addEventListener('resize', () => { fixCookVideoSize(); fixSplitVideoSize(); placeSplitMic(); placeCookRail(); placeCmtTab(); ensureVideoNav(); });
       window.addEventListener('resize', placeCmtTab);
+
+      // Cook keeps the back/grid buttons on the video; Split (via
+      // applySplitLayoutMobile in app.js) lifts them above it. For the
+      // video-first look we want them on the footage in both layouts, so keep
+      // re-seating the wrapper into the video placeholder. Idempotent.
+      function ensureVideoNav() {
+        const player = document.getElementById('view-mobile-player');
+        if (!player) return;
+        const wrap = player.querySelector('.player-top-controls-wrapper');
+        const placeholder = player.querySelector('.mobile-video-placeholder');
+        if (wrap && placeholder && wrap.parentElement !== placeholder) placeholder.appendChild(wrap);
+      }
 
       window.addEventListener('resize', () => {
         const sheet = document.getElementById('playerCmtSheet');
@@ -5075,7 +5126,7 @@
         // settles, ask it to measure again, then place the floaters
         setTimeout(() => {
           if (typeof window.adjustPlayerVideoSize === 'function') window.adjustPlayerVideoSize();
-          setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); dockCollapsedBand(); }, 80);
+          setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); dockCollapsedBand(); ensureVideoNav(); }, 80);
         }, 400);
       }
       function placeCmtSheetIfOpen() {
@@ -5190,7 +5241,7 @@
             }, 80);
             setTimeout(markCookStripOverlap, 180);
             setTimeout(updateRoute, 200);
-            setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); }, 220);
+            setTimeout(() => { fixCookVideoSize(); fixSplitVideoSize(); placeCmtTab(); placeCookRail(); placeSplitMic(); placeCmtSheetIfOpen(); ensureVideoNav(); }, 220);
           }
         }, true);
         // the pin travels with the real video clock
