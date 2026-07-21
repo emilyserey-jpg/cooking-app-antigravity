@@ -2542,6 +2542,116 @@ a:focus-visible {
   box-sizing: border-box;
 }
 
+/* ══════════════════════════════════════════════════════════
+   MY SPACE — swipeable home-screen panels (mobile)
+   The My Space view (#view-profile) is split into 3 full-screen
+   panels you swipe between horizontally, iPhone home-screen style.
+   The page itself never scrolls down; panel 3's recipe list is the
+   only place an internal scroll is allowed (there's no other way to
+   reach a long recipe list without a down-scroll).
+   ══════════════════════════════════════════════════════════ */
+
+/* Lock the whole view to the screen — no vertical page scroll */
+#view-profile.active {
+  overflow: hidden;
+}
+
+/* Hide the "Dashboard Workspace" heading in swipe mode to reclaim space */
+#view-profile .myspace-heading-hidden {
+  display: none !important;
+}
+
+/* Horizontal pager */
+.myspace-swipe {
+  display: flex;
+  flex-wrap: nowrap;
+  /* viewport minus the app header (68px) and the dots row (46px) */
+  height: calc(100dvh - 68px - 46px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.myspace-swipe::-webkit-scrollbar { display: none; }
+
+.myspace-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem 0;
+}
+
+/* Panel 1: bento grid (Calendar + Stats) — rows size to their content
+   (the base grid forces a fixed 240px row, which clips the calendar) */
+.myspace-panel .bento-dashboard-grid {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100%;
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 0.85rem;
+  overflow: hidden;
+}
+/* let each widget be as tall as its content inside the panel */
+.myspace-panel .bento-widget {
+  height: auto;
+  min-height: 0;
+}
+
+/* Panel 2: shopping list fills the height */
+.myspace-panel #bentoGroceryWidget {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Panel 3: library folders (top) + recipes (scrolls internally if long) */
+.myspace-panel .bento-dashboard-folders-container {
+  padding: 0 0 1rem !important;
+  margin: 0 !important;
+  max-width: none;
+  flex-shrink: 0;
+}
+.myspace-panel .bento-dashboard-recipes-container {
+  padding: 0 0 1rem !important;
+  margin: 0 !important;
+  max-width: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Page-dot indicator */
+.myspace-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+}
+.myspace-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(26, 58, 92, 0.22);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.myspace-dot.active {
+  background: var(--primary);
+  transform: scale(1.4);
+}
+
 /* Chatbox loading & success states */
 @keyframes chatboxPulse {
   0% { box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); border-color: #7c3aed; }

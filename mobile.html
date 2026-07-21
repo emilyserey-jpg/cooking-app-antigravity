@@ -5392,5 +5392,92 @@
       let tries = 0; const t = setInterval(() => { if (hookRefresh() || ++tries > 40) { if (grid()) applyOrder(); clearInterval(t); } }, 150);
     })();
   </script>
+
+  <!-- ── My Space: swipeable home-screen panels ──
+       Regroups the existing My Space content into 3 full-screen panels you
+       swipe between horizontally (iPhone home-screen style), with page dots
+       and no vertical page scroll. Elements are only reparented (kept by id),
+       so every widget feature — show/hide, resize, drag-reorder, custom
+       widgets — keeps working untouched.
+         Panel 1: bento grid (Calendar + Stats + any enabled extras)
+         Panel 2: Shopping List
+         Panel 3: My Library folders + My Recipes -->
+  <script>
+    (() => {
+      function build() {
+        const view = document.getElementById('view-profile');
+        if (!view) return false;
+        if (view.querySelector('.myspace-swipe')) return true; // already built
+        const grid    = document.getElementById('profileBentoGrid');
+        const grocery = document.getElementById('bentoGroceryWidget');
+        const folders = view.querySelector('.bento-dashboard-folders-container');
+        const recipes = view.querySelector('.bento-dashboard-recipes-container');
+        if (!grid || !folders || !recipes) return false;
+
+        // Hide the "Dashboard Workspace" heading to reclaim vertical space
+        const heading = view.querySelector('h2');
+        if (heading && /Dashboard Workspace/i.test(heading.textContent) && heading.parentElement) {
+          heading.parentElement.classList.add('myspace-heading-hidden');
+        }
+
+        const swipe = document.createElement('div');
+        swipe.className = 'myspace-swipe';
+        swipe.id = 'mySpaceSwipe';
+
+        const panels = [document.createElement('div'), document.createElement('div'), document.createElement('div')];
+        panels.forEach(p => p.className = 'myspace-panel');
+
+        // Jump straight to a panel when its dot is tapped. Native touch swiping
+        // handles the smooth paging between adjacent panels; this is the direct
+        // jump for a non-adjacent dot. Snap is momentarily disabled so the jump
+        // isn't cut short by mandatory snapping, then restored on the next tick.
+        function goTo(swipe, i) {
+          const target = i * swipe.clientWidth;
+          if (Math.abs(swipe.scrollLeft - target) < 2) return;
+          const prev = swipe.style.scrollSnapType;
+          swipe.style.scrollSnapType = 'none';
+          swipe.scrollLeft = target;
+          setTimeout(() => { swipe.style.scrollSnapType = prev; }, 60);
+        }
+
+        // Drop the pager where the grid currently sits, then fill the panels
+        grid.parentNode.insertBefore(swipe, grid);
+        panels[0].appendChild(grid);
+        if (grocery) panels[1].appendChild(grocery);
+        panels[2].appendChild(folders);
+        panels[2].appendChild(recipes);
+        panels.forEach(p => swipe.appendChild(p));
+
+        // Page dots
+        const dots = document.createElement('div');
+        dots.className = 'myspace-dots';
+        dots.id = 'mySpaceDots';
+        const setActive = idx => dots.querySelectorAll('.myspace-dot')
+          .forEach((d, i) => d.classList.toggle('active', i === idx));
+        panels.forEach((_, i) => {
+          const b = document.createElement('button');
+          b.className = 'myspace-dot' + (i === 0 ? ' active' : '');
+          b.setAttribute('aria-label', 'Go to panel ' + (i + 1));
+          b.addEventListener('click', () => { goTo(swipe, i); setActive(i); });
+          dots.appendChild(b);
+        });
+        swipe.after(dots);
+
+        // Keep the active dot in sync while swiping. Update directly on the
+        // scroll event — rAF can be throttled inside embedded webviews.
+        swipe.addEventListener('scroll', () => {
+          setActive(Math.round(swipe.scrollLeft / swipe.clientWidth) || 0);
+        }, { passive: true });
+
+        return true;
+      }
+
+      if (document.readyState !== 'loading') build();
+      else document.addEventListener('DOMContentLoaded', build);
+      // Elements are static, but retry briefly in case of late DOM tweaks
+      let tries = 0;
+      const t = setInterval(() => { if (build() || ++tries > 40) clearInterval(t); }, 150);
+    })();
+  </script>
 </body>
 </html>
