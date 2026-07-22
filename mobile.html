@@ -3448,6 +3448,12 @@
     lucide.createIcons();
   </script>
   
+  <!-- Default the landing page to My Space (the profile/dashboard). Only sets
+       it when the user hasn't chosen a landing view, so a later explicit choice
+       in settings still wins. Runs before app.js reads the preference. -->
+  <script>
+    try { if (localStorage.getItem('cooking_gps_landing_view') == null) localStorage.setItem('cooking_gps_landing_view', 'profile'); } catch (e) {}
+  </script>
   <script type="module" src="app.js?v=12.15"></script>
   <!-- ── Player layouts: Mirror / Cook / Flow ──
        The pill floats top-center of the player. Flow = the split view as it
