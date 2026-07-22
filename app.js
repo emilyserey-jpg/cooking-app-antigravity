@@ -8234,7 +8234,7 @@ function libRenderContent() {
       const layout = libState.layout || 'grid';
       let containerStyle = '';
       if (layout === 'grid') {
-        containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;`;
+        containerStyle = `columns:168px;column-gap:12px;`; // masonry — tiles keep their real shape
       } else {
         containerStyle = `display:flex;flex-direction:column;gap:10px;`;
       }
@@ -8371,18 +8371,24 @@ function libRecipeCardHTML(r, folderId) {
     : '';
 
   if (layout === 'grid') {
+    // Masonry tile: keep each video's real shape (portrait vs landscape) so the
+    // grid packs tight instead of cropping everything to one height.
+    const naturalThumb = r.thumbnail_url
+      ? `<img src="${encodeURI(r.thumbnail_url)}" alt="" style="width:100%;height:auto;display:block;background:#111;">`
+      : `<div style="width:100%;aspect-ratio:4/5;position:relative;">${thumbHtml}</div>`;
     return `
       <div class="lib-recipe-card" id="libR_${r.id}"
         style="background:#fff;border-radius:16px;border:2px solid var(--border-card);overflow:hidden;
-               cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;display:flex;flex-direction:column;position:relative;"
+               cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;position:relative;
+               break-inside:avoid;width:100%;margin:0 0 12px;"
         onclick="libOpenRecipe('${r.id}')"
         ${dragAttr}
         onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 28px rgba(74,144,217,0.18)';this.style.borderColor='var(--primary)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='1';var vid=this.querySelector('.lib-card-video');if(vid)window.playCardVideo(vid);"
         onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
-        
-        <!-- Thumbnail -->
-        <div style="position:relative;height:130px;background:#111;overflow:hidden;flex-shrink:0;">
-          ${thumbHtml}
+
+        <!-- Thumbnail (natural aspect) -->
+        <div style="position:relative;background:#111;overflow:hidden;">
+          ${naturalThumb}
           ${r.video_url ? `
             <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity 0.25s;pointer-events:none;background:#000;">
@@ -8581,7 +8587,7 @@ function libRenderFolderView(content) {
     const layout = libState.layout || 'grid';
     let containerStyle = '';
     if (layout === 'grid') {
-      containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;`;
+      containerStyle = `columns:168px;column-gap:12px;`; // masonry — tiles keep their real shape
     } else {
       containerStyle = `display:flex;flex-direction:column;gap:10px;`;
     }
