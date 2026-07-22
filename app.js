@@ -3948,7 +3948,7 @@ window.openPublicProfile = async function(creatorEmail, fromView, startInEditMod
         subBtn.className = 'btn-subscribe subscribed';
         subBtn.onclick = () => switchView('profile');
       }
-      if (msgBtn) msgBtn.style.display = 'none'; // can't message yourself
+      if (msgBtn) msgBtn.style.display = ''; // shown between Edit Profile and Share
     } else {
       if (subBtn) {
         subBtn.className = 'btn-subscribe';
