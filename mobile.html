@@ -5500,5 +5500,114 @@
       const t = setInterval(() => { if (build() || ++tries > 40) clearInterval(t); }, 150);
     })();
   </script>
+
+  <!-- ── Library: hold a video and drag it into a folder (touch) ──
+       HTML5 drag doesn't fire for touch, so this adds a long-press pointer
+       drag: press-and-hold a loose video card, drag it over a folder in the
+       Collections rail, and drop to file it there. A quick tap still opens
+       the video; scrolling still scrolls. Reuses window.libMoveRecipeToFolder. -->
+  <script>
+    (() => {
+      const HOLD_MS = 320, MOVE_CANCEL = 12;
+      let timer = null, startX = 0, startY = 0, card = null, rid = null;
+      let dragging = false, clone = null, offX = 0, offY = 0, overFolder = null, didDrag = false;
+
+      const inLibrary = () => {
+        const v = document.getElementById('view-grid-view');
+        return v && v.classList.contains('active') && !window.libOpenFolderId;
+      };
+      const recipeIdOf = el => (el && el.id && el.id.indexOf('libR_') === 0) ? el.id.slice(5) : null;
+      const folderIdOf = el => (el && el.id && el.id.indexOf('libF_') === 0) ? el.id.slice(5) : null;
+
+      function onDown(e) {
+        if (!inLibrary() || e.button != null && e.button !== 0) return;
+        if (e.target.closest('button, a, input, select, textarea')) return;
+        const c = e.target.closest('.lib-recipe-card');
+        const id = recipeIdOf(c);
+        if (!c || !id) return;
+        card = c; rid = id; startX = e.clientX; startY = e.clientY; didDrag = false;
+        timer = setTimeout(() => beginDrag(e), HOLD_MS);
+        window.addEventListener('pointermove', onMovePre, { passive: false });
+        window.addEventListener('pointerup', onUpPre);
+        window.addEventListener('pointercancel', onUpPre);
+      }
+      function onMovePre(e) {
+        if (dragging) return;
+        if (Math.abs(e.clientX - startX) > MOVE_CANCEL || Math.abs(e.clientY - startY) > MOVE_CANCEL) endPre();
+      }
+      function onUpPre() { if (!dragging) endPre(); }
+      function endPre() {
+        clearTimeout(timer); timer = null;
+        window.removeEventListener('pointermove', onMovePre);
+        window.removeEventListener('pointerup', onUpPre);
+        window.removeEventListener('pointercancel', onUpPre);
+        if (!dragging) { card = null; rid = null; }
+      }
+
+      function beginDrag(e) {
+        if (!card) return;
+        dragging = true; didDrag = true;
+        try { navigator.vibrate && navigator.vibrate(15); } catch (_) {}
+        const r = card.getBoundingClientRect();
+        offX = e.clientX - r.left; offY = e.clientY - r.top;
+        clone = card.cloneNode(true);
+        Object.assign(clone.style, {
+          position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+          margin: '0', zIndex: '99999', pointerEvents: 'none', opacity: '0.95',
+          transform: 'scale(0.92) rotate(-2deg)', boxShadow: '0 22px 44px rgba(20,50,80,0.38)', transition: 'transform 0.1s'
+        });
+        document.body.appendChild(clone);
+        card.style.opacity = '0.35';
+        if (window.showTip) window.showTip('Drop on a folder to file it');
+        window.removeEventListener('pointermove', onMovePre);
+        window.removeEventListener('pointerup', onUpPre);
+        window.removeEventListener('pointercancel', onUpPre);
+        window.addEventListener('pointermove', onMoveDrag, { passive: false });
+        window.addEventListener('pointerup', onUpDrag);
+        window.addEventListener('pointercancel', onUpDrag);
+      }
+      function onMoveDrag(e) {
+        e.preventDefault();
+        clone.style.left = (e.clientX - offX) + 'px';
+        clone.style.top = (e.clientY - offY) + 'px';
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const folder = under && under.closest ? under.closest('.lib-folder-card') : null;
+        if (folder !== overFolder) {
+          if (overFolder) { overFolder.style.outline = ''; overFolder.style.outlineOffset = ''; overFolder.style.transform = ''; }
+          overFolder = folder;
+          if (overFolder) {
+            overFolder.style.outline = '3px solid var(--primary)';
+            overFolder.style.outlineOffset = '2px';
+            overFolder.style.transform = 'translateY(-2px) scale(1.03)';
+            try { navigator.vibrate && navigator.vibrate(8); } catch (_) {}
+          }
+        }
+      }
+      function onUpDrag() {
+        const dropOn = overFolder, dropRid = rid;
+        if (overFolder) { overFolder.style.outline = ''; overFolder.style.outlineOffset = ''; overFolder.style.transform = ''; }
+        if (clone) clone.remove();
+        if (card) card.style.opacity = '';
+        window.removeEventListener('pointermove', onMoveDrag);
+        window.removeEventListener('pointerup', onUpDrag);
+        window.removeEventListener('pointercancel', onUpDrag);
+        dragging = false; card = null; rid = null; clone = null; overFolder = null;
+        if (dropOn && dropRid) {
+          const fid = folderIdOf(dropOn);
+          if (fid && window.libMoveRecipeToFolder) {
+            const name = dropOn.querySelector('div[style*="font-weight:900"]');
+            window.libMoveRecipeToFolder(dropRid, null, fid);
+            if (window.showTip) window.showTip('Filed in ' + (name ? '“' + name.textContent + '”' : 'folder'));
+          }
+        }
+      }
+      // Swallow the click that follows a real drag, so it doesn't open the video
+      document.addEventListener('click', e => {
+        if (didDrag) { e.preventDefault(); e.stopPropagation(); didDrag = false; }
+      }, true);
+
+      document.addEventListener('pointerdown', onDown);
+    })();
+  </script>
 </body>
 </html>
