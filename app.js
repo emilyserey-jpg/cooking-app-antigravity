@@ -8209,9 +8209,9 @@ function libRenderContent() {
     if (folders.length) {
       html += `<div style="margin-bottom:1.5rem;">
         <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">
-          Folders (${folders.length})
+          Collections (${folders.length})
         </div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin:0; padding:0; max-width:100%;" id="libFolderGrid">`;
+        <div class="lib-collections-rail" style="display:flex; gap:12px; overflow-x:auto; padding:0 0 6px; margin:0; max-width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch;" id="libFolderGrid">`;
       folders.forEach(f => { if (f) html += libFolderCardHTML(f); });
       html += `</div></div>`;
     }
@@ -8233,7 +8233,7 @@ function libRenderContent() {
       const layout = libState.layout || 'grid';
       let containerStyle = '';
       if (layout === 'grid') {
-        containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;`;
+        containerStyle = `display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;`;
       } else {
         containerStyle = `display:flex;flex-direction:column;gap:10px;`;
       }
@@ -8271,76 +8271,51 @@ function libHexToRgba(hex, alpha) {
 function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
   const isDrag = window.libEditMode && libState.sort === 'custom';
+  const colorVal = f.color || '#4a90d9';
+  const bgSoft = libHexToRgba(colorVal, 0.12);
+  const bgSofter = libHexToRgba(colorVal, 0.05);
 
   const recipesSource = window.getFolderRecipesSource();
   const folderRecipes = (f.recipeIds || []).map(rid => recipesSource.find(r => r.id === rid)).filter(Boolean);
   const previewRecipes = folderRecipes.filter(r => r.video_url || r.thumbnail_url);
-  const hasPreviews = previewRecipes.length > 0;
 
-  let folderIconHtml = '';
-  const colorVal = f.color || '#4a90d9';
-  const bgSoft = libHexToRgba(colorVal, 0.08);
-
-  if (hasPreviews) {
-    const firstRecipe = previewRecipes[0];
-    let defaultPreviewHtml = '';
-    if (firstRecipe.thumbnail_url) {
-      defaultPreviewHtml = `<img src="${encodeURI(firstRecipe.thumbnail_url)}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;">`;
+  // 2x2 mosaic cover from up to four thumbnails (soft color fills the rest)
+  let cells = '';
+  for (let i = 0; i < 4; i++) {
+    const rec = previewRecipes[i];
+    if (rec && rec.thumbnail_url) {
+      cells += `<div style="overflow:hidden;background:#000;"><img src="${encodeURI(rec.thumbnail_url)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`;
+    } else if (rec) {
+      cells += `<div style="background:${bgSoft};display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>`;
     } else {
-      const hash = firstRecipe.id ? firstRecipe.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
-      const gradients = ['#ff6b6b','#4facfe','#43e97b','#fa709a','#30cfd0','#f093fb'];
-      const grad = gradients[hash % gradients.length];
-      defaultPreviewHtml = `<div style="width:100%; height:100%; background:${grad}; display:flex; align-items:center; justify-content:center; color:#fff;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m15 10-4 4V10L11 6Z"/><path d="M15 10 7 6v8l8-4Z"/></svg></div>`;
+      cells += `<div style="background:${bgSofter};"></div>`;
     }
-
-    folderIconHtml = `
-      <div class="folder-preview-container" style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; overflow:hidden; border-top-left-radius:18px; border-top-right-radius:18px; border-bottom: 1.5px solid var(--border-card); background:rgba(0,0,0,0.01); transition: background 0.25s;">
-        <div class="folder-badge" style="position:absolute; top:10px; left:10px; width:28px; height:28px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-card); box-shadow:0 2px 6px rgba(0,0,0,0.06); z-index: 3;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.2" stroke="${colorVal}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </div>
-        <div class="folder-masked-preview" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:1; transition: opacity 0.25s; overflow:hidden; pointer-events:none; z-index: 2;">
-          <div class="folder-preview-content" style="width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            ${defaultPreviewHtml}
-          </div>
-        </div>
-      </div>
-    `;
-  } else {
-    folderIconHtml = `
-      <div style="position:absolute; top:0; left:0; right:0; height:calc(100% - 68px); display:flex; align-items:center; justify-content:center; border-top-left-radius:18px; border-top-right-radius:18px; border-bottom: 1.5px solid var(--border-card); background:${bgSoft};">
-        <svg class="folder-base-svg" width="36" height="36" viewBox="0 0 24 24" fill="${colorVal}" fill-opacity="0.15" stroke="${colorVal}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.03));">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
-      </div>
-    `;
   }
 
   return `
     <div class="lib-folder-card" id="libF_${f.id}"
-      style="background:#fff; border: 2px solid var(--border-card); border-radius:20px; cursor:pointer;
-             position:relative; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.02); height:160px; display:flex; flex-direction:column; box-sizing:border-box; padding:12px 14px;"
+      style="flex-shrink:0; width:132px; background:#fff; border:2px solid var(--border-card); border-radius:16px; cursor:pointer;
+             position:relative; transition:all 0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.02); box-sizing:border-box; padding:8px;"
       onclick="libOpenFolder('${f.id}')"
-      onmouseenter="window.startFolderSlideshow(this, '${f.id}'); this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)';"
-      onmouseleave="window.stopFolderSlideshow(this, '${f.id}'); this.style.borderColor='var(--border-card)'; this.style.transform='';"
+      onmouseenter="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-2px)';"
+      onmouseleave="this.style.borderColor='var(--border-card)'; this.style.transform='';"
       ${isDrag ? `draggable="true" ondragstart="libOnDragStart(event,'folder','${f.id}')"` : ''}
       ondragover="libOnDragOver(event,'${f.id}')"
       ondrop="libOnDrop(event,'folder','${f.id}')"
       ondragleave="libOnDragLeave(event)">
-      <!-- Actions menu -->
-      <div style="position:absolute;top:10px;right:10px;display:${window.libEditMode ? 'flex' : 'none'};gap:4px;z-index:10;" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:12px;right:12px;display:${window.libEditMode ? 'flex' : 'none'};gap:4px;z-index:10;" onclick="event.stopPropagation()">
         <button onclick="libRenameFolder('${f.id}')" title="Rename"
-          style="background:rgba(255,255,255,0.9);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;color:var(--text-heading);"></i></button>
+          style="background:rgba(255,255,255,0.92);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="edit-3" style="width:12px;height:12px;color:var(--text-heading);"></i></button>
         <button onclick="libDeleteFolder('${f.id}')" title="Delete"
-          style="background:rgba(255,255,255,0.9);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="trash-2" style="width:12px;height:12px;color:#ef4444;"></i></button>
+          style="background:rgba(255,255,255,0.92);border:1px solid var(--border-card);border-radius:6px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)"><i data-lucide="trash-2" style="width:12px;height:12px;color:#ef4444;"></i></button>
       </div>
-      ${folderIconHtml}
-      <div style="margin-top:auto;">
-        <div style="font-weight:900;font-size:0.85rem;color:var(--text-heading);word-break:break-word;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
-        <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);margin-top:3px;">${count} video${count !== 1 ? 's' : ''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;height:90px;border-radius:11px;overflow:hidden;background:var(--border-card);">
+        ${cells}
       </div>
-      ${isDrag ? '<div style="position:absolute;bottom:6px;right:8px;font-size:0.65rem;color:rgba(0,0,0,0.3);font-weight:700;z-index:3;">⠿ drag</div>' : ''}
+      <div style="padding:8px 2px 2px;">
+        <div style="font-weight:900;font-size:0.82rem;color:var(--text-heading);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+        <div style="font-size:0.66rem;font-weight:700;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums;">${count} video${count !== 1 ? 's' : ''}</div>
+      </div>
     </div>`;
 }
 
@@ -8404,7 +8379,7 @@ function libRecipeCardHTML(r, folderId) {
         onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--border-card)';var ov=this.querySelector('.lib-play-ov');if(ov)ov.style.opacity='0';var vid=this.querySelector('.lib-card-video');if(vid)window.stopCardVideo(vid);">
         
         <!-- Thumbnail -->
-        <div style="position:relative;height:220px;background:#111;overflow:hidden;flex-shrink:0;">
+        <div style="position:relative;height:130px;background:#111;overflow:hidden;flex-shrink:0;">
           ${thumbHtml}
           ${r.video_url ? `
             <video class="lib-card-video" data-src="${encodeURI(r.video_url)}" muted loop playsinline
@@ -8413,13 +8388,13 @@ function libRecipeCardHTML(r, folderId) {
           ` : ''}
           ${mins ? `<div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 7px;border-radius:5px;z-index:3;">${mins}</div>` : ''}
           <div class="lib-play-ov" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);opacity:0;transition:opacity 0.18s;z-index:3;">
-            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);color:var(--primary);"><i data-lucide="play" style="width:16px;height:16px;"></i></div>
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.15);color:var(--primary);"><i data-lucide="play" style="width:15px;height:15px;"></i></div>
           </div>
         </div>
 
         <!-- Info Body -->
-        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
-          <div style="font-weight:900;font-size:0.86rem;color:var(--text-heading);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:2.6rem;">${r.title || 'Untitled'}</div>
+        <div style="padding:9px 11px 11px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-weight:900;font-size:0.8rem;color:var(--text-heading);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:2.6rem;">${r.title || 'Untitled'}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;gap:8px;" onclick="event.stopPropagation()">
             <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               ${privBadge}
