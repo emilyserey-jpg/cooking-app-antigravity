@@ -952,6 +952,10 @@
                 <div id="pubStatFollowers" class="pf-stat-n">0</div>
                 <div class="pf-stat-l">Followers</div>
               </div>
+              <div class="pf-stat">
+                <div id="pubStatFollowing" class="pf-stat-n">0</div>
+                <div class="pf-stat-l">Following</div>
+              </div>
             </div>
           </div>
           <div class="pf-idblock">
@@ -961,6 +965,7 @@
             </div>
             <div id="pubHandle" class="pf-handle">@username</div>
             <div id="pubBioTextSnippet" class="pf-bio">Cooking creator</div>
+            <a id="pubProfileLink" class="pf-link" href="#" onclick="return false;">intheloop.app/username</a>
           </div>
           <div class="pf-actions">
             <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="pf-btn pf-btn-primary">
@@ -976,15 +981,15 @@
         </div>
 
         <!-- Tabs -->
-        <div class="channel-tabs">
-          <button id="pubTabHomeBtn" onclick="pubSwitchTab('home')" class="channel-tab-btn active">
-            <i data-lucide="home" style="width:14px;height:14px;"></i> Home
+        <div class="channel-tabs pf-tabs">
+          <button id="pubTabHomeBtn" onclick="pubSwitchTab('home')" class="channel-tab-btn active" aria-label="Recipes grid" title="Recipes">
+            <i data-lucide="layout-grid"></i>
           </button>
-          <button id="pubTabRecipesBtn" onclick="pubSwitchTab('recipes')" class="channel-tab-btn">
-            <i data-lucide="play-square" style="width:14px;height:14px;"></i> Recipes
+          <button id="pubTabRecipesBtn" onclick="pubSwitchTab('recipes')" class="channel-tab-btn" aria-label="Videos" title="Videos">
+            <i data-lucide="play-square"></i>
           </button>
-          <button id="pubTabAboutBtn" onclick="pubSwitchTab('about')" class="channel-tab-btn">
-            <i data-lucide="info" style="width:14px;height:14px;"></i> About
+          <button id="pubTabAboutBtn" onclick="pubSwitchTab('about')" class="channel-tab-btn" aria-label="About" title="About">
+            <i data-lucide="info"></i>
           </button>
         </div>
 

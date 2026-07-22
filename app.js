@@ -3846,8 +3846,12 @@ function updateSubscribeUI(email) {
   if (recipesStatEl) recipesStatEl.textContent = recipeCount;
   const followersStatEl = document.getElementById('pubStatFollowers');
   if (followersStatEl) followersStatEl.textContent = formatSubs;
+  const followingStatEl = document.getElementById('pubStatFollowing');
+  if (followingStatEl) followingStatEl.textContent = Object.keys(subs).length;
   const handleEl = document.getElementById('pubHandle');
   if (handleEl) handleEl.textContent = '@' + email.split('@')[0];
+  const profileLinkEl = document.getElementById('pubProfileLink');
+  if (profileLinkEl) profileLinkEl.textContent = 'intheloop.app/' + email.split('@')[0];
   
   const aboutSubsEl = document.getElementById('pubAboutStatsSubs');
   if (aboutSubsEl) {
