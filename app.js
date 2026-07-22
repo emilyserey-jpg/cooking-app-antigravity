@@ -8179,8 +8179,9 @@ function libRenderContent() {
     const q = libSearchQuery.toLowerCase();
 
     // Build ordered list respecting current sort
-    let folders = [...libState.folders].filter(f => f && typeof f === 'object');
-    let loose   = libAllRecipes.filter(r => r && !folders.some(f => f && (f.recipeIds||[]).includes(r.id)));
+    const allFolders = [...libState.folders].filter(f => f && typeof f === 'object');
+    let folders = allFolders.filter(f => !f.parentId); // only root folders show in the rail
+    let loose   = libAllRecipes.filter(r => r && !allFolders.some(f => f && (f.recipeIds||[]).includes(r.id)));
 
     // Apply sort
     if (libState.sort === 'az') {
@@ -8270,6 +8271,7 @@ function libHexToRgba(hex, alpha) {
 
 function libFolderCardHTML(f) {
   const count = (f.recipeIds || []).length;
+  const subCount = (libState.folders || []).filter(ff => ff && ff.parentId === f.id).length;
   const isDrag = window.libEditMode && libState.sort === 'custom';
   const colorVal = f.color || '#4a90d9';
   const bgSoft = libHexToRgba(colorVal, 0.12);
@@ -8314,7 +8316,7 @@ function libFolderCardHTML(f) {
       </div>
       <div style="padding:8px 2px 2px;">
         <div style="font-weight:900;font-size:0.82rem;color:var(--text-heading);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
-        <div style="font-size:0.66rem;font-weight:700;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums;">${count} video${count !== 1 ? 's' : ''}</div>
+        <div style="font-size:0.66rem;font-weight:700;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums;">${count} video${count !== 1 ? 's' : ''}${subCount ? ` · ${subCount} folder${subCount !== 1 ? 's' : ''}` : ''}</div>
       </div>
     </div>`;
 }
@@ -8546,6 +8548,16 @@ function libRenderFolderView(content) {
       </div>
     </div>`;
 
+  // Nested subfolders (folders dragged inside this one)
+  const children = (libState.folders || []).filter(ff => ff && ff.parentId === f.id);
+  if (children.length) {
+    html += `<div style="margin-bottom:1.25rem;">
+      <div style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:10px;">Folders (${children.length})</div>
+      <div class="lib-collections-rail" style="display:flex;gap:12px;overflow-x:auto;padding:0 0 6px;margin:0;max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch;">`;
+    children.forEach(cf => { if (cf) html += libFolderCardHTML(cf); });
+    html += `</div></div>`;
+  }
+
   // Add recipe dropdown
   if (addable.length) {
     html += `<div style="background:#fff;border-radius:12px;border:2px solid var(--border-card);padding:12px 14px;margin-bottom:1rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -8593,6 +8605,34 @@ window.libAddRecipeToFolder = function(recipeId, folderId) {
   if (!f) return;
   if (!f.recipeIds) f.recipeIds = [];
   if (!f.recipeIds.includes(recipeId)) f.recipeIds.push(recipeId);
+  libSave();
+  libRenderContent();
+};
+
+// Nest one folder inside another (on-device). Guards against nesting a folder
+// into itself or into one of its own descendants (which would create a loop).
+window.libNestFolder = function(childId, parentId) {
+  if (!childId || !parentId || childId === parentId) return false;
+  const child  = libGetFolder(childId);
+  const parent = libGetFolder(parentId);
+  if (!child || !parent) return false;
+  // walk up from parent — if we reach child, this would create a cycle
+  let p = parent, guard = 0;
+  while (p && p.parentId && guard++ < 100) {
+    if (p.parentId === childId) return false;
+    p = libGetFolder(p.parentId);
+  }
+  child.parentId = parentId;
+  libSave();
+  libRenderContent();
+  return true;
+};
+
+// Pull a folder back out to the top level
+window.libUnnestFolder = function(childId) {
+  const child = libGetFolder(childId);
+  if (!child || !child.parentId) return;
+  delete child.parentId;
   libSave();
   libRenderContent();
 };

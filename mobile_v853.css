@@ -4277,3 +4277,33 @@ body.editor-split-view-active #workbenchRight {
   width: 18px !important; height: 1.5px !important; border-radius: 2px !important; background: transparent !important;
 }
 #view-public-profile .pf-tabs .channel-tab-btn.active::after { background: var(--text-heading) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LIBRARY — iPhone-style hold-to-edit (jiggle) + Done button
+   ═══════════════════════════════════════════════════════════ */
+@keyframes libWobble {
+  0%, 100% { transform: rotate(-1.1deg); }
+  50%      { transform: rotate(1.1deg); }
+}
+.lib-jiggle .lib-folder-card,
+.lib-jiggle .lib-recipe-card {
+  animation: libWobble 0.26s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+.lib-jiggle .lib-folder-card:nth-child(even),
+.lib-jiggle .lib-recipe-card:nth-child(even) { animation-delay: -0.13s; }
+.lib-jiggle .lib-folder-card:nth-child(3n),
+.lib-jiggle .lib-recipe-card:nth-child(3n)   { animation-duration: 0.29s; }
+@media (prefers-reduced-motion: reduce) {
+  .lib-jiggle .lib-folder-card,
+  .lib-jiggle .lib-recipe-card { animation: none; }
+}
+
+#libEditDone {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100000;
+  background: linear-gradient(180deg, var(--primary), var(--primary-dark)); color: #fff;
+  border: none; border-radius: 999px; padding: 12px 32px;
+  font-family: var(--font); font-weight: 900; font-size: 0.95rem; cursor: pointer;
+  box-shadow: 0 12px 28px rgba(74,144,217,0.5);
+}
+#libEditDone:active { transform: translateX(-50%) scale(0.96); }
