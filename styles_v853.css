@@ -2667,6 +2667,118 @@ a:focus-visible {
   min-height: 350px;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MY / PUBLIC PROFILE (desktop) — Instagram-style header + video grid
+   Mirrors the mobile design; profile is centered in a narrow card.
+   Scoped to #view-public-profile so Discover's grid is untouched.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Centre the phone-style profile and drop the cover banner */
+#view-public-profile .channel-container { max-width: 600px !important; }
+#view-public-profile .channel-banner { display: none !important; }
+#view-public-profile .channel-tab-content { padding: 0.75rem 1rem 1.75rem !important; }
+
+/* ── Header: avatar + stats, name/handle/bio, actions ── */
+.pf-header { padding: 22px 20px 6px; }
+
+.pf-top { display: flex; align-items: center; gap: 24px; }
+.pf-avatar {
+  width: 88px; height: 88px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-size: 2.1rem; font-weight: 900; color: #fff; letter-spacing: -0.02em;
+  background: linear-gradient(150deg, #24425f, var(--text-heading));
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 0 0 2.5px var(--primary);
+}
+.pf-stats { flex: 1; display: flex; justify-content: space-around; gap: 8px; }
+.pf-stat { text-align: center; }
+.pf-stat-n {
+  font-size: 1.45rem; font-weight: 900; color: var(--text-heading); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pf-stat-l { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-top: 5px; }
+
+.pf-idblock { padding: 16px 6px 0; }
+.pf-nameline { display: flex; align-items: center; gap: 8px; }
+.pf-name { font-size: 1.25rem; font-weight: 900; color: var(--text-heading); margin: 0; letter-spacing: -0.01em; }
+.pf-verify { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 800; color: var(--green); flex-shrink: 0; }
+.pf-verify svg { width: 15px; height: 15px; }
+.pf-handle { font-size: 0.88rem; font-weight: 700; color: var(--text-muted); margin-top: 3px; }
+.pf-bio { font-size: 0.92rem; font-weight: 600; color: var(--text-body); margin-top: 8px; line-height: 1.5; }
+
+.pf-actions { display: flex; gap: 10px; padding: 18px 6px 4px; }
+.pf-btn {
+  flex: 1; border: none; border-radius: 12px; padding: 11px 14px;
+  font-family: var(--font); font-weight: 800; font-size: 0.92rem; cursor: pointer; transition: all 0.18s;
+}
+.pf-btn-ghost { background: var(--bg-card-soft); color: var(--primary-dark); border: 1.5px solid var(--border-card); }
+.pf-btn-ghost:hover { background: var(--bg-card); }
+.pf-iconbtn { flex-shrink: 0; width: 48px; border: 1.5px solid var(--border-card); background: var(--bg-card-soft); border-radius: 12px; display: grid; place-items: center; color: var(--text-body); cursor: pointer; }
+.pf-iconbtn:hover { background: var(--bg-card); }
+
+/* Follow/Edit button — styled by id because JS rewrites its class to .btn-subscribe */
+#view-public-profile #pubSubscribeBtn {
+  flex: 1 !important; min-width: 0 !important; width: auto !important; height: auto !important; margin: 0 !important;
+  border: none !important; border-radius: 12px !important; padding: 11px 14px !important;
+  font-family: var(--font) !important; font-weight: 800 !important; font-size: 0.92rem !important; cursor: pointer !important;
+  color: #fff !important; background: linear-gradient(180deg, var(--primary-light), var(--primary)) !important;
+  box-shadow: 0 6px 14px var(--primary-glow) !important;
+}
+#view-public-profile #pubSubscribeBtn:hover { background: linear-gradient(180deg, var(--primary), var(--primary-dark)) !important; transform: none !important; }
+#view-public-profile #pubSubscribeBtn.subscribed {
+  background: var(--bg-card-soft) !important; color: var(--primary-dark) !important;
+  border: 1.5px solid var(--border-active) !important; box-shadow: none !important;
+}
+
+/* Keep the existing tabs, sit them tidily under the new header */
+#view-public-profile .channel-tabs { margin-top: 8px; }
+
+/* ── Recipe tiles → portrait 3:4 video format ── */
+#view-public-profile .yt-video-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 4px !important;
+  margin: 0 !important;
+}
+#view-public-profile .yt-video-card {
+  position: relative !important;
+  aspect-ratio: 3 / 4 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+}
+#view-public-profile .yt-video-card img,
+#view-public-profile .yt-video-card video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+#view-public-profile .yt-thumbnail-wrapper { position: absolute !important; inset: 0 !important; border-radius: 8px !important; overflow: hidden !important; }
+
+/* subtle top+bottom gradient for overlay legibility */
+#view-public-profile .yt-thumbnail-wrapper::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, rgba(12,20,32,0.16) 0%, transparent 20%, transparent 60%, rgba(12,20,32,0.5) 100%);
+}
+/* play glyph, bottom-left */
+#view-public-profile .yt-thumbnail-wrapper::after {
+  content: ""; position: absolute; left: 10px; bottom: 10px; z-index: 4;
+  border-style: solid; border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent #fff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+}
+/* duration chip, bottom-right */
+#view-public-profile .yt-duration-badge {
+  position: absolute !important; right: 8px !important; bottom: 8px !important; top: auto !important; left: auto !important; z-index: 4 !important;
+  background: rgba(12,20,32,0.6) !important; color: #fff !important;
+  font-family: var(--font) !important; font-size: 0.72rem !important; font-weight: 700 !important;
+  padding: 2px 7px !important; border-radius: 6px !important;
+}
+/* PINNED badge on the first tile of each grid */
+#pubHomeRecentGrid .yt-video-card:first-child::before,
+#pubRecipesGrid .yt-video-card:first-child::before {
+  content: "PINNED"; position: absolute; left: 8px; top: 8px; z-index: 5;
+  background: rgba(12,20,32,0.64); color: #fff; font-family: var(--font);
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px;
+}
+
+
 .yt-video-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

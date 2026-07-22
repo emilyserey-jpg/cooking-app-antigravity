@@ -939,23 +939,39 @@
           <div class="channel-banner-logo">In The Loop</div>
         </div>
 
-        <!-- Identity row -->
-        <div class="channel-header">
-          <div class="channel-avatar-wrapper">
-            <div id="pubAvatar" class="channel-avatar">?</div>
-          </div>
-          <div class="channel-details">
-            <h1 id="pubName" class="channel-title">Loading…</h1>
-            <div id="pubSubCount" class="channel-meta">@username • -- subscribers • -- recipes</div>
-            <div id="pubBioTextSnippet" class="channel-bio-snippet">Cooking creator</div>
-            <div class="channel-actions">
-              <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="btn-subscribe">
-                Subscribe
-              </button>
-              <button id="pubShareBtn" onclick="showTip('Share link copied!')" class="btn-channel-secondary" style="width:36px; height:36px; padding:0 !important; display:inline-flex !important; align-items:center; justify-content:center; flex-shrink:0;">
-                <i data-lucide="share-2" style="width:16px;height:16px;"></i>
-              </button>
+        <!-- Identity row (Instagram-style: avatar + stats, then name/bio, then actions) -->
+        <div class="pf-header">
+          <div class="pf-top">
+            <div id="pubAvatar" class="pf-avatar">?</div>
+            <div class="pf-stats">
+              <div class="pf-stat">
+                <div id="pubStatRecipes" class="pf-stat-n">0</div>
+                <div class="pf-stat-l">Recipes</div>
+              </div>
+              <div class="pf-stat">
+                <div id="pubStatFollowers" class="pf-stat-n">0</div>
+                <div class="pf-stat-l">Followers</div>
+              </div>
             </div>
+          </div>
+          <div class="pf-idblock">
+            <div class="pf-nameline">
+              <h1 id="pubName" class="pf-name">Loading…</h1>
+              <span class="pf-verify"><i data-lucide="badge-check" style="width:15px;height:15px;"></i> Creator</span>
+            </div>
+            <div id="pubHandle" class="pf-handle">@username</div>
+            <div id="pubBioTextSnippet" class="pf-bio">Cooking creator</div>
+          </div>
+          <div class="pf-actions">
+            <button id="pubSubscribeBtn" onclick="togglePubSubscribe()" class="pf-btn pf-btn-primary">
+              Follow
+            </button>
+            <button id="pubMessageBtn" class="pf-btn pf-btn-ghost" onclick="showTip('Messaging is coming soon!')">
+              Message
+            </button>
+            <button id="pubShareBtn" onclick="showTip('Share link copied!')" class="pf-iconbtn" title="Share profile">
+              <i data-lucide="share-2" style="width:17px;height:17px;"></i>
+            </button>
           </div>
         </div>
 
