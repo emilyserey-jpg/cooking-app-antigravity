@@ -3817,27 +3817,37 @@ function updateSubscribeUI(email) {
   } catch(e) {}
   
   const isSubbed = !!subs[email];
+  const isOwnProfile = !!(currentUser && email === currentUser.email);
   const subBtn = document.getElementById('pubSubscribeBtn');
-  if (subBtn) {
+  // Own profile keeps the label openPublicProfile set (e.g. "Customize Workspace")
+  if (subBtn && !isOwnProfile) {
     if (isSubbed) {
-      subBtn.textContent = 'Subscribed';
+      subBtn.textContent = 'Following';
       subBtn.classList.add('subscribed');
     } else {
-      subBtn.textContent = 'Subscribe';
+      subBtn.textContent = 'Follow';
       subBtn.classList.remove('subscribed');
     }
   }
-  
+
   // Re-display stats with updated subscriber count
   const baseStats = getCreatorStats(email);
   const totalSubs = baseStats.subs + (isSubbed ? 1 : 0);
   const formatSubs = totalSubs >= 1000 ? (totalSubs/1000).toFixed(1) + 'K' : totalSubs;
-  
+
   const recipeCount = pubCurrentCreator ? pubCurrentCreator.recipes.length : 0;
   const subCountEl = document.getElementById('pubSubCount');
   if (subCountEl) {
     subCountEl.textContent = `@${email.split('@')[0]} • ${formatSubs} subscribers • ${recipeCount} recipes`;
   }
+
+  // New Instagram-style stat row + handle
+  const recipesStatEl = document.getElementById('pubStatRecipes');
+  if (recipesStatEl) recipesStatEl.textContent = recipeCount;
+  const followersStatEl = document.getElementById('pubStatFollowers');
+  if (followersStatEl) followersStatEl.textContent = formatSubs;
+  const handleEl = document.getElementById('pubHandle');
+  if (handleEl) handleEl.textContent = '@' + email.split('@')[0];
   
   const aboutSubsEl = document.getElementById('pubAboutStatsSubs');
   if (aboutSubsEl) {
@@ -3931,17 +3941,20 @@ window.openPublicProfile = async function(creatorEmail, fromView, startInEditMod
     // Subscribe button configuration
     const subBtn = document.getElementById('pubSubscribeBtn');
     
+    const msgBtn = document.getElementById('pubMessageBtn');
     if (currentUser && creatorEmail === currentUser.email) {
       if (subBtn) {
-        subBtn.textContent = 'Customize Workspace';
+        subBtn.textContent = 'Edit Profile';
         subBtn.className = 'btn-subscribe subscribed';
         subBtn.onclick = () => switchView('profile');
       }
+      if (msgBtn) msgBtn.style.display = 'none'; // can't message yourself
     } else {
       if (subBtn) {
         subBtn.className = 'btn-subscribe';
         subBtn.onclick = () => togglePubSubscribe();
       }
+      if (msgBtn) msgBtn.style.display = '';
     }
 
     // Refresh sub state UI

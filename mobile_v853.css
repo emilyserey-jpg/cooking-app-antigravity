@@ -4151,3 +4151,100 @@ body.editor-split-view-active #workbenchLeft {
 body.editor-split-view-active #workbenchRight {
   width: 50% !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MY / PUBLIC PROFILE — Instagram-style header + video-format grid
+   Scoped to #view-public-profile so Discover's grid is untouched.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Drop the YouTube cover banner for a clean profile header */
+#view-public-profile .channel-banner { display: none !important; }
+
+/* ── Header: avatar + stats, name/handle/bio, actions ── */
+.pf-header { padding: 20px 18px 6px; }
+
+.pf-top { display: flex; align-items: center; gap: 22px; }
+.pf-avatar {
+  width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-size: 2rem; font-weight: 900; color: #fff; letter-spacing: -0.02em;
+  background: linear-gradient(150deg, #24425f, var(--text-heading));
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 0 0 2.5px var(--primary);
+}
+.pf-stats { flex: 1; display: flex; justify-content: space-around; gap: 8px; }
+.pf-stat { text-align: center; }
+.pf-stat-n {
+  font-size: 1.35rem; font-weight: 900; color: var(--text-heading); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pf-stat-l { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-top: 5px; }
+
+.pf-idblock { padding: 14px 4px 0; }
+.pf-nameline { display: flex; align-items: center; gap: 8px; }
+.pf-name { font-size: 1.15rem; font-weight: 900; color: var(--text-heading); margin: 0; letter-spacing: -0.01em; }
+.pf-verify { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 800; color: var(--green); flex-shrink: 0; }
+.pf-verify svg { width: 15px; height: 15px; }
+.pf-handle { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 3px; }
+.pf-bio { font-size: 0.9rem; font-weight: 600; color: var(--text-body); margin-top: 8px; line-height: 1.5; }
+
+.pf-actions { display: flex; gap: 9px; padding: 16px 4px 4px; }
+.pf-btn {
+  flex: 1; border: none; border-radius: 12px; padding: 11px 14px;
+  font-family: var(--font); font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.18s;
+}
+.pf-btn-primary { color: #fff; background: linear-gradient(180deg, var(--primary-light), var(--primary)); box-shadow: 0 6px 14px var(--primary-glow); }
+.pf-btn-primary:hover { filter: brightness(1.05); }
+.pf-btn-primary.subscribed { background: var(--bg-card-soft); color: var(--primary-dark); border: 1.5px solid var(--border-active); box-shadow: none; }
+.pf-btn-ghost { background: var(--bg-card-soft); color: var(--primary-dark); border: 1.5px solid var(--border-card); }
+.pf-iconbtn { flex-shrink: 0; width: 46px; border: 1.5px solid var(--border-card); background: var(--bg-card-soft); border-radius: 12px; display: grid; place-items: center; color: var(--text-body); cursor: pointer; }
+
+/* The Follow/Customize button — styled by id because the app's JS rewrites its
+   class to .btn-subscribe, which would otherwise wipe the .pf-btn styling. */
+#view-public-profile #pubSubscribeBtn {
+  flex: 1 !important; min-width: 0 !important; width: auto !important; height: auto !important; margin: 0 !important;
+  border: none !important; border-radius: 12px !important; padding: 11px 14px !important;
+  font-family: var(--font) !important; font-weight: 800 !important; font-size: 0.9rem !important; cursor: pointer !important;
+  color: #fff !important; background: linear-gradient(180deg, var(--primary-light), var(--primary)) !important;
+  box-shadow: 0 6px 14px var(--primary-glow) !important;
+}
+#view-public-profile #pubSubscribeBtn:hover { background: linear-gradient(180deg, var(--primary), var(--primary-dark)) !important; transform: none !important; }
+#view-public-profile #pubSubscribeBtn.subscribed {
+  background: var(--bg-card-soft) !important; color: var(--primary-dark) !important;
+  border: 1.5px solid var(--border-active) !important; box-shadow: none !important;
+}
+
+/* Keep the existing tabs, just sit them tidily under the new header */
+#view-public-profile .channel-tabs { margin-top: 8px; }
+
+/* ── Recipe tiles → portrait 3:4 video format ── */
+#view-public-profile .yt-video-grid { margin: 0 -1rem !important; }
+#view-public-profile .yt-video-card { aspect-ratio: 3 / 4 !important; }
+
+/* subtle top+bottom gradient so overlays stay legible on any photo */
+#view-public-profile .yt-thumbnail-wrapper::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, rgba(12,20,32,0.16) 0%, transparent 20%, transparent 60%, rgba(12,20,32,0.5) 100%);
+}
+/* play glyph, bottom-left — signals "video" at a glance */
+#view-public-profile .yt-thumbnail-wrapper::after {
+  content: ""; position: absolute; left: 9px; bottom: 9px; z-index: 4;
+  border-style: solid; border-width: 5px 0 5px 8px;
+  border-color: transparent transparent transparent #fff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+}
+/* duration chip, bottom-right */
+#view-public-profile .yt-duration-badge {
+  position: absolute !important; right: 7px !important; bottom: 7px !important; top: auto !important; left: auto !important; z-index: 4 !important;
+  background: rgba(12,20,32,0.6) !important; color: #fff !important;
+  font-family: var(--font) !important; font-size: 0.68rem !important; font-weight: 700 !important;
+  padding: 2px 6px !important; border-radius: 6px !important;
+}
+/* PINNED badge on the first tile of each grid */
+#pubHomeRecentGrid .yt-video-card:first-child::before,
+#pubRecipesGrid .yt-video-card:first-child::before {
+  content: "PINNED"; position: absolute; left: 7px; top: 7px; z-index: 5;
+  background: rgba(12,20,32,0.64); color: #fff; font-family: var(--font);
+  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 6px;
+}
