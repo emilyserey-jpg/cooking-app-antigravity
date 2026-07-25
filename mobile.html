@@ -411,11 +411,13 @@
                 </button>
               </div>
               <div id="descLayoutToggleGroup" style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
-                <button id="descViewRowBtn" onclick="window.setPlayerDescLayout('row')" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
-                  Horizontal
+                <button id="descViewRowBtn" onclick="window.setPlayerDescLayout('row')" title="Horizontal — cards side by side" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s; display:flex; align-items:center; justify-content:center;">
+                  <span class="hv-label">Horizontal</span>
+                  <svg class="hv-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg>
                 </button>
-                <button id="descViewColBtn" onclick="window.setPlayerDescLayout('column')" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s;">
-                  Vertical
+                <button id="descViewColBtn" onclick="window.setPlayerDescLayout('column')" title="Vertical — cards stacked" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s; display:flex; align-items:center; justify-content:center;">
+                  <span class="hv-label">Vertical</span>
+                  <svg class="hv-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="14" height="6.5" rx="1.5"/><rect x="5" y="13.5" width="14" height="6.5" rx="1.5"/></svg>
                 </button>
               </div>
             </div>
@@ -3944,10 +3946,16 @@
     /* the description header starts clear of the video's bottom corner */
     #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 14px !important; padding: 0 12px !important; }
     /* Cook layout: the Steps/Ingredients/Comments tabs replace the "Step Descriptions" label in that row */
-    #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; flex: 1 1 100%; }
+    #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; flex: 1 1 auto; min-width: 0; }
     #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls > span.desc-label { display: none !important; }
-    /* three tabs + Horizontal/Vertical don't fit one phone line — let H/V wrap below, right-aligned (Steps only) */
-    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup { margin-left: auto; }
+    /* Cook: Horizontal/Vertical collapses to an icon pair so tabs + toggle sit on one line.
+       (Split keeps the text labels — .hv-icon is hidden by default below.) */
+    .hv-icon { display: none; }
+    #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls { flex-wrap: nowrap !important; }
+    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup { flex-shrink: 0; }
+    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup .hv-label { display: none; }
+    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup .hv-icon { display: block; width: 15px; height: 15px; }
+    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup button { padding: 5px 9px !important; }
     /* Split keeps its one-screen frame with the panel open: the columns scroll
        inside, so long card lists (Vertical descriptions) never push the route
        band further down the page */
