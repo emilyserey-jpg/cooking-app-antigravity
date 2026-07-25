@@ -3879,18 +3879,18 @@
     /* full-width band variant (Mirror / Flow, width pref = full):
        pinned across the bottom of the screen, columns pad to make room */
     #playerRouteCard.plr-band {
-      position: absolute; left: 8px; right: 8px; bottom: 12px; margin: 0;
+      position: absolute; left: 8px; right: 8px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); margin: 0;
       box-shadow: 0 10px 28px rgba(26, 58, 92, 0.18); z-index: 40;
     }
     .phone-screen.plr-has-band .player-left-column,
     .phone-screen.plr-has-band .mobile-player-body {
-      padding-bottom: 126px !important;
+      padding-bottom: calc(126px + env(safe-area-inset-bottom, 0px)) !important;
       transition: padding-bottom 0.3s cubic-bezier(0.4,0,0.2,1);
     }
     /* collapsed: the band is just the thin controls strip, so reserve only
        enough for it — the content drops down and the gap above the strip closes */
     .phone-screen.plr-has-band.route-collapsed .player-left-column,
-    .phone-screen.plr-has-band.route-collapsed .mobile-player-body { padding-bottom: 60px !important; }
+    .phone-screen.plr-has-band.route-collapsed .mobile-player-body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important; }
 
     /* the Route replaces the old plain scrubber and time row in the
        split layout too (Cook already hides them) */
@@ -4000,6 +4000,28 @@
        (In Split the viewport lives in .mobile-player-body, not .player-left-column.) */
     .phone-screen.pl-split .step-slider-viewport {
       overflow-x: hidden !important; overflow-y: auto !important;
+    }
+    /* Split: the classic step card fills the description column instead of sizing
+       to its content, and keeps a comfortable gap above the bottom control panel. */
+    .phone-screen.pl-split .mobile-player-body .step-slider-viewport {
+      flex: 1 1 auto !important; min-height: 0 !important;
+      display: flex !important; flex-direction: column !important;   /* beats the inline display:block set in app.js */
+      margin-bottom: 14px !important;                                /* the gap → control panel */
+    }
+    .phone-screen.pl-split .mobile-player-body .step-cards-slider {
+      flex: 1 1 auto !important; min-height: 0 !important;
+    }
+    .phone-screen.pl-split .mobile-player-body .step-slider-card {
+      min-height: 100% !important; box-sizing: border-box !important;
+    }
+    /* Split: let the player view fill the viewport height so the bottom-anchored
+       control panel sits flush at the bottom of the screen. Scoped via :has() to
+       Split only — Cook has no .pl-split, so it is untouched. */
+    #view-mobile-player:has(.phone-screen.pl-split) {
+      display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important;
+    }
+    #view-mobile-player:has(.phone-screen.pl-split) .player-mobile-wrapper {
+      flex: 1 1 auto !important; min-height: 0 !important;
     }
 
     /* compact card type: small title, small dark notes, as many lines as
@@ -4377,8 +4399,10 @@
         });
         if (maxBottom <= 0) return;
         const stripH = card.getBoundingClientRect().height || 42;
-        card.style.top = Math.round(Math.min(maxBottom + 8, sr.height - stripH - 12)) + 'px';
-        card.style.bottom = 'auto';
+        // anchor the collapsed band to the bottom edge (the CSS .plr-band bottom
+        // anchor) instead of parking it just under the content
+        card.style.top = 'auto';
+        card.style.bottom = '';
       }
       function dockCollapsedBand() {
         const card = document.getElementById('playerRouteCard');
@@ -4886,7 +4910,7 @@
         const h = Math.round(Math.min(w / aspect, 440));
         vidC.style.setProperty('width', w + 'px', 'important');
         vidC.style.setProperty('height', h + 'px', 'important');
-        // drop the video down in its column so it isn't glued to the top
+        // keep the video exactly where the user placed it (do not touch this column)
         vidC.style.setProperty('margin', '104px auto 0', 'important');
       }
 
