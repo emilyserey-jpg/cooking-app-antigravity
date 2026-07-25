@@ -675,9 +675,9 @@ h1, h2, h3, h4, h5 {
 }
 
 .step-chip.active {
-  background: #00c2ff !important;
+  background: #4a90d9 !important;
   background-image: none !important;
-  border-color: #00c2ff !important;
+  border-color: #4a90d9 !important;
   color: #fff !important;
   transform: none !important;
   box-shadow: none !important;
@@ -1476,15 +1476,15 @@ h1, h2, h3, h4, h5 {
 }
 
 .step-chip.done .step-chip-checkbox {
-  border-color: #22c55e;
-  background: #22c55e;
+  border-color: #4a90d9;
+  background: #4a90d9;
   color: #fff;
 }
 
 .step-chip.active.done .step-chip-checkbox {
   border-color: #fff;
   background: #fff;
-  color: #22c55e;
+  color: #4a90d9;
 }
 
 .player-controls-strip {
@@ -1556,25 +1556,25 @@ h1, h2, h3, h4, h5 {
 }
 
 .step-chip.done {
-  background: rgba(34, 197, 94, 0.08) !important;
-  border-color: rgba(34, 197, 94, 0.3) !important;
-  color: #16a34a !important;
+  background: rgba(74, 144, 217, 0.08) !important;
+  border-color: rgba(74, 144, 217, 0.3) !important;
+  color: #2f72b8 !important;
 }
 
 .step-chip.done .step-chip-num {
-  background: #22c55e !important;
+  background: #4a90d9 !important;
   color: #fff !important;
 }
 
 .step-chip.done:hover {
-  border-color: #22c55e !important;
-  color: #15803d !important;
+  border-color: #4a90d9 !important;
+  color: #2f72b8 !important;
 }
 
 .step-chip.active.done {
-  background: #22c55e !important;
+  background: #4a90d9 !important;
   background-image: none !important;
-  border-color: #22c55e !important;
+  border-color: #4a90d9 !important;
   color: #fff !important;
   box-shadow: none !important;
 }

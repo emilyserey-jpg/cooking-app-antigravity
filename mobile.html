@@ -3651,7 +3651,7 @@
     .plr-route { position: relative; height: 32px; margin: 0 8px; cursor: pointer; touch-action: none; }
     .plr-line, .plr-done-line { position: absolute; top: 14px; height: 4px; border-radius: 999px; }
     .plr-line { left: 0; right: 0; background: repeating-linear-gradient(90deg, #c9dcee 0 6px, transparent 6px 11px); }
-    .plr-done-line { left: 0; width: 0%; background: linear-gradient(90deg, #22c55e, #1fb6ff); }
+    .plr-done-line { left: 0; width: 0%; background: linear-gradient(90deg, #4a90d9, #2f72b8); }
     .plr-dot {
       position: absolute; top: 5px; width: 22px; height: 22px; margin-left: -11px;
       border-radius: 50%; background: #fff; border: 2.5px solid #c9dcee;
@@ -3660,8 +3660,8 @@
       transition: all 0.2s ease; pointer-events: none;
     }
     @media (prefers-reduced-motion: reduce) { .plr-dot { transition: none; } }
-    .plr-dot.done { background: #22c55e; border-color: #22c55e; color: #fff; }
-    .plr-dot.now { border-color: #1fb6ff; color: #0b93d4; box-shadow: 0 0 0 3.5px rgba(31, 182, 255, 0.25); }
+    .plr-dot.done { background: #4a90d9; border-color: #4a90d9; color: #fff; }
+    .plr-dot.now { border-color: #4a90d9; color: #2f72b8; box-shadow: 0 0 0 3.5px rgba(74, 144, 217, 0.25); }
     .plr-flag { position: absolute; top: 6px; right: -4px; font-size: 0.78rem; z-index: 1; pointer-events: none; }
     .plr-pin {
       position: absolute; top: -9px; margin-left: -8px; font-size: 0.95rem; z-index: 3;
@@ -3825,17 +3825,17 @@
       background: repeating-linear-gradient(180deg, #c9dcee 0 4px, transparent 4px 8px);
     }
     .plr-stop:last-child::before { display: none; }
-    .plr-stop.done::before { background: #22c55e; }
+    .plr-stop.done::before { background: #4a90d9; }
     .plr-vdot {
       width: 17px; height: 17px; border-radius: 50%; background: #fff; border: 2px solid #c9dcee;
       display: flex; align-items: center; justify-content: center; font-size: 0.48rem;
       font-weight: 900; color: var(--text-muted); z-index: 2; box-sizing: border-box;
     }
-    .plr-stop.done .plr-vdot { background: #22c55e; border-color: #22c55e; color: #fff; }
-    .plr-stop.now .plr-vdot { border-color: #1fb6ff; color: #0b93d4; box-shadow: 0 0 0 3px rgba(31, 182, 255, 0.25); }
+    .plr-stop.done .plr-vdot { background: #4a90d9; border-color: #4a90d9; color: #fff; }
+    .plr-stop.now .plr-vdot { border-color: #4a90d9; color: #2f72b8; box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.25); }
     .plr-vname { font-size: 0.66rem; font-weight: 800; color: var(--text-muted); line-height: 1.3; padding-top: 1px; }
     .plr-stop.now .plr-vname {
-      background: #1fb6ff; color: #fff; font-weight: 900; border-radius: 999px;
+      background: #4a90d9; color: #fff; font-weight: 900; border-radius: 999px;
       padding: 2px 8px; justify-self: start; margin-top: -1px;
     }
 
@@ -3952,6 +3952,14 @@
     .phone-screen.pl-cook .player-left-column .step-slider-viewport {
       margin: 8px 10px 0 !important;
       max-height: 190px !important; overflow: hidden !important;
+    }
+    /* Split view: the description card gets flex-shrunk shorter than its content,
+       and the base .step-slider-viewport rule clips overflow, so long ingredient
+       lists lose their bottom (e.g. "salt"/"pepper"). Keep the horizontal carousel
+       clipped, but let the card scroll vertically so nothing is hidden.
+       (In Split the viewport lives in .mobile-player-body, not .player-left-column.) */
+    .phone-screen.pl-split .step-slider-viewport {
+      overflow-x: hidden !important; overflow-y: auto !important;
     }
 
     /* compact card type: small title, small dark notes, as many lines as
