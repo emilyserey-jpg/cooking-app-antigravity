@@ -4016,12 +4016,41 @@
     }
     /* Split: let the player view fill the viewport height so the bottom-anchored
        control panel sits flush at the bottom of the screen. Scoped via :has() to
-       Split only — Cook has no .pl-split, so it is untouched. */
-    #view-mobile-player:has(.phone-screen.pl-split) {
+       Split only — Cook has no .pl-split, so it is untouched. Scoped to .active
+       so the hidden player doesn't reserve empty space above the editor. */
+    #view-mobile-player.active:has(.phone-screen.pl-split) {
       display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important;
     }
-    #view-mobile-player:has(.phone-screen.pl-split) .player-mobile-wrapper {
+    #view-mobile-player.active:has(.phone-screen.pl-split) .player-mobile-wrapper {
       flex: 1 1 auto !important; min-height: 0 !important;
+    }
+
+    /* Edit mode (Split): pin the scrubber and the playback-controls card to the
+       bottom of the screen so they stay reachable while the loop stops scroll. */
+    body.mobile-editing-active.editor-split-view-active #stepNavControlsRow {
+      position: fixed !important;
+      left: 8px !important; right: 8px !important; bottom: 8px !important;
+      width: auto !important; margin: 0 !important;
+      z-index: 950 !important;
+    }
+    body.mobile-editing-active.editor-split-view-active #editorScrubberCard {
+      position: fixed !important;
+      left: 8px !important; right: 8px !important; bottom: 122px !important; /* rests on the controls card below */
+      width: auto !important; margin: 0 !important;
+      z-index: 950 !important;
+    }
+    /* keep the last loop stop clear of the two pinned cards */
+    body.mobile-editing-active.editor-split-view-active .app-container {
+      padding-bottom: 200px !important;
+    }
+    /* the active view-section's translateY(0) transform would hijack
+       position:fixed (a transformed ancestor becomes the containing block),
+       so drop it while editing — the cards must pin to the real viewport */
+    body.mobile-editing-active .view-section.active {
+      transform: none !important;
+      /* transform must not transition here — a mid-flight transform transition
+         keeps the section acting as the containing block for the fixed cards */
+      transition: opacity var(--ease-out) !important;
     }
 
     /* compact card type: small title, small dark notes, as many lines as
