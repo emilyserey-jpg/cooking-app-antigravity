@@ -395,10 +395,19 @@
 
             <!-- Multigrid Descriptions Layout Toggle Controls -->
             <div id="playerMultigridDescControls" style="display:none; align-items:center; justify-content:space-between; margin-bottom:8px; width:100%; flex-wrap:wrap; gap:8px;">
-              <span style="font-size:0.75rem; font-weight:800; color:var(--text-title); display:flex; align-items:center; gap:4px;">
+              <span class="desc-label" style="font-size:0.75rem; font-weight:800; color:var(--text-title); display:flex; align-items:center; gap:4px;">
                 <i data-lucide="book-open" style="width:14px; height:14px; color:var(--primary);"></i> Step Descriptions
               </span>
-              <div style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
+              <!-- Cook layout only: Steps / Ingredients page tabs — take the label's slot (see setCookContentTab in app.js) -->
+              <div id="cookContentTabs" style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
+                <button id="cookTabStepsBtn" onclick="window.setCookContentTab('steps')" style="border:none; padding:4px 12px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
+                  Steps
+                </button>
+                <button id="cookTabIngBtn" onclick="window.setCookContentTab('ingredients')" style="border:none; padding:4px 12px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s;">
+                  Ingredients
+                </button>
+              </div>
+              <div id="descLayoutToggleGroup" style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
                 <button id="descViewRowBtn" onclick="window.setPlayerDescLayout('row')" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
                   Horizontal
                 </button>
@@ -411,6 +420,11 @@
             <!-- Multigrid Descriptions Slidable Container (hidden by default) -->
             <div id="playerMultigridDescriptions" style="display:none; flex-direction:row; overflow-x:auto; gap:12px; padding: 4px 4px 12px 4px; -webkit-overflow-scrolling:touch; width:100%; box-sizing:border-box; scrollbar-width:thin;">
               <!-- Dynamic description cards -->
+            </div>
+
+            <!-- Cook layout only: Ingredients page (shown when the Ingredients tab is active; populated by renderCookIngredients in app.js) -->
+            <div id="playerCookIngredients" style="display:none; flex-direction:column; width:100%; box-sizing:border-box; font-size:0.78rem; color:var(--text-body); line-height:1.45; font-weight:600; padding:2px 4px 12px;">
+              <!-- Dynamic ingredient rows -->
             </div>
 
             <!-- Steps timeline scroll list -->
@@ -3916,6 +3930,9 @@
     #view-mobile-player .phone-screen.pl-cook.multigrid-active #playerCookRail { display: none !important; }
     /* the description header starts clear of the video's bottom corner */
     #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 14px !important; padding: 0 12px !important; }
+    /* Cook layout: the Steps/Ingredients tabs replace the "Step Descriptions" label in that row */
+    #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; }
+    #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls > span.desc-label { display: none !important; }
     /* Split keeps its one-screen frame with the panel open: the columns scroll
        inside, so long card lists (Vertical descriptions) never push the route
        band further down the page */

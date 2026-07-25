@@ -1140,6 +1140,24 @@ window.renderMultigridDescriptions = function() {
   //   swipeable card (ingredients, tips, full height), Vertical swaps in the
   //   stacked all-steps list. Never both, so nothing overlaps or repeats.
   if (ctrlContainer) ctrlContainer.style.display = 'flex';
+
+  // Cook layout only: the Steps / Ingredients tabs choose what fills this slot.
+  const inCook = !window.currentSplitLayoutActive;
+  const cookIng = document.getElementById('playerCookIngredients');
+  const hvGroup = document.getElementById('descLayoutToggleGroup');
+  if (inCook && window.cookContentTab === 'ingredients') {
+    container.style.display = 'none';
+    if (activeCard) activeCard.style.display = 'none';
+    if (hvGroup) hvGroup.style.display = 'none';        // Horizontal/Vertical only applies to steps
+    if (cookIng) { cookIng.style.display = 'flex'; renderCookIngredients(); }
+    if (typeof syncCookContentTabs === 'function') syncCookContentTabs();
+    return;                                              // no step cards to build on the Ingredients page
+  }
+  // Steps tab (or any Split state): hide the Cook ingredients view, restore the H/V toggle
+  if (cookIng) cookIng.style.display = 'none';
+  if (inCook && hvGroup) hvGroup.style.display = 'flex';
+  if (inCook && typeof syncCookContentTabs === 'function') syncCookContentTabs();
+
   const splitClosed = window.currentSplitLayoutActive && !isPlayerMultigridActive;
   if (splitClosed && playerDescLayoutMode === 'row') {
     container.style.display = 'none';
@@ -1257,6 +1275,61 @@ window.togglePlayerMultigridDescStepDone = function(stepIndex) {
 window.setPlayerDescLayout = function(mode) {
   playerDescLayoutMode = mode;
   renderMultigridDescriptions();
+};
+
+// ── Cook layout: Steps / Ingredients page tabs ──
+// These live in the "Step Descriptions" header row (Cook only) and swap the
+// slot between the step-description cards and the recipe's ingredient list.
+window.cookContentTab = window.cookContentTab || 'steps';
+
+function syncCookContentTabs() {
+  const stepsBtn = document.getElementById('cookTabStepsBtn');
+  const ingBtn = document.getElementById('cookTabIngBtn');
+  if (!stepsBtn || !ingBtn) return;
+  const onSteps = window.cookContentTab !== 'ingredients';
+  stepsBtn.style.background = onSteps ? 'var(--primary)' : 'transparent';
+  stepsBtn.style.color = onSteps ? '#fff' : 'var(--text-muted)';
+  ingBtn.style.background = onSteps ? 'transparent' : 'var(--primary)';
+  ingBtn.style.color = onSteps ? 'var(--text-muted)' : '#fff';
+}
+
+function renderCookIngredients() {
+  const el = document.getElementById('playerCookIngredients');
+  if (!el) return;
+  const rd = (typeof getActiveRecipeData === 'function') ? getActiveRecipeData() : window.recipeData;
+  const raw = (rd && typeof rd.ingredients === 'string') ? rd.ingredients : '';
+  // The ingredients string can hold two formats: a plain list after the
+  // ---INGREDIENTS--- delimiter, and/or a custom page (promptType "ingredients")
+  // inside the ---CUSTOM_PAGES--- JSON. Prefer the plain list; fall back to the
+  // custom page — this recipe uses the latter.
+  let listStr = '';
+  if (raw.includes('---CUSTOM_PAGES---')) {
+    const parts = raw.split('---INGREDIENTS---');
+    listStr = parts[1] ? parts[1].trim() : '';
+    if (!listStr) {
+      try {
+        const pages = JSON.parse(parts[0].replace('---CUSTOM_PAGES---', '').trim());
+        const page = Object.values(pages).find(p => p && (
+          p.promptType === 'ingredients' || String(p.name || '').toLowerCase().includes('ingredient')
+        ));
+        if (page && typeof page.content === 'string') listStr = page.content;
+      } catch (e) { /* malformed custom-pages JSON — fall through to empty */ }
+    }
+  } else {
+    listStr = raw;
+  }
+  const items = listStr.split(/[\n;]/)
+    .map(s => s.replace(/^\s*[-•*]\s*/, '').trim())   // strip "- ", "• ", "* " bullet markers
+    .filter(Boolean);
+  el.innerHTML = items.length
+    ? items.map(i => `<div style="display:flex; align-items:center; padding:7px 6px; border-bottom:1px solid var(--border-card);"><span style="flex:1;">${i}</span></div>`).join('')
+    : `<div style="padding:10px 6px; font-style:italic; color:var(--text-muted);">No ingredients listed for this recipe.</div>`;
+}
+
+window.setCookContentTab = function(tab) {
+  window.cookContentTab = (tab === 'ingredients') ? 'ingredients' : 'steps';
+  syncCookContentTabs();
+  renderMultigridDescriptions();   // single authority applies the show/hide
 };
 
 function renderStepCardsMobile() {
@@ -9754,18 +9827,23 @@ function updateMultigridLayoutClass() {
     const wantLeft = !window.currentSplitLayoutActive;
     const descCtrl = document.getElementById('playerMultigridDescControls');
     const descList = document.getElementById('playerMultigridDescriptions');
+    const cookIng = document.getElementById('playerCookIngredients');
     if (descCtrl && descList) {
-      [descCtrl, descList].forEach(node => {
+      [descCtrl, descList, cookIng].filter(Boolean).forEach(node => {
         if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
       });
       const classicVp = document.querySelector('.step-slider-viewport');
       if (wantLeft && classicVp && classicVp.parentElement) {
-        const misplaced = descList.nextElementSibling !== classicVp ||
+        // order in the Cook column: controls, descriptions, cook-ingredients, then the docked card slot
+        const tail = cookIng || descList;
+        const misplaced = tail.nextElementSibling !== classicVp ||
                           descCtrl.nextElementSibling !== descList ||
-                          descCtrl.parentElement !== classicVp.parentElement;
+                          descCtrl.parentElement !== classicVp.parentElement ||
+                          (cookIng && descList.nextElementSibling !== cookIng);
         if (misplaced) {
           classicVp.parentElement.insertBefore(descCtrl, classicVp);
           classicVp.parentElement.insertBefore(descList, classicVp);
+          if (cookIng) classicVp.parentElement.insertBefore(cookIng, classicVp);
         }
       } else if (!wantLeft) {
         // Split: the toggle sits at the top of the column, right under the
@@ -9778,6 +9856,11 @@ function updateMultigridLayoutClass() {
         if (descList._homeParent && descList.parentElement !== descList._homeParent) {
           if (descList._homeNext && descList._homeNext.parentElement === descList._homeParent) descList._homeParent.insertBefore(descList, descList._homeNext);
           else descList._homeParent.appendChild(descList);
+        }
+        // the Cook-only ingredients panel returns to its home (hidden) slot in Split
+        if (cookIng && cookIng._homeParent && cookIng.parentElement !== cookIng._homeParent) {
+          if (cookIng._homeNext && cookIng._homeNext.parentElement === cookIng._homeParent) cookIng._homeParent.insertBefore(cookIng, cookIng._homeNext);
+          else cookIng._homeParent.appendChild(cookIng);
         }
       }
     }
