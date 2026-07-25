@@ -3501,8 +3501,6 @@
     /* Cook view: give the "Step Descriptions" row more breathing room below the video.
        (`body` prefix + :not(.multigrid-active) so it out-specifies the base 14px rule.) */
     body #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 30px !important; }
-    /* Control bar is forced to full (above), so the width toggle has no purpose — hide it. */
-    #plrWidthBtn { display: none !important; }
 
     /* Back / Multigrid become frosted circular orbs, icon only */
     #view-mobile-player .player-top-btn {
@@ -5116,8 +5114,7 @@
         const leftCol = player.querySelector('.player-left-column');
         if (!screen || !leftCol) return;
         const name = localStorage.getItem(KEY) || 'cook';
-        // Always full — the "column" (slim) mode hid the controls and trapped users.
-        const width = 'full';
+        const width = localStorage.getItem('cooking_gps_route_width') || 'full';
         const band = name !== 'cook' && width === 'full';
         const slim = name !== 'cook' && width === 'column';
         card.classList.toggle('plr-slim', slim);
