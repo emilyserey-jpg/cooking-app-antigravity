@@ -4886,7 +4886,8 @@
         const h = Math.round(Math.min(w / aspect, 440));
         vidC.style.setProperty('width', w + 'px', 'important');
         vidC.style.setProperty('height', h + 'px', 'important');
-        vidC.style.setProperty('margin', '4px auto', 'important');
+        // drop the video down in its column so it isn't glued to the top
+        vidC.style.setProperty('margin', '104px auto 0', 'important');
       }
 
       // Cook gave the video a fixed 42vh box and cropped whatever didn't fit.
