@@ -1141,20 +1141,29 @@ window.renderMultigridDescriptions = function() {
   //   stacked all-steps list. Never both, so nothing overlaps or repeats.
   if (ctrlContainer) ctrlContainer.style.display = 'flex';
 
-  // Cook layout only: the Steps / Ingredients tabs choose what fills this slot.
+  // Cook layout only: the Steps / Ingredients / Comments tabs choose what fills this slot.
   const inCook = !window.currentSplitLayoutActive;
   const cookIng = document.getElementById('playerCookIngredients');
+  const cookCmt = document.getElementById('playerCookComments');
   const hvGroup = document.getElementById('descLayoutToggleGroup');
-  if (inCook && window.cookContentTab === 'ingredients') {
+  if (inCook && (window.cookContentTab === 'ingredients' || window.cookContentTab === 'comments')) {
+    const isIng = window.cookContentTab === 'ingredients';
     container.style.display = 'none';
     if (activeCard) activeCard.style.display = 'none';
     if (hvGroup) hvGroup.style.display = 'none';        // Horizontal/Vertical only applies to steps
-    if (cookIng) { cookIng.style.display = 'flex'; renderCookIngredients(); }
+    if (cookIng) { cookIng.style.display = isIng ? 'flex' : 'none'; if (isIng) renderCookIngredients(); }
+    if (cookCmt) {
+      cookCmt.style.display = isIng ? 'none' : 'flex';
+      // comments load async from Supabase — fetch only when the tab is shown for a recipe
+      // we haven't loaded yet, never on every resize-driven re-render
+      if (!isIng && cookCmt.dataset.loadedFor !== String(activePlayerRecipeId || '')) renderCookComments();
+    }
     if (typeof syncCookContentTabs === 'function') syncCookContentTabs();
-    return;                                              // no step cards to build on the Ingredients page
+    return;
   }
-  // Steps tab (or any Split state): hide the Cook ingredients view, restore the H/V toggle
+  // Steps tab (or any Split state): hide the Cook ingredient/comment views, restore the H/V toggle
   if (cookIng) cookIng.style.display = 'none';
+  if (cookCmt) cookCmt.style.display = 'none';
   if (inCook && hvGroup) hvGroup.style.display = 'flex';
   if (inCook && typeof syncCookContentTabs === 'function') syncCookContentTabs();
 
@@ -1283,14 +1292,15 @@ window.setPlayerDescLayout = function(mode) {
 window.cookContentTab = window.cookContentTab || 'steps';
 
 function syncCookContentTabs() {
-  const stepsBtn = document.getElementById('cookTabStepsBtn');
-  const ingBtn = document.getElementById('cookTabIngBtn');
-  if (!stepsBtn || !ingBtn) return;
-  const onSteps = window.cookContentTab !== 'ingredients';
-  stepsBtn.style.background = onSteps ? 'var(--primary)' : 'transparent';
-  stepsBtn.style.color = onSteps ? '#fff' : 'var(--text-muted)';
-  ingBtn.style.background = onSteps ? 'transparent' : 'var(--primary)';
-  ingBtn.style.color = onSteps ? 'var(--text-muted)' : '#fff';
+  const tab = window.cookContentTab || 'steps';
+  const map = { steps: 'cookTabStepsBtn', ingredients: 'cookTabIngBtn', comments: 'cookTabCmtBtn' };
+  Object.keys(map).forEach(key => {
+    const btn = document.getElementById(map[key]);
+    if (!btn) return;
+    const on = key === tab;
+    btn.style.background = on ? 'var(--primary)' : 'transparent';
+    btn.style.color = on ? '#fff' : 'var(--text-muted)';
+  });
 }
 
 function renderCookIngredients() {
@@ -1327,9 +1337,101 @@ function renderCookIngredients() {
 }
 
 window.setCookContentTab = function(tab) {
-  window.cookContentTab = (tab === 'ingredients') ? 'ingredients' : 'steps';
+  window.cookContentTab = ['ingredients', 'comments'].includes(tab) ? tab : 'steps';
   syncCookContentTabs();
+  if (window.cookContentTab === 'comments') {
+    // clear the loaded marker so the render authority fetches fresh comments
+    const cc = document.getElementById('playerCookComments');
+    if (cc) cc.dataset.loadedFor = '';
+  }
   renderMultigridDescriptions();   // single authority applies the show/hide
+};
+
+// Comments page (Cook layout). Reuses the app's Supabase comment API — same data
+// as the Split comment sheet — but renders into its own Cook container so the two
+// never fight over one element.
+function renderCookCommentForm(formEl) {
+  if (!formEl) return;
+  if (currentUser) {
+    formEl.innerHTML =
+      '<div style="display:flex; gap:8px; align-items:center; border-top:1px solid var(--border-card); padding-top:10px;">' +
+        '<input id="playerCookCommentInput" type="text" placeholder="Add a comment…" style="flex:1; min-width:0; background:var(--bg-card-soft); border:1.5px solid var(--border-card); border-radius:999px; padding:9px 14px; font-family:var(--font); font-size:0.76rem; color:var(--text-heading); outline:none;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitCookComment();}" />' +
+        '<button id="playerCookPostBtn" onclick="submitCookComment()" title="Post" style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background:var(--primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="width:16px;height:16px;"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+      '</div>';
+  } else {
+    formEl.innerHTML =
+      '<div style="border-top:1px solid var(--border-card); padding-top:10px; text-align:center;">' +
+        '<p style="font-size:0.7rem; color:var(--text-muted); margin:0 0 6px; font-weight:600;">Sign in to join the conversation.</p>' +
+        '<button onclick="openAuthModal()" style="padding:5px 14px; font-size:0.68rem; font-weight:800; border-radius:8px; cursor:pointer; background:var(--bg-card-soft); border:1.5px solid var(--border-card); font-family:var(--font); color:var(--text-heading);">Sign In</button>' +
+      '</div>';
+  }
+}
+
+async function renderCookComments() {
+  const wrap = document.getElementById('playerCookComments');
+  const listEl = document.getElementById('playerCookCommentsList');
+  const formEl = document.getElementById('playerCookCommentForm');
+  const countEl = document.getElementById('cookTabCmtCount');
+  if (!wrap || !listEl) return;
+  const recipeId = activePlayerRecipeId || window.activePlayerRecipeId;
+  wrap.dataset.loadedFor = String(recipeId || '');   // mark synchronously so the render guard won't double-fetch
+  renderCookCommentForm(formEl);
+  if (!recipeId) { listEl.innerHTML = '<div style="font-size:0.74rem;color:var(--text-muted);text-align:center;padding:16px 10px;font-weight:600;">Open a recipe to see its comments.</div>'; return; }
+  listEl.innerHTML = '<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:14px;font-weight:600;">Loading comments…</div>';
+  try {
+    const { getRecipeComments } = await import('./supabase-client.js');
+    const comments = await getRecipeComments(recipeId);
+    if (countEl) countEl.textContent = comments.length ? ' · ' + comments.length : '';
+    if (!comments.length) {
+      listEl.innerHTML = '<div style="font-size:0.76rem;color:var(--text-muted);text-align:center;padding:20px 10px;font-weight:600;">No comments yet. Be the first!</div>';
+      return;
+    }
+    listEl.innerHTML = comments.map(c => {
+      const who = String(c.author_id || c.user_id || 'anonymous');
+      const handle = '@' + who.split('@')[0];
+      const initial = (who[0] || 'a').toUpperCase();
+      const when = (typeof timeAgo === 'function') ? timeAgo(c.created_at || c.createdAt) : '';
+      const hue = (who.charCodeAt(0) * 47) % 360;
+      return '<div style="display:flex; gap:9px; align-items:flex-start; padding:9px 4px; border-bottom:1px solid var(--border-card);">' +
+        '<span style="flex-shrink:0; width:30px; height:30px; border-radius:50%; background:hsl(' + hue + ' 45% 55%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:900;">' + initial + '</span>' +
+        '<div style="min-width:0; flex:1;">' +
+          '<div style="font-size:0.72rem; font-weight:900; color:var(--text-heading);">' + escapeHTML(handle) + ' <span style="font-size:0.6rem; font-weight:700; color:var(--text-muted);">' + when + '</span></div>' +
+          '<p style="font-size:0.76rem; font-weight:600; color:var(--text-body); line-height:1.45; margin:3px 0 0; word-break:break-word;">' + escapeHTML(c.body) + '</p>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch (err) {
+    console.error('[Cook Comments] load failed:', err);
+    listEl.innerHTML = '<div style="font-size:0.72rem;color:#f87171;text-align:center;padding:14px;">Could not load comments.</div>';
+  }
+}
+
+window.submitCookComment = async function() {
+  if (!currentUser) { if (typeof showTip === 'function') showTip('Please sign in to post comments.'); return; }
+  const recipeId = activePlayerRecipeId || window.activePlayerRecipeId;
+  if (!recipeId) return;
+  const input = document.getElementById('playerCookCommentInput');
+  const btn = document.getElementById('playerCookPostBtn');
+  if (!input) return;
+  const body = input.value.trim();
+  if (!body) { if (typeof showTip === 'function') showTip('Write a comment first!'); return; }
+  if (btn) btn.disabled = true;
+  try {
+    const { createRecipeComment } = await import('./supabase-client.js');
+    await createRecipeComment(recipeId, body, currentUser.email);
+    input.value = '';
+    if (typeof showTip === 'function') showTip('Comment posted!');
+    const cc = document.getElementById('playerCookComments');
+    if (cc) cc.dataset.loadedFor = '';   // force a refresh
+    renderCookComments();
+  } catch (err) {
+    console.error('[Cook Comments] post failed:', err);
+    if (typeof showTip === 'function') showTip('Could not post comment: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 };
 
 function renderStepCardsMobile() {
@@ -9828,22 +9930,22 @@ function updateMultigridLayoutClass() {
     const descCtrl = document.getElementById('playerMultigridDescControls');
     const descList = document.getElementById('playerMultigridDescriptions');
     const cookIng = document.getElementById('playerCookIngredients');
+    const cookCmt = document.getElementById('playerCookComments');
     if (descCtrl && descList) {
-      [descCtrl, descList, cookIng].filter(Boolean).forEach(node => {
+      // Cook column order: controls, descriptions, cook-ingredients, cook-comments, then the docked card slot
+      const ordered = [descCtrl, descList, cookIng, cookCmt].filter(Boolean);
+      ordered.forEach(node => {
         if (!node._homeParent) { node._homeParent = node.parentElement; node._homeNext = node.nextElementSibling; }
       });
       const classicVp = document.querySelector('.step-slider-viewport');
       if (wantLeft && classicVp && classicVp.parentElement) {
-        // order in the Cook column: controls, descriptions, cook-ingredients, then the docked card slot
-        const tail = cookIng || descList;
-        const misplaced = tail.nextElementSibling !== classicVp ||
-                          descCtrl.nextElementSibling !== descList ||
-                          descCtrl.parentElement !== classicVp.parentElement ||
-                          (cookIng && descList.nextElementSibling !== cookIng);
+        let misplaced = ordered[ordered.length - 1].nextElementSibling !== classicVp ||
+                        ordered.some(el => el.parentElement !== classicVp.parentElement);
+        for (let i = 0; i < ordered.length - 1 && !misplaced; i++) {
+          if (ordered[i].nextElementSibling !== ordered[i + 1]) misplaced = true;
+        }
         if (misplaced) {
-          classicVp.parentElement.insertBefore(descCtrl, classicVp);
-          classicVp.parentElement.insertBefore(descList, classicVp);
-          if (cookIng) classicVp.parentElement.insertBefore(cookIng, classicVp);
+          ordered.forEach(el => classicVp.parentElement.insertBefore(el, classicVp));
         }
       } else if (!wantLeft) {
         // Split: the toggle sits at the top of the column, right under the
@@ -9853,15 +9955,13 @@ function updateMultigridLayoutClass() {
             (descCtrl.nextElementSibling !== classicVp || descCtrl.parentElement !== classicVp.parentElement)) {
           classicVp.parentElement.insertBefore(descCtrl, classicVp);
         }
-        if (descList._homeParent && descList.parentElement !== descList._homeParent) {
-          if (descList._homeNext && descList._homeNext.parentElement === descList._homeParent) descList._homeParent.insertBefore(descList, descList._homeNext);
-          else descList._homeParent.appendChild(descList);
-        }
-        // the Cook-only ingredients panel returns to its home (hidden) slot in Split
-        if (cookIng && cookIng._homeParent && cookIng.parentElement !== cookIng._homeParent) {
-          if (cookIng._homeNext && cookIng._homeNext.parentElement === cookIng._homeParent) cookIng._homeParent.insertBefore(cookIng, cookIng._homeNext);
-          else cookIng._homeParent.appendChild(cookIng);
-        }
+        // the Cook-only description list, ingredients and comments panels return to their home (hidden) slots in Split
+        [descList, cookIng, cookCmt].filter(Boolean).forEach(node => {
+          if (node._homeParent && node.parentElement !== node._homeParent) {
+            if (node._homeNext && node._homeNext.parentElement === node._homeParent) node._homeParent.insertBefore(node, node._homeNext);
+            else node._homeParent.appendChild(node);
+          }
+        });
       }
     }
 

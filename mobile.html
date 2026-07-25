@@ -398,13 +398,16 @@
               <span class="desc-label" style="font-size:0.75rem; font-weight:800; color:var(--text-title); display:flex; align-items:center; gap:4px;">
                 <i data-lucide="book-open" style="width:14px; height:14px; color:var(--primary);"></i> Step Descriptions
               </span>
-              <!-- Cook layout only: Steps / Ingredients page tabs — take the label's slot (see setCookContentTab in app.js) -->
-              <div id="cookContentTabs" style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
-                <button id="cookTabStepsBtn" onclick="window.setCookContentTab('steps')" style="border:none; padding:4px 12px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
+              <!-- Cook layout only: Steps / Ingredients / Comments page tabs — take the label's slot (see setCookContentTab in app.js) -->
+              <div id="cookContentTabs" style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; gap:2px;">
+                <button id="cookTabStepsBtn" onclick="window.setCookContentTab('steps')" style="flex:1; border:none; padding:5px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s; white-space:nowrap;">
                   Steps
                 </button>
-                <button id="cookTabIngBtn" onclick="window.setCookContentTab('ingredients')" style="border:none; padding:4px 12px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s;">
+                <button id="cookTabIngBtn" onclick="window.setCookContentTab('ingredients')" style="flex:1; border:none; padding:5px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s; white-space:nowrap;">
                   Ingredients
+                </button>
+                <button id="cookTabCmtBtn" onclick="window.setCookContentTab('comments')" style="flex:1; border:none; padding:5px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s; white-space:nowrap;">
+                  Comments<span id="cookTabCmtCount" style="opacity:0.75;"></span>
                 </button>
               </div>
               <div id="descLayoutToggleGroup" style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
@@ -425,6 +428,16 @@
             <!-- Cook layout only: Ingredients page (shown when the Ingredients tab is active; populated by renderCookIngredients in app.js) -->
             <div id="playerCookIngredients" style="display:none; flex-direction:column; width:100%; box-sizing:border-box; font-size:0.78rem; color:var(--text-body); line-height:1.45; font-weight:600; padding:2px 4px 12px;">
               <!-- Dynamic ingredient rows -->
+            </div>
+
+            <!-- Cook layout only: Comments page (shown when the Comments tab is active; populated by renderCookComments in app.js) -->
+            <div id="playerCookComments" style="display:none; flex-direction:column; width:100%; box-sizing:border-box; padding:2px 4px 12px; gap:8px;">
+              <div id="playerCookCommentsList" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- Dynamic comment rows -->
+              </div>
+              <div id="playerCookCommentForm" style="margin-top:2px;">
+                <!-- Composer (or sign-in prompt) injected by renderCookComments -->
+              </div>
             </div>
 
             <!-- Steps timeline scroll list -->
@@ -3930,9 +3943,11 @@
     #view-mobile-player .phone-screen.pl-cook.multigrid-active #playerCookRail { display: none !important; }
     /* the description header starts clear of the video's bottom corner */
     #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 14px !important; padding: 0 12px !important; }
-    /* Cook layout: the Steps/Ingredients tabs replace the "Step Descriptions" label in that row */
-    #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; }
+    /* Cook layout: the Steps/Ingredients/Comments tabs replace the "Step Descriptions" label in that row */
+    #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; flex: 1 1 100%; }
     #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls > span.desc-label { display: none !important; }
+    /* three tabs + Horizontal/Vertical don't fit one phone line — let H/V wrap below, right-aligned (Steps only) */
+    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup { margin-left: auto; }
     /* Split keeps its one-screen frame with the panel open: the columns scroll
        inside, so long card lists (Vertical descriptions) never push the route
        band further down the page */
