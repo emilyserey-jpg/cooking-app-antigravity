@@ -3487,20 +3487,22 @@
       border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* ── the mockup's skin: airy ground, frosted orbs, capsule play, glass cards ──
-       Flat light-blue rather than a blue→green fade: the gradient's green foot
-       pooled around the route card and read as a cutout edge. */
+    /* One flat color across the whole app — no radial gradient, no panel seam. */
+    body {
+      background: #eaf3fc !important;
+      background-image: none !important;
+    }
     #view-mobile-player .phone-screen {
       background: #eaf3fc !important;
     }
-    /* the app body carries a blue→green radial ground (styles.css); its green
-       foot at the bottom-right showed through below the player and read as a
-       cutout. Keep the blue radials, drop the green one. */
-    body {
-      background-image:
-        radial-gradient(ellipse at 10% 0%, #c8e6ff 0%, transparent 55%),
-        radial-gradient(ellipse at 50% 50%, #eaf4ff 0%, transparent 80%) !important;
-    }
+    /* Drop the control card's soft shadow — on the flat background it read as a
+       gray band below the card. */
+    #playerRouteCard { box-shadow: none !important; }
+    /* Cook view: give the "Step Descriptions" row more breathing room below the video.
+       (`body` prefix + :not(.multigrid-active) so it out-specifies the base 14px rule.) */
+    body #view-mobile-player .phone-screen.pl-cook:not(.multigrid-active) #playerMultigridDescControls { margin-top: 30px !important; }
+    /* Control bar is forced to full (above), so the width toggle has no purpose — hide it. */
+    #plrWidthBtn { display: none !important; }
 
     /* Back / Multigrid become frosted circular orbs, icon only */
     #view-mobile-player .player-top-btn {
@@ -5114,7 +5116,8 @@
         const leftCol = player.querySelector('.player-left-column');
         if (!screen || !leftCol) return;
         const name = localStorage.getItem(KEY) || 'cook';
-        const width = localStorage.getItem('cooking_gps_route_width') || 'full';
+        // Always full — the "column" (slim) mode hid the controls and trapped users.
+        const width = 'full';
         const band = name !== 'cook' && width === 'full';
         const slim = name !== 'cook' && width === 'column';
         card.classList.toggle('plr-slim', slim);
