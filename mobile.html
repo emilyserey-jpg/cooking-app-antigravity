@@ -6284,7 +6284,9 @@
         // mid-flight transition holds the OLD padding over our !important
         // (same frozen-transition trap as the view-section transform)
         setImp(b, 'transition', 'none');
-        setImp(b, 'padding-bottom', bandClear + 'px');
+        // minus 8: the last panel's own margin-bottom already provides it,
+        // so both columns bottom out on exactly the same line
+        setImp(b, 'padding-bottom', Math.max(0, bandClear - 8) + 'px');
         // hide everything first, then place the open ones — both steps
         // surfaces included, so the inactive one never leaks into layout
         allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
