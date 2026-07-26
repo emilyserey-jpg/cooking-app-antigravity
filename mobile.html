@@ -4270,6 +4270,36 @@
     .phone-screen > #playerCmtTab,
     .phone-screen #playerCookRail #playerCmtTab { display: none !important; }
 
+    /* phones show no burned-in subtitles at all — desktop and iPad keep
+       them. (updateSubtitles sets inline display:flex, so !important is
+       needed to win.) The clamp styling below stays for the larger screens
+       that can land on this page, e.g. an iPad in portrait. */
+    @media (max-width: 768px) {
+      #editorSubtitleOverlay,
+      #playerSubtitleOverlay { display: none !important; }
+    }
+
+    /* editor captions: caption-sized and clamped to 3 lines, so a long
+       transcript segment reads like a subtitle instead of swallowing the
+       whole video frame */
+    #editorSubtitleOverlay span {
+      display: -webkit-box !important;
+      -webkit-box-orient: vertical !important;
+      -webkit-line-clamp: 3 !important;
+      overflow: hidden !important;
+      font-size: 0.62rem !important;
+      font-weight: 800 !important;
+      line-height: 1.35 !important;
+      padding: 3px 8px !important;
+      border-radius: 8px !important;
+      background: rgba(0, 0, 0, 0.55) !important;
+    }
+    /* split view: the video is a small card with no overlay buttons at its
+       foot, so the caption sits low like a real subtitle */
+    body.editor-split-view-active #editorSubtitleOverlay {
+      bottom: 8px !important;
+    }
+
     /* the All view reads like the recipe: comments grouped under step chips */
     .plc-glbl {
       display: inline-flex; align-items: center; gap: 5px;

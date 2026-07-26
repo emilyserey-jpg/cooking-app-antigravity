@@ -6113,6 +6113,9 @@ window.toggleVideoZoomCrop = function() {
 };
 
 window.applyVideoZoomCrop = function() {
+  // the flag lives on window (feature disabled → false); the bare `active`
+  // below was a ReferenceError that silently killed every caller up-stack
+  const active = !!window.currentVideoZoomCropActive;
   // Always remove transform and scaling properties to prevent accidental cropping
   const players = document.querySelectorAll('#mobileRealVideo, #mobileVideoCanvas, #uploadedVideoPlayer');
   players.forEach(player => {
@@ -6267,6 +6270,14 @@ window.loadRecipeToEditor = function(recipe) {
     }
     if (recipe.video_url) {
       videoEl.src = recipe.video_url;
+      // wire the scrubber (duration readout, progress fill, markers) — this
+      // path never goes through showEditorStage, so without this the editor
+      // timeline stays dead at "/ 0:00"
+      if (videoEl.readyState >= 1) {
+        window.onVideoLoaded();
+      } else {
+        videoEl.addEventListener('loadedmetadata', () => window.onVideoLoaded(), { once: true });
+      }
     } else {
       videoEl.src = '';
     }
@@ -10915,6 +10926,15 @@ function showEditorStage(videoUrl) {
 
   videoEl.load();
 
+  // Re-wire the scrubber: onVideoLoaded (duration readout, progress fill,
+  // timeline markers) lost its onloadedmetadata hookup in a past redesign
+  // and was never being called — dead scrubber, "/ 0:00", stale markers.
+  if (videoEl.readyState >= 1) {
+    window.onVideoLoaded();
+  } else {
+    videoEl.addEventListener('loadedmetadata', () => window.onVideoLoaded(), { once: true });
+  }
+
   videoEl.addEventListener('timeupdate', () => {
     const t = videoEl.currentTime;
     const m = Math.floor(t / 60);
@@ -11078,6 +11098,25 @@ window.onVideoLoaded = function() {
     if (dur) dur.textContent = timeStr;
     if (cdl) cdl.textContent = timeStr;
 
+    // A fresh upload's metadata often isn't loaded yet at this point, which
+    // left videoDuration stuck at 0 — dead scrubber, "/ 0:00" readout. Refresh
+    // the duration (and everything drawn from it) whenever the browser learns
+    // it. Guarded so repeated editor opens don't stack listeners.
+    if (!videoEl._durationSyncBound) {
+      videoEl._durationSyncBound = true;
+      videoEl.addEventListener('durationchange', () => {
+        if (!isFinite(videoEl.duration) || videoEl.duration <= 0) return;
+        videoDuration = videoEl.duration;
+        const dm = Math.floor(videoDuration / 60);
+        const ds = Math.floor(videoDuration % 60).toString().padStart(2, '0');
+        const durEl = document.getElementById('timelineDuration');
+        const cdlEl = document.getElementById('chapterDurationLabel');
+        if (durEl) durEl.textContent = `${dm}:${ds}`;
+        if (cdlEl) cdlEl.textContent = `${dm}:${ds}`;
+        renderTimeline();
+      });
+    }
+
     // Auto-capture a local preview when metadata or data is loaded
     const onFirstData = () => {
       videoEl.currentTime = 0.5;
@@ -11093,7 +11132,11 @@ window.onVideoLoaded = function() {
       onFirstData();
     }
 
-    // Update playhead and current time as video plays
+    // Update playhead and current time as video plays.
+    // Guarded: onVideoLoaded now runs on every editor open, so these
+    // bindings must not stack on the same element.
+    if (!videoEl._scrubberWired) {
+    videoEl._scrubberWired = true;
     videoEl.addEventListener('timeupdate', () => {
       const t  = videoEl.currentTime;
       const cm = Math.floor(t / 60);
@@ -11107,7 +11150,7 @@ window.onVideoLoaded = function() {
     });
 
     // Sync play/pause button icon
-    videoEl.addEventListener('play',  () => { 
+    videoEl.addEventListener('play',  () => {
       const b = document.getElementById('videoPlayBtn'); if (b) { b.innerHTML = '<i id="videoPlayIconOverlay" data-lucide="pause" style="width: 14px; height: 14px;"></i>'; if (window.lucide) lucide.createIcons(); } 
       const tb = document.getElementById('toolbarPlayBtn');
       if (tb) {
@@ -11133,11 +11176,19 @@ window.onVideoLoaded = function() {
         updateLucideIcon('toolbarPlayIconMobile', 'play', '16px', '16px');
       }
     });
+    }  // end _scrubberWired guard
   }
   // Re-render timeline if steps already exist (e.g. after AI analysis)
   if (createStepsArr.length) {
     renderTimeline();
     renderCreateSteps();
+  } else {
+    // starting fresh: wipe any markers left on the scrubber by the last
+    // recipe — renderTimeline() won't run to clear them when there are no steps
+    const staleMarkers = document.getElementById('videoMarkers');
+    if (staleMarkers) staleMarkers.innerHTML = '';
+    const staleScrubber = document.getElementById('videoScrubber');
+    if (staleScrubber) staleScrubber.querySelectorAll('[data-is-handle]').forEach(el => el.remove());
   }
   // showTip('Video ready! Play it and tap " Add Step" to mark steps.'); // Disabled per user request
 };
@@ -14781,10 +14832,27 @@ window.showChatboxActionMenu = function(triggerEl) {
 function setAIStatus(msg, show = true) {
   const el = document.getElementById('aiStatus');
   const tx = document.getElementById('aiStatusText');
+  const cleanMsg = msg ? msg.replace(/\p{Extended_Pictographic}/gu, '').trim() : '';
   if (el) el.style.display = show ? 'block' : 'none';
-  if (tx) {
-    const cleanMsg = msg ? msg.replace(/\p{Extended_Pictographic}/gu, '').trim() : '';
-    tx.textContent = cleanMsg;
+  if (tx) tx.textContent = cleanMsg;
+  // the mobile page has no #aiStatus, which made every AI tap fail silently
+  // (showTip is disabled too). Surface the message on the AI card's own
+  // description line, right under the mode picker.
+  if (!el) {
+    const desc = document.getElementById('aiModeDesc');
+    if (desc) {
+      if (show && cleanMsg) {
+        if (!desc.dataset.defaultText) desc.dataset.defaultText = desc.textContent;
+        desc.textContent = cleanMsg;
+        desc.style.color = '#7c3aed';
+        desc.style.fontWeight = '800';
+      } else if (desc.dataset.defaultText) {
+        desc.textContent = desc.dataset.defaultText;
+        desc.style.color = '';
+        desc.style.fontWeight = '';
+        delete desc.dataset.defaultText;
+      }
+    }
   }
 }
 
