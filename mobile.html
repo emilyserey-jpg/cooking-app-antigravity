@@ -6039,7 +6039,12 @@
     /* consistent card geometry inside managed panels: same margins for
        every panel, and the step card sizes to its text instead of being
        forced to 100% of a slider it no longer fills — no more spill-out */
-    .mp-panel { margin: 0 0 8px !important; box-sizing: border-box !important; }
+    .mp-panel {
+      margin: 0 0 8px !important; box-sizing: border-box !important;
+      /* vertical swipes scroll natively; horizontal pulls come to us so a
+         sideways drag can pick the panel up from anywhere */
+      touch-action: pan-y;
+    }
     #mpShelf .mp-panel, #mpUnder .mp-panel { margin: 0 !important; }
     .mp-panel.step-slider-viewport { padding: 0 !important; }
     .mp-panel .step-cards-slider {
@@ -6152,15 +6157,12 @@
         return s;
       }
 
-      function ensureGrip(el, key) {
+      // grips retired: panels lift from anywhere (sideways pull or hold) —
+      // this now only cleans up any grip left from an older session
+      function ensureGrip(el) {
         setPlain(el, 'position', 'relative');
-        const existing = el.querySelector(':scope > .mpGrip');
-        if (existing) { if (existing.dataset.key !== key) existing.dataset.key = key; return; }
-        const g = document.createElement('button');
-        g.className = 'mpGrip'; g.textContent = '⋮⋮';
-        g.title = 'Drag to move · flick sideways to close';
-        g.dataset.key = key;
-        el.appendChild(g);
+        const g = el.querySelector(':scope > .mpGrip');
+        if (g) g.remove();
       }
       function removeGrips() {
         document.querySelectorAll('.mpGrip').forEach(g => g.remove());
@@ -6241,7 +6243,7 @@
           setImp(el, 'overflow-y', 'auto');
           if (!el.classList.contains('mp-panel')) el.classList.add('mp-panel');
           el.classList.toggle('mp-settling', key === settleKey);
-          ensureGrip(el, key);
+          ensureGrip(el);
         });
         engaged = true;
         setPlain(u, 'display', underUsed ? 'flex' : 'none');
@@ -6361,36 +6363,42 @@
         liveMap = mmap;
         applyMulti(mmap, key);
       }
-      // grip: drag instantly
-      document.addEventListener('pointerdown', e => {
-        const g = e.target.closest('.mpGrip');
-        if (!g || !mmap) return;
-        startDrag(g.dataset.key, e.clientX, e.clientY);
-        e.preventDefault();
-      }, true);
-      // whole panel: press and hold ~¼s to lift, then drag — taps, buttons
-      // and scrolling keep working because the hold cancels on movement
-      let lpTimer = null, lpStart = null;
+      // whole panel, no grip needed: press anywhere and PULL SIDEWAYS to pick
+      // the panel up instantly (like the mockup). A vertical swipe stays a
+      // scroll, a motionless ¼s hold also lifts, and buttons/inputs are
+      // excluded so taps keep working.
+      let press = null, lpTimer = null;
       document.addEventListener('pointerdown', e => {
         if (!mmap || dragKey) return;
-        if (e.target.closest('.mpGrip')) return;                    // grip path is instant
         const p = e.target.closest('.mp-panel');
         if (!p) return;
         if (e.target.closest('button, input, textarea, select, a, [contenteditable="true"]')) return;
         const key = allKeys().find(k => panelEl(k) === p);
         if (!key) return;
-        lpStart = { x: e.clientX, y: e.clientY };
+        press = { key, x: e.clientX, y: e.clientY, scrolling: false };
         clearTimeout(lpTimer);
-        lpTimer = setTimeout(() => { lpTimer = null; startDrag(key, lpStart.x, lpStart.y); }, 260);
+        lpTimer = setTimeout(() => {
+          lpTimer = null;
+          if (press && !press.scrolling && !dragKey) startDrag(press.key, press.x, press.y);
+        }, 260);
       }, true);
       window.addEventListener('pointermove', e => {
-        if (lpTimer && lpStart &&
-            (Math.abs(e.clientX - lpStart.x) > 8 || Math.abs(e.clientY - lpStart.y) > 8)) {
-          clearTimeout(lpTimer); lpTimer = null;   // moved: it's a scroll, not a lift
+        if (!press || dragKey) return;
+        const dx = e.clientX - press.x, dy = e.clientY - press.y;
+        if (press.scrolling) return;
+        if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+          // sideways pull: pick it up right now
+          clearTimeout(lpTimer); lpTimer = null;
+          startDrag(press.key, e.clientX, e.clientY);
+        } else if (Math.abs(dy) > 10) {
+          // vertical: it's a scroll — stand down for this press
+          press.scrolling = true;
+          clearTimeout(lpTimer); lpTimer = null;
         }
       });
-      window.addEventListener('pointerup', () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } });
-      window.addEventListener('pointercancel', () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } });
+      const clearPress = () => { press = null; if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+      window.addEventListener('pointerup', clearPress);
+      window.addEventListener('pointercancel', clearPress);
       window.addEventListener('pointermove', e => {
         if (!dragKey) return;
         ghost.style.left = e.clientX + 'px';
