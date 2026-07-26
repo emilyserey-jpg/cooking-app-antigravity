@@ -6237,6 +6237,14 @@
         });
         removeGrips();
         engaged = false;
+        // the app tows the Step Descriptions controls row around after the
+        // steps surface — after our panel travel it can strand at the column
+        // bottom (or inside a zone). Re-seat it directly above the steps.
+        const mgc0 = document.getElementById('playerMultigridDescControls');
+        if (mgc0) {
+          const firstSteps = stepsSurfaces().find(el => el.parentElement === b);
+          if (firstSteps) b.insertBefore(mgc0, firstSteps);
+        }
         // send the H/V toggle back to its native controls row
         const hv0 = document.getElementById('descLayoutToggleGroup');
         if (hv0 && hv0._mpHome && hv0.parentElement !== hv0._mpHome) {
