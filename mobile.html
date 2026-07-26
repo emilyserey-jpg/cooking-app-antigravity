@@ -6164,7 +6164,9 @@
         let u = document.getElementById('mpUnder');
         if (!u) {
           u = document.createElement('div'); u.id = 'mpUnder';
-          u.style.cssText = 'display:none; flex:1 1 0; min-height:0; flex-direction:column; margin-top:8px;';
+          // 6px side margins: the video and route card sit 6px inside the
+          // column's edges — the under-panel matches their rhythm exactly
+          u.style.cssText = 'display:none; flex:1 1 0; min-height:0; flex-direction:column; margin:8px 6px 0 6px;';
         }
         const col = vidCol();
         if (col && u.parentElement !== col) col.appendChild(u);
