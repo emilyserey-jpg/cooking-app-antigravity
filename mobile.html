@@ -6164,6 +6164,8 @@
         removeGrips();
         engaged = false;
         const bb = dBody();
+        // width/max-width stay: they match the app's own 60% split values,
+        // and stripping them would hand native mode the same collapse window
         if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
         const sc0 = screen();
         if (sc0 && sc0.style.getPropertyValue('padding-bottom')) sc0.style.removeProperty('padding-bottom');
@@ -6185,10 +6187,14 @@
         const b = dBody(); if (!b) return;
         const u = underBox(), s = shelfBox();
         // the Split layout sizes the description column to its content
-        // (align-items:flex-start) — stretch it so panels have height to share
+        // (align-items:flex-start) — stretch it so panels have height to share.
+        // Width asserted too: the app writes its 60% column split on a late
+        // timer, and waiting for it left panels collapsed for a beat or two.
         setImp(b, 'align-self', 'stretch');
         setImp(b, 'height', 'auto');
         setImp(b, 'min-height', '0');
+        setImp(b, 'width', '60%');
+        setImp(b, 'max-width', '60%');
         // hide everything first, then place the open ones
         allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
         // the H/V description controls belong to single-steps mode only
@@ -6403,9 +6409,15 @@
           finally { applying = false; }
         }
       }
+      // throttle, not debounce: transitions mutate the DOM continuously, and
+      // a debounce would postpone our repair until the churn ends (~1-2s of
+      // visible mess). This fires at most every 100ms but always fires.
       const scheduleSync = (() => {
         let t = null;
-        return () => { clearTimeout(t); t = setTimeout(syncMode, 90); };
+        return () => {
+          if (t) return;
+          t = setTimeout(() => { t = null; syncMode(); }, 100);
+        };
       })();
 
       document.addEventListener('DOMContentLoaded', () => {
