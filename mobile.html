@@ -6044,6 +6044,11 @@
       /* vertical swipes scroll natively; horizontal pulls come to us so a
          sideways drag can pick the panel up from anywhere */
       touch-action: pan-y;
+      /* dragging must never turn into text selection */
+      -webkit-user-select: none; user-select: none;
+    }
+    .mp-panel textarea, .mp-panel input {
+      -webkit-user-select: text; user-select: text;
     }
     #mpShelf .mp-panel, #mpUnder .mp-panel { margin: 0 !important; }
     .mp-panel.step-slider-viewport { padding: 0 !important; }
@@ -6375,7 +6380,10 @@
         if (e.target.closest('button, input, textarea, select, a, [contenteditable="true"]')) return;
         const key = allKeys().find(k => panelEl(k) === p);
         if (!key) return;
-        press = { key, x: e.clientX, y: e.clientY, scrolling: false };
+        press = { key, x: e.clientX, y: e.clientY, scrolling: false, mouse: e.pointerType !== 'touch' };
+        // a mouse can't drag-scroll content, so nothing competes with the
+        // gesture — also stops the browser starting a text selection instead
+        if (press.mouse) e.preventDefault();
         clearTimeout(lpTimer);
         lpTimer = setTimeout(() => {
           lpTimer = null;
@@ -6386,12 +6394,19 @@
         if (!press || dragKey) return;
         const dx = e.clientX - press.x, dy = e.clientY - press.y;
         if (press.scrolling) return;
-        if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
-          // sideways pull: pick it up right now
+        if (press.mouse) {
+          // mouse/pen: any movement is a drag — lift immediately
+          if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            clearTimeout(lpTimer); lpTimer = null;
+            startDrag(press.key, e.clientX, e.clientY);
+          }
+          return;
+        }
+        // touch: forgiving diagonal — sideways-ish lifts, clearly-vertical scrolls
+        if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 0.7) {
           clearTimeout(lpTimer); lpTimer = null;
           startDrag(press.key, e.clientX, e.clientY);
-        } else if (Math.abs(dy) > 10) {
-          // vertical: it's a scroll — stand down for this press
+        } else if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx) * 1.5) {
           press.scrolling = true;
           clearTimeout(lpTimer); lpTimer = null;
         }
