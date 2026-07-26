@@ -6053,13 +6053,20 @@
     #mpShelf .mp-panel, #mpUnder .mp-panel { margin: 0 !important; }
     .mp-panel.step-slider-viewport { padding: 0 !important; }
     .mp-panel .step-cards-slider {
-      flex: 1 1 auto !important; min-height: 0 !important; height: auto !important;
+      flex: 1 1 auto !important; min-height: 0 !important; height: 100% !important;
       padding: 0 !important;
     }
     .mp-panel .step-slider-card {
-      min-height: 0 !important; height: auto !important;
+      /* fill the panel: stretch to its full height when content is short,
+         scroll inside the border when content is long */
+      min-height: 100% !important; height: auto !important;
       width: 100% !important; box-sizing: border-box !important; margin: 0 !important;
-      overflow-y: auto !important;   /* long steps scroll inside the border */
+      overflow-y: auto !important;
+      /* identical theme to every other card — no blue halo, no glow */
+      border: 1.5px solid var(--border-card, #dbe7f5) !important;
+      box-shadow: none !important;
+      background: #fff !important;
+      border-radius: 12px !important;
     }
   </style>
   <script>
