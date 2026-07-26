@@ -6193,6 +6193,12 @@
         });
         removeGrips();
         engaged = false;
+        // send the H/V toggle back to its native controls row
+        const hv0 = document.getElementById('descLayoutToggleGroup');
+        if (hv0 && hv0._mpHome && hv0.parentElement !== hv0._mpHome) {
+          hv0._mpHome.appendChild(hv0);
+          ['display', 'justify-content', 'margin', 'flex'].forEach(p => hv0.style.removeProperty(p));
+        }
         const bb = dBody();
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
@@ -6275,6 +6281,24 @@
           ensureGrip(el);
         });
         engaged = true;
+        // the H/V card-layout toggle (▐▐ / ≡) normally rides the hidden
+        // single-steps controls row — when Steps is open, it moves into the
+        // steps panel's own header strip so the option is never lost
+        const hv = document.getElementById('descLayoutToggleGroup');
+        const stepsEl = panelEl('steps');
+        if (hv) {
+          if (stepsEl && openKeys(m).includes('steps')) {
+            if (!hv._mpHome) hv._mpHome = hv.parentElement;
+            if (hv.parentElement !== stepsEl) stepsEl.insertBefore(hv, stepsEl.firstChild);
+            setPlain(hv, 'display', 'flex');
+            setPlain(hv, 'justify-content', 'flex-end');
+            setPlain(hv, 'margin', '2px 4px');
+            setPlain(hv, 'flex', '0 0 auto');
+          } else if (hv._mpHome && hv.parentElement !== hv._mpHome) {
+            hv._mpHome.appendChild(hv);
+            ['display', 'justify-content', 'margin', 'flex'].forEach(p => hv.style.removeProperty(p));
+          }
+        }
         setPlain(u, 'display', underUsed ? 'flex' : 'none');
         setPlain(s, 'display', shelfUsed ? 'flex' : 'none');
         // the video column is content-sized, so a grow-to-fill under-zone
