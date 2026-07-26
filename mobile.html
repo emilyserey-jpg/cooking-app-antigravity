@@ -325,15 +325,18 @@
                  <button id="playerTabStepsBtn" onclick="window.switchPlayerMainTab('steps')" class="player-tab-btn">
                    <i data-lucide="play-circle" style="width: 14px; height: 14px;"></i>Steps
                  </button>
+                 <button id="playerTabIngredientsBtn" onclick="window.switchPlayerMainTab('ingredients')" class="player-tab-btn">
+                   <i data-lucide="shopping-cart" style="width: 14px; height: 14px;"></i>Ingredients
+                 </button>
                  <button id="playerTabCommentsBtn" onclick="window.switchPlayerMainTab('comments')" class="player-tab-btn">
-                   <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>Comments (<span id="playerCommentsCountBadgeTab">0</span>)
+                   <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>Comments<span class="cmt-count-wrap"> (<span id="playerCommentsCountBadgeTab">0</span>)</span>
                  </button>
                </div>
                
                <!-- Options Dropdown -->
                <div class="actions-dropdown-wrapper" style="position: relative; flex-shrink: 0; margin-left: 8px; z-index: 1000;">
                  <button id="playerActionsDropdownBtn" onclick="window.togglePlayerActionsDropdown()" class="sec-action-btn actions-menu-btn" tabindex="-1" style="height: 32px; padding: 0 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.06); box-shadow: none;">
-                   <span>Options</span>
+                   <span class="options-btn-label">Options</span>
                    <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
                  </button>
                  
@@ -3991,6 +3994,14 @@
       background: #fff; border: 1px solid rgba(74, 144, 217, 0.18); border-radius: 10px;
       box-shadow: 0 12px 30px rgba(26, 58, 92, 0.22); padding: 4px; margin: 0;
       overflow-y: auto;
+      box-sizing: border-box;
+    }
+    /* attached flyout: rises flush from the card's top edge — square bottom
+       corners + an upward shadow sell the connection */
+    #playerRouteCard.plr-slim.plr-open .plr-meta.plr-menu-above {
+      border-radius: 10px 10px 0 0;
+      border-bottom: none;
+      box-shadow: 0 -12px 30px rgba(26, 58, 92, 0.18);
     }
     /* .plr-slim included to outrank the card's own
        "#playerRouteCard .plr-meta .control-btn { width: 26px !important }" —
@@ -4010,21 +4021,10 @@
     #playerRouteCard.plr-open .plr-meta #playerModeCycleBtn::after { content: "Loop mode"; }
     #playerRouteCard.plr-open .plr-meta #playerMuteBtn::after { content: "Sound"; }
     #playerRouteCard.plr-open .plr-meta .speed-dropdown-wrapper::after { content: "Speed"; }
-    /* the layout picker unrolls into three named rows */
-    #playerRouteCard.plr-open #plrLayoutSeg {
-      flex-direction: column; align-items: stretch; gap: 1px;
-      background: transparent; border-radius: 0; padding: 0;
-      border-bottom: 1px solid rgba(74, 144, 217, 0.14); margin-bottom: 3px; padding-bottom: 3px;
+    /* the open/close caret gets a name in the menu, like its neighbors */
+    #playerRouteCard.plr-open .plr-meta #plrCollapseBtn::after {
+      content: attr(title); font-weight: 800; font-size: 0.7rem; color: var(--text-heading);
     }
-    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg {
-      display: flex; align-items: center; gap: 8px; justify-content: flex-start;
-      width: 100%; padding: 7px 9px; border-radius: 6px; font-size: 0.7rem; text-align: left;
-    }
-    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg::after { content: attr(title); font-weight: 800; }
-    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg[aria-pressed="true"]::before {
-      content: "✓"; position: absolute; right: 12px; font-weight: 900;
-    }
-    #playerRouteCard.plr-open #plrLayoutSeg .plr-seg { position: relative; }
     /* the current step gets its own line, so it never has to share width */
     #plrNow {
       display: none; font-size: 0.66rem; font-weight: 900; color: var(--text-heading);
@@ -4035,20 +4035,17 @@
        The app sets inline display on some of these as it relocates them
        between the strip and the card, so these hides have to be !important. */
     #playerRouteCard.plr-tuck .step-nav-chips-container { display: none !important; }
-    /* the route layout picker: one tight pill, leading the control row,
-       so all three layouts are one tap away without opening a menu */
+    /* the route-layout cycle button rides the ⋯ bar, wearing the same pill
+       as its neighbors; each tap steps Road → Compact → Standing up */
     #plrLayoutSeg { display: none; }
     #playerRouteCard.plr-slim #plrLayoutSeg {
-      display: inline-flex; align-items: center; gap: 0;
-      background: rgba(74, 144, 217, 0.08); border-radius: 999px; padding: 1px; flex: none;
+      display: inline-flex; align-items: center; flex: none;
     }
-    /* size and padding come from the card's own .plr-meta button rules, which
-       are more specific — only the segmented look is set here */
     #plrLayoutSeg .plr-seg {
-      border: none; background: transparent; color: var(--primary);
-      border-radius: 999px; cursor: pointer; line-height: 1;
+      border: none; background: rgba(74, 144, 217, 0.10); color: var(--primary);
+      border-radius: 6px; cursor: pointer; line-height: 1.4;
+      font-family: var(--font); font-size: 0.66rem; font-weight: 900; padding: 2px 8px;
     }
-    #plrLayoutSeg .plr-seg[aria-pressed="true"] { background: var(--primary); color: #fff; }
 
     /* Stack: the road stands upright, stops running down the card */
     #playerRouteCard.plr-stack .plr-route,
@@ -4223,7 +4220,9 @@
       flex: 1 1 auto !important; min-height: 0 !important;
     }
     .phone-screen.pl-split .mobile-player-body .step-slider-card {
-      min-height: 100% !important; box-sizing: border-box !important;
+      /* natural height: a short description shouldn't stretch the card into
+         an empty box — the column below it just stays open */
+      min-height: 0 !important; box-sizing: border-box !important;
     }
     /* Split: let the player view fill the viewport height so the bottom-anchored
        control panel sits flush at the bottom of the screen. Scoped via :has() to
@@ -4606,10 +4605,13 @@
       // collapses cleanly without a magic number.
       const ROUTE_COLLAPSED = 'cooking_gps_route_collapsed';
       function isRouteCollapsed() { return localStorage.getItem(ROUTE_COLLAPSED) === 'true'; }
-      // every visible card row that is not the controls strip
+      // every visible card row that is not the controls strip — nor the ⋯ bar:
+      // in the narrow column the bar IS the always-visible handle (the strip
+      // is menu-only there), and folding it left a blank pill with no way back
       function foldingRows(card) {
         return Array.prototype.filter.call(card.children, el =>
-          !el.classList.contains('plr-meta') && getComputedStyle(el).display !== 'none');
+          !el.classList.contains('plr-meta') && el.id !== 'plrBar' &&
+          getComputedStyle(el).display !== 'none');
       }
       function reflectRouteCollapsed(animate) {
         const collapsed = isRouteCollapsed();
@@ -4650,6 +4652,9 @@
             row.addEventListener('transitionend', done);
           }
         });
+        // the bar may carry a stale fold from before it was exempted — release it
+        const bar = card.querySelector('#plrBar');
+        if (bar) { bar.classList.remove('plr-folded'); bar.style.maxHeight = ''; }
         // content sizes can still be resolving when this runs on load, which
         // would measure maxBottom as 0 and skip; re-dock on the next frame and
         // shortly after so the strip lands under the settled content either way
@@ -4712,21 +4717,38 @@
         reflectRouteCollapsed(true);
       };
 
-      // The Options menu owns this choice — the card's own row is already
-      // full at 144px, and a seventh button there pushed it to three lines.
-      function syncRouteLayoutMenu() {
+      // The cycle button always wears the CURRENT layout's icon and name
+      // (the open ⋯ menu prints the name via `content: attr(title)`)
+      const ROUTE_LAYOUT_UI = {
+        road:  { icon: '—', name: 'Road' },
+        tuck:  { icon: '▤', name: 'Compact' },
+        stack: { icon: '☰', name: 'Standing up' }
+      };
+      function syncRouteLayoutMenu(cardEl) {
         const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
-        document.querySelectorAll('#plrLayoutSeg .plr-seg').forEach(seg => {
-          seg.setAttribute('aria-pressed', String(seg.dataset.layout === cur));
-        });
+        // query inside the card: on first boot it isn't in the document yet,
+        // so getElementById would miss and strand the button on its default
+        const root = cardEl || document.getElementById('playerRouteCard');
+        const btn = root && root.querySelector('#plrLayoutCycleBtn');
+        if (!btn) return;
+        const ui = ROUTE_LAYOUT_UI[cur] || ROUTE_LAYOUT_UI.road;
+        btn.textContent = ui.icon;
+        btn.title = ui.name;
+        btn.setAttribute('aria-label', 'Route layout: ' + ui.name + ' — tap to switch');
       }
       window.setRouteLayout = function (name) {
         if (!ROUTE_LAYOUT_NAMES[name]) return;
         localStorage.setItem(ROUTE_LAYOUT, name);
-        const card = document.getElementById('playerRouteCard');
-        if (card) card.classList.remove('plr-open');
         placeRouteCard();
-        if (typeof window.closePlayerActionsDropdown === 'function') window.closePlayerActionsDropdown();
+        // keep the ⋯ menu open so repeated taps keep cycling layouts, and
+        // re-seat it — the card reshapes over several frames, so re-place
+        // now, next frame, and after the layout settles
+        const card = document.getElementById('playerRouteCard');
+        if (card && card.classList.contains('plr-open') && card._plrPlaceMenu) {
+          card._plrPlaceMenu();
+          requestAnimationFrame(card._plrPlaceMenu);
+          setTimeout(card._plrPlaceMenu, 200);
+        }
       };
       const NAMES = ['cook', 'split'];
       // Mirror and Flow were mirror images; they merged into one Split
@@ -4801,6 +4823,11 @@
           // else lives in the dropdown that .plr-meta becomes when open.
           '<div id="plrBar">' +
             '<button id="plrMoreBtn" title="Route options" aria-haspopup="true" aria-expanded="false">⋯</button>' +
+            // ONE route-layout button, right on the bar: it shows the current
+            // layout and each press cycles Road → Compact → Standing up
+            '<span id="plrLayoutSeg" role="group" aria-label="Route layout">' +
+              '<button class="plr-seg" id="plrLayoutCycleBtn" title="Road" aria-label="Route layout: Road — tap to switch">—</button>' +
+            '</span>' +
             '<span id="plrBarClock">0:00 / 0:00</span>' +
           '</div>' +
           '<div class="plr-meta">' +
@@ -4808,13 +4835,6 @@
             // one row that stays when the road and chips fold away, so it holds
             // the only way back
             '<button id="plrCollapseBtn" class="plr-collapse-btn" onclick="toggleRouteCollapsed()" aria-label="Hide steps" aria-expanded="true" title="Hide steps"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"></path></svg></button>' +
-            // the three route layouts live in the card itself, leading the
-            // row, so picking one never means opening a menu
-            '<span id="plrLayoutSeg" role="group" aria-label="Route layout">' +
-              '<button class="plr-seg" data-layout="road" title="Road" aria-label="Road layout">\u2014</button>' +
-              '<button class="plr-seg" data-layout="tuck" title="Compact" aria-label="Compact layout">\u25a4</button>' +
-              '<button class="plr-seg" data-layout="stack" title="Standing up" aria-label="Standing up layout">\u2630</button>' +
-            '</span>' +
             '<button id="plrSwapBtn" title="Swap which side the video is on">\u21c4<span class="plr-lbl"> sides</span></button>' +
             '<button id="plrWidthBtn" title="Switch timeline width">\u2194<span class="plr-lbl"> width</span></button>' +
             '<span id="plrClock">0:00 / 0:00</span>' +
@@ -4852,8 +4872,10 @@
           localStorage.setItem(SIDES, cur === 'video-left' ? 'video-right' : 'video-left');
           window.setPlayerLayout('split');
         });
-        card.querySelectorAll('#plrLayoutSeg .plr-seg').forEach(seg => {
-          seg.addEventListener('click', () => window.setRouteLayout(seg.dataset.layout));
+        card.querySelector('#plrLayoutCycleBtn').addEventListener('click', () => {
+          const order = ['road', 'tuck', 'stack'];
+          const cur = localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT;
+          window.setRouteLayout(order[(order.indexOf(cur) + 1) % order.length]);
         });
         const moreBtn = card.querySelector('#plrMoreBtn');
         // the panel is position:fixed, so it gets placed under the button by
@@ -4861,34 +4883,82 @@
         function placeMenu() {
           const panel = card.querySelector('.plr-meta');
           if (!panel || !card.classList.contains('plr-open')) return;
-          const b = moreBtn.getBoundingClientRect();
-          const w = panel.offsetWidth || 170;
           const margin = 8;
           // #view-mobile-player carries a transform, which makes it the
           // containing block for position:fixed — so viewport coordinates have
           // to be shifted into its space or the panel lands in the wrong place
           const cb = panel.offsetParent;
           const o = cb ? cb.getBoundingClientRect() : { top: 0, left: 0 };
+          const cardR = card.getBoundingClientRect();
+          const above = cardR.top - margin;
+          if (above >= 120) {
+            // attached flyout: card-wide, rising flush from the card's top
+            // edge, so the strip and step chips below stay in view.
+            // Writes are skipped when nothing moved — this runs on a follow
+            // loop while open, and steady-state must not thrash layout.
+            panel.classList.add('plr-menu-above');
+            const set = (prop, val) => {
+              if (panel.style.getPropertyValue(prop) !== val) panel.style.setProperty(prop, val);
+            };
+            set('width', Math.round(cardR.width) + 'px');
+            set('max-height', Math.min(panel.scrollHeight + 8, above) + 'px');
+            const ph = panel.offsetHeight;
+            set('left', Math.round(cardR.left - o.left) + 'px');
+            set('top', Math.round(cardR.top - ph - o.top) + 'px');
+            return;
+          }
+          // not enough room above the card — fall back to a dropdown under
+          // the ⋯ button (the old behavior)
+          panel.classList.remove('plr-menu-above');
+          panel.style.width = '';
+          const b = moreBtn.getBoundingClientRect();
+          const w = panel.offsetWidth || 170;
           const left = Math.min(Math.max(margin, b.left), window.innerWidth - w - margin);
           const below = window.innerHeight - b.bottom - margin;
-          const above = b.top - margin;
-          let top;
-          if (below >= 160 || below >= above) {
-            top = b.bottom + 4;
-            panel.style.maxHeight = Math.max(120, below - 4) + 'px';
-          } else {
-            const h = Math.min(panel.scrollHeight + 8, above - 4);
-            top = Math.max(margin, b.top - h - 4);
-            panel.style.maxHeight = h + 'px';
-          }
+          panel.style.maxHeight = Math.max(120, below - 4) + 'px';
           panel.style.left = (left - o.left) + 'px';
-          panel.style.top = (top - o.top) + 'px';
+          panel.style.top = (b.bottom + 4 - o.top) + 'px';
+        }
+        // the attached-menu placement writes inline width/position on .plr-meta;
+        // in band mode the same element is the visible controls strip, so any
+        // leftovers squeeze it into a stacked mess — wipe them on every close
+        function resetMenuInline() {
+          const panel = card.querySelector('.plr-meta');
+          if (!panel) return;
+          ['width', 'max-height', 'left', 'top'].forEach(p => panel.style.removeProperty(p));
+          panel.classList.remove('plr-menu-above');
+        }
+        card._plrResetMenu = resetMenuInline;
+        card._plrPlaceMenu = placeMenu;   // setRouteLayout re-seats the open menu after a cycle
+        // the card reshapes asynchronously after a layout cycle (chips join,
+        // rows fold, video settles) — keep the open panel glued to its top
+        // edge through all of it
+        if (window.ResizeObserver) {
+          new ResizeObserver(() => {
+            if (card.classList.contains('plr-open')) placeMenu();
+          }).observe(card);
+        }
+        // follow loop: while the menu is open, keep it glued to the card's
+        // top edge every frame — the card drifts as the video loads and as
+        // layout cycles reshape it, and one-shot placement kept going stale.
+        // placeMenu skips writes when nothing moved, so idle frames are free.
+        let followRaf = 0;
+        function followMenu() {
+          followRaf = 0;
+          if (!card.classList.contains('plr-open')) return;
+          placeMenu();
+          followRaf = requestAnimationFrame(followMenu);
         }
         moreBtn.addEventListener('click', ev => {
           ev.stopPropagation();
           const open = card.classList.toggle('plr-open');
           moreBtn.setAttribute('aria-expanded', String(open));
-          if (open) placeMenu();
+          if (open) {
+            placeMenu();
+            if (!followRaf) followRaf = requestAnimationFrame(followMenu);
+          } else {
+            resetMenuInline();
+          }
         });
         window.addEventListener('resize', placeMenu);
         window.addEventListener('scroll', placeMenu, true);
@@ -4898,6 +4968,7 @@
           if (card.contains(ev.target)) return;
           card.classList.remove('plr-open');
           moreBtn.setAttribute('aria-expanded', 'false');
+          resetMenuInline();
         });
         return card;
       }
@@ -5492,8 +5563,13 @@
         const routeLayout = slim ? (localStorage.getItem(ROUTE_LAYOUT) || ROUTE_LAYOUT_DEFAULT) : 'road';
         card.classList.toggle('plr-tuck', routeLayout === 'tuck');
         card.classList.toggle('plr-stack', routeLayout === 'stack');
-        if (!slim) card.classList.remove('plr-open');
-        syncRouteLayoutMenu();
+        if (!slim) {
+          card.classList.remove('plr-open');
+          // leaving the column: .plr-meta goes back to being the band's
+          // controls strip — stale menu inline styles would stack it
+          if (card._plrResetMenu) card._plrResetMenu();
+        }
+        syncRouteLayoutMenu(card);
         screen.classList.toggle('plr-has-band', band);
         card.querySelector('#plrWidthBtn').style.display = name === 'cook' ? 'none' : '';
         card.querySelector('#plrSwapBtn').style.display = name === 'cook' ? 'none' : '';
@@ -6057,9 +6133,9 @@
       padding: 0 !important;
     }
     .mp-panel .step-slider-card {
-      /* fill the panel: stretch to its full height when content is short,
-         scroll inside the border when content is long */
-      min-height: 100% !important; height: auto !important;
+      /* natural height: sit at the panel's top and scroll inside the border
+         when content is long — never balloon to fill a mostly-empty panel */
+      min-height: 0 !important; height: auto !important;
       width: 100% !important; box-sizing: border-box !important; margin: 0 !important;
       overflow-y: auto !important;
       /* identical theme to every other card — no blue halo, no glow */
@@ -6507,6 +6583,14 @@
           mmap[COLUMN[0]] = current;
           mmap[firstFreeZone(mmap)] = key;                  // second panel joins the column
         } else {
+          // saved keys may outlive their panel (e.g. a custom page that no
+          // longer renders) — a ghost key squats in a zone and eats the
+          // 3-panel cap. By click time every real panel has a tab, so a key
+          // with neither tab nor panel is gone for good: free its zone.
+          Object.keys(mmap).forEach(zz => {
+            const k = mmap[zz];
+            if (k && !tabEl(k) && !panelEl(k)) mmap[zz] = null;
+          });
           const z = zoneOf(mmap, key);
           if (z) {
             mmap[z] = null;                                  // toggle off

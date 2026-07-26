@@ -3799,13 +3799,62 @@ a:focus-visible {
   height: 12px !important;
 }
 
-/* Tab bar shrink */
+/* Tab bar shrink — the description column is only 60% wide, so the tabs go
+   compact: no icons, tighter gaps, icon-only Options. All three tabs
+   (Steps / Ingredients / Comments) fit without clipping or side-scrolling. */
 .phone-screen.split-view-active .player-main-tabs {
   padding: 6px 4px 4px 4px !important;
 }
 .phone-screen.split-view-active .player-tab-btn {
-  padding: 5px 8px !important;
-  font-size: 0.65rem !important;
+  padding: 5px 4px !important;
+  font-size: 0.6rem !important;
+}
+.phone-screen.split-view-active .player-tab-btn i,
+.phone-screen.split-view-active .player-tab-btn svg {
+  display: none !important;
+}
+.phone-screen.split-view-active #playerMainTabsContainer > div:first-child {
+  gap: 3px !important;
+}
+.phone-screen.split-view-active .actions-dropdown-wrapper {
+  margin-left: 4px !important;
+}
+.phone-screen.split-view-active .actions-menu-btn .options-btn-label {
+  display: none !important;
+}
+.phone-screen.split-view-active .player-tab-btn .cmt-count-wrap {
+  display: none !important;
+}
+/* the narrow column can't fit the label + H/V toggle on one line — the
+   toggle explains itself, so the label yields in Split */
+.phone-screen.split-view-active #playerMultigridDescControls .desc-label {
+  display: none !important;
+}
+
+/* Vertical steps fill the column: the stacked list stretches to the bottom
+   and its cards share the spare height, so no dead space under the last card */
+.phone-screen.split-view-active:not(.multigrid-active) #playerMultigridDescriptions.mg-vertical {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+.phone-screen.split-view-active:not(.multigrid-active) #playerMultigridDescriptions.mg-vertical .multigrid-desc-card {
+  flex: 1 0 auto !important;
+}
+
+/* Horizontal steps keep their natural card height — the steps panel itself
+   may stretch (multi-panel shares the column height), but a short description
+   shouldn't balloon the card into a mostly-empty box */
+.phone-screen.split-view-active:not(.multigrid-active) .step-cards-slider {
+  align-items: flex-start !important;
+}
+.phone-screen.split-view-active:not(.multigrid-active) .step-slider-card {
+  min-height: 0 !important;
+}
+
+/* No floating route band → the 80px bottom clearance is pure void; drop it */
+.phone-screen.split-view-active:not(.plr-has-band) .mobile-player-body {
+  padding-bottom: 10px !important;
 }
 .phone-screen.split-view-active .sec-action-btn.actions-menu-btn {
   height: 28px !important;
