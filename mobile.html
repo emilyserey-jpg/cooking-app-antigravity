@@ -1864,9 +1864,16 @@
                     <button type="button" onclick="window.setAiMode('manual',this)" data-aimode="manual" style="flex:1; border:none; background:transparent; border-radius:999px; padding:7px 2px; font-family:var(--font); font-weight:800; font-size:0.7rem; color:var(--text-muted); cursor:pointer; white-space:nowrap;">Manual</button>
                   </div>
                   <p id="aiModeDesc" style="font-size:0.68rem; color:var(--text-muted); text-align:center; margin:4px 0 0; min-height:14px; line-height:1.35;">Full analysis — visuals, speech &amp; captions (recommended)</p>
+                  <!-- hidden: ticked by aiGo() before each run so checkForceFreshAI
+                       clears the Gemini/transcript caches — a Generate tap always
+                       means a fresh generation, never a silent cache reuse -->
+                  <input type="checkbox" id="aiForceFresh" style="display:none">
                   <div style="display:flex; gap:6px; width:100%; margin-top:6px;">
                     <button id="aiGoBtn" onclick="window.aiGo()" style="flex:1; background:linear-gradient(135deg,#7c3aed,#6366f1); color:#fff; border:none; border-radius:999px; padding:9px 8px; font-family:var(--font); font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 6px rgba(124,58,237,0.25); white-space:nowrap;">✨ Generate</button>
-                    <button id="aiRedoBtn" onclick="window.aiWriteStepDescriptions()" title="Re-generate step descriptions for current stops" style="flex:0 0 auto; background:rgba(255,255,255,0.95); border:2px solid var(--border-card); border-radius:999px; padding:0 14px; font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-body); cursor:pointer;">↻ Steps</button>
+                    <!-- ↻ Steps (bulk re-write descriptions) removed July 25, 2026 —
+                         redundant next to always-fresh Generate + per-card ✨ buttons.
+                         window.aiWriteStepDescriptions still exists if it's ever wanted back. -->
+
                   </div>
                   <script>
                     (function(){
@@ -1889,6 +1896,21 @@
                         document.getElementById('aiGoBtn').textContent = MODES[m].label;
                       };
                       window.aiGo = function() {
+                        // an explicit Generate tap means a fresh run: tick the
+                        // (hidden) force-fresh box so the AI entry functions
+                        // clear their caches instead of silently reusing the
+                        // previous result. Manual opens a modal — no AI, no tick.
+                        if (cur !== 'manual') {
+                          const ff = document.getElementById('aiForceFresh');
+                          if (ff) ff.checked = true;
+                        }
+                        // Transcript mode builds steps from the spoken words —
+                        // the legacy button only transcribes (and bails silently
+                        // when a transcript already exists)
+                        if (cur === 'transcript' && typeof window.createStepsFromTranscript === 'function') {
+                          window.createStepsFromTranscript();
+                          return;
+                        }
                         const t = document.getElementById(MODES[cur].target);
                         if (t) t.click();
                       };
@@ -1960,6 +1982,7 @@
                   <button type="button" onclick="window.focusStepMove(-1)" style="border:none; background:#fff; color:#4a90d9; width:30px; height:30px; border-radius:50%; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15);">‹</button>
                   <span id="splitFocusLabel" style="font-family:var(--font); font-weight:800; font-size:0.72rem; color:var(--text-muted);">1 / 1</span>
                   <button type="button" onclick="window.focusStepMove(1)" style="border:none; background:#fff; color:#4a90d9; width:30px; height:30px; border-radius:50%; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15);">›</button>
+                  <button type="button" id="stepsLinkBtn" onclick="window.toggleStepsLink()" style="border:none; background:#fff; width:30px; height:30px; border-radius:50%; font-size:0.8rem; cursor:pointer; box-shadow:0 1px 5px rgba(30,58,92,.15); flex:0 0 auto;">🔗</button>
                 </div>
                 <style>
                   /* ── Split-view layout options: steps LEFT, video RIGHT ──
@@ -2328,6 +2351,15 @@
                         c.classList.add('slide-anim');
                       }
                     };
+                    // exposed for the link toggle: jump straight to card i /
+                    // read which card is focused
+                    window.focusStepSet = function(i) {
+                      const n = cards().length; if (!n) return;
+                      const clamped = Math.max(0, Math.min(n - 1, i));
+                      if (clamped === idx) return;
+                      idx = clamped; apply();
+                    };
+                    window.focusStepIndex = function() { return idx; };
                     document.addEventListener('DOMContentLoaded', () => {
                       try { if (localStorage.getItem(KEY) === 'focus') document.body.classList.add('split-focus'); } catch {}
                       try { if (localStorage.getItem('editor_split_swap') === '1') document.body.classList.add('split-swap'); } catch {}
@@ -2681,6 +2713,105 @@
                       ensureSplitEditTitle();
                       new MutationObserver(ensureSplitEditTitle)
                         .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                    });
+                  })();
+                </script>
+                <script>
+                  // Safety net: editor state must never survive into the player.
+                  // A lingering mobile-editing-active makes the player page
+                  // scrollable (body block/auto-height + editor bottom padding),
+                  // which shows up as a dead blank band under the route card.
+                  // switchView() clears it on the normal path; this catches every
+                  // other way into the player (history swipe-back, hash edits).
+                  (function(){
+                    function stripEditingStateInPlayer() {
+                      const pv = document.getElementById('view-mobile-player');
+                      if (!pv || !pv.classList.contains('active')) return;
+                      const s2 = document.getElementById('createStage2');
+                      const s2open = s2 && s2.style.display !== 'none';
+                      if (!document.body.classList.contains('mobile-editing-active') && !s2open) return;
+                      document.body.classList.remove('mobile-editing-active');
+                      // a visible createStage2 keeps the editor's page layout
+                      // alive through body:has(...) CSS — close it too
+                      if (s2open) s2.style.display = 'none';
+                      const s3 = document.getElementById('createStage3');
+                      if (s3 && s3.style.display !== 'none') s3.style.display = 'none';
+                      // the player sized itself while the editor's body styles
+                      // were still on — nudge the app to lay out again
+                      setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+                    }
+                    document.addEventListener('DOMContentLoaded', () => {
+                      stripEditingStateInPlayer();
+                      const pv = document.getElementById('view-mobile-player');
+                      if (pv) new MutationObserver(stripEditingStateInPlayer)
+                        .observe(pv, { attributes: true, attributeFilter: ['class'] });
+                      // also watch body: catches the class being (re)added while
+                      // the player is already showing. No loop — after the strip
+                      // the condition is false, so the re-fire does nothing.
+                      new MutationObserver(stripEditingStateInPlayer)
+                        .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                      window.addEventListener('hashchange',
+                        () => setTimeout(stripEditingStateInPlayer, 50));
+                    });
+                  })();
+                </script>
+                <script>
+                  // 🔗 Link toggle: connects the step-card pager (‹ 1/6 ›) with the
+                  // video transport arrows (← →). Linked: flipping a card seeks the
+                  // video to that stop, and stepping the video flips to its card.
+                  // One button both connects and disconnects; state is remembered.
+                  (function(){
+                    const KEY = 'editor_steps_linked';
+                    let linked = true;
+                    try { linked = localStorage.getItem(KEY) !== '0'; } catch {}
+                    function paint() {
+                      const b = document.getElementById('stepsLinkBtn');
+                      if (!b) return;
+                      b.style.opacity = linked ? '1' : '0.4';
+                      b.style.background = linked ? '#e8f0fe' : '#fff';
+                      b.title = linked
+                        ? 'Cards and video arrows move together — tap to disconnect'
+                        : 'Cards and video arrows move separately — tap to connect';
+                    }
+                    window.toggleStepsLink = function() {
+                      linked = !linked;
+                      try { localStorage.setItem(KEY, linked ? '1' : '0'); } catch {}
+                      paint();
+                    };
+                    // the stop's start time, read from the card's own "0:16 → 0:20" badge
+                    function cardStart(card) {
+                      const m = (card.textContent || '').match(/(\d+):(\d{2})\s*(?:→|->)/);
+                      return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+                    }
+                    const cards = () => [...document.querySelectorAll('#createStepsList .loop-stop-card')];
+                    document.addEventListener('DOMContentLoaded', () => {
+                      paint();
+                      // card pager → video
+                      const oF = window.focusStepMove;
+                      window.focusStepMove = function(d) {
+                        oF(d);
+                        if (!linked) return;
+                        const i = window.focusStepIndex ? window.focusStepIndex() : -1;
+                        const c = cards()[i];
+                        const t = c ? cardStart(c) : null;
+                        const vid = document.getElementById('uploadedVideoPlayer');
+                        if (vid && t != null) vid.currentTime = t + 0.05;
+                      };
+                      // video transport → card pager
+                      const oN = window.navStep;
+                      window.navStep = function(d) {
+                        oN(d);
+                        if (!linked || !window.focusStepSet) return;
+                        const vid = document.getElementById('uploadedVideoPlayer');
+                        if (!vid) return;
+                        const t = vid.currentTime + 0.25;
+                        let best = 0;
+                        cards().forEach((c, i) => {
+                          const s = cardStart(c);
+                          if (s != null && s <= t) best = i;
+                        });
+                        window.focusStepSet(best);
+                      };
                     });
                   })();
                 </script>
@@ -4079,8 +4210,11 @@
       overflow-x: hidden !important; overflow-y: auto !important;
     }
     /* Split: the classic step card fills the description column instead of sizing
-       to its content, and keeps a comfortable gap above the bottom control panel. */
-    .phone-screen.pl-split .mobile-player-body .step-slider-viewport {
+       to its content, and keeps a comfortable gap above the bottom control panel.
+       The :not([style*="display: none"]) guards keep this from overriding the
+       tab switcher — on Ingredients/Comments/custom tabs the step card must
+       actually disappear, not be resurrected by this !important. */
+    .phone-screen.pl-split .mobile-player-body .step-slider-viewport:not([style*="display: none"]):not([style*="display:none"]) {
       flex: 1 1 auto !important; min-height: 0 !important;
       display: flex !important; flex-direction: column !important;   /* beats the inline display:block set in app.js */
       margin-bottom: 14px !important;                                /* the gap → control panel */
@@ -4262,6 +4396,14 @@
       color: var(--text-heading); padding: 6px 12px; cursor: pointer;
     }
     .phone-screen.cmt-open #playerCmtTab { display: none; }
+    /* the step capsules that ride inside the route card are part of the
+       player's transport — they stay put no matter which tab (Steps /
+       Ingredients / Comments / custom) the description column shows.
+       (The tab switcher inline-hides .step-nav-chips-container globally;
+       this wins over that inline style. Collapsing the route still folds
+       them away — that path uses max-height/opacity, not display.) */
+    #playerRouteCard .step-nav-chips-container { display: block !important; }
+
     /* the comment pill is retired everywhere — comments still open from the
        Comments tab, the cards' Add-a-tip chips, and the sheet's own buttons.
        (.phone-screen included so this outranks the rail's later

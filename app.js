@@ -2169,13 +2169,23 @@ function switchView(viewId) {
   currentView = viewId;
   window.location.hash = viewId;
 
-  // Update Tabs
-  document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
-  const activeTab = Array.from(document.querySelectorAll('.view-tab')).find(tab => {
+  // Update Tabs — tabless views (like the player) keep the tab you came
+  // from lit instead of clearing the whole nav
+  const allTabs = Array.from(document.querySelectorAll('.view-tab'));
+  const activeTab = allTabs.find(tab => {
     const onc = tab.getAttribute('onclick') || '';
     return onc.includes(`'${viewId}'`) || onc.includes(`"${viewId}"`);
   });
-  if (activeTab) activeTab.classList.add('active');
+  if (activeTab) {
+    allTabs.forEach(tab => tab.classList.remove('active'));
+    activeTab.classList.add('active');
+  } else if (!allTabs.some(t => t.classList.contains('active'))) {
+    // nothing lit at all (e.g. booted straight into the player):
+    // fall back to the remembered previous view, else Discover
+    const prev = (typeof playerPreviousView === 'string' && playerPreviousView) || 'discover';
+    const fb = allTabs.find(tab => (tab.getAttribute('onclick') || '').includes(`'${prev}'`));
+    if (fb) fb.classList.add('active');
+  }
 
   // Toggle Views
   document.querySelectorAll('.view-section').forEach(sec => {
@@ -15085,6 +15095,27 @@ window.transcribeVideo = async function() {
     videoUrl = networkUrl;
   }
 
+  // declared before the network-URL branch below — it used to sit after it,
+  // so that path crashed with a TDZ ReferenceError before doing anything
+  const btns = [
+    document.getElementById('transcribeBtn'),
+    document.getElementById('transcribeBtnMobile'),
+    document.getElementById('fixedTranscribeBtn')
+  ].filter(Boolean);
+
+  const setButtonsState = (disabled, text) => {
+    btns.forEach(b => {
+      b.disabled = disabled;
+      if (text) {
+        if (b.id === 'fixedTranscribeBtn') {
+          b.textContent = text.replace(' AI: ', '').replace(' ', '');
+        } else {
+          b.textContent = text;
+        }
+      }
+    });
+  };
+
   if (!uploadedFile) {
     if (videoUrl && !videoUrl.startsWith('blob:') && (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
       setButtonsState(true, '⏳ Transcribing (Replicate)...');
@@ -15129,30 +15160,12 @@ window.transcribeVideo = async function() {
     }
   }
 
-  // Use cache if already transcribed
+  // Use cache if already transcribed — say so where the user can see it
+  // (showTip is disabled; setAIStatus has a visible mobile fallback)
   if (cachedTranscript) {
-    showTip('Already transcribed! Use the buttons below to generate content.');
+    setAIStatus('Already transcribed — building from the existing transcript.', true);
     return;
   }
-
-  const btns = [
-    document.getElementById('transcribeBtn'),
-    document.getElementById('transcribeBtnMobile'),
-    document.getElementById('fixedTranscribeBtn')
-  ].filter(Boolean);
-
-  const setButtonsState = (disabled, text) => {
-    btns.forEach(b => {
-      b.disabled = disabled;
-      if (text) {
-        if (b.id === 'fixedTranscribeBtn') {
-          b.textContent = text.replace(' AI: ', '').replace(' ', '');
-        } else {
-          b.textContent = text;
-        }
-      }
-    });
-  };
 
   async function transcribeWithGeminiFallback(reason) {
     console.log('[AI] Running Gemini transcription fallback due to:', reason);
@@ -15731,20 +15744,24 @@ window.aiWriteSteps = async function() {
 // ── AI: Write descriptions for each placed loop stop ──────────────────────
 window.aiWriteStepDescriptions = async function() {
   if (!createStepsArr.length) {
-    showTip('Add loop stops first, then tap Generate Steps.');
+    setAIStatus('Add loop stops first, then tap ↻ Steps.', true);
     return;
   }
-  showTip('AI is writing descriptions for each loop stop...');
+  setAIStatus('AI is re-writing the description of every loop stop...', true);
 
   const hasDescriptions = createStepsArr.some(s => s.description && s.description.trim().length > 0);
-  const btnIds = ['aiGenerateStepsBtn', 'aiGenerateStepsBtnMobile'];
+  // aiRedoBtn is the visible ↻ Steps pill on mobile — the legacy ids are
+  // hidden there, so without it the run had no visible working state
+  const btnIds = ['aiGenerateStepsBtn', 'aiGenerateStepsBtnMobile', 'aiRedoBtn'];
   const originalHtmls = {};
   btnIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       originalHtmls[id] = el.innerHTML;
       el.disabled = true;
-      el.innerHTML = hasDescriptions ? '<span>Re-generating Steps...</span>' : '<span>Generating Steps...</span>';
+      el.innerHTML = (id === 'aiRedoBtn')
+        ? '↻ Writing…'
+        : (hasDescriptions ? '<span>Re-generating Steps...</span>' : '<span>Generating Steps...</span>');
     }
   });
 
@@ -15792,9 +15809,9 @@ window.aiWriteStepDescriptions = async function() {
       delete step.timers; // force auto-detection on render!
     });
     renderCreateSteps();
-    showTip('Steps generated! Edit any card to customize.');
+    setAIStatus('Step descriptions re-written! Edit any card to customize.', true);
   } catch (err) {
-    showTip(' ' + (err.message || 'Could not generate steps.'));
+    setAIStatus(err.message || 'Could not generate steps.', true);
   } finally {
     btnIds.forEach(id => {
       const el = document.getElementById(id);
