@@ -6348,22 +6348,49 @@
         return 0;
       }
       let liveMap = null;
+      function startDrag(key, x, y) {
+        dragKey = key;
+        trail = [{ x, y, t: performance.now() }];
+        ghost = document.createElement('div');
+        ghost.id = 'mpGhost';
+        const t = tabEl(key);
+        ghost.textContent = '⋮⋮ ' + (t ? t.textContent.trim() : key);
+        ghost.style.left = x + 'px';
+        ghost.style.top = y + 'px';
+        document.body.appendChild(ghost);
+        liveMap = mmap;
+        applyMulti(mmap, key);
+      }
+      // grip: drag instantly
       document.addEventListener('pointerdown', e => {
         const g = e.target.closest('.mpGrip');
         if (!g || !mmap) return;
-        dragKey = g.dataset.key;
-        trail = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
-        ghost = document.createElement('div');
-        ghost.id = 'mpGhost';
-        const t = tabEl(dragKey);
-        ghost.textContent = '⋮⋮ ' + (t ? t.textContent.trim() : dragKey);
-        ghost.style.left = e.clientX + 'px';
-        ghost.style.top = e.clientY + 'px';
-        document.body.appendChild(ghost);
-        liveMap = mmap;
-        applyMulti(mmap, dragKey);
+        startDrag(g.dataset.key, e.clientX, e.clientY);
         e.preventDefault();
       }, true);
+      // whole panel: press and hold ~¼s to lift, then drag — taps, buttons
+      // and scrolling keep working because the hold cancels on movement
+      let lpTimer = null, lpStart = null;
+      document.addEventListener('pointerdown', e => {
+        if (!mmap || dragKey) return;
+        if (e.target.closest('.mpGrip')) return;                    // grip path is instant
+        const p = e.target.closest('.mp-panel');
+        if (!p) return;
+        if (e.target.closest('button, input, textarea, select, a, [contenteditable="true"]')) return;
+        const key = allKeys().find(k => panelEl(k) === p);
+        if (!key) return;
+        lpStart = { x: e.clientX, y: e.clientY };
+        clearTimeout(lpTimer);
+        lpTimer = setTimeout(() => { lpTimer = null; startDrag(key, lpStart.x, lpStart.y); }, 260);
+      }, true);
+      window.addEventListener('pointermove', e => {
+        if (lpTimer && lpStart &&
+            (Math.abs(e.clientX - lpStart.x) > 8 || Math.abs(e.clientY - lpStart.y) > 8)) {
+          clearTimeout(lpTimer); lpTimer = null;   // moved: it's a scroll, not a lift
+        }
+      });
+      window.addEventListener('pointerup', () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } });
+      window.addEventListener('pointercancel', () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } });
       window.addEventListener('pointermove', e => {
         if (!dragKey) return;
         ghost.style.left = e.clientX + 'px';
