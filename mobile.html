@@ -6189,6 +6189,10 @@
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
         if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
+        const vc0 = vidCol();
+        if (vc0) ['align-self', 'height', 'min-height'].forEach(p => {
+          if (vc0.style.getPropertyPriority(p) === 'important') vc0.style.removeProperty(p);
+        });
         const sc0 = screen();
         if (sc0 && sc0.style.getPropertyValue('padding-bottom')) sc0.style.removeProperty('padding-bottom');
         const u = document.getElementById('mpUnder');  if (u) u.style.display = 'none';
@@ -6253,6 +6257,20 @@
         engaged = true;
         setPlain(u, 'display', underUsed ? 'flex' : 'none');
         setPlain(s, 'display', shelfUsed ? 'flex' : 'none');
+        // the video column is content-sized, so a grow-to-fill under-zone
+        // resolves to ZERO height — stretch the column while it's in use
+        const vc = vidCol();
+        if (vc) {
+          if (underUsed) {
+            setImp(vc, 'align-self', 'stretch');
+            setImp(vc, 'height', 'auto');
+            setImp(vc, 'min-height', '0');
+          } else {
+            ['align-self', 'height', 'min-height'].forEach(p => {
+              if (vc.style.getPropertyPriority(p) === 'important') vc.style.removeProperty(p);
+            });
+          }
+        }
         // clear the columns off the shelf's strip while it's out
         const sc = screen();
         if (sc) {
