@@ -6220,7 +6220,7 @@
         const bb = dBody();
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
-        if (bb) ['align-self', 'height', 'min-height', 'padding-bottom'].forEach(p => bb.style.removeProperty(p));
+        if (bb) ['align-self', 'height', 'min-height', 'padding-bottom', 'transition'].forEach(p => bb.style.removeProperty(p));
         const vc0 = vidCol();
         if (vc0) {
           ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
@@ -6259,8 +6259,24 @@
         setImp(b, 'min-height', '0');
         setImp(b, 'width', '60%');
         setImp(b, 'max-width', '60%');
-        // the app pads the column bottom by 80px — pure void in multi mode
-        setImp(b, 'padding-bottom', '0px');
+        // exact clearance for the floating route band (full-width mode):
+        // measured from the screen bottom to the band's top, so panels in
+        // BOTH columns stop 12px above it — no touching, no void
+        let bandClear = 0;
+        if (bandMode()) {
+          const bandEl = document.getElementById('playerRouteCard');
+          const scEl = screen();
+          if (bandEl && scEl) {
+            const gap = Math.round(scEl.getBoundingClientRect().bottom - bandEl.getBoundingClientRect().top);
+            bandClear = Math.max(60, Math.min(260, gap)) + 12;
+          } else bandClear = 140;
+        }
+        // (the app pads the column bottom by 80px — pure void in multi mode)
+        // transition:none — the body animates padding-bottom, and a stuck
+        // mid-flight transition holds the OLD padding over our !important
+        // (same frozen-transition trap as the view-section transform)
+        setImp(b, 'transition', 'none');
+        setImp(b, 'padding-bottom', bandClear + 'px');
         // hide everything first, then place the open ones — both steps
         // surfaces included, so the inactive one never leaks into layout
         allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
@@ -6347,15 +6363,9 @@
             // never taller than the screen — panels compress and scroll
             // internally instead of running off the bottom edge
             setImp(vc, 'max-height', '100%');
-            // the full-width route band floats over the screen bottom; keep
-            // the under-panel clear of it (measured, with a fallback)
-            let clear = '8px';
-            if (bandMode()) {
-              const band = document.getElementById('playerRouteCard');
-              const bh = band ? Math.round(band.getBoundingClientRect().height) : 0;
-              clear = ((bh > 0 && bh < 300 ? bh : 120) + 16) + 'px';
-            }
-            setImp(u, 'margin-bottom', clear);
+            // same precise band clearance as the description column — the
+            // under-panel ends 12px above the band, no touch and no void
+            setImp(u, 'margin-bottom', (bandMode() ? bandClear : 8) + 'px');
             // make room: the app drops the video ~104px down its column by
             // design — when a card lives below, raise the video to the top
             // and cap its height so the card gets real space
