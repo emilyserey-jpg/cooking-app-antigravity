@@ -6219,6 +6219,10 @@
         }
         const head0 = document.getElementById('mpStepsHead');
         if (head0) head0.remove();
+        const route0 = document.getElementById('playerRouteCard');
+        if (route0 && route0.style.getPropertyPriority('margin-top') === 'important') {
+          route0.style.removeProperty('margin-top');
+        }
         const bb = dBody();
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
@@ -6400,6 +6404,22 @@
               if (vidC0.style.getPropertyPriority(p) === 'important') vidC0.style.removeProperty(p);
             });
           }
+        }
+        // the slim route card also gets dragged up onto the video by the
+        // transport strip's negative margin — clear it the same way the
+        // under-panel is cleared, so nothing sits on the footage
+        const routeC = document.getElementById('playerRouteCard');
+        if (routeC && vc && routeC.parentElement === vc && !bandMode()) {
+          const vidCC = vc.querySelector('.mobile-video-container');
+          let rp = routeC.previousElementSibling;
+          while (rp && rp.getBoundingClientRect().height === 0) rp = rp.previousElementSibling;
+          if (vidCC && rp) {
+            let rOver = Math.round(vidCC.getBoundingClientRect().bottom - rp.getBoundingClientRect().bottom);
+            rOver = Math.min(Math.max(rOver, 0), 90);
+            setImp(routeC, 'margin-top', (rOver + 8) + 'px');
+          }
+        } else if (routeC && routeC.style.getPropertyPriority('margin-top') === 'important') {
+          routeC.style.removeProperty('margin-top');
         }
         // clear the columns off the shelf's strip while it's out
         const sc = screen();
