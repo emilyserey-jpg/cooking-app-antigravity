@@ -6205,7 +6205,9 @@
         cleanEls.forEach(el => {
           if (!el) return;
           if (el.parentElement !== b) b.appendChild(el);
-          ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y', 'margin']
+          // display included: leftover inline display (ours OR the tab
+          // switcher's) fights Cook's own CSS sizing — hand it all back
+          ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y', 'margin', 'display']
             .forEach(p => el.style.removeProperty(p));
           el.classList.remove('mp-settling', 'mp-panel');
         });
@@ -6643,12 +6645,43 @@
             }
           }
           if (mmap) applyMulti(mmap);
-        } else if (engaged) {
-          // left Split with our styles still on — clean up and go native
-          restoreNativeHomes();
-          applying = true;
-          try { window.switchPlayerMainTab(window.activePlayerMainTab || 'steps'); }
-          finally { applying = false; }
+        } else {
+          if (engaged) {
+            // left Split with our styles still on — clean up and go native
+            restoreNativeHomes();
+            applying = true;
+            try {
+              // land on Steps: re-selecting a non-steps tab would hide the
+              // step viewport with inline display:none
+              window.switchPlayerMainTab('steps');
+            } finally { applying = false; }
+            // Cook docks the strip + step slider into the video column
+            // (relocateCookPieces) BEFORE we clean up — restoreNativeHomes
+            // just un-docked them, so re-dock exactly like the app does
+            const sCook = screen();
+            if (sCook && sCook.classList.contains('pl-cook')) {
+              const p = view();
+              const leftCol = p && p.querySelector('.player-left-column');
+              const strip = p && p.querySelector('.player-controls-strip');
+              const slider = p && p.querySelector('.step-slider-viewport');
+              if (leftCol) {
+                if (strip) leftCol.appendChild(strip);
+                if (slider) leftCol.appendChild(slider);
+              }
+            }
+          }
+          // Cook safety net: its steps live OUTSIDE the tab system, so a
+          // stray inline display:none from any tab switch orphans them —
+          // strip it whenever Cook's own content tab says steps are showing
+          const s0 = screen();
+          if (s0 && s0.classList.contains('pl-cook') &&
+              (window.cookContentTab || 'steps') === 'steps') {
+            const vp0 = view() && view().querySelector('.step-slider-viewport');
+            if (vp0 && vp0.style.display === 'none' &&
+                vp0.style.getPropertyPriority('display') !== 'important') {
+              vp0.style.removeProperty('display');
+            }
+          }
         }
       }
       // throttle, not debounce: transitions mutate the DOM continuously, and
