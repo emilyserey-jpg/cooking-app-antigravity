@@ -6369,9 +6369,8 @@
             // never taller than the screen — panels compress and scroll
             // internally instead of running off the bottom edge
             setImp(vc, 'max-height', '100%');
-            // same precise band clearance as the description column — the
-            // under-panel ends 12px above the band, no touch and no void
-            setImp(u, 'margin-bottom', (bandMode() ? bandClear : 8) + 'px');
+            // (height set explicitly below — flex-grow silently refuses to
+            // run for this item in some band-mode states)
             // make room: the app drops the video ~104px down its column by
             // design — when a card lives below, raise the video to the top
             // and cap its height so the card gets real space
@@ -6395,6 +6394,15 @@
             }
             over = Math.min(Math.max(over, 0), 80);
             setImp(u, 'margin-top', Math.max(8, over + 12) + 'px');
+            // deterministic height: from the zone's real top down to the
+            // clearance line (band top, or 8px above the column's bottom)
+            const colR2 = vc.getBoundingClientRect();
+            const clr2 = bandMode() ? bandClear : 8;
+            const uTop2 = u.getBoundingClientRect().top;
+            const uh = Math.max(80, Math.round(colR2.bottom - clr2 - uTop2));
+            setImp(u, 'height', uh + 'px');
+            setImp(u, 'flex', '0 0 auto');
+            setImp(u, 'margin-bottom', '0px');
           } else {
             ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
               if (vc.style.getPropertyPriority(p) === 'important') vc.style.removeProperty(p);
