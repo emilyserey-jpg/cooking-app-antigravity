@@ -6051,6 +6051,7 @@
 
       let mmap = null;          // zone → panel key while multi is active, else null
       let applying = false;     // reentrancy guard around native switch calls
+      let engaged = false;      // whether our styles are currently on the DOM
 
       const view   = () => document.getElementById('view-mobile-player');
       const screen = () => view() && view().querySelector('.phone-screen');
@@ -6161,6 +6162,7 @@
           el.classList.remove('mp-settling');
         });
         removeGrips();
+        engaged = false;
         const bb = dBody();
         if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
         const sc0 = screen();
@@ -6219,6 +6221,7 @@
           el.classList.toggle('mp-settling', key === settleKey);
           ensureGrip(el, key);
         });
+        engaged = true;
         setPlain(u, 'display', underUsed ? 'flex' : 'none');
         setPlain(s, 'display', shelfUsed ? 'flex' : 'none');
         // clear the columns off the shelf's strip while it's out
@@ -6374,55 +6377,51 @@
       window.addEventListener('pointerup', e => endDrag(e, true));
       window.addEventListener('pointercancel', e => endDrag(e, false));
 
-      // ── keep multi alive across the app's own tab calls & restore on load ──
+      // ── mode-aware lifecycle ────────────────────────────────────────────
+      // One brain for every transition: entering Split (re)engages the saved
+      // or active multi layout; leaving Split (Cook, other views, multigrid)
+      // fully cleans our styles off the DOM and hands back to native code.
+      function syncMode() {
+        if (inSplitPlayer()) {
+          if (!mmap) {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (err) {}
+            if (saved) {
+              // keep saved keys even if their panel doesn't exist yet —
+              // custom panels are built late; we place them when they appear
+              const valid = {};
+              zoneList().forEach(z => valid[z] = saved[z] || null);
+              if (openKeys(valid).length >= 2) mmap = valid;
+            }
+          }
+          if (mmap) applyMulti(mmap);
+        } else if (engaged) {
+          // left Split with our styles still on — clean up and go native
+          restoreNativeHomes();
+          applying = true;
+          try { window.switchPlayerMainTab(window.activePlayerMainTab || 'steps'); }
+          finally { applying = false; }
+        }
+      }
+      const scheduleSync = (() => {
+        let t = null;
+        return () => { clearTimeout(t); t = setTimeout(syncMode, 90); };
+      })();
+
       document.addEventListener('DOMContentLoaded', () => {
-        // the app rebuilds tabs/panels at its own pace (recipe load, comment
-        // refresh) — whenever the player's DOM shifts underneath us, reassert.
-        // applyMulti is guarded (no moves or grip adds when already right),
-        // so the observer settles after one echo instead of looping.
-        const reapply = (() => {
-          let t = null;
-          return () => {
-            if (!mmap) return;
-            clearTimeout(t);
-            t = setTimeout(() => { if (mmap && inSplitPlayer()) applyMulti(mmap); }, 90);
-          };
-        })();
+        // the app rebuilds tabs/panels and flips layout classes at its own
+        // pace — any DOM shift inside the player reruns the mode brain.
+        // applyMulti's writes are all diff-checked, so its own pass generates
+        // no new records and the observer settles instead of echoing.
         const pv = document.getElementById('view-mobile-player');
-        // style attributes included: the app rewrites panel styles at its own
-        // pace long after load. applyMulti's writes are all diff-checked, so
-        // its own pass generates no records and the loop settles.
-        if (pv) new MutationObserver(reapply).observe(pv,
+        if (pv) new MutationObserver(scheduleSync).observe(pv,
           { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
 
         const orig = window.switchPlayerMainTab;
         if (typeof orig !== 'function') return;
         window.switchPlayerMainTab = function(tabName) {
           const r = orig.apply(this, arguments);
-          if (applying) return r;
-          if (mmap && inSplitPlayer()) {
-            // the app switched natively (e.g. on recipe load) — reassert ours.
-            // Twice: custom panels can be rebuilt shortly after the switch,
-            // which discards the styling from the first pass.
-            setTimeout(() => { if (mmap) applyMulti(mmap); }, 60);
-            setTimeout(() => { if (mmap) applyMulti(mmap); }, 650);
-          } else if (!mmap && inSplitPlayer()) {
-            // first native switch after load: restore a saved multi layout
-            let saved = null;
-            try { saved = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (err) {}
-            if (saved) {
-              // keep saved keys even if their panel doesn't exist yet —
-              // custom panels are built after this first switch, and the
-              // observer will place them the moment they appear
-              const valid = {};
-              zoneList().forEach(z => valid[z] = saved[z] || null);
-              if (openKeys(valid).length >= 2) {
-                mmap = valid;
-                setTimeout(() => { if (mmap) applyMulti(mmap); }, 60);
-                setTimeout(() => { if (mmap) applyMulti(mmap); }, 650);
-              }
-            }
-          }
+          if (!applying) { scheduleSync(); setTimeout(syncMode, 650); }
           return r;
         };
       });
