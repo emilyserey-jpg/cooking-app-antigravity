@@ -6198,9 +6198,15 @@
         // and stripping them would hand native mode the same collapse window
         if (bb) ['align-self', 'height', 'min-height', 'padding-bottom'].forEach(p => bb.style.removeProperty(p));
         const vc0 = vidCol();
-        if (vc0) ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
-          if (vc0.style.getPropertyPriority(p) === 'important') vc0.style.removeProperty(p);
-        });
+        if (vc0) {
+          ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
+            if (vc0.style.getPropertyPriority(p) === 'important') vc0.style.removeProperty(p);
+          });
+          const vidC1 = vc0.querySelector('.mobile-video-container');
+          if (vidC1) ['margin-top', 'max-height'].forEach(p => {
+            if (vidC1.style.getPropertyPriority(p) === 'important') vidC1.style.removeProperty(p);
+          });
+        }
         const sc0 = screen();
         if (sc0 && sc0.style.getPropertyValue('padding-bottom')) sc0.style.removeProperty('padding-bottom');
         const u = document.getElementById('mpUnder');  if (u) u.style.display = 'none';
@@ -6291,6 +6297,15 @@
               clear = ((bh > 0 && bh < 300 ? bh : 120) + 16) + 'px';
             }
             setImp(u, 'margin-bottom', clear);
+            // make room: the app drops the video ~104px down its column by
+            // design — when a card lives below, raise the video to the top
+            // and cap its height so the card gets real space
+            const vidCRaise = vc.querySelector('.mobile-video-container');
+            if (vidCRaise) {
+              setImp(vidCRaise, 'margin-top', '0px');
+              if (shelfUsed) setImp(vidCRaise, 'max-height', '225px');
+              else if (vidCRaise.style.getPropertyValue('max-height')) vidCRaise.style.removeProperty('max-height');
+            }
             // the transport strip rides ON the video via a negative margin,
             // which drags later flow up into the video's box — measure how
             // far the video really reaches past whatever sits above us.
@@ -6308,6 +6323,10 @@
           } else {
             ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
               if (vc.style.getPropertyPriority(p) === 'important') vc.style.removeProperty(p);
+            });
+            const vidC0 = vc.querySelector('.mobile-video-container');
+            if (vidC0) ['margin-top', 'max-height'].forEach(p => {
+              if (vidC0.style.getPropertyPriority(p) === 'important') vidC0.style.removeProperty(p);
             });
           }
         }
