@@ -1195,6 +1195,9 @@ window.renderMultigridDescriptions = function() {
   }
 
   // Apply style overrides to the container based on current layout mode
+  // (.mg-vertical lets the Split CSS stretch the stacked list + its cards
+  //  down the column so no dead space is left under the last card)
+  container.classList.toggle('mg-vertical', playerDescLayoutMode !== 'row');
   if (playerDescLayoutMode === 'row') {
     container.style.flexDirection = 'row';
     container.style.overflowX = 'auto';
@@ -2548,18 +2551,13 @@ function renderPlayerIngredients() {
   }
   
   const recipeData = getActiveRecipeData();
-  const rawIngredientsStr = (recipeData && typeof recipeData.ingredients === 'string') ? recipeData.ingredients : '';
-  
-  if (!rawIngredientsStr || !rawIngredientsStr.trim()) {
-    panel.style.display = 'none';
-    const tabsWrapper = document.querySelector('#playerMainTabsContainer > div');
-    if (tabsWrapper) {
-      tabsWrapper.querySelectorAll('.player-custom-tab-btn').forEach(btn => btn.remove());
-    }
-    document.querySelectorAll('.player-custom-panel').forEach(p => p.remove());
-    return;
+  // ingredients can arrive as a string OR an array (older recipes) — normalize
+  let rawIngredientsStr = '';
+  if (recipeData) {
+    if (typeof recipeData.ingredients === 'string') rawIngredientsStr = recipeData.ingredients;
+    else if (Array.isArray(recipeData.ingredients)) rawIngredientsStr = recipeData.ingredients.join('\n');
   }
-  
+
   let recipeCustomPages = {};
   let cleanIngredientsStr = rawIngredientsStr || '';
   if (rawIngredientsStr && rawIngredientsStr.includes('---CUSTOM_PAGES---')) {
@@ -2570,6 +2568,14 @@ function renderPlayerIngredients() {
       recipeCustomPages = JSON.parse(customPart);
     } catch(e) {
       console.warn('Failed to parse custom pages in player:', e);
+    }
+    // no plain list after the delimiter — fall back to an ingredients custom
+    // page if the recipe keeps its list there (same rule as the Cook view)
+    if (!cleanIngredientsStr) {
+      const page = Object.values(recipeCustomPages).find(p => p && (
+        p.promptType === 'ingredients' || String(p.name || '').toLowerCase().includes('ingredient')
+      ));
+      if (page && typeof page.content === 'string') cleanIngredientsStr = page.content;
     }
   }
 
@@ -2614,9 +2620,13 @@ function renderPlayerIngredients() {
   
   const ingredients = cleanIngredientsStr
     .split(/[\n;]/)
-    .map(i => i.trim())
+    .map(i => i.replace(/^\s*[-•*]\s*/, '').trim())
     .filter(i => i.length > 0);
-    
+
+  if (ingredients.length === 0) {
+    listEl.innerHTML = '<div style="padding:10px 6px; font-style:italic; color:var(--text-muted);">No ingredients listed for this recipe yet — add them from the recipe editor.</div>';
+  }
+
   ingredients.forEach((ing) => {
     const itemDiv = document.createElement('div');
     
@@ -2688,6 +2698,9 @@ function renderPlayerIngredients() {
     Object.keys(recipeCustomPages).forEach(tabId => {
       const page = recipeCustomPages[tabId];
       if (!page.name || !page.name.trim()) return; // skip untitled custom pages in player
+      // an ingredients-flavored custom page already feeds the native
+      // Ingredients tab — a second tab for it would be a duplicate
+      if (page.promptType === 'ingredients' || String(page.name).toLowerCase().includes('ingredient')) return;
       
       const btn = document.createElement('button');
       btn.id = `playerTab_${tabId}`;
@@ -9801,14 +9814,21 @@ function updateMultigridLayoutClass() {
     const rightCol = document.querySelector('.mobile-player-body');
     if (rightCol) {
       if (window.currentSplitLayoutActive) {
-        rightCol.style.setProperty('height', '100%', 'important');
-        rightCol.style.setProperty('max-height', '100%', 'important');
+        // height:100% resolves against a content-sized parent here and
+        // collapses the column — stretch it like the multi-panel code does,
+        // so the step/ingredient/comment panels have the full phone height
+        rightCol.style.setProperty('align-self', 'stretch', 'important');
+        rightCol.style.setProperty('height', 'auto', 'important');
+        rightCol.style.setProperty('min-height', '0', 'important');
+        rightCol.style.removeProperty('max-height');
         rightCol.style.setProperty('flex', '1 1 auto', 'important');
         rightCol.style.setProperty('width', '60%', 'important');
         rightCol.style.setProperty('max-width', '60%', 'important');
         rightCol.style.setProperty('overflow-y', 'auto', 'important');
       } else {
+        rightCol.style.removeProperty('align-self');
         rightCol.style.removeProperty('height');
+        rightCol.style.removeProperty('min-height');
         rightCol.style.removeProperty('max-height');
         rightCol.style.removeProperty('flex');
         rightCol.style.removeProperty('width');
