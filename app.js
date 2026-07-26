@@ -9797,12 +9797,16 @@ function updateMultigridLayoutClass() {
     const wrapper = document.querySelector('.player-mobile-wrapper');
     const leftCol = document.querySelector('.player-left-column');
 
+    // the column split is user-adjustable (drag the seam) — read the saved
+    // percentage, defaulting to the classic 60/40
+    let colPct = parseFloat(localStorage.getItem('cooking_gps_split_col_pct'));
+    if (!isFinite(colPct) || colPct < 32 || colPct > 78) colPct = 60;
     if (leftCol) {
       if (window.currentSplitLayoutActive) {
         leftCol.style.setProperty('height', '100%', 'important');
-        leftCol.style.setProperty('flex', '0 0 40%', 'important');
-        leftCol.style.setProperty('width', '40%', 'important');
-        leftCol.style.setProperty('max-width', '40%', 'important');
+        leftCol.style.setProperty('flex', '0 0 ' + (100 - colPct) + '%', 'important');
+        leftCol.style.setProperty('width', (100 - colPct) + '%', 'important');
+        leftCol.style.setProperty('max-width', (100 - colPct) + '%', 'important');
       } else {
         leftCol.style.setProperty('height', 'auto', 'important');
         leftCol.style.setProperty('flex', '0 0 auto', 'important');
@@ -9822,8 +9826,8 @@ function updateMultigridLayoutClass() {
         rightCol.style.setProperty('min-height', '0', 'important');
         rightCol.style.removeProperty('max-height');
         rightCol.style.setProperty('flex', '1 1 auto', 'important');
-        rightCol.style.setProperty('width', '60%', 'important');
-        rightCol.style.setProperty('max-width', '60%', 'important');
+        rightCol.style.setProperty('width', colPct + '%', 'important');
+        rightCol.style.setProperty('max-width', colPct + '%', 'important');
         rightCol.style.setProperty('overflow-y', 'auto', 'important');
       } else {
         rightCol.style.removeProperty('align-self');

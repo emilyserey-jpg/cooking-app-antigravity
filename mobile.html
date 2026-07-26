@@ -6322,6 +6322,26 @@
       position: absolute !important; top: 7px; right: 7px;
       width: 24px !important; height: 24px !important;
     }
+    /* ── resize handles: drag the seam between panels / columns ── */
+    .mpDivider {
+      flex: 0 0 12px; display: flex; align-items: center; justify-content: center;
+      cursor: row-resize; touch-action: none; user-select: none; margin: -2px 6px;
+    }
+    .mpDivider::before {
+      content: ''; width: 34px; height: 4px; border-radius: 999px;
+      background: rgba(74, 144, 217, 0.28); transition: background 0.15s, width 0.15s;
+    }
+    .mpDivider.drag::before, .mpDivider:active::before { background: var(--primary); width: 46px; }
+    #mpColDivider {
+      position: absolute; width: 14px; z-index: 45;
+      cursor: col-resize; touch-action: none; user-select: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #mpColDivider::before {
+      content: ''; width: 4px; height: 38px; border-radius: 999px;
+      background: rgba(74, 144, 217, 0.28); transition: background 0.15s, height 0.15s;
+    }
+    #mpColDivider.drag::before { background: var(--primary); height: 54px; }
   </style>
   <script>
     // ── Multi-panel free layout (Split player) ──────────────────────────
@@ -6334,6 +6354,16 @@
     (function(){
       const LS = 'cooking_gps_multi_panels';
       const COLUMN = ['ltop', 'lmid', 'lbot'];
+      // adjustable panels: per-panel height shares + the column width split
+      const SIZES = 'cooking_gps_multi_panel_sizes';   // { panelKey: flexGrow }
+      const SPLIT_PCT = 'cooking_gps_split_col_pct';   // description column %
+      let panelGrow = {};
+      try { panelGrow = JSON.parse(localStorage.getItem(SIZES) || '{}') || {}; } catch (e) { panelGrow = {}; }
+      function saveGrow() { try { localStorage.setItem(SIZES, JSON.stringify(panelGrow)); } catch (e) {} }
+      function colPct() {
+        const v = parseFloat(localStorage.getItem(SPLIT_PCT));
+        return (isFinite(v) && v >= 32 && v <= 78) ? v : 60;
+      }
 
       let mmap = null;          // zone → panel key while multi is active, else null
       let applying = false;     // reentrancy guard around native switch calls
@@ -6466,6 +6496,7 @@
           el.classList.remove('mp-settling', 'mp-panel');
         });
         removeGrips();
+        document.querySelectorAll('.mpDivider').forEach(d => d.remove());
         engaged = false;
         // the app tows the Step Descriptions controls row around after the
         // steps surface — after our panel travel it can strand at the column
@@ -6527,8 +6558,15 @@
         setImp(b, 'align-self', 'stretch');
         setImp(b, 'height', 'auto');
         setImp(b, 'min-height', '0');
-        setImp(b, 'width', '60%');
-        setImp(b, 'max-width', '60%');
+        const pct = colPct();
+        setImp(b, 'width', pct + '%');
+        setImp(b, 'max-width', pct + '%');
+        const vcW = vidCol();
+        if (vcW && pct !== 60) {
+          setImp(vcW, 'flex', '0 0 ' + (100 - pct) + '%');
+          setImp(vcW, 'width', (100 - pct) + '%');
+          setImp(vcW, 'max-width', (100 - pct) + '%');
+        }
         // exact clearance for the floating route band (full-width mode):
         // measured from the screen bottom to the band's top, so panels in
         // BOTH columns stop 12px above it — no touching, no void
@@ -6577,8 +6615,10 @@
             shelfUsed = true;
           }
           // 'important' — the Split layout sizes the step card with its own
-          // !important rules, which would otherwise starve the other panels
-          setImp(el, 'flex', '1 1 0');
+          // !important rules, which would otherwise starve the other panels.
+          // Column panels honor the user's dragged height share (default 1).
+          const grow = COLUMN.includes(z) ? (panelGrow[key] || 1) : 1;
+          setImp(el, 'flex', grow + ' 1 0');
           setImp(el, 'display', 'flex');
           setImp(el, 'flex-direction', 'column');
           setImp(el, 'min-height', '0');
@@ -6701,8 +6741,155 @@
           if (shelfUsed) setImp(sc, 'padding-bottom', '174px');
           else if (sc.style.getPropertyValue('padding-bottom')) sc.style.removeProperty('padding-bottom');
         }
+        syncDividers(m);
+        placeColDivider();
         paintTabs(m);
       }
+
+      // ── adjustable panels: drag the seams ─────────────────────────────
+      // A slim handle sits between stacked column panels; dragging it trades
+      // height between the two neighbors (persisted per panel). Double-tap
+      // resets the pair to an even split.
+      function wireDivider(div, keyA, keyB) {
+        div.addEventListener('pointerdown', e => {
+          e.preventDefault(); e.stopPropagation();
+          try { div.setPointerCapture(e.pointerId); } catch (err) {}
+          div.classList.add('drag');
+          const pa = panelEl(keyA), pb = panelEl(keyB);
+          if (!pa || !pb) return;
+          const h1 = pa.getBoundingClientRect().height;
+          const h2 = pb.getBoundingClientRect().height;
+          const sum = (panelGrow[keyA] || 1) + (panelGrow[keyB] || 1);
+          const total = h1 + h2, y0 = e.clientY;
+          let live = true;   // a finished gesture must never ghost-write
+          const move = ev => {
+            if (!live) return;
+            const nh1 = Math.min(Math.max(64, h1 + (ev.clientY - y0)), total - 64);
+            panelGrow[keyA] = +(sum * nh1 / total).toFixed(3);
+            panelGrow[keyB] = +(sum * (total - nh1) / total).toFixed(3);
+            setImp(pa, 'flex', panelGrow[keyA] + ' 1 0');
+            setImp(pb, 'flex', panelGrow[keyB] + ' 1 0');
+          };
+          const up = () => {
+            live = false;
+            div.classList.remove('drag');
+            div.removeEventListener('pointermove', move);
+            saveGrow();
+          };
+          div.addEventListener('pointermove', move);
+          div.addEventListener('pointerup', up, { once: true });
+          div.addEventListener('pointercancel', up, { once: true });
+        });
+        div.addEventListener('dblclick', () => {
+          delete panelGrow[keyA]; delete panelGrow[keyB];
+          saveGrow();
+          if (mmap) applyMulti(mmap);
+        });
+      }
+      function syncDividers(m) {
+        const b = dBody(); if (!b) return;
+        // NEVER rebuild while a handle is being dragged: every resize write
+        // re-triggers the reapply observer → applyMulti → here, and replacing
+        // the handle mid-gesture kills its pointer capture (drag dies after
+        // one pixel). Same reason we leave matching handles untouched below.
+        if (b.querySelector(':scope > .mpDivider.drag')) return;
+        const seq = COLUMN.map(z => m[z]).filter(Boolean);
+        const want = [];
+        for (let i = 1; i < seq.length; i++) want.push(seq[i - 1] + '|' + seq[i]);
+        const have = [...b.querySelectorAll(':scope > .mpDivider')];
+        if (want.length === have.length && want.every((p, i) => have[i].dataset.pair === p)) return;
+        have.forEach(d => d.remove());
+        want.forEach(pair => {
+          const upper = pair.split('|')[0], lower = pair.split('|')[1];
+          const lowEl = panelEl(lower);
+          if (!lowEl || !panelEl(upper) || lowEl.parentElement !== b) return;
+          const div = document.createElement('div');
+          div.className = 'mpDivider';
+          div.dataset.pair = pair;
+          div.title = 'Drag to resize · double-tap for even split';
+          wireDivider(div, upper, lower);
+          // land between the two: same flex order as the lower panel, placed
+          // before its header row (Steps carries one) or the panel itself
+          let anchor = lowEl;
+          const head = document.getElementById('mpStepsHead');
+          if (head && head.nextElementSibling === lowEl) anchor = head;
+          setPlain(div, 'order', lowEl.style.getPropertyValue('order'));
+          b.insertBefore(div, anchor);
+        });
+      }
+      // the vertical seam between the two columns — dragging it re-balances
+      // the width split (persisted; 32–78% clamp). Works in native Split too.
+      function ensureColDivider() {
+        let cd = document.getElementById('mpColDivider');
+        if (!cd) {
+          cd = document.createElement('div');
+          cd.id = 'mpColDivider';
+          cd.title = 'Drag to resize the columns';
+          cd.addEventListener('pointerdown', e => {
+            e.preventDefault(); e.stopPropagation();
+            try { cd.setPointerCapture(e.pointerId); } catch (err) {}
+            cd.classList.add('drag');
+            const sc = screen(), b = dBody();
+            if (!sc || !b) return;
+            const sr = sc.getBoundingClientRect();
+            const bodyOnLeft = b.getBoundingClientRect().left - sr.left < sr.width / 4;
+            let live = true;   // a finished gesture must never ghost-write
+            const move = ev => {
+              if (!live) return;
+              const rel = (ev.clientX - sr.left) / Math.max(1, sr.width) * 100;
+              const pct = Math.min(78, Math.max(32, bodyOnLeft ? rel : 100 - rel));
+              try { localStorage.setItem(SPLIT_PCT, String(Math.round(pct * 10) / 10)); } catch (err) {}
+              applyColWidths();
+              placeColDivider();
+            };
+            const up = () => {
+              live = false;
+              cd.classList.remove('drag');
+              cd.removeEventListener('pointermove', move);
+              // let the video and route re-fit the new column widths
+              window.dispatchEvent(new Event('resize'));
+            };
+            cd.addEventListener('pointermove', move);
+            cd.addEventListener('pointerup', up, { once: true });
+            cd.addEventListener('pointercancel', up, { once: true });
+          });
+        }
+        const sc = screen();
+        if (sc && cd.parentElement !== sc) sc.appendChild(cd);
+        return cd;
+      }
+      function applyColWidths() {
+        const b = dBody(), vc = vidCol();
+        if (!b) return;
+        const pct = colPct();
+        setImp(b, 'width', pct + '%');
+        setImp(b, 'max-width', pct + '%');
+        if (vc) {
+          setImp(vc, 'flex', '0 0 ' + (100 - pct) + '%');
+          setImp(vc, 'width', (100 - pct) + '%');
+          setImp(vc, 'max-width', (100 - pct) + '%');
+        }
+      }
+      function placeColDivider() {
+        const cd = ensureColDivider();
+        const sc = screen(), b = dBody(), vc = vidCol();
+        const on = sc && b && vc && inSplitPlayer();
+        const set = (prop, val) => {
+          if (cd.style.getPropertyValue(prop) !== val) cd.style.setProperty(prop, val);
+        };
+        if (!on) { set('display', 'none'); return; }
+        set('display', 'flex');
+        const sr = sc.getBoundingClientRect();
+        const br = b.getBoundingClientRect(), vr = vc.getBoundingClientRect();
+        const x = br.left < vr.left ? (br.right + vr.left) / 2 : (vr.right + br.left) / 2;
+        const top = Math.max(br.top, vr.top), bottom = Math.min(
+          Math.max(br.bottom, vr.bottom), sr.bottom);
+        set('left', Math.round(x - sr.left - 7) + 'px');
+        set('top', Math.round(top - sr.top) + 'px');
+        set('height', Math.max(0, Math.round(bottom - top)) + 'px');
+      }
+      window.addEventListener('resize', placeColDivider);
+      setInterval(placeColDivider, 500);
 
       function save(m) {
         try {
