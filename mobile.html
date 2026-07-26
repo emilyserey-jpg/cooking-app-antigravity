@@ -6199,6 +6199,8 @@
           hv0._mpHome.appendChild(hv0);
           ['display', 'justify-content', 'margin', 'flex'].forEach(p => hv0.style.removeProperty(p));
         }
+        const head0 = document.getElementById('mpStepsHead');
+        if (head0) head0.remove();
         const bb = dBody();
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
@@ -6282,21 +6284,36 @@
         });
         engaged = true;
         // the H/V card-layout toggle (▐▐ / ≡) normally rides the hidden
-        // single-steps controls row — when Steps is open, it moves into the
-        // steps panel's own header strip so the option is never lost
+        // single-steps controls row — when Steps is open, it moves into a
+        // header bar WE own, glued above the steps panel. It must never sit
+        // inside the panel itself: switching layouts rebuilds the panel's
+        // contents and would wipe the toggle out of existence.
         const hv = document.getElementById('descLayoutToggleGroup');
         const stepsEl = panelEl('steps');
         if (hv) {
           if (stepsEl && openKeys(m).includes('steps')) {
             if (!hv._mpHome) hv._mpHome = hv.parentElement;
-            if (hv.parentElement !== stepsEl) stepsEl.insertBefore(hv, stepsEl.firstChild);
+            let head = document.getElementById('mpStepsHead');
+            if (!head) {
+              head = document.createElement('div'); head.id = 'mpStepsHead';
+              head.style.cssText = 'display:flex; justify-content:flex-end; flex:0 0 auto; margin:0 0 4px; min-height:0;';
+            }
+            if (head.parentElement !== stepsEl.parentElement || head.nextElementSibling !== stepsEl) {
+              stepsEl.parentElement.insertBefore(head, stepsEl);
+            }
+            // same flex order as the panel so they stay adjacent in the column
+            setPlain(head, 'order', stepsEl.style.order ? stepsEl.style.getPropertyValue('order') : '');
+            setPlain(head, 'display', 'flex');
+            if (hv.parentElement !== head) head.appendChild(hv);
             setPlain(hv, 'display', 'flex');
-            setPlain(hv, 'justify-content', 'flex-end');
-            setPlain(hv, 'margin', '2px 4px');
-            setPlain(hv, 'flex', '0 0 auto');
-          } else if (hv._mpHome && hv.parentElement !== hv._mpHome) {
-            hv._mpHome.appendChild(hv);
-            ['display', 'justify-content', 'margin', 'flex'].forEach(p => hv.style.removeProperty(p));
+            setPlain(hv, 'margin', '0');
+          } else {
+            const head = document.getElementById('mpStepsHead');
+            if (hv._mpHome && hv.parentElement !== hv._mpHome) {
+              hv._mpHome.appendChild(hv);
+              ['display', 'margin'].forEach(p => hv.style.removeProperty(p));
+            }
+            if (head) head.remove();
           }
         }
         setPlain(u, 'display', underUsed ? 'flex' : 'none');
