@@ -6142,7 +6142,7 @@
         let u = document.getElementById('mpUnder');
         if (!u) {
           u = document.createElement('div'); u.id = 'mpUnder';
-          u.style.cssText = 'display:none; flex:1 1 0; min-height:0; flex-direction:column;';
+          u.style.cssText = 'display:none; flex:1 1 0; min-height:0; flex-direction:column; margin-top:8px;';
         }
         const col = vidCol();
         if (col && u.parentElement !== col) col.appendChild(u);
@@ -6155,7 +6155,8 @@
           // the phone-screen is a nowrap row flex — a flow child would land
           // beside the columns and crush them. Anchor the shelf to the
           // screen's bottom instead; applyMulti pads the screen to clear it.
-          s.style.cssText = 'display:none; position:absolute; left:8px; right:8px; bottom:8px; height:150px; z-index:40; min-height:0;';
+          // left/right 4px lines its card up with the column panels' edges.
+          s.style.cssText = 'display:none; position:absolute; left:4px; right:4px; bottom:8px; height:150px; z-index:40; min-height:0;';
         }
         const sc = screen();
         if (sc && s.parentElement !== sc) sc.appendChild(s);
@@ -6190,7 +6191,7 @@
         // and stripping them would hand native mode the same collapse window
         if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
         const vc0 = vidCol();
-        if (vc0) ['align-self', 'height', 'min-height'].forEach(p => {
+        if (vc0) ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
           if (vc0.style.getPropertyPriority(p) === 'important') vc0.style.removeProperty(p);
         });
         const sc0 = screen();
@@ -6265,8 +6266,34 @@
             setImp(vc, 'align-self', 'stretch');
             setImp(vc, 'height', 'auto');
             setImp(vc, 'min-height', '0');
+            // never taller than the screen — panels compress and scroll
+            // internally instead of running off the bottom edge
+            setImp(vc, 'max-height', '100%');
+            // the full-width route band floats over the screen bottom; keep
+            // the under-panel clear of it (measured, with a fallback)
+            let clear = '8px';
+            if (bandMode()) {
+              const band = document.getElementById('playerRouteCard');
+              const bh = band ? Math.round(band.getBoundingClientRect().height) : 0;
+              clear = ((bh > 0 && bh < 300 ? bh : 120) + 16) + 'px';
+            }
+            setImp(u, 'margin-bottom', clear);
+            // the transport strip rides ON the video via a negative margin,
+            // which drags later flow up into the video's box — measure how
+            // far the video really reaches past whatever sits above us.
+            // Skip zero-rect (hidden) siblings and clamp: a bogus rect once
+            // produced margin-top:565px and launched the panel off-screen.
+            const vidC = vc.querySelector('.mobile-video-container');
+            let prev = u.previousElementSibling;
+            while (prev && prev.getBoundingClientRect().height === 0) prev = prev.previousElementSibling;
+            let over = 0;
+            if (vidC && prev) {
+              over = Math.round(vidC.getBoundingClientRect().bottom - prev.getBoundingClientRect().bottom);
+            }
+            over = Math.min(Math.max(over, 0), 80);
+            setImp(u, 'margin-top', Math.max(8, over + 12) + 'px');
           } else {
-            ['align-self', 'height', 'min-height'].forEach(p => {
+            ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
               if (vc.style.getPropertyPriority(p) === 'important') vc.style.removeProperty(p);
             });
           }
@@ -6274,7 +6301,7 @@
         // clear the columns off the shelf's strip while it's out
         const sc = screen();
         if (sc) {
-          if (shelfUsed) setImp(sc, 'padding-bottom', '166px');
+          if (shelfUsed) setImp(sc, 'padding-bottom', '174px');
           else if (sc.style.getPropertyValue('padding-bottom')) sc.style.removeProperty('padding-bottom');
         }
         paintTabs(m);
