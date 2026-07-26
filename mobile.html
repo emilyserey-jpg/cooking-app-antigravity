@@ -6036,6 +6036,21 @@
     .mp-settling { opacity: 0.45 !important; }
     #mpUnder, #mpShelf { min-height: 0; }
     #mpShelf { width: 100%; }
+    /* consistent card geometry inside managed panels: same margins for
+       every panel, and the step card sizes to its text instead of being
+       forced to 100% of a slider it no longer fills — no more spill-out */
+    .mp-panel { margin: 0 0 8px !important; box-sizing: border-box !important; }
+    #mpShelf .mp-panel, #mpUnder .mp-panel { margin: 0 !important; }
+    .mp-panel.step-slider-viewport { padding: 0 !important; }
+    .mp-panel .step-cards-slider {
+      flex: 1 1 auto !important; min-height: 0 !important; height: auto !important;
+      padding: 0 !important;
+    }
+    .mp-panel .step-slider-card {
+      min-height: 0 !important; height: auto !important;
+      width: 100% !important; box-sizing: border-box !important; margin: 0 !important;
+      overflow-y: auto !important;   /* long steps scroll inside the border */
+    }
   </style>
   <script>
     // ── Multi-panel free layout (Split player) ──────────────────────────
@@ -6159,7 +6174,7 @@
           if (el.parentElement !== b) b.appendChild(el);
           ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y']
             .forEach(p => el.style.removeProperty(p));
-          el.classList.remove('mp-settling');
+          el.classList.remove('mp-settling', 'mp-panel');
         });
         removeGrips();
         engaged = false;
@@ -6224,6 +6239,7 @@
           setImp(el, 'min-height', '0');
           setImp(el, 'max-height', 'none');
           setImp(el, 'overflow-y', 'auto');
+          if (!el.classList.contains('mp-panel')) el.classList.add('mp-panel');
           el.classList.toggle('mp-settling', key === settleKey);
           ensureGrip(el, key);
         });
