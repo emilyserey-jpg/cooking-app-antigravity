@@ -6111,10 +6111,25 @@
         return null;
       }
       function panelEl(key) {
-        if (key === 'steps') return view() && view().querySelector('.step-slider-viewport');
+        if (key === 'steps') {
+          // Vertical desc layout renders the steps into a DIFFERENT element
+          // (playerMultigridDescriptions) and empties the slider viewport —
+          // the "steps panel" is whichever surface the H/V toggle selected
+          const colBtn = document.getElementById('descViewColBtn');
+          if (colBtn && (colBtn.style.background || '').includes('primary')) {
+            const mg = document.getElementById('playerMultigridDescriptions');
+            if (mg) return mg;
+          }
+          return view() && view().querySelector('.step-slider-viewport');
+        }
         if (key === 'ingredients') return document.getElementById('playerIngredientsPanel');
         if (key === 'comments') return document.getElementById('playerCommentsSection');
         return document.getElementById('playerPanel_' + key);
+      }
+      // both steps surfaces, for hide/cleanup passes
+      function stepsSurfaces() {
+        return [view() && view().querySelector('.step-slider-viewport'),
+                document.getElementById('playerMultigridDescriptions')].filter(Boolean);
       }
       function tabEl(key) {
         if (key === 'steps') return document.getElementById('playerTabStepsBtn');
@@ -6184,8 +6199,9 @@
       // put every known panel back where the native tab switcher expects it
       function restoreNativeHomes() {
         const b = dBody(); if (!b) return;
-        allKeys().forEach(k => {
-          const el = panelEl(k); if (!el) return;
+        const cleanEls = allKeys().map(k => panelEl(k)).concat(stepsSurfaces());
+        cleanEls.forEach(el => {
+          if (!el) return;
           if (el.parentElement !== b) b.appendChild(el);
           ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y', 'margin']
             .forEach(p => el.style.removeProperty(p));
@@ -6245,8 +6261,10 @@
         setImp(b, 'max-width', '60%');
         // the app pads the column bottom by 80px — pure void in multi mode
         setImp(b, 'padding-bottom', '0px');
-        // hide everything first, then place the open ones
+        // hide everything first, then place the open ones — both steps
+        // surfaces included, so the inactive one never leaks into layout
         allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
+        stepsSurfaces().forEach(el => setImp(el, 'display', 'none'));
         // the H/V description controls belong to single-steps mode only
         const mgc = document.getElementById('playerMultigridDescControls');
         if (mgc) setImp(mgc, 'display', 'none');
