@@ -6187,7 +6187,7 @@
         allKeys().forEach(k => {
           const el = panelEl(k); if (!el) return;
           if (el.parentElement !== b) b.appendChild(el);
-          ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y']
+          ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y', 'margin']
             .forEach(p => el.style.removeProperty(p));
           el.classList.remove('mp-settling', 'mp-panel');
         });
@@ -6196,7 +6196,7 @@
         const bb = dBody();
         // width/max-width stay: they match the app's own 60% split values,
         // and stripping them would hand native mode the same collapse window
-        if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
+        if (bb) ['align-self', 'height', 'min-height', 'padding-bottom'].forEach(p => bb.style.removeProperty(p));
         const vc0 = vidCol();
         if (vc0) ['align-self', 'height', 'min-height', 'max-height'].forEach(p => {
           if (vc0.style.getPropertyPriority(p) === 'important') vc0.style.removeProperty(p);
@@ -6229,6 +6229,8 @@
         setImp(b, 'min-height', '0');
         setImp(b, 'width', '60%');
         setImp(b, 'max-width', '60%');
+        // the app pads the column bottom by 80px — pure void in multi mode
+        setImp(b, 'padding-bottom', '0px');
         // hide everything first, then place the open ones
         allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
         // the H/V description controls belong to single-steps mode only
@@ -6241,13 +6243,17 @@
           if (COLUMN.includes(z)) {
             if (el.parentElement !== b) b.appendChild(el);
             setImp(el, 'order', String(1 + COLUMN.indexOf(z)));
+            // inline: outranks the split CSS's own 14px on the step viewport
+            setImp(el, 'margin', '0 0 8px 0');
           } else if (z === 'under') {
             if (el.parentElement !== u) u.appendChild(el);
             if (el.style.order) el.style.removeProperty('order');
+            setImp(el, 'margin', '0');
             underUsed = true;
           } else if (z === 'shelf') {
             if (el.parentElement !== s) s.appendChild(el);
             if (el.style.order) el.style.removeProperty('order');
+            setImp(el, 'margin', '0');
             shelfUsed = true;
           }
           // 'important' — the Split layout sizes the step card with its own
