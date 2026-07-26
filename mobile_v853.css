@@ -3856,6 +3856,27 @@ a:focus-visible {
 .phone-screen.split-view-active:not(.plr-has-band) .mobile-player-body {
   padding-bottom: 10px !important;
 }
+
+/* Editing overlay: the form's Title field already names the recipe — the
+   player's floating title card above the video is redundant while editing */
+body.mobile-editing-active #playerRecipeTitleContainer {
+  display: none !important;
+}
+
+/* Split comments panel: header, step-filter tabs and composer stay pinned;
+   the LIST is the elastic row — it grows into whatever height the panel has
+   and scrolls inside itself, instead of being capped at 160px and shoved
+   out of view below the tabs */
+.phone-screen.split-view-active #playerCommentsSection > div:first-child,
+.phone-screen.split-view-active #playerCommentsSection #plcPanelUI,
+.phone-screen.split-view-active #playerCommentsSection #playerAddCommentWrap {
+  flex-shrink: 0;
+}
+.phone-screen.split-view-active #playerCommentsSection #playerCommentsList {
+  flex: 1 1 auto !important;
+  min-height: 48px !important;
+  max-height: none !important;
+}
 .phone-screen.split-view-active .sec-action-btn.actions-menu-btn {
   height: 28px !important;
   padding: 0 6px !important;

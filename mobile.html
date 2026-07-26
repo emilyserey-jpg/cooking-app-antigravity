@@ -1823,11 +1823,19 @@
                   Loop Stops <span id="createStepCount" style="color:var(--text-muted); font-weight:600;">(0)</span>
                 </div>
                 <div style="margin-left:auto; display:flex; align-items:center; gap:4px;">
-                  <!-- Split-view card layout toggle: List (all cards) vs Focus (one card + pager) -->
-                  <button id="splitLayoutToggle" onclick="window.toggleSplitLayoutMode()" title="Switch between all cards and one-step focus"
-                    style="display:none; background:#eef4fb; color:#2f72b8; border:1.5px solid rgba(74,144,217,0.35); border-radius:7px; padding:4px 9px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; align-items:center; gap:3px;">
-                    <span id="splitLayoutToggleLabel">≡ List</span>
-                  </button>
+                  <!-- Split-view card layout toggle: List (all cards) vs Focus (one card
+                       + pager) — an icon pill, same look as the player's ▐▐ / ≡ toggle -->
+                  <span id="splitLayoutToggle" role="group" aria-label="Card layout"
+                    style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; align-items:center; gap:2px;">
+                    <button id="splitModeListBtn" onclick="window.setSplitLayoutMode('list')" title="List — all step cards"
+                      style="border:none; padding:4px 9px; border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:15px; height:15px;"><rect x="5" y="4" width="14" height="6.5" rx="1.5"/><rect x="5" y="13.5" width="14" height="6.5" rx="1.5"/></svg>
+                    </button>
+                    <button id="splitModeFocusBtn" onclick="window.setSplitLayoutMode('focus')" title="Focus — one card at a time"
+                      style="border:none; padding:4px 9px; border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:15px; height:15px;"><rect x="5" y="6" width="14" height="12" rx="1.5"/></svg>
+                    </button>
+                  </span>
                   <!-- Swap which side the video and the step cards sit on -->
                   <button id="splitSwapToggle" onclick="window.toggleSplitSwap()" title="Swap video and steps sides"
                     style="display:none; background:#eef4fb; color:#2f72b8; border:1.5px solid rgba(74,144,217,0.35); border-radius:7px; padding:4px 8px; font-family:var(--font); font-weight:800; font-size:0.68rem; cursor:pointer; white-space:nowrap; align-items:center;">
@@ -2331,13 +2339,26 @@
                       if (l) l.textContent = (idx + 1) + ' / ' + cs.length;
                     }
                     function setLabel() {
-                      const el = document.getElementById('splitLayoutToggleLabel');
-                      if (el) el.textContent = document.body.classList.contains('split-focus') ? '▭ Focus' : '≡ List';
+                      // paint the active segment of the List/Focus icon pill
+                      const focus = document.body.classList.contains('split-focus');
+                      const paint = (id, on) => {
+                        const b = document.getElementById(id);
+                        if (!b) return;
+                        b.style.background = on ? 'var(--primary)' : 'transparent';
+                        b.style.color = on ? '#fff' : 'var(--text-muted)';
+                      };
+                      paint('splitModeListBtn', !focus);
+                      paint('splitModeFocusBtn', focus);
                     }
                     window.toggleSplitLayoutMode = function() {
                       document.body.classList.toggle('split-focus');
                       try { localStorage.setItem(KEY, document.body.classList.contains('split-focus') ? 'focus' : 'list'); } catch {}
                       setLabel(); apply();
+                    };
+                    window.setSplitLayoutMode = function(mode) {
+                      const want = mode === 'focus';
+                      if (document.body.classList.contains('split-focus') !== want) window.toggleSplitLayoutMode();
+                      else setLabel();
                     };
                     window.toggleSplitSwap = function() {
                       document.body.classList.toggle('split-swap');
@@ -2922,17 +2943,19 @@
             <!-- Preview Cover -->
             <div class="glass-card" id="editorCoverCard" style="padding:10px 13px; flex-shrink:0;">
               <label style="display:block; font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px;">Preview Cover (Thumbnail)</label>
-              <div style="display:flex; gap:12px; align-items:center; margin-bottom:8px;">
+              <div class="cover-main-row" style="display:flex; gap:12px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
                 <div id="createThumbnailPreviewContainer" style="width:96px; height:54px; border-radius:8px; background:#1a2235; overflow:hidden; border:2px solid var(--border-card); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);">
                   <span id="createThumbnailPlaceholder" style="font-size:1.1rem;display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i data-lucide="image" style="width:18px;height:18px;"></i></span>
                   <img id="createThumbnailPreviewImg" style="width:100%; height:100%; object-fit:cover; display:none; border-radius:6px;">
                 </div>
-                <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
-                  <div style="display:flex; gap:6px;">
-                    <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="flex:1; padding:6px 12px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; background:var(--bg-card-soft); border:2px solid var(--border-card); cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs);">
+                <!-- min-width makes this wrap under the thumbnail when the column
+                     is too narrow for both side by side (Split editor) -->
+                <div class="cover-btn-col" style="flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px;">
+                  <div class="cover-btn-row" style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button type="button" onclick="document.getElementById('coverFileInput').click()" class="btn" style="flex:1; min-width:96px; padding:6px 10px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; background:var(--bg-card-soft); border:2px solid var(--border-card); cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs); white-space:nowrap;">
                       Choose Image
                     </button>
-                    <button type="button" onclick="window.generateAICover()" class="btn" style="flex:1; padding:6px 12px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs); background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; color:#fff;">
+                    <button type="button" onclick="window.generateAICover()" class="btn" style="flex:1; min-width:80px; padding:6px 10px; font-size:0.72rem; font-weight:800; display:inline-flex; align-items:center; gap:4px; cursor:pointer; border-radius:8px; justify-content:center; font-family:var(--font); box-shadow:var(--shadow-xs); background:linear-gradient(135deg,#7c3aed,#6366f1); border:none; color:#fff; white-space:nowrap;">
                       AI Cover
                     </button>
                   </div>
@@ -4153,14 +4176,14 @@
     /* Cook layout: the Steps/Ingredients/Comments tabs replace the "Step Descriptions" label in that row */
     #view-mobile-player .phone-screen.pl-cook #cookContentTabs { display: flex !important; flex: 1 1 auto; min-width: 0; }
     #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls > span.desc-label { display: none !important; }
-    /* Cook: Horizontal/Vertical collapses to an icon pair so tabs + toggle sit on one line.
-       (Split keeps the text labels — .hv-icon is hidden by default below.) */
+    /* Horizontal/Vertical is an icon pair everywhere (Cook AND Split) —
+       the ▐▐ / ≡ pill replaces the text labels */
     .hv-icon { display: none; }
     #view-mobile-player .phone-screen.pl-cook #playerMultigridDescControls { flex-wrap: nowrap !important; }
-    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup { flex-shrink: 0; }
-    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup .hv-label { display: none; }
-    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup .hv-icon { display: block; width: 15px; height: 15px; }
-    #view-mobile-player .phone-screen.pl-cook #descLayoutToggleGroup button { padding: 5px 9px !important; }
+    #descLayoutToggleGroup { flex-shrink: 0; }
+    #descLayoutToggleGroup .hv-label { display: none; }
+    #descLayoutToggleGroup .hv-icon { display: block !important; width: 15px; height: 15px; }
+    #descLayoutToggleGroup button { padding: 5px 9px !important; }
     /* Split keeps its one-screen frame with the panel open: the columns scroll
        inside, so long card lists (Vertical descriptions) never push the route
        band further down the page */
@@ -4359,6 +4382,42 @@
       font-family: var(--font); font-size: 0.7rem; font-weight: 900; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
+    /* ── the Split Comments panel wears the sheet's step-filter layout ──
+       (same look as the #playerCmtSheet rules above; the widget lives inside
+       #playerCommentsSection so it needs its own scope) */
+    #plcPanelUI { display: flex; flex-direction: column; flex-shrink: 0; }
+    #plcPanelUI .plc-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-shrink: 0; }
+    #plcPanelUI .plc-head h4 {
+      flex: 1; margin: 0; font-size: 0.75rem; font-weight: 900; color: var(--text-heading);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+    #plcPanelUI .plc-tabs {
+      display: flex; gap: 5px; margin-bottom: 8px; flex-shrink: 0;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    #plcPanelUI .plc-tabs::-webkit-scrollbar { display: none; }
+    #plcPanelUI .plc-tab {
+      border: 1.5px solid rgba(74, 144, 217, 0.12); background: #fff; color: var(--text-muted);
+      border-radius: 999px; padding: 4px 10px; cursor: pointer; white-space: nowrap;
+      font-family: var(--font); font-size: 0.6rem; font-weight: 900;
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    #plcPanelUI .plc-tab .ct {
+      background: #f4f9ff; color: var(--primary); border-radius: 999px;
+      padding: 0 5px; font-size: 0.54rem;
+    }
+    #plcPanelUI .plc-tab.on { background: #1fb6ff; border-color: #1fb6ff; color: #fff; }
+    #plcPanelUI .plc-tab.on .ct { background: rgba(255, 255, 255, 0.3); color: #fff; }
+    #plcPanelUI .plc-nav {
+      border: none; background: rgba(74, 144, 217, 0.08); color: var(--primary);
+      width: 22px; height: 22px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+      font-family: var(--font); font-size: 0.85rem; font-weight: 900; line-height: 1;
+      display: flex; align-items: center; justify-content: center; padding: 0 0 2px;
+    }
+    #plcPanelUI .plc-empty { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); padding: 10px 2px; }
+    /* inside the popup sheet, the sheet's own header/tabs take over */
+    #playerCmtSheet #plcPanelUI { display: none !important; }
+
     #playerCmtSheet .plc-scope { display: flex; gap: 3px; background: #f4f9ff; border-radius: 999px; padding: 3px; }
     #playerCmtSheet .plc-scope button {
       border: none; background: transparent; color: var(--text-muted); border-radius: 999px;
@@ -5413,6 +5472,99 @@
           commentNodes().forEach(n => { n.style.display = ''; });
           body.appendChild(sec);
         }
+        // hand the filter UI back to the panel copy
+        renderPanelCmtUI();
+      }
+
+      // ── the Split Comments panel carries the sheet's step-filter layout ──
+      // Same state (cmtMode/cmtStop), same tabs and counts, same empty line —
+      // rendered inside #playerCommentsSection so it works without the popup.
+      function ensurePanelCmtUI() {
+        const sec = document.getElementById('playerCommentsSection');
+        const list = document.getElementById('playerCommentsList');
+        if (!sec || !list) return null;
+        let ui = document.getElementById('plcPanelUI');
+        if (!ui) {
+          ui = document.createElement('div');
+          ui.id = 'plcPanelUI';
+          ui.innerHTML =
+            '<div class="plc-head">' +
+            '<button class="plc-nav" id="plcPanelPrev" title="Comments on the previous stop">‹</button>' +
+            '<h4 id="plcPanelTitle">Comments</h4>' +
+            '<button class="plc-nav" id="plcPanelNext" title="Comments on the next stop">›</button></div>' +
+            '<div class="plc-tabs" id="plcPanelTabs"></div>' +
+            '<div class="plc-empty" id="plcPanelEmpty" style="display:none;">' +
+              'No comments here yet — be the first to leave a tip.</div>';
+          const stepStop = (dir) => {
+            const n = parseStops().length;
+            if (!n) return;
+            cmtMode = 'stop';
+            cmtStop = (cmtStop + dir + n) % n;
+            renderPanelCmtUI();
+          };
+          ui.querySelector('#plcPanelPrev').addEventListener('click', () => stepStop(-1));
+          ui.querySelector('#plcPanelNext').addEventListener('click', () => stepStop(1));
+          // posting while a stop is selected stamps that stop's tag, exactly
+          // like the sheet does (skip when the sheet is open — it handles it)
+          sec.addEventListener('click', (ev) => {
+            const sh = document.getElementById('playerCmtSheet');
+            if (sh && sh.classList.contains('open')) return;
+            if (cmtMode !== 'stop') return;
+            const wrap = document.getElementById('playerAddCommentWrap');
+            if (!wrap || !wrap.contains(ev.target) || ev.target.tagName !== 'BUTTON') return;
+            const inp = wrap.querySelector('input, textarea');
+            if (inp && inp.value && inp.value.indexOf(stopTag(cmtStop)) !== 0)
+              inp.value = stopTag(cmtStop) + ' ' + inp.value;
+          }, true);
+        }
+        if (ui.parentElement !== list.parentElement || ui.nextElementSibling !== list)
+          list.parentElement.insertBefore(ui, list);
+        return ui;
+      }
+      function renderPanelCmtUI() {
+        const sheet = document.getElementById('playerCmtSheet');
+        if (sheet && sheet.classList.contains('open')) return;   // popup owns the UI while open
+        const ui = ensurePanelCmtUI();
+        if (!ui) return;
+        const nodes = commentNodes();
+        const stops = parseStops();
+        const counts = stopCommentCounts(stops.length);
+        const titles = [...document.querySelectorAll('#stepCardsSlider .step-card-title')].map(t => t.textContent);
+        const tabs = ui.querySelector('#plcPanelTabs');
+        tabs.innerHTML = '';
+        const mkTab = (label, count, on, onTap) => {
+          const b = document.createElement('button');
+          b.className = 'plc-tab' + (on ? ' on' : '');
+          b.appendChild(document.createTextNode(label));
+          const ct = document.createElement('span');
+          ct.className = 'ct'; ct.textContent = count;
+          b.appendChild(ct);
+          b.addEventListener('click', onTap);
+          tabs.appendChild(b);
+        };
+        mkTab('All', nodes.length, cmtMode === 'all',
+          () => { cmtMode = 'all'; renderPanelCmtUI(); });
+        stops.forEach((s, i) => {
+          mkTab(String(i + 1) + ' ' + (titles[i] || 'Stop ' + (i + 1)), counts[i],
+            cmtMode === 'stop' && cmtStop === i,
+            () => { cmtMode = 'stop'; cmtStop = i; renderPanelCmtUI(); });
+        });
+        ui.querySelectorAll('.plc-nav').forEach(b =>
+          b.style.display = cmtMode === 'stop' ? '' : 'none');
+        let visible = 0;
+        nodes.forEach(node => {
+          const show = cmtMode === 'all' || (node.textContent || '').indexOf(stopTag(cmtStop)) !== -1;
+          node.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        const title = ui.querySelector('#plcPanelTitle');
+        if (cmtMode === 'stop') {
+          const t = titles[cmtStop];
+          title.textContent = 'On ' + (t || 'Stop ' + (cmtStop + 1)) + ' · ' + visible;
+        } else {
+          title.textContent = 'All comments · ' + nodes.length;
+        }
+        ui.querySelector('#plcPanelEmpty').style.display = visible === 0 ? '' : 'none';
       }
 
       function updateRoute() {
@@ -5727,7 +5879,9 @@
           updateRoute();
           const sheet = document.getElementById('playerCmtSheet');
           if (sheet && sheet.classList.contains('open')) renderCmtSheet();
+          else renderPanelCmtUI();   // keep the panel's tabs/counts live too
         }).observe(cmtList, { childList: true });
+        renderPanelCmtUI();
         // step cards re-render as steps change; keep their Add-a-tip chips
         const cardHost = document.getElementById('stepCardsSlider');
         if (cardHost) {
