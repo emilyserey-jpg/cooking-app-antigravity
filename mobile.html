@@ -6013,5 +6013,420 @@
       });
     })();
   </script>
+
+  <style>
+    /* ── Multi-panel free layout (Split player) ── */
+    .mpGrip {
+      position: absolute; top: 4px; right: 4px; z-index: 60;
+      border: none; background: rgba(74, 144, 217, 0.12); color: #4a90d9;
+      border-radius: 8px; width: 26px; height: 20px; font-size: 0.62rem;
+      font-weight: 900; letter-spacing: -1px; cursor: grab; touch-action: none;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font);
+    }
+    .mpGrip:active { cursor: grabbing; }
+    #mpGhost {
+      position: fixed; z-index: 10060; pointer-events: none;
+      transform: translate(-50%, -130%) rotate(-2deg);
+      background: #fff; border: 1.5px solid rgba(74, 144, 217, 0.35);
+      border-radius: 999px; padding: 6px 14px; font-family: var(--font);
+      font-size: 0.72rem; font-weight: 900; color: var(--primary);
+      box-shadow: 0 10px 24px rgba(26, 58, 92, 0.28); white-space: nowrap;
+    }
+    .mp-settling { opacity: 0.45 !important; }
+    #mpUnder, #mpShelf { min-height: 0; }
+    #mpShelf { width: 100%; }
+  </style>
+  <script>
+    // ── Multi-panel free layout (Split player) ──────────────────────────
+    // Tabs become switches: open up to 3 panels at once. Panels stack down
+    // the description column (top/middle/bottom); drag a panel's ⋮⋮ grip to
+    // move it under the video or onto the full-width shelf; flick the grip
+    // sideways to close the panel. Tabs bring closed panels back. The
+    // arrangement is remembered per device. Single-panel behavior stays
+    // 100% native — this engages only at 2+ panels, in Split only.
+    (function(){
+      const LS = 'cooking_gps_multi_panels';
+      const COLUMN = ['ltop', 'lmid', 'lbot'];
+
+      let mmap = null;          // zone → panel key while multi is active, else null
+      let applying = false;     // reentrancy guard around native switch calls
+
+      const view   = () => document.getElementById('view-mobile-player');
+      const screen = () => view() && view().querySelector('.phone-screen');
+      const dBody  = () => view() && view().querySelector('.mobile-player-body');
+      const vidCol = () => view() && view().querySelector('.player-left-column');
+
+      function inSplitPlayer() {
+        const s = screen();
+        if (!s || !s.classList.contains('pl-split')) return false;
+        if (!view().classList.contains('active')) return false;
+        // Step Videos (multigrid) replaces the steps panel — stay native there
+        if (view().querySelector('.mobile-video-container.multigrid-active')) return false;
+        return true;
+      }
+      const bandMode = () => { const s = screen(); return s && s.classList.contains('plr-has-band'); };
+      const zoneList = () => bandMode() ? [...COLUMN, 'under'] : [...COLUMN, 'under', 'shelf'];
+
+      // panel keys ↔ tabs ↔ elements (custom pages resolve dynamically)
+      function keyForTab(btn) {
+        if (!btn || !btn.id) return null;
+        if (btn.id === 'playerTabStepsBtn') return 'steps';
+        if (btn.id === 'playerTabIngredientsBtn') return 'ingredients';
+        if (btn.id === 'playerTabCommentsBtn') return 'comments';
+        if (btn.id.startsWith('playerTab_')) return btn.id.slice(10);
+        return null;
+      }
+      function panelEl(key) {
+        if (key === 'steps') return view() && view().querySelector('.step-slider-viewport');
+        if (key === 'ingredients') return document.getElementById('playerIngredientsPanel');
+        if (key === 'comments') return document.getElementById('playerCommentsSection');
+        return document.getElementById('playerPanel_' + key);
+      }
+      function tabEl(key) {
+        if (key === 'steps') return document.getElementById('playerTabStepsBtn');
+        if (key === 'ingredients') return document.getElementById('playerTabIngredientsBtn');
+        if (key === 'comments') return document.getElementById('playerTabCommentsBtn');
+        return document.getElementById('playerTab_' + key);
+      }
+      function allKeys() {
+        const keys = [];
+        document.querySelectorAll('#playerMainTabsContainer .player-tab-btn').forEach(b => {
+          const k = keyForTab(b); if (k) keys.push(k);
+        });
+        return keys;
+      }
+      const openKeys = m => Object.values(m || {}).filter(Boolean);
+      const zoneOf = (m, key) => Object.keys(m).find(z => m[z] === key) || null;
+
+      // write helpers that only touch the DOM when the value would change —
+      // the reapply observer watches style attributes, so steady-state runs
+      // must be write-free or they'd echo forever
+      function setImp(el, prop, val) {
+        if (el.style.getPropertyValue(prop) !== val || el.style.getPropertyPriority(prop) !== 'important')
+          el.style.setProperty(prop, val, 'important');
+      }
+      function setPlain(el, prop, val) {
+        if (el.style.getPropertyValue(prop) !== val || el.style.getPropertyPriority(prop) !== '')
+          el.style.setProperty(prop, val);
+      }
+
+      // ── containers for the two non-column zones ──
+      function underBox() {
+        let u = document.getElementById('mpUnder');
+        if (!u) {
+          u = document.createElement('div'); u.id = 'mpUnder';
+          u.style.cssText = 'display:none; flex:1 1 0; min-height:0; flex-direction:column;';
+        }
+        const col = vidCol();
+        if (col && u.parentElement !== col) col.appendChild(u);
+        return u;
+      }
+      function shelfBox() {
+        let s = document.getElementById('mpShelf');
+        if (!s) {
+          s = document.createElement('div'); s.id = 'mpShelf';
+          // the phone-screen is a nowrap row flex — a flow child would land
+          // beside the columns and crush them. Anchor the shelf to the
+          // screen's bottom instead; applyMulti pads the screen to clear it.
+          s.style.cssText = 'display:none; position:absolute; left:8px; right:8px; bottom:8px; height:150px; z-index:40; min-height:0;';
+        }
+        const sc = screen();
+        if (sc && s.parentElement !== sc) sc.appendChild(s);
+        return s;
+      }
+
+      function ensureGrip(el, key) {
+        setPlain(el, 'position', 'relative');
+        const existing = el.querySelector(':scope > .mpGrip');
+        if (existing) { if (existing.dataset.key !== key) existing.dataset.key = key; return; }
+        const g = document.createElement('button');
+        g.className = 'mpGrip'; g.textContent = '⋮⋮';
+        g.title = 'Drag to move · flick sideways to close';
+        g.dataset.key = key;
+        el.appendChild(g);
+      }
+      function removeGrips() {
+        document.querySelectorAll('.mpGrip').forEach(g => g.remove());
+      }
+
+      // put every known panel back where the native tab switcher expects it
+      function restoreNativeHomes() {
+        const b = dBody(); if (!b) return;
+        allKeys().forEach(k => {
+          const el = panelEl(k); if (!el) return;
+          if (el.parentElement !== b) b.appendChild(el);
+          ['order', 'flex', 'min-height', 'max-height', 'flex-direction', 'overflow-y']
+            .forEach(p => el.style.removeProperty(p));
+          el.classList.remove('mp-settling');
+        });
+        removeGrips();
+        const bb = dBody();
+        if (bb) ['align-self', 'height', 'min-height'].forEach(p => bb.style.removeProperty(p));
+        const sc0 = screen();
+        if (sc0 && sc0.style.getPropertyValue('padding-bottom')) sc0.style.removeProperty('padding-bottom');
+        const u = document.getElementById('mpUnder');  if (u) u.style.display = 'none';
+        const s = document.getElementById('mpShelf');  if (s) s.style.display = 'none';
+      }
+
+      function paintTabs(m) {
+        allKeys().forEach(k => {
+          const t = tabEl(k); if (!t) return;
+          const on = openKeys(m).includes(k);
+          setPlain(t, 'background', on ? 'var(--primary)' : 'rgba(0, 0, 0, 0.05)');
+          setPlain(t, 'color', on ? '#fff' : 'var(--text-muted)');
+          setPlain(t, 'box-shadow', on ? '0 4px 12px rgba(74, 144, 217, 0.25)' : 'none');
+        });
+      }
+
+      function applyMulti(m, settleKey) {
+        const b = dBody(); if (!b) return;
+        const u = underBox(), s = shelfBox();
+        // the Split layout sizes the description column to its content
+        // (align-items:flex-start) — stretch it so panels have height to share
+        setImp(b, 'align-self', 'stretch');
+        setImp(b, 'height', 'auto');
+        setImp(b, 'min-height', '0');
+        // hide everything first, then place the open ones
+        allKeys().forEach(k => { const el = panelEl(k); if (el) setImp(el, 'display', 'none'); });
+        // the H/V description controls belong to single-steps mode only
+        const mgc = document.getElementById('playerMultigridDescControls');
+        if (mgc) setImp(mgc, 'display', 'none');
+        let underUsed = false, shelfUsed = false;
+        Object.keys(m).forEach(z => {
+          const key = m[z]; if (!key) return;
+          const el = panelEl(key); if (!el) return;
+          if (COLUMN.includes(z)) {
+            if (el.parentElement !== b) b.appendChild(el);
+            setImp(el, 'order', String(1 + COLUMN.indexOf(z)));
+          } else if (z === 'under') {
+            if (el.parentElement !== u) u.appendChild(el);
+            if (el.style.order) el.style.removeProperty('order');
+            underUsed = true;
+          } else if (z === 'shelf') {
+            if (el.parentElement !== s) s.appendChild(el);
+            if (el.style.order) el.style.removeProperty('order');
+            shelfUsed = true;
+          }
+          // 'important' — the Split layout sizes the step card with its own
+          // !important rules, which would otherwise starve the other panels
+          setImp(el, 'flex', '1 1 0');
+          setImp(el, 'display', 'flex');
+          setImp(el, 'flex-direction', 'column');
+          setImp(el, 'min-height', '0');
+          setImp(el, 'max-height', 'none');
+          setImp(el, 'overflow-y', 'auto');
+          el.classList.toggle('mp-settling', key === settleKey);
+          ensureGrip(el, key);
+        });
+        setPlain(u, 'display', underUsed ? 'flex' : 'none');
+        setPlain(s, 'display', shelfUsed ? 'flex' : 'none');
+        // clear the columns off the shelf's strip while it's out
+        const sc = screen();
+        if (sc) {
+          if (shelfUsed) setImp(sc, 'padding-bottom', '166px');
+          else if (sc.style.getPropertyValue('padding-bottom')) sc.style.removeProperty('padding-bottom');
+        }
+        paintTabs(m);
+      }
+
+      function save(m) {
+        try {
+          if (m && openKeys(m).length >= 2) localStorage.setItem(LS, JSON.stringify(m));
+          else localStorage.removeItem(LS);
+        } catch (e) {}
+      }
+
+      function toSingle(key) {
+        mmap = null; save(null);
+        restoreNativeHomes();
+        applying = true;
+        try { window.switchPlayerMainTab(key); } finally { applying = false; }
+      }
+
+      function firstFreeZone(m) {
+        return zoneList().find(z => !m[z]) || null;
+      }
+
+      // ── tab clicks become toggles (capture, so native onclick never fires) ──
+      document.addEventListener('click', e => {
+        const btn = e.target.closest('#playerMainTabsContainer .player-tab-btn');
+        if (!btn || !inSplitPlayer()) return;
+        const key = keyForTab(btn);
+        if (!key) return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+        if (!mmap) {
+          const current = window.activePlayerMainTab || 'steps';
+          if (key === current) return;                      // re-tap on the only panel: no-op
+          mmap = {}; zoneList().forEach(z => mmap[z] = null);
+          mmap[COLUMN[0]] = current;
+          mmap[firstFreeZone(mmap)] = key;                  // second panel joins the column
+        } else {
+          const z = zoneOf(mmap, key);
+          if (z) {
+            mmap[z] = null;                                  // toggle off
+            const left = openKeys(mmap);
+            if (left.length === 1) { toSingle(left[0]); return; }
+          } else {
+            if (openKeys(mmap).length >= 3) return;          // cap: 3 panels
+            const free = firstFreeZone(mmap);
+            if (!free) return;
+            mmap[free] = key;
+          }
+        }
+        applyMulti(mmap); save(mmap);
+      }, true);
+
+      // ── drag the ⋮⋮ grip: live layout preview · flick sideways closes ──
+      let dragKey = null, ghost = null, trail = [];
+      const movedMap = (base, key, z) => {
+        const from = zoneOf(base, key);
+        if (z === from) return base;
+        const m = { ...base };
+        const displaced = m[z] || null;
+        m[z] = key;
+        if (from) m[from] = displaced;
+        return m;
+      };
+      function hitZone(e) {
+        const b = dBody(), sc = screen(), col = vidCol();
+        if (!b || !sc || !col) return null;
+        const scR = sc.getBoundingClientRect();
+        const x = e.clientX, y = e.clientY;
+        if (x < scR.left || x > scR.right || y < scR.top || y > scR.bottom) return null;
+        if (!bandMode() && y > scR.bottom - 96) return 'shelf';
+        const bR = b.getBoundingClientRect();
+        if (x >= bR.left && x <= bR.right) {
+          const t = (y - bR.top) / Math.max(1, bR.height);
+          return t < 1 / 3 ? 'ltop' : t < 2 / 3 ? 'lmid' : 'lbot';
+        }
+        const colR = col.getBoundingClientRect();
+        if (x >= colR.left && x <= colR.right) {
+          const vid = col.querySelector('.mobile-video-container');
+          const edge = vid ? vid.getBoundingClientRect().bottom : colR.top;
+          if (y > edge) return 'under';
+        }
+        return null;
+      }
+      function throwDir(e) {
+        const scR = screen().getBoundingClientRect();
+        if (e.clientX < scR.left + 6) return -1;
+        if (e.clientX > scR.right - 6) return 1;
+        const now = performance.now();
+        const old = trail.find(p => now - p.t < 130);
+        if (old && now - old.t > 15) {
+          const vx = (e.clientX - old.x) / (now - old.t);
+          const vy = (e.clientY - old.y) / (now - old.t);
+          if (Math.abs(vx) > 0.75 && Math.abs(vx) > Math.abs(vy) * 1.4) return Math.sign(vx);
+        }
+        return 0;
+      }
+      let liveMap = null;
+      document.addEventListener('pointerdown', e => {
+        const g = e.target.closest('.mpGrip');
+        if (!g || !mmap) return;
+        dragKey = g.dataset.key;
+        trail = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
+        ghost = document.createElement('div');
+        ghost.id = 'mpGhost';
+        const t = tabEl(dragKey);
+        ghost.textContent = '⋮⋮ ' + (t ? t.textContent.trim() : dragKey);
+        ghost.style.left = e.clientX + 'px';
+        ghost.style.top = e.clientY + 'px';
+        document.body.appendChild(ghost);
+        liveMap = mmap;
+        applyMulti(mmap, dragKey);
+        e.preventDefault();
+      }, true);
+      window.addEventListener('pointermove', e => {
+        if (!dragKey) return;
+        ghost.style.left = e.clientX + 'px';
+        ghost.style.top = e.clientY + 'px';
+        trail.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+        if (trail.length > 6) trail.shift();
+        const z = hitZone(e);
+        const next = z ? movedMap(mmap, dragKey, z) : mmap;
+        if (JSON.stringify(next) !== JSON.stringify(liveMap)) {
+          liveMap = next;
+          applyMulti(next, dragKey);
+        }
+      });
+      function endDrag(e, commit) {
+        if (!dragKey) return;
+        const key = dragKey; dragKey = null;
+        if (ghost) { ghost.remove(); ghost = null; }
+        if (commit && e) {
+          const dir = throwDir(e);
+          if (dir) {
+            const z = zoneOf(mmap, key);
+            if (z) mmap = { ...mmap, [z]: null };
+            const left = openKeys(mmap);
+            if (left.length === 1) { toSingle(left[0]); return; }
+          } else {
+            const z = hitZone(e);
+            if (z) mmap = movedMap(mmap, key, z);
+          }
+        }
+        liveMap = null; trail = [];
+        applyMulti(mmap); save(mmap);
+      }
+      window.addEventListener('pointerup', e => endDrag(e, true));
+      window.addEventListener('pointercancel', e => endDrag(e, false));
+
+      // ── keep multi alive across the app's own tab calls & restore on load ──
+      document.addEventListener('DOMContentLoaded', () => {
+        // the app rebuilds tabs/panels at its own pace (recipe load, comment
+        // refresh) — whenever the player's DOM shifts underneath us, reassert.
+        // applyMulti is guarded (no moves or grip adds when already right),
+        // so the observer settles after one echo instead of looping.
+        const reapply = (() => {
+          let t = null;
+          return () => {
+            if (!mmap) return;
+            clearTimeout(t);
+            t = setTimeout(() => { if (mmap && inSplitPlayer()) applyMulti(mmap); }, 90);
+          };
+        })();
+        const pv = document.getElementById('view-mobile-player');
+        // style attributes included: the app rewrites panel styles at its own
+        // pace long after load. applyMulti's writes are all diff-checked, so
+        // its own pass generates no records and the loop settles.
+        if (pv) new MutationObserver(reapply).observe(pv,
+          { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+        const orig = window.switchPlayerMainTab;
+        if (typeof orig !== 'function') return;
+        window.switchPlayerMainTab = function(tabName) {
+          const r = orig.apply(this, arguments);
+          if (applying) return r;
+          if (mmap && inSplitPlayer()) {
+            // the app switched natively (e.g. on recipe load) — reassert ours.
+            // Twice: custom panels can be rebuilt shortly after the switch,
+            // which discards the styling from the first pass.
+            setTimeout(() => { if (mmap) applyMulti(mmap); }, 60);
+            setTimeout(() => { if (mmap) applyMulti(mmap); }, 650);
+          } else if (!mmap && inSplitPlayer()) {
+            // first native switch after load: restore a saved multi layout
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (err) {}
+            if (saved) {
+              // keep saved keys even if their panel doesn't exist yet —
+              // custom panels are built after this first switch, and the
+              // observer will place them the moment they appear
+              const valid = {};
+              zoneList().forEach(z => valid[z] = saved[z] || null);
+              if (openKeys(valid).length >= 2) {
+                mmap = valid;
+                setTimeout(() => { if (mmap) applyMulti(mmap); }, 60);
+                setTimeout(() => { if (mmap) applyMulti(mmap); }, 650);
+              }
+            }
+          }
+          return r;
+        };
+      });
+    })();
+  </script>
 </body>
 </html>
