@@ -1721,7 +1721,7 @@
                 </button>
 
                 <!-- Previous Button -->
-                <button id="navPrevBtn" onclick="window.navStep(-1)" class="control-btn" tabindex="-1" title="Previous Step (← key)">
+                <button id="navPrevBtn" onclick="window.navOrScrub(-1)" class="control-btn" tabindex="-1" title="Previous stop / back 1s (← key)">
                   <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
                   <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
                 </button>
@@ -1747,7 +1747,7 @@
               <!-- Right Group: next + mute + speed -->
               <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
                 <!-- Next Button -->
-                <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
+                <button id="navNextBtn" onclick="window.navOrScrub(1)" class="control-btn" tabindex="-1" title="Next stop / forward 1s (→ key)">
                   <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
                   <span id="navNextLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
                 </button>
@@ -2193,15 +2193,21 @@
                      (its play/mute/speed/loop all exist in the step bar too); the step
                      bar re-arranges into: loop · prev · [pin/play capsule] · next ·
                      mute · speed — all real buttons, all original handlers. */
-                  body.editor-split-view-active #videoOverlayControls { display: none !important; }
-                  /* timeline strip: scrubber + time readout share one row */
-                  body.editor-split-view-active #editorScrubberCard {
+                  /* The on-video overlay bar is hidden in the editor entirely — it
+                     duplicated the control panel below the video. Its timer is
+                     relocated into that lower panel (see relocateTimeReadout). */
+                  #view-create #videoOverlayControls { display: none !important; }
+                  /* timeline strip: scrubber + run clock share one row (every editor layout) */
+                  #view-create #editorScrubberCard {
                     display: flex !important; align-items: center !important; gap: 10px !important;
-                    padding: 8px 12px !important;
+                    padding: 6px 12px !important;
                   }
-                  body.editor-split-view-active #editorScrubberCard #videoScrubber { flex: 1 1 auto !important; margin: 0 !important; }
-                  body.editor-split-view-active #editorScrubberCard #videoOverlayTimeReadout {
-                    position: static !important; display: block !important; flex-shrink: 0 !important;
+                  #view-create #editorScrubberCard #videoScrubber { flex: 1 1 auto !important; margin: 0 !important; }
+                  #view-create #editorScrubberCard #videoOverlayTimeReadout {
+                    position: static !important; display: inline-flex !important; align-items: center !important;
+                    flex-shrink: 0 !important; margin: 0 !important;
+                    background: transparent !important; border: none !important; box-shadow: none !important;
+                    padding: 0 2px !important; height: auto !important;
                     font-size: 0.72rem !important; font-weight: 800 !important;
                     color: var(--text-heading) !important; white-space: nowrap !important;
                     font-variant-numeric: tabular-nums;
@@ -2853,15 +2859,14 @@
                   // stacked view keeps working exactly as before.
                   (function(){
                     function relocateTimeReadout() {
+                      // The run clock rides on the scrubber row (right-aligned) in
+                      // every editor layout — never on its own line under the
+                      // controls. The on-video overlay bar stays hidden.
                       const ro = document.getElementById('videoOverlayTimeReadout');
                       const strip = document.getElementById('editorScrubberCard');
-                      const overlay = document.getElementById('videoOverlayControls');
-                      if (!ro || !strip || !overlay) return;
-                      if (document.body.classList.contains('editor-split-view-active')) {
-                        if (ro.parentElement !== strip) strip.appendChild(ro);
-                      } else {
-                        if (ro.parentElement !== overlay) overlay.appendChild(ro);
-                      }
+                      if (!ro || !strip) return;
+                      ro.style.alignSelf = '';
+                      if (ro.parentElement !== strip) strip.appendChild(ro);
                     }
                     document.addEventListener('DOMContentLoaded', () => {
                       relocateTimeReadout();
@@ -5722,13 +5727,11 @@
             meta.insertBefore(widthBtn, meta.querySelector('#plrClock'));
           return;
         }
-        const mode = document.getElementById('playerModeCycleBtn');
-        const mute = document.getElementById('playerMuteBtn');
-        const speed = player.querySelector('.speed-dropdown-wrapper');
-        // width rides right after the mute button, per the mockup
-        [mode, mute, widthBtn, speed].forEach(el => {
-          if (el && el.parentElement !== bar) bar.insertBefore(el, barClock);
-        });
+        // Loop / mute / speed now stay on the video control panel in BOTH width
+        // modes — the panel must look identical whether the tracker is full or
+        // short width. Only the width toggle rides the route-card bar, so you can
+        // switch back out of the narrow column without opening the ⋯ menu.
+        if (widthBtn && widthBtn.parentElement !== bar) bar.insertBefore(widthBtn, barClock);
       }
 
       // Step names for the compact layouts come from the same chips the player
