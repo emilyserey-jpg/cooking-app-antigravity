@@ -3806,8 +3806,10 @@ a:focus-visible {
   padding: 6px 4px 4px 4px !important;
 }
 .phone-screen.split-view-active .player-tab-btn {
-  padding: 5px 4px !important;
-  font-size: 0.6rem !important;
+  /* the tabs ride the full-width top band now — sized to match the
+     Cook/Split pill and the app's other buttons, not squeezed */
+  padding: 6px 9px !important;
+  font-size: 0.68rem !important;
 }
 .phone-screen.split-view-active .player-tab-btn i,
 .phone-screen.split-view-active .player-tab-btn svg {
@@ -3863,6 +3865,24 @@ body.mobile-editing-active #playerRecipeTitleContainer {
   display: none !important;
 }
 
+/* Cook: the description cards row IS the step display — the classic swipe
+   card underneath repeated the same step text. A Cook safety net re-shows
+   the viewport by stripping inline display:none, so this hide must be a
+   stylesheet rule it can't touch. (Split still uses the swipe card.) */
+.phone-screen.pl-cook .step-slider-viewport {
+  display: none !important;
+}
+
+/* Split: the tab row rides beside the Cook/Split pill in the reserved top
+   band — the tabs take the left, and the column gets a whole row of its
+   space back (the pill itself is fixated top-right in every layout) */
+.phone-screen.pl-split #playerMainTabsContainer.tabs-in-pill-row {
+  position: absolute !important; top: 24px; left: 8px; z-index: 60;
+  width: auto !important; max-width: calc(100% - 132px);
+  border-bottom: none !important; padding: 4px 0 !important;
+  background: transparent !important;
+}
+
 /* Split comments panel: header, step-filter tabs and composer stay pinned;
    the LIST is the elastic row — it grows into whatever height the panel has
    and scrolls inside itself, instead of being capped at 160px and shoved
@@ -3877,10 +3897,55 @@ body.mobile-editing-active #playerRecipeTitleContainer {
   min-height: 48px !important;
   max-height: none !important;
 }
+/* the multi-panel cleanup strips these panels' inline flex-direction:column
+   when it disengages (Step Videos mode) — pin it so their header/tabs/list/
+   composer stack vertically instead of collapsing into a horizontal row
+   (which squeezed the list to a sliver and shoved it off the panel edge) */
+.phone-screen.split-view-active #playerCommentsSection,
+.phone-screen.split-view-active #playerIngredientsPanel {
+  flex-direction: column !important;
+}
+
+/* Split: push the Horizontal/Vertical toggle to the right of the title row so
+   its right edge lines up with the description card below (margin-left:auto
+   sends it right; margin-right matches the card's edge inset) */
+.phone-screen.split-view-active #playerMultigridDescControls #descLayoutToggleGroup {
+  margin-left: auto !important;
+  margin-right: 13px !important;
+}
+
+/* Step Videos header — all controls on ONE row. The panel normally reserves
+   48px up top for the floating back/grid buttons; we pull the header UP to sit
+   on that same line, then pad it so its expand/close land BETWEEN the back
+   (left) and grid (right). This lives inside #playerMultigridContainer, which
+   only shows in Step Videos mode — so the single-video view is untouched. */
+#playerMultigridContainer {
+  padding-top: 10px !important;
+}
+#playerMultigridContainer > div:first-child {
+  padding-left: 44px !important;
+  padding-right: 44px !important;
+  min-height: 30px !important;
+}
+
+/* Step Videos mode: the Steps tab shows the description cards. In the narrow
+   column a Horizontal (row) layout gives them a fixed 280px width that spills
+   off the panel edge — with no horizontal room here, stack them to the column
+   width and scroll vertically so every card fits inside the panel. */
+.phone-screen.pl-split.multigrid-active #playerMultigridDescriptions {
+  flex-direction: column !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+.phone-screen.pl-split.multigrid-active #playerMultigridDescriptions .multigrid-desc-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+}
 .phone-screen.split-view-active .sec-action-btn.actions-menu-btn {
-  height: 28px !important;
-  padding: 0 6px !important;
-  font-size: 0.65rem !important;
+  height: 31px !important;
+  padding: 0 9px !important;
+  font-size: 0.68rem !important;
 }
 
 /* Card layout adjustments */

@@ -1150,7 +1150,14 @@ window.renderMultigridDescriptions = function() {
     const isIng = window.cookContentTab === 'ingredients';
     container.style.display = 'none';
     if (activeCard) activeCard.style.display = 'none';
-    if (hvGroup) hvGroup.style.display = 'none';        // Horizontal/Vertical only applies to steps
+    // Horizontal/Vertical only applies to steps — but it keeps RESERVING its
+    // spot (visibility, not display), so the Steps/Ingredients/Comments tabs
+    // never resize when the pill comes and goes
+    if (hvGroup) {
+      hvGroup.style.display = 'flex';
+      hvGroup.style.visibility = 'hidden';
+      hvGroup.style.pointerEvents = 'none';
+    }
     if (cookIng) { cookIng.style.display = isIng ? 'flex' : 'none'; if (isIng) renderCookIngredients(); }
     if (cookCmt) {
       cookCmt.style.display = isIng ? 'none' : 'flex';
@@ -1164,6 +1171,12 @@ window.renderMultigridDescriptions = function() {
   // Steps tab (or any Split state): hide the Cook ingredient/comment views, restore the H/V toggle
   if (cookIng) cookIng.style.display = 'none';
   if (cookCmt) cookCmt.style.display = 'none';
+  // any non-ingredients/comments path: the pill is really visible again
+  // (cleared unconditionally so Cook's hidden state can't leak into Split)
+  if (hvGroup) {
+    hvGroup.style.visibility = '';
+    hvGroup.style.pointerEvents = '';
+  }
   if (inCook && hvGroup) hvGroup.style.display = 'flex';
   if (inCook && typeof syncCookContentTabs === 'function') syncCookContentTabs();
 
@@ -7341,8 +7354,12 @@ window.switchPlayerMainTab = function(tabName) {
   
   if (tabName === 'steps') {
     if (stepsBtn) activateBtn(stepsBtn);
+    // the Horizontal/Vertical toggle rides in this controls row — show it
+    // whenever Steps is displayed (single panel, multigrid, or Cook), not
+    // only in multigrid. In an engaged multi-panel arrangement applyMulti
+    // still hides it here (its !important) and re-hosts it above the steps.
+    if (mgControls) mgControls.style.display = 'flex';
     if (isPlayerMultigridActive) {
-      if (mgControls) mgControls.style.display = 'flex';
       if (mgDesc) mgDesc.style.display = 'flex';
     } else {
       if (stepsViewport) stepsViewport.style.display = 'flex';
@@ -9684,6 +9701,17 @@ window.containSplitMultigridFrame = function() {
   const playerView = document.getElementById('view-mobile-player');
   if (!playerView || getComputedStyle(playerView).display === 'none') return;
   rightCol.style.removeProperty('max-height');
+  // Step Videos (multigrid) on: the page overshoot comes from the TALL video
+  // column, not this one — capping the description column here just collapses
+  // its panels to nothing. Leave the column at its full height (the stylesheet
+  // rule .pl-split.multigrid-active .mobile-player-body gives it height:100%)
+  // and scroll internally; don't shrink it based on the video side's overshoot
+  // and don't force height:auto (that lets tall panels grow the page instead).
+  if (playerView.querySelector('.mobile-video-container.multigrid-active')) {
+    ['align-self', 'height', 'min-height'].forEach(p => rightCol.style.removeProperty(p));
+    rightCol.style.setProperty('overflow-y', 'auto', 'important');
+    return;
+  }
   const overshoot = document.documentElement.scrollHeight - window.innerHeight;
   if (overshoot > 8) {
     const cur = rightCol.getBoundingClientRect().height;
