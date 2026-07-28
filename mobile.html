@@ -195,8 +195,7 @@
                  <!-- Multigrid Container (hidden by default) -->
                 <div id="playerMultigridContainer" style="display:none; position:absolute; inset:0; z-index:4; overflow-y:auto; background:#0f172a; padding: 48px 8px 8px 8px; box-sizing:border-box;">
                   <!-- Header: STEP VIDEOS label + layout pill (Cook only) + expand (Split only) + close -->
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
-                    <span style="font-size:0.62rem; font-weight:800; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.08em; font-family:var(--font);">Step Videos</span>
+                  <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:8px; gap:8px;">
                     <div style="display:inline-flex; align-items:center; gap:6px;">
                       <div id="playerMultigridLayoutPill" style="display:inline-flex; background:rgba(255,255,255,0.08); padding:2px; border-radius:999px; border:1px solid rgba(255,255,255,0.15);">
                         <button onclick="window.setPlayerGridLayout('row')" id="playerLayoutRowBtn" style="border:none; padding:6px 14px; border-radius:999px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; transition:all 0.2s; background:transparent; color:rgba(255,255,255,0.6);">Row Layout</button>
@@ -2016,13 +2015,24 @@
                     flex-wrap: wrap !important; row-gap: 4px !important;
                     padding: 8px 10px !important; gap: 6px !important;
                   }
+                  /* the three controls (List/Focus pill · swap · AI Generator) stay
+                     shoulder to shoulder on ONE row — compacted so they fit the
+                     narrow column instead of AI Generator wrapping underneath */
                   body.editor-split-view-active #editorStopsCard > div:first-child > div:last-child {
-                    margin-left: 0 !important; flex-wrap: wrap !important; row-gap: 4px !important;
+                    margin-left: 0 !important; flex-wrap: nowrap !important; gap: 3px !important;
                   }
-                  body.editor-split-view-active #splitLayoutToggle,
                   body.editor-split-view-active #toggleAiToolsBtn {
-                    font-size: 0.62rem !important; padding: 3px 7px !important;
+                    font-size: 0.62rem !important; padding: 3px 6px !important;
                     white-space: nowrap !important; flex-shrink: 0 !important;
+                  }
+                  body.editor-split-view-active #splitLayoutToggle {
+                    padding: 1px !important; flex-shrink: 0 !important;
+                  }
+                  body.editor-split-view-active #splitLayoutToggle button {
+                    padding: 3px 6px !important;
+                  }
+                  body.editor-split-view-active #splitSwapToggle {
+                    padding: 3px 6px !important; flex-shrink: 0 !important;
                   }
                   /* fill the phone screen: the split columns stretch to use all the
                      height the viewport offers (instead of stopping at a fixed 290px),
@@ -2682,8 +2692,10 @@
                       if (el.textContent !== input.value) el.textContent = input.value;
                     }
                     function ensureSplitEditTitle() {
-                      const on = document.body.classList.contains('mobile-editing-active') &&
-                                 document.body.classList.contains('editor-split-view-active');
+                      // retired: the Save slide's TITLE field sits on-screen in the
+                      // split editor, so the floating duplicate above the video only
+                      // repeated it. `on` stays false → any live copy gets removed.
+                      const on = false;
                       let t = document.getElementById('splitEditTitle');
                       if (!on) { if (t) t.remove(); return; }
                       const col = document.getElementById('mobileSplitLeft');
@@ -3719,7 +3731,9 @@
        applySplitLayoutMobile machinery so nothing else changes. -->
   <style>
     #playerLayoutPill {
-      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      /* fixated top-right in EVERY layout — it must not hop to the center
+         when Cook is active */
+      position: absolute; top: 24px; right: 8px;
       z-index: 60; display: flex; gap: 2px; padding: 4px;
       background: rgba(255,255,255,0.92); border: 1px solid rgba(74,144,217,0.14);
       border-radius: 999px; box-shadow: 0 4px 14px rgba(26,58,92,0.10);
@@ -4583,7 +4597,11 @@
       border: none !important; box-shadow: 0 1px 6px rgba(0,0,0,0.28) !important;
       backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(7px) !important;
     }
-    .phone-screen.pl-split .mobile-player-body #playerCommentsSection {
+    /* hide the raw comments section in normal Split (the multi-panel system
+       places it with its own inline display when the Comments panel is open).
+       EXCEPT in Step Videos mode, where multi-panel disengages and the native
+       Comments tab legitimately shows this section — don't hide it there. */
+    .phone-screen.pl-split:not(.multigrid-active) .mobile-player-body #playerCommentsSection {
       display: none !important;
     }
 
@@ -5440,21 +5458,11 @@
         }, 420);
       }
 
-      // every step card carries its own "Add a tip" chip; cards re-render
-      // on step changes, so the chips are (re)injected when needed
+      // retired: the per-card "Add a tip" chip is gone — comments are one tap
+      // away on the Comments tab (with per-step pinning). Cards re-render on
+      // step changes, so this now SWEEPS any chip that tries to come back.
       function injectAddTipChips() {
-        document.querySelectorAll('#stepCardsSlider .step-slider-card').forEach(card => {
-          if (card.querySelector('.plc-addtip')) return;
-          const col = card.querySelector('div');
-          if (!col) return;
-          const idx = parseInt((card.id || '').replace('stepSliderCard-', ''), 10);
-          if (isNaN(idx)) return;
-          const b = document.createElement('button');
-          b.className = 'plc-addtip';
-          b.textContent = '💬 Add a tip';
-          b.addEventListener('click', ev => { ev.stopPropagation(); openCmtSheet('stop', idx); });
-          col.appendChild(b);
-        });
+        document.querySelectorAll('.plc-addtip').forEach(b => b.remove());
       }
       function closeCmtSheet() {
         const sheet = document.getElementById('playerCmtSheet');
@@ -6287,9 +6295,10 @@
       padding: 0 !important;
     }
     .mp-panel .step-slider-card {
-      /* natural height: sit at the panel's top and scroll inside the border
-         when content is long — never balloon to fill a mostly-empty panel */
-      min-height: 0 !important; height: auto !important;
+      /* natural height when short — but never TALLER than the panel: the
+         card caps at the panel box and scrolls inside its border, so no
+         step text is ever cut off without a way to reach it */
+      min-height: 0 !important; height: auto !important; max-height: 100% !important;
       width: 100% !important; box-sizing: border-box !important; margin: 0 !important;
       overflow-y: auto !important;
       /* identical theme to every other card — no blue halo, no glow */
@@ -6381,6 +6390,12 @@
         // Step Videos (multigrid) replaces the steps panel — stay native there
         if (view().querySelector('.mobile-video-container.multigrid-active')) return false;
         return true;
+      }
+      // like inSplitPlayer but TRUE in Step Videos mode too — the column
+      // resize seam works the same whether or not the multigrid grid is up
+      function inSplitColumns() {
+        const s = screen(), v = view();
+        return !!(s && s.classList.contains('pl-split') && v && v.classList.contains('active'));
       }
       const bandMode = () => { const s = screen(); return s && s.classList.contains('plr-has-band'); };
       const zoneList = () => bandMode() ? [...COLUMN, 'under'] : [...COLUMN, 'under', 'shelf'];
@@ -6743,6 +6758,7 @@
         }
         syncDividers(m);
         placeColDivider();
+        relocateTabsRow();
         paintTabs(m);
       }
 
@@ -6873,7 +6889,7 @@
       function placeColDivider() {
         const cd = ensureColDivider();
         const sc = screen(), b = dBody(), vc = vidCol();
-        const on = sc && b && vc && inSplitPlayer();
+        const on = sc && b && vc && inSplitColumns();
         const set = (prop, val) => {
           if (cd.style.getPropertyValue(prop) !== val) cd.style.setProperty(prop, val);
         };
@@ -6888,8 +6904,23 @@
         set('top', Math.round(top - sr.top) + 'px');
         set('height', Math.max(0, Math.round(bottom - top)) + 'px');
       }
+      // Split: the tab row lives beside the Cook/Split pill in the top band
+      // (the pill's CSS slides right); everywhere else it goes home to the
+      // top of the description column
+      function relocateTabsRow() {
+        const tabs = document.getElementById('playerMainTabsContainer');
+        const sc = screen(), b = dBody();
+        if (!tabs || !sc || !b) return;
+        if (inSplitPlayer()) {
+          if (tabs.parentElement !== sc) sc.appendChild(tabs);
+          tabs.classList.add('tabs-in-pill-row');
+        } else {
+          tabs.classList.remove('tabs-in-pill-row');
+          if (tabs.parentElement !== b) b.insertBefore(tabs, b.firstChild);
+        }
+      }
       window.addEventListener('resize', placeColDivider);
-      setInterval(placeColDivider, 500);
+      setInterval(() => { placeColDivider(); relocateTabsRow(); }, 500);
 
       function save(m) {
         try {
