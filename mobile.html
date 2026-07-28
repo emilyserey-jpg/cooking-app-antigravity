@@ -7304,5 +7304,67 @@
       });
     })();
   </script>
+
+  <!-- ── Split video tile (step 1 of drag-to-rearrange) ──────────────────
+       The video is really several sibling pieces (frame, control strip,
+       overlay details, scrubber rail). In SPLIT ONLY we bundle them into one
+       .mp-video-tile so they can only ever move together. Cook view is left
+       untouched — the tile is unwrapped whenever we're not in split. -->
+  <style>
+    #view-mobile-player .mp-video-tile { display: flex; flex-direction: column; min-height: 0; }
+  </style>
+  <script>
+    (function(){
+      const PARTS = ['mobile-video-container','player-controls-strip','video-overlay-details','player-timeline-rail'];
+      const col   = () => document.querySelector('#view-mobile-player .player-left-column');
+      const screenEl = () => document.querySelector('#view-mobile-player .phone-screen');
+      const inSplit  = () => { const s = screenEl(); return !!(s && s.classList.contains('split-view-active')); };
+      const tileEl   = () => document.querySelector('#view-mobile-player .mp-video-tile');
+      const title    = () => document.getElementById('playerRecipeTitleContainer');
+
+      function gatherParts() {
+        const c = col(), t = tileEl();
+        const out = [];
+        PARTS.forEach(cls => {
+          const el = (c && c.querySelector(':scope > .' + cls)) || (t && t.querySelector(':scope > .' + cls));
+          if (el) out.push(el);
+        });
+        return out;
+      }
+
+      function wrap() {
+        const c = col(); if (!c) return;
+        const parts = gatherParts(); if (!parts.length) return;
+        let t = tileEl();
+        if (!t) { t = document.createElement('div'); t.className = 'mp-video-tile'; }
+        // position the tile right after the recipe title (fallback: where the
+        // first piece already is), then move every piece inside it
+        const anchor = (title() && title().parentElement === c) ? title().nextSibling : parts[0];
+        if (t.parentElement !== c || t.nextSibling === null) {
+          if (anchor && anchor !== t) c.insertBefore(t, anchor);
+          else if (!t.parentElement) c.insertBefore(t, parts[0]);
+        }
+        parts.forEach(p => { if (p.parentElement !== t) t.appendChild(p); });
+      }
+
+      function unwrap() {
+        const t = tileEl(); if (!t) return;
+        const c = col();
+        if (c) {
+          const ref = (title() && title().parentElement === c) ? title().nextSibling : t;
+          [...t.children].forEach(p => c.insertBefore(p, ref === t ? t : ref));
+        }
+        t.remove();
+      }
+
+      function sync() {
+        try { if (inSplit()) wrap(); else unwrap(); } catch (_) {}
+      }
+
+      setInterval(sync, 500);
+      document.addEventListener('DOMContentLoaded', sync);
+      sync();
+    })();
+  </script>
 </body>
 </html>
