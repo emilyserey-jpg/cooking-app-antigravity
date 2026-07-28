@@ -7311,7 +7311,17 @@
        .mp-video-tile so they can only ever move together. Cook view is left
        untouched — the tile is unwrapped whenever we're not in split. -->
   <style>
-    #view-mobile-player .mp-video-tile { display: flex; flex-direction: column; min-height: 0; }
+    #view-mobile-player .mp-video-tile { display: flex; flex-direction: column; min-height: 0; position: relative; }
+    #view-mobile-player .mpv-grip {
+      position: absolute; top: 8px; left: 8px; z-index: 62; width: 30px; height: 30px;
+      border: none; border-radius: 9px; background: rgba(18,24,32,.55); color: #fff;
+      display: grid; place-items: center; cursor: grab; touch-action: none;
+      -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    #view-mobile-player .mpv-grip:active { cursor: grabbing; }
+    .mpv-dragging { opacity: .32; }
+    .mpv-indicator { position: fixed; z-index: 99998; background: var(--primary,#4a90d9); border-radius: 3px;
+      pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
   </style>
   <script>
     (function(){
@@ -7321,6 +7331,74 @@
       const inSplit  = () => { const s = screenEl(); return !!(s && s.classList.contains('split-view-active')); };
       const tileEl   = () => document.querySelector('#view-mobile-player .mp-video-tile');
       const title    = () => document.getElementById('playerRecipeTitleContainer');
+      // the drop targets a dragged tile can land beside (the three panels)
+      const panels = () => ['#playerCommentsSection','#playerIngredientsPanel','.step-slider-viewport']
+        .map(s => document.querySelector('#view-mobile-player ' + s)).filter(el => el && el.offsetParent !== null);
+
+      function ensureGrip(){
+        const t = tileEl();
+        if (!t || !inSplit()){ document.querySelectorAll('#view-mobile-player .mpv-grip').forEach(g => g.remove()); return; }
+        if (t.querySelector(':scope > .mpv-grip')) return;
+        const g = document.createElement('button');
+        g.type = 'button'; g.className = 'mpv-grip'; g.title = 'Drag to move the video';
+        g.setAttribute('aria-label','Drag to move the video');
+        g.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="6" r="1.7"/><circle cx="16" cy="6" r="1.7"/><circle cx="8" cy="12" r="1.7"/><circle cx="16" cy="12" r="1.7"/><circle cx="8" cy="18" r="1.7"/><circle cx="16" cy="18" r="1.7"/></svg>';
+        g.addEventListener('pointerdown', startDrag);
+        t.appendChild(g);
+      }
+
+      function startDrag(e){
+        e.preventDefault(); e.stopPropagation();
+        const t = tileEl(); if (!t) return;
+        const r = t.getBoundingClientRect();
+        const clone = t.cloneNode(true);
+        const cg = clone.querySelector('.mpv-grip'); if (cg) cg.remove();
+        Object.assign(clone.style, { position:'fixed', left:r.left+'px', top:r.top+'px', width:r.width+'px',
+          height:r.height+'px', margin:'0', zIndex:'99999', pointerEvents:'none', opacity:'.92',
+          transform:'scale(.6)', transformOrigin:'top left', borderRadius:'16px', overflow:'hidden',
+          boxShadow:'0 22px 44px rgba(0,0,0,.42)' });
+        document.body.appendChild(clone);
+        t.classList.add('mpv-dragging');
+        const ind = document.createElement('div'); ind.className = 'mpv-indicator'; ind.style.display = 'none';
+        document.body.appendChild(ind);
+        try { navigator.vibrate && navigator.vibrate(10); } catch(_){}
+        let drop = null;
+        function move(ev){
+          clone.style.left = (ev.clientX - r.width*0.30) + 'px';
+          clone.style.top  = (ev.clientY - 22) + 'px';
+          let best=null, bestD=Infinity, where='after';
+          panels().forEach(p => {
+            const pr = p.getBoundingClientRect();
+            const cx = pr.left+pr.width/2, cy = pr.top+pr.height/2;
+            const d = Math.hypot(ev.clientX-cx, ev.clientY-cy);
+            if (d < bestD){ bestD=d; best=p; where = ev.clientY < cy ? 'before' : 'after'; }
+          });
+          drop = best ? { el:best, where } : null;
+          if (drop){
+            const pr = drop.el.getBoundingClientRect();
+            ind.style.display='block'; ind.style.left=pr.left+'px'; ind.style.width=pr.width+'px';
+            ind.style.height='4px'; ind.style.top=(drop.where==='before'?pr.top-2:pr.bottom-2)+'px';
+          } else ind.style.display='none';
+        }
+        function up(){
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointercancel', up);
+          clone.remove(); ind.remove(); t.classList.remove('mpv-dragging');
+          if (drop){
+            const parent = drop.el.parentElement;
+            const ref = drop.where==='before' ? drop.el : drop.el.nextSibling;
+            parent.insertBefore(t, ref);
+            // sit in the flex order of the panel it landed beside
+            const ord = drop.el.style.getPropertyValue('order') || '0';
+            t.style.setProperty('order', ord, 'important');
+            try { navigator.vibrate && navigator.vibrate(14); } catch(_){}
+          }
+        }
+        window.addEventListener('pointermove', move, { passive:false });
+        window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', up);
+      }
 
       function gatherParts() {
         const c = col(), t = tileEl();
@@ -7336,13 +7414,13 @@
         const c = col(); if (!c) return;
         const parts = gatherParts(); if (!parts.length) return;
         let t = tileEl();
-        if (!t) { t = document.createElement('div'); t.className = 'mp-video-tile'; }
-        // position the tile right after the recipe title (fallback: where the
-        // first piece already is), then move every piece inside it
-        const anchor = (title() && title().parentElement === c) ? title().nextSibling : parts[0];
-        if (t.parentElement !== c || t.nextSibling === null) {
-          if (anchor && anchor !== t) c.insertBefore(t, anchor);
-          else if (!t.parentElement) c.insertBefore(t, parts[0]);
+        if (!t) {
+          // brand-new tile: place it where the video lives (right after the
+          // title). Once it exists we NEVER relocate it again — the user's drag
+          // owns its position; this loop only keeps the pieces bundled inside.
+          t = document.createElement('div'); t.className = 'mp-video-tile';
+          const anchor = (title() && title().parentElement === c) ? title().nextSibling : parts[0];
+          c.insertBefore(t, anchor || null);
         }
         parts.forEach(p => { if (p.parentElement !== t) t.appendChild(p); });
       }
@@ -7358,7 +7436,10 @@
       }
 
       function sync() {
-        try { if (inSplit()) wrap(); else unwrap(); } catch (_) {}
+        try {
+          if (inSplit()) { wrap(); ensureGrip(); }
+          else { unwrap(); ensureGrip(); }
+        } catch (_) {}
       }
 
       setInterval(sync, 500);
