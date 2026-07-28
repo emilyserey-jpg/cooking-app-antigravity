@@ -149,10 +149,11 @@
         <div class="phone-notch"></div>
         
         <div class="phone-screen">
-          <!-- Layout pill: viewers flip between the two player layouts -->
-          <div id="playerLayoutPill" role="tablist" aria-label="Player layout">
-            <button data-pl="cook" onclick="window.setPlayerLayout('cook')" role="tab">Cook</button>
-            <button data-pl="split" onclick="window.setPlayerLayout('split')" role="tab">Split</button>
+          <!-- Layout pill: one button that switches between the two player layouts -->
+          <div id="playerLayoutPill" aria-label="Player layout">
+            <button id="playerLayoutToggleBtn" onclick="window.togglePlayerLayout()" title="Switch layout — Cook / Split" style="display:inline-flex; align-items:center; gap:4px;">
+              <span style="font-size:0.72rem; line-height:1;">⇄</span><span id="playerLayoutToggleLabel">Cook</span>
+            </button>
           </div>
           <div class="player-left-column">
             <!-- Recipe Title Display -->
@@ -334,7 +335,7 @@
                
                <!-- Options Dropdown -->
                <div class="actions-dropdown-wrapper" style="position: relative; flex-shrink: 0; margin-left: 8px; z-index: 1000;">
-                 <button id="playerActionsDropdownBtn" onclick="window.togglePlayerActionsDropdown()" class="sec-action-btn actions-menu-btn" tabindex="-1" style="height: 32px; padding: 0 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.06); box-shadow: none;">
+                 <button id="playerActionsDropdownBtn" onclick="window.togglePlayerActionsDropdown()" class="sec-action-btn actions-menu-btn" tabindex="-1" style="height: 30px; padding: 0 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.06); box-shadow: none; box-sizing: border-box;">
                    <span class="options-btn-label">Options</span>
                    <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
                  </button>
@@ -401,7 +402,7 @@
                 <i data-lucide="book-open" style="width:14px; height:14px; color:var(--primary);"></i> Step Descriptions
               </span>
               <!-- Cook layout only: Steps / Ingredients / Comments page tabs — take the label's slot (see setCookContentTab in app.js) -->
-              <div id="cookContentTabs" style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; gap:2px;">
+              <div id="cookContentTabs" style="display:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; gap:2px; height:30px; box-sizing:border-box; align-items:stretch;">
                 <button id="cookTabStepsBtn" onclick="window.setCookContentTab('steps')" style="flex:1; border:none; padding:5px 8px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s; white-space:nowrap;">
                   Steps
                 </button>
@@ -412,14 +413,10 @@
                   Comments<span id="cookTabCmtCount" style="opacity:0.75;"></span>
                 </button>
               </div>
-              <div id="descLayoutToggleGroup" style="display:flex; background:rgba(0,0,0,0.05); padding:2px; border-radius:8px; flex-shrink:0;">
-                <button id="descViewRowBtn" onclick="window.setPlayerDescLayout('row')" title="Horizontal — cards side by side" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s; display:flex; align-items:center; justify-content:center;">
-                  <span class="hv-label">Horizontal</span>
-                  <svg class="hv-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg>
-                </button>
-                <button id="descViewColBtn" onclick="window.setPlayerDescLayout('column')" title="Vertical — cards stacked" style="border:none; padding:4px 10px; border-radius:6px; font-family:var(--font); font-size:0.68rem; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s; display:flex; align-items:center; justify-content:center;">
-                  <span class="hv-label">Vertical</span>
-                  <svg class="hv-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="14" height="6.5" rx="1.5"/><rect x="5" y="13.5" width="14" height="6.5" rx="1.5"/></svg>
+              <div id="descLayoutToggleGroup" style="display:flex; flex-shrink:0;">
+                <!-- Single button that switches the description cards between side-by-side and stacked -->
+                <button id="descViewToggleBtn" onclick="window.togglePlayerDescLayout()" title="Switch cards — side by side / stacked" style="border:none; height:30px; padding:0 10px; border-radius:8px; background:rgba(0,0,0,0.05); color:var(--text-body); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; box-sizing:border-box;">
+                  <svg id="descViewToggleIcon" class="hv-icon" viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg>
                 </button>
               </div>
             </div>
@@ -1519,11 +1516,11 @@
             <span id="olAreaLbl" style="font-size:0.58rem; font-weight:800; letter-spacing:0.08em; color:#2f72b8; font-family:var(--font);">STOPS</span>
           </div>
           <div style="pointer-events:auto; position:absolute; top:4px; right:10px;">
-            <button id="olMenuBtn" onclick="window.olToggleMenu()" title="View &amp; layout options"
-              style="width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); color:#1e3a5c; font-size:0.9rem; font-weight:800; cursor:pointer; box-shadow:0 2px 10px rgba(30,58,92,0.22); display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">⋯</button>
-            <div id="olMenu" style="display:none; position:absolute; right:0; top:38px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(20,35,55,0.25); padding:6px; z-index:99999; min-width:180px;">
-              <button onclick="document.getElementById('editorMobileSplitBtn').click(); window.olToggleMenu();" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:transparent; padding:9px 10px; border-radius:8px; font-family:var(--font); font-size:0.75rem; font-weight:800; color:#1e3a5c; cursor:pointer; text-align:left;">⧉&nbsp; Stacked / Split view</button>
-            </div>
+            <!-- Single tap toggles Stacked ⇄ Split layout (replaces the old ⋯ menu) -->
+            <button id="olLayoutToggleBtn" onclick="window.toggleMobileSplitView()" title="Switch layout — Stacked / Split"
+              style="width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); color:#1e3a5c; cursor:pointer; box-shadow:0 2px 10px rgba(30,58,92,0.22); display:inline-flex; align-items:center; justify-content:center; font-family:var(--font);">
+              <i id="olLayoutToggleIcon" data-lucide="columns" style="width:16px; height:16px;"></i>
+            </button>
           </div>
         </div>
         <!-- Header row (classic — hidden on phones, kept for wide screens & delegation) -->
@@ -1710,9 +1707,9 @@
               <div id="stepNavCount" style="font-size:0.65rem;color:var(--text-muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Add stops or run AI</div>
             </div>
 
-            <!-- Unified Editor Controls Strip (All-in-One Row) -->
-            <div class="player-controls-strip" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
-              <!-- Left Group (aligned to the right inside its flex area) -->
+            <!-- Unified Editor Controls Strip — shared loop control panel (Play anchor + stops/add dock) -->
+            <div class="player-controls-strip lcp-panel" style="margin-top: 2px; margin-bottom: 2px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+              <!-- Left Group: loop + previous -->
               <div style="flex: 1; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
                 <!-- Loop/Repeat Toggle -->
                 <button id="previewLoopBtn" onclick="window.toggleEditorLoopPreview()" class="control-btn" tabindex="-1" title="Preview Loop Stop">
@@ -1724,30 +1721,27 @@
                   <i id="navPrevIcon" data-lucide="skip-back" style="width: 15px; height: 15px;"></i>
                   <span id="navPrevLabel" style="font-size:0.55rem; font-weight:800; margin-left:1px; display:none;">1s</span>
                 </button>
-
-                <!-- Add Stop Button (44px Circle) -->
-                <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" tabindex="-1"
-                  style="width: 44px; height: 44px; border-radius: 50%; background:var(--primary); border:none; padding:0; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(74,144,217,0.2); font-size:1.15rem; flex-shrink:0;"
-                  title="Add Stop at Current Time">
-                  <i data-lucide="map-pin" style="width: 20px; height: 20px;"></i>
-                </button>
               </div>
 
-              <!-- Center Group (containing the 44px Play/Pause button) -->
-              <div style="display: flex; justify-content: center; margin: 0 8px; flex-shrink: 0;">
-                <!-- Play/Pause -->
-                <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn" tabindex="-1" title="Play/Pause (Spacebar)">
+              <!-- Center: big Play with the stops-pin / add-stop dock below it -->
+              <div class="lcp-anchor" style="margin: 0 8px;">
+                <!-- Play/Pause (the anchor) -->
+                <button id="toolbarPlayBtnMobile" onclick="window.toggleVideoPlay()" class="control-btn play-btn lcp-play" tabindex="-1" title="Play/Pause (Spacebar)">
                   <i id="toolbarPlayIconMobile" data-lucide="play" style="width: 16px; height: 16px;"></i>
                 </button>
+                <!-- Dock: pin = stops/scrub mode toggle · plus = add a stop -->
+                <div class="lcp-dock">
+                  <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="lcp-pin" tabindex="-1" title="Skip mode: steps / 1-second scrub">
+                    <i id="createKbToggleIcon" data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                  </button>
+                  <button onclick="addStepAtCurrentTime()" id="navAddStopBtn" class="lcp-add" tabindex="-1" title="Add Stop at Current Time">
+                    <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                  </button>
+                </div>
               </div>
 
-              <!-- Right Group (aligned to the left inside its flex area) -->
+              <!-- Right Group: next + mute + speed -->
               <div style="flex: 1; display: flex; justify-content: flex-start; gap: 8px; align-items: center;">
-                <!-- Keyboard Toggle (Skip Mode - 44px Circle) -->
-                <button id="createKbToggleBtn" onclick="window.toggleCreateKeyboardMode()" class="control-btn" tabindex="-1" title="Toggle Skip Mode" style="width: 44px; height: 44px; flex-shrink:0; margin:0; display:inline-flex; align-items:center; justify-content:center;">
-                  <i id="createKbToggleIcon" data-lucide="keyboard" style="width: 16px; height: 16px;"></i>
-                </button>
-
                 <!-- Next Button -->
                 <button id="navNextBtn" onclick="window.navStep(1)" class="control-btn" tabindex="-1" title="Next Step (→ key)">
                   <i id="navNextIcon" data-lucide="skip-forward" style="width: 15px; height: 15px;"></i>
@@ -2218,8 +2212,8 @@
                   }
                   body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) {
                     display: grid !important;
-                    grid-template-columns: 38px 38px 46px 38px 38px 38px;
-                    grid-template-rows: 34px 40px;
+                    grid-template-columns: 38px 38px 68px 38px 38px 38px;
+                    grid-template-rows: 40px 26px;
                     column-gap: 10px !important; row-gap: 0 !important;
                     justify-content: center !important; align-items: stretch !important;
                     width: 100% !important;
@@ -2229,15 +2223,15 @@
                     display: contents !important;
                   }
                   /* hide any button in the bar that isn't part of the B2 set */
-                  body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) button:not(#previewLoopBtn):not(#navPrevBtn):not(#navAddStopBtn):not(#toolbarPlayBtnMobile):not(#navNextBtn):not(#editorMuteBtnToolbarMobile):not(#editorSpeedBtn) {
-                    display: none !important;   /* keyboard-mode toggle and other extras */
+                  body.editor-split-view-active #stepNavControlsContent > div:has(#navPrevBtn) button:not(#previewLoopBtn):not(#navPrevBtn):not(#navAddStopBtn):not(#toolbarPlayBtnMobile):not(#navNextBtn):not(#editorMuteBtnToolbarMobile):not(#editorSpeedBtn):not(#createKbToggleBtn) {
+                    display: none !important;   /* other extras (pin + add live in the dock) */
                   }
                   body.editor-split-view-active #previewLoopBtn,
                   body.editor-split-view-active #navPrevBtn,
                   body.editor-split-view-active #navNextBtn,
                   body.editor-split-view-active #stepNavControlsContent #editorMuteBtnToolbarMobile,
                   body.editor-split-view-active #stepNavControlsContent #editorSpeedBtn {
-                    grid-row: 1 / span 2 !important; align-self: center !important; justify-self: center !important;
+                    grid-row: 1 !important; align-self: center !important; justify-self: center !important;
                     width: 38px !important; height: 38px !important; min-width: 38px !important;
                     border-radius: 50% !important; padding: 0 !important;
                     display: inline-flex !important; align-items: center !important; justify-content: center !important;
@@ -2247,20 +2241,18 @@
                   body.editor-split-view-active #navNextBtn { grid-column: 4 !important; }
                   body.editor-split-view-active #stepNavControlsContent #editorMuteBtnToolbarMobile { grid-column: 5 !important; }
                   body.editor-split-view-active #stepNavControlsContent #editorSpeedBtn { grid-column: 6 !important; }
-                  /* the dual capsule: pin on top, play below, visually one control */
-                  body.editor-split-view-active #navAddStopBtn {
+                  /* Center column: big Play on top (row 1), the stops/add dock below (row 2) */
+                  body.editor-split-view-active #toolbarPlayBtnMobile {
                     grid-column: 3 !important; grid-row: 1 !important;
-                    width: 46px !important; height: 34px !important; min-width: 46px !important;
-                    border-radius: 999px 999px 0 0 !important; padding: 0 !important; margin: 0 !important;
+                    width: 40px !important; height: 40px !important; min-width: 40px !important;
+                    border-radius: 50% !important; padding: 0 !important; margin: 0 !important;
+                    align-self: center !important; justify-self: center !important;
                     display: inline-flex !important; align-items: center !important; justify-content: center !important;
                     box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
                   }
-                  body.editor-split-view-active #toolbarPlayBtnMobile {
+                  body.editor-split-view-active .lcp-dock {
                     grid-column: 3 !important; grid-row: 2 !important;
-                    width: 46px !important; height: 40px !important; min-width: 46px !important;
-                    border-radius: 0 0 999px 999px !important; padding: 0 !important; margin: 0 !important;
-                    display: inline-flex !important; align-items: center !important; justify-content: center !important;
-                    box-shadow: 0 3px 10px rgba(47,114,184,0.3) !important;
+                    align-self: start !important; justify-self: center !important;
                   }
                   /* ── reclaim wasted width so step cards fill their column ── */
                   body.editor-split-view-active #mobileEditorCarousel,
@@ -3750,6 +3742,13 @@
     /* room for the pill in every layout */
     .phone-screen.pl-ready { padding-top: 62px !important; }
 
+    /* Cook: the Steps/Ingredients/Comments row — even 8px gaps, in order:
+       tabs (fill the left) · layout toggle · Options */
+    .phone-screen.pl-cook #playerMultigridDescControls { justify-content: flex-start !important; }
+    .phone-screen.pl-cook #playerMultigridDescControls #cookContentTabs { order: 1; }
+    .phone-screen.pl-cook #playerMultigridDescControls #descLayoutToggleGroup { order: 2; }
+    .phone-screen.pl-cook #playerMultigridDescControls .actions-dropdown-wrapper { order: 3; margin-left: 0 !important; }
+
     /* SPLIT with sides swapped (steps left, video right) — the old Mirror */
     .phone-screen.split-view-active.pl-split.pl-swap { flex-direction: row-reverse !important; }
     .phone-screen.split-view-active.pl-split.pl-swap .player-left-column {
@@ -4858,9 +4857,12 @@
           // top margin in CSS), with the step card docking right after it
           if (strip) leftCol.appendChild(strip);
           if (slider) leftCol.appendChild(slider);
-          // the Options menu docks into the title row (its home, the tabs
-          // bar, is hidden in Cook)
-          if (optionsWrap && titleC && optionsWrap.parentElement !== titleC)
+          // the Options menu docks into the Steps/Ingredients/Comments row
+          // (to the right of the tabs), not the title row
+          const cookDescControls = document.getElementById('playerMultigridDescControls');
+          if (optionsWrap && cookDescControls && optionsWrap.parentElement !== cookDescControls)
+            cookDescControls.appendChild(optionsWrap);
+          else if (optionsWrap && !cookDescControls && titleC && optionsWrap.parentElement !== titleC)
             titleC.appendChild(optionsWrap);
         } else {
           if (slider && slider.parentElement !== body) {
@@ -5841,9 +5843,10 @@
           s.classList.add('pl-ready');
         });
         relocateCookPieces(name === 'cook');
-        const pill = document.getElementById('playerLayoutPill');
-        if (pill) pill.querySelectorAll('button').forEach(b =>
-          b.classList.toggle('on', b.dataset.pl === name));
+        const layoutToggleLabel = document.getElementById('playerLayoutToggleLabel');
+        if (layoutToggleLabel) layoutToggleLabel.textContent = (name === 'cook') ? 'Cook' : 'Split';
+        const layoutToggleBtn = document.getElementById('playerLayoutToggleBtn');
+        if (layoutToggleBtn) layoutToggleBtn.classList.add('on');
         // classify strip buttons once layout settles (the app sizes the
         // video container a beat later, so measure again after it lands)
         if (name === 'cook') { setTimeout(markCookStripOverlap, 60); setTimeout(markCookStripOverlap, 500); }
@@ -5852,6 +5855,12 @@
         // multigrid re-renders for the new layout (spotlight in Split, grid in Cook)
         if (typeof window.refreshMultigridForLayout === 'function')
           setTimeout(window.refreshMultigridForLayout, 100);
+      };
+
+      // Single-button layout switch: flip Cook <-> Split on each tap.
+      window.togglePlayerLayout = function() {
+        const cur = normalizeLayout(localStorage.getItem(KEY) || 'cook');
+        window.setPlayerLayout(cur === 'cook' ? 'split' : 'cook');
       };
 
       document.addEventListener('DOMContentLoaded', () => {

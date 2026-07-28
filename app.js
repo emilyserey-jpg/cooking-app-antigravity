@@ -1191,20 +1191,12 @@ window.renderMultigridDescriptions = function() {
   }
 
   // Apply visual button active states
-  const rowBtn = document.getElementById('descViewRowBtn');
-  const colBtn = document.getElementById('descViewColBtn');
-  if (rowBtn && colBtn) {
-    if (playerDescLayoutMode === 'row') {
-      rowBtn.style.background = 'var(--primary)';
-      rowBtn.style.color = '#fff';
-      colBtn.style.background = 'transparent';
-      colBtn.style.color = 'var(--text-muted)';
-    } else {
-      colBtn.style.background = 'var(--primary)';
-      colBtn.style.color = '#fff';
-      rowBtn.style.background = 'transparent';
-      rowBtn.style.color = 'var(--text-muted)';
-    }
+  // single toggle button: show the icon for the CURRENT layout
+  const descToggleIcon = document.getElementById('descViewToggleIcon');
+  if (descToggleIcon) {
+    descToggleIcon.innerHTML = (playerDescLayoutMode === 'row')
+      ? '<rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/>'
+      : '<rect x="5" y="4" width="14" height="6.5" rx="1.5"/><rect x="5" y="13.5" width="14" height="6.5" rx="1.5"/>';
   }
 
   // Apply style overrides to the container based on current layout mode
@@ -1300,6 +1292,11 @@ window.togglePlayerMultigridDescStepDone = function(stepIndex) {
 window.setPlayerDescLayout = function(mode) {
   playerDescLayoutMode = mode;
   renderMultigridDescriptions();
+};
+
+// Single-button switch: flip the description cards between side-by-side and stacked.
+window.togglePlayerDescLayout = function() {
+  window.setPlayerDescLayout(playerDescLayoutMode === 'row' ? 'column' : 'row');
 };
 
 // ── Cook layout: Steps / Ingredients page tabs ──
@@ -6117,10 +6114,18 @@ window.toggleMobileSplitView = function() {
     }
   });
 
+  // keep the one-liner header's single layout-toggle button in sync
+  const olToggleBtn = document.getElementById('olLayoutToggleBtn');
+  if (olToggleBtn) {
+    olToggleBtn.innerHTML = isSplit
+      ? '<i id="olLayoutToggleIcon" data-lucide="layout" style="width:16px;height:16px;"></i>'
+      : '<i id="olLayoutToggleIcon" data-lucide="columns" style="width:16px;height:16px;"></i>';
+  }
+
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
   }
-  
+
   window.dispatchEvent(new Event('resize'));
 };
 
@@ -6134,6 +6139,8 @@ window.initMobileSplitView = function() {
       btn.style.background = 'var(--primary)';
       btn.style.color = '#fff';
     });
+    const olToggleBtn = document.getElementById('olLayoutToggleBtn');
+    if (olToggleBtn) olToggleBtn.innerHTML = '<i id="olLayoutToggleIcon" data-lucide="layout" style="width:16px;height:16px;"></i>';
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
@@ -11603,12 +11610,14 @@ window.setKeyboardMode = function(mode) {
     }
 
     if (cKbToggleBtn) {
-      cKbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
-      cKbToggleBtn.style.color = 'var(--text-body)';
-      cKbToggleBtn.style.borderColor = 'var(--border-card)';
-      updateLucideIcon('createKbToggleIcon', 'chevrons-right', '16px', '16px');
+      // Dock pin — Steps mode: blue map-pin
+      cKbToggleBtn.style.background = 'var(--primary-soft)';
+      cKbToggleBtn.style.color = 'var(--primary-dark)';
+      cKbToggleBtn.style.borderColor = 'transparent';
+      cKbToggleBtn.style.boxShadow = 'none';
+      updateLucideIcon('createKbToggleIcon', 'map-pin', '14px', '14px');
       const span = cKbToggleBtn.querySelector('span');
-      if (span) span.textContent = 'Skip: Steps';
+      if (span) span.textContent = '';
     }
 
     // Update Combined Prev button to Previous Step style
@@ -11655,12 +11664,14 @@ window.setKeyboardMode = function(mode) {
     }
 
     if (cKbToggleBtn) {
-      cKbToggleBtn.style.background = 'var(--primary-soft)';
-      cKbToggleBtn.style.color = 'var(--primary-dark)';
-      cKbToggleBtn.style.borderColor = 'var(--primary)';
-      updateLucideIcon('createKbToggleIcon', 'timer', '16px', '16px');
+      // Dock pin — Scrub mode: amber timer (1-second seek)
+      cKbToggleBtn.style.background = 'rgba(224,138,30,0.16)';
+      cKbToggleBtn.style.color = '#c4761a';
+      cKbToggleBtn.style.borderColor = 'transparent';
+      cKbToggleBtn.style.boxShadow = 'none';
+      updateLucideIcon('createKbToggleIcon', 'timer', '14px', '14px');
       const span = cKbToggleBtn.querySelector('span');
-      if (span) span.textContent = `Skip: ${seekAmount}s`;
+      if (span) span.textContent = '';
     }
 
     // Update Combined Prev button to Rewind 1s style

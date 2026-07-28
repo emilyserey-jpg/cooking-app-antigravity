@@ -1555,6 +1555,52 @@ h1, h2, h3, h4, h5 {
   box-shadow: var(--shadow-md);
 }
 
+/* ── Shared loop control panel: big Play anchor + stops/add dock below ── */
+.lcp-anchor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.player-controls-strip .control-btn.play-btn.lcp-play {
+  width: 40px;
+  height: 40px;
+}
+.lcp-dock {
+  display: inline-flex;
+  align-items: stretch;
+  background: #fff;
+  border: 1.5px solid var(--border-card);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  height: 22px;
+}
+.lcp-dock > button {
+  border: none;
+  cursor: pointer;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.15s ease;
+}
+.lcp-dock > button:first-child {
+  border-right: 1px solid var(--border-card);
+}
+.lcp-dock > button:hover {
+  filter: brightness(0.94);
+}
+.lcp-dock .lcp-pin {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+.lcp-dock .lcp-add {
+  color: #1f7a52;
+  background: rgba(46, 158, 107, 0.14);
+}
+
 .step-chip.done {
   background: rgba(74, 144, 217, 0.08) !important;
   border-color: rgba(74, 144, 217, 0.3) !important;
@@ -3442,13 +3488,19 @@ a:focus-visible {
   width: 15px !important;
   height: 15px !important;
 }
-#view-create #navAddStopBtn {
-  padding: 6px 10px !important;
+/* navAddStopBtn + createKbToggleBtn now live inside the .lcp-dock pill —
+   let the dock size them (auto width, full 22px height) instead of the
+   old free-standing 32px / padded sizing. */
+#view-create .lcp-dock #navAddStopBtn {
+  width: auto !important;
+  height: 100% !important;
+  padding: 0 9px !important;
   font-size: 0.72rem !important;
 }
-#view-create #createKbToggleBtn {
-  width: 32px !important;
-  height: 32px !important;
+#view-create .lcp-dock #createKbToggleBtn {
+  width: auto !important;
+  height: 100% !important;
+  padding: 0 9px !important;
 }
 #view-create #createKbToggleBtn svg {
   width: 13px !important;
