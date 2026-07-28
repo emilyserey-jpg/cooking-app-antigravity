@@ -11602,11 +11602,12 @@ window.setKeyboardMode = function(mode) {
     if (pHint)  pHint.textContent = 'Pressing Left / Right arrow keys will jump between recipe steps.';
 
     if (kbToggleBtn) {
-      kbToggleBtn.style.background = 'rgba(255,255,255,0.95)';
-      kbToggleBtn.style.color = 'var(--text-body)';
-      kbToggleBtn.style.borderColor = 'var(--border-card)';
-      kbToggleBtn.style.boxShadow = 'var(--shadow-xs)';
-      updateLucideIcon('playerKbToggleIcon', 'chevrons-right', '15px', '15px');
+      // Player mode button on the frosted video bar — Steps: outline map-pin
+      kbToggleBtn.style.setProperty('background', 'transparent', 'important');
+      kbToggleBtn.style.setProperty('border-color', 'rgba(255,255,255,0.36)', 'important');
+      kbToggleBtn.style.color = '#fff';
+      kbToggleBtn.style.boxShadow = 'none';
+      updateLucideIcon('playerKbToggleIcon', 'map-pin', '14px', '14px');
     }
 
     if (cKbToggleBtn) {
@@ -11620,19 +11621,18 @@ window.setKeyboardMode = function(mode) {
       if (span) span.textContent = '';
     }
 
-    // Update Combined Prev button to Previous Step style
+    // Steps: plain arrows (matches the artifact)
     const cPrevBtn = document.getElementById('playerCombinedPrevBtn');
     if (cPrevBtn) {
       cPrevBtn.title = 'Previous Step';
-      updateLucideIcon('playerCombinedPrevIcon', 'skip-back', '15px', '15px');
+      updateLucideIcon('playerCombinedPrevIcon', 'arrow-left', '15px', '15px');
       const label = document.getElementById('playerCombinedPrevLabel');
       if (label) label.style.display = 'none';
     }
-    // Update Combined Next button to Next Step style
     const cNextBtn = document.getElementById('playerCombinedNextBtn');
     if (cNextBtn) {
       cNextBtn.title = 'Next Step';
-      updateLucideIcon('playerCombinedNextIcon', 'skip-forward', '15px', '15px');
+      updateLucideIcon('playerCombinedNextIcon', 'arrow-right', '15px', '15px');
       const label = document.getElementById('playerCombinedNextLabel');
       if (label) label.style.display = 'none';
     }
@@ -11656,11 +11656,12 @@ window.setKeyboardMode = function(mode) {
     if (pHint)  pHint.textContent = `Pressing Left / Right arrow keys will seek forward or backward by ${seekAmount} second${seekAmount === 1 ? '' : 's'}.`;
 
     if (kbToggleBtn) {
-      kbToggleBtn.style.background = 'var(--primary-soft)';
-      kbToggleBtn.style.color = 'var(--primary-dark)';
-      kbToggleBtn.style.borderColor = 'var(--primary)';
+      // Scrub: amber-filled stopwatch
+      kbToggleBtn.style.setProperty('background', '#e08a1e', 'important');
+      kbToggleBtn.style.setProperty('border-color', '#e08a1e', 'important');
+      kbToggleBtn.style.color = '#fff';
       kbToggleBtn.style.boxShadow = 'none';
-      updateLucideIcon('playerKbToggleIcon', 'timer', '15px', '15px');
+      updateLucideIcon('playerKbToggleIcon', 'timer', '14px', '14px');
     }
 
     if (cKbToggleBtn) {
@@ -11674,19 +11675,18 @@ window.setKeyboardMode = function(mode) {
       if (span) span.textContent = '';
     }
 
-    // Update Combined Prev button to Rewind 1s style
+    // Scrub: plain arrows (the pin/stopwatch shows the mode, no "1s" text)
     const cPrevBtn = document.getElementById('playerCombinedPrevBtn');
     if (cPrevBtn) {
       cPrevBtn.title = 'Rewind 1s';
-      updateLucideIcon('playerCombinedPrevIcon', 'rewind', '15px', '15px');
+      updateLucideIcon('playerCombinedPrevIcon', 'arrow-left', '15px', '15px');
       const label = document.getElementById('playerCombinedPrevLabel');
       if (label) label.style.display = 'inline-block';
     }
-    // Update Combined Next button to Forward 1s style
     const cNextBtn = document.getElementById('playerCombinedNextBtn');
     if (cNextBtn) {
       cNextBtn.title = 'Forward 1s';
-      updateLucideIcon('playerCombinedNextIcon', 'fast-forward', '15px', '15px');
+      updateLucideIcon('playerCombinedNextIcon', 'arrow-right', '15px', '15px');
       const label = document.getElementById('playerCombinedNextLabel');
       if (label) label.style.display = 'inline-block';
     }

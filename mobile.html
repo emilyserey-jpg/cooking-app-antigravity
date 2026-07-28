@@ -164,6 +164,8 @@
             <!-- Video Section -->
             <div class="mobile-video-container">
               <div class="mobile-video-placeholder">
+                <!-- Cook: reopen handle pinned to the video's own bottom edge, shown only while controls are hidden -->
+                <button class="pl-cook-reopen" onclick="event.stopPropagation(); window.togglePlayerControlsHidden();" aria-label="Show controls" tabindex="-1"></button>
                 <!-- Animated Canvas representing video playback -->
                 <canvas id="mobileVideoCanvas" class="video-element-sim" style="cursor:pointer;" onclick="toggleVideoPlayback()"></canvas>
                 <!-- Real Video Player -->
@@ -269,6 +271,8 @@
 
             <!-- Unified Player Controls Strip (All-in-One Row) -->
             <div class="player-controls-strip" style="margin-top: 6px; margin-bottom: 2px; gap: 6px;">
+              <!-- Cook: grabber handle to hide / show the bar -->
+              <button class="pl-cook-grabber" onclick="window.togglePlayerControlsHidden()" aria-label="Hide controls" tabindex="-1"></button>
               <!-- Mode Toggle -->
               <button id="playerModeCycleBtn" onclick="window.cyclePlaybackMode()" class="control-btn" tabindex="-1" style="background: rgba(74, 144, 217, 0.1); color: var(--primary); border-color: rgba(74, 144, 217, 0.2);" title="Cycle Playback Mode">
                 <i id="playerModeCycleIcon" data-lucide="repeat" style="width: 15px; height: 15px;"></i>
@@ -3876,28 +3880,83 @@
        Buttons over the video sit on its scrim as bare white icons; buttons
        that land on the pale background wear small smoked circles (the
        pl-over-video class is set by JS from real geometry). */
+    /* Cook: the control bar is a frosted pill along the video's bottom edge,
+       holding every control uniformly (Concept A). */
     #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip {
       position: relative !important; z-index: 6 !important;
-      margin: -78px 4px 0 !important; padding: 0 !important;
-      background: transparent !important;
-      backdrop-filter: none; -webkit-backdrop-filter: none;
-      border: none !important; border-radius: 0 !important;
-      box-shadow: none !important;
+      margin: -70px 6px 0 !important; padding: 6px 7px !important;
+      background: rgba(18, 24, 32, 0.38) !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      border: none !important; border-radius: 15px !important;
+      transition: margin-top 0.28s cubic-bezier(0.2, 0.7, 0.3, 1) !important;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28) !important;
       flex-wrap: nowrap !important;
-      display: flex !important; align-items: center !important; justify-content: space-evenly !important;
-      width: auto !important;
+      display: flex !important; align-items: center !important; justify-content: space-between !important;
+      gap: 3px !important; width: auto !important;
     }
-    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .control-btn {
-      width: 36px !important; height: 36px !important;
-      background: rgba(15, 23, 32, 0.34) !important;
-      border: none !important; color: #fff !important;
-      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-    }
-    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .control-btn.pl-over-video {
+    /* every control is the same outline circle */
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .control-btn:not(#playerStripPlayPauseBtn):not(#playerSpeedBtn) {
+      width: 28px !important; height: 28px !important;
       background: transparent !important;
-      backdrop-filter: none; -webkit-backdrop-filter: none;
-      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+      border: 1.5px solid rgba(255, 255, 255, 0.34) !important; color: #fff !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      box-shadow: none !important; filter: none !important;
     }
+    /* speed keeps its little pill shape */
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip #playerSpeedBtn {
+      width: auto !important; min-width: 28px !important; height: 28px !important; padding: 0 7px !important; border-radius: 999px !important;
+      background: transparent !important; border: 1.5px solid rgba(255, 255, 255, 0.34) !important; color: #fff !important;
+      box-shadow: none !important; backdrop-filter: none !important;
+    }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip #playerSpeedBtn #playerSpeedLabel { color: #fff !important; }
+    /* Play button is removed in Cook — tapping the video plays / pauses instead */
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip #playerStripPlayPauseBtn {
+      display: none !important;
+    }
+    /* Cook: no "1s" text on the arrows — the pin/stopwatch already shows the mode */
+    .phone-screen.pl-cook #playerCombinedPrevLabel,
+    .phone-screen.pl-cook #playerCombinedNextLabel { display: none !important; }
+    /* the grabber handle — only in Cook, a slim line on the bar's top edge */
+    .player-controls-strip .pl-cook-grabber { display: none; }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip {
+      padding-top: 13px !important;
+    }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .pl-cook-grabber {
+      display: flex !important; align-items: center; justify-content: center;
+      position: absolute !important; top: 3px; left: 50%; transform: translateX(-50%);
+      width: 46px; height: 12px; padding: 0; margin: 0;
+      background: transparent !important; border: none !important; cursor: pointer; z-index: 7;
+    }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .pl-cook-grabber::before {
+      content: ""; width: 30px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.55);
+      transition: background 0.15s ease;
+    }
+    #view-mobile-player .phone-screen.pl-cook .player-left-column .player-controls-strip .pl-cook-grabber:hover::before { background: rgba(255, 255, 255, 0.8); }
+
+    /* hidden: the bar collapses to just the grabber pill — tap it to bring the controls back */
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .player-controls-strip > .control-btn,
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .player-controls-strip #playerStripPlayPauseBtn,
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .player-controls-strip > .speed-dropdown-wrapper {
+      visibility: hidden !important; pointer-events: none !important;
+    }
+    /* hidden: bar goes transparent but keeps its footprint; the grabber pill
+       pins to the bottom edge so it lands at the bottom of the video */
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .player-controls-strip {
+      background: transparent !important; box-shadow: none !important;
+    }
+    /* while hidden the strip's own grabber goes away — the reopen handle in the
+       video takes over (pinned to the video's real bottom edge) */
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .player-controls-strip .pl-cook-grabber {
+      visibility: hidden !important;
+    }
+    .pl-cook-reopen { display: none; }
+    #view-mobile-player .phone-screen.pl-cook.controls-hidden .mobile-video-placeholder .pl-cook-reopen {
+      display: flex !important; align-items: center; justify-content: center;
+      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 30;
+      width: 58px; height: 20px; border-radius: 999px; border: none; cursor: pointer;
+      background: rgba(18, 24, 32, 0.46);
+    }
+    .pl-cook-reopen::before { content: ""; width: 30px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.62); }
     /* the scrim lives inside the video only */
     .phone-screen.pl-cook .mobile-video-placeholder { position: relative !important; }
     .phone-screen.pl-cook .mobile-video-placeholder::after {
@@ -4625,7 +4684,8 @@
     /* nothing peeks up from below the capsule bar */
     .phone-screen.pl-cook .mobile-player-body { display: none !important; }
     /* keyboard toggle sits out of the capsule row (still there in Mirror/Flow) */
-    .phone-screen.pl-cook #playerKbToggleBtn { display: none !important; }
+    /* Cook: the mode button IS the pin (Play button is removed; tap the video to play) */
+    .phone-screen.pl-cook #playerKbToggleBtn { display: inline-flex !important; }
 
     /* the docked card shows exactly one step, full width, neighbors hidden */
     .phone-screen.pl-cook .step-cards-slider { gap: 0 !important; }
@@ -5262,8 +5322,10 @@
             rail.appendChild(mic);
           }
           if (cmtTab && cmtTab.parentElement !== rail) rail.appendChild(cmtTab);
-          if (mute && mute.parentElement !== rail) rail.appendChild(mute);
-          if (speed && speed.parentElement !== rail) rail.appendChild(speed);
+          // mute + speed stay in the bottom control bar (Concept A) — only the
+          // mic + comments pill live in the small corner rail now.
+          if (mute && strip && mute.parentElement === rail) strip.appendChild(mute);
+          if (speed && strip && speed.parentElement === rail) strip.appendChild(speed);
           rail.style.display = '';
         } else {
           if (mic && micHome && mic.parentElement === rail) micHome.insertBefore(mic, micNext);
@@ -5284,8 +5346,9 @@
         const sr = screen.getBoundingClientRect();
         const vr = vidC.getBoundingClientRect();
         if (vr.height < 60) return;
+        // top-right corner, just under the grid button (Concept A)
         rail.style.left = Math.round(vr.right - sr.left - 42) + 'px';
-        rail.style.top = Math.max(60, Math.round(vr.bottom - sr.top - 92 - rail.offsetHeight)) + 'px';
+        rail.style.top = Math.round(vr.top - sr.top + 48) + 'px';
       }
       window.addEventListener('resize', placeCookRail);
 
@@ -5841,6 +5904,7 @@
           s.classList.toggle('pl-split', name === 'split');
           s.classList.toggle('pl-swap', name === 'split' && swap);
           s.classList.add('pl-ready');
+          s.classList.remove('controls-hidden'); // always start with controls shown
         });
         relocateCookPieces(name === 'cook');
         const layoutToggleLabel = document.getElementById('playerLayoutToggleLabel');
@@ -5861,6 +5925,13 @@
       window.togglePlayerLayout = function() {
         const cur = normalizeLayout(localStorage.getItem(KEY) || 'cook');
         window.setPlayerLayout(cur === 'cook' ? 'split' : 'cook');
+      };
+
+      // Cook: the grabber collapses the control bar to a slim handle and back.
+      window.togglePlayerControlsHidden = function() {
+        document.querySelectorAll('#view-mobile-player .phone-screen').forEach(function(s) {
+          s.classList.toggle('controls-hidden');
+        });
       };
 
       document.addEventListener('DOMContentLoaded', () => {
