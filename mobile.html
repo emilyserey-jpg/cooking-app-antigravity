@@ -4226,7 +4226,7 @@
        dark translucent pill, same white outline-circle buttons, play hidden
        (tap the video to play/pause), pin + loop + mute + speed all present.
        These mirror the .pl-cook .player-controls-strip rules above. */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip {
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip {
       position: relative !important; z-index: 6 !important;
       margin: -70px 6px 0 !important; padding: 13px 7px 6px !important;
       background: rgba(18, 24, 32, 0.38) !important;
@@ -4239,11 +4239,11 @@
     }
     /* keep the natural DOM order (mode, prev, pin, next, mute, speed); override
        the old split `order` rules that shuffled them */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip > * { order: 0 !important; }
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip > * { order: 0 !important; }
     /* the pin/keyboard-mode button shows in Split too (Cook shows it) */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerKbToggleBtn { display: flex !important; }
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip #playerKbToggleBtn { display: flex !important; }
     /* every control is the same white outline circle */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip .control-btn:not(#playerStripPlayPauseBtn):not(#playerSpeedBtn) {
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip .control-btn:not(#playerStripPlayPauseBtn):not(#playerSpeedBtn) {
       width: 28px !important; min-width: 28px !important; height: 28px !important;
       flex: 0 0 auto !important; border-radius: 50% !important;
       background: transparent !important;
@@ -4251,18 +4251,18 @@
       box-shadow: none !important; filter: none !important;
     }
     /* speed keeps its little pill shape */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerSpeedBtn {
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip #playerSpeedBtn {
       width: auto !important; min-width: 28px !important; height: 28px !important; padding: 0 7px !important; border-radius: 999px !important;
       flex: 0 0 auto !important;
       background: transparent !important; border: 1.5px solid rgba(255, 255, 255, 0.34) !important; color: #fff !important;
       box-shadow: none !important; filter: none !important; font-size: 0.68rem !important; font-weight: 800 !important;
     }
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerSpeedLabel { color: #fff !important; }
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip .speed-dropdown-wrapper {
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip #playerSpeedLabel { color: #fff !important; }
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip .speed-dropdown-wrapper {
       flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; margin: 0 !important;
     }
     /* Play button removed in Split too — tapping the video plays / pauses */
-    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerStripPlayPauseBtn { display: none !important; }
+    #view-mobile-player .phone-screen.pl-split :is(.player-left-column, .mp-video-tile) .player-controls-strip #playerStripPlayPauseBtn { display: none !important; }
     /* Step-videos panel open: the single video (and its overlaid transport) rests */
     #view-mobile-player .phone-screen.pl-split.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
     #view-mobile-player .phone-screen.pl-cook.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
@@ -7311,7 +7311,14 @@
        .mp-video-tile so they can only ever move together. Cook view is left
        untouched — the tile is unwrapped whenever we're not in split. -->
   <style>
-    #view-mobile-player .mp-video-tile { display: flex; flex-direction: column; min-height: 0; position: relative; }
+    /* the tile is a real panel-sized block: 6px side inset + 10px below so it
+       never sits flush against (or over) the next wrapper, matching the other
+       panels' rhythm. flex:0 0 auto so it keeps the video's height and the
+       panels share the remaining column space. */
+    #view-mobile-player .mp-video-tile {
+      display: flex; flex-direction: column; min-height: 0; position: relative;
+      margin: 0 6px 10px 6px; flex: 0 0 auto;
+    }
     #view-mobile-player .mpv-grip {
       position: absolute; top: 8px; left: 8px; z-index: 62; width: 30px; height: 30px;
       border: none; border-radius: 9px; background: rgba(18,24,32,.55); color: #fff;
