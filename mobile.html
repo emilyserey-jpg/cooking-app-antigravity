@@ -4217,27 +4217,47 @@
       z-index: 3; pointer-events: none;
       background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 20, 0.55) 85%);
     }
+    /* Split view: the control panel is an exact copy of the Cook panel — same
+       dark translucent pill, same white outline-circle buttons, play hidden
+       (tap the video to play/pause), pin + loop + mute + speed all present.
+       These mirror the .pl-cook .player-controls-strip rules above. */
     #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip {
       position: relative !important; z-index: 6 !important;
-      margin: -58px 6px 2px !important; padding: 0 !important;
-      background: transparent !important; border: none !important;
-      box-shadow: none !important; border-radius: 0 !important;
-      backdrop-filter: none; -webkit-backdrop-filter: none;
-      flex-wrap: nowrap !important; gap: 0 !important;
-      display: flex !important; align-items: center !important;
-      justify-content: space-evenly !important;
+      margin: -70px 6px 0 !important; padding: 13px 7px 6px !important;
+      background: rgba(18, 24, 32, 0.38) !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      border: none !important; border-radius: 15px !important;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28) !important;
+      flex-wrap: nowrap !important; gap: 3px !important;
+      display: flex !important; align-items: center !important; justify-content: space-between !important;
       width: auto !important;
     }
-    #view-mobile-player .phone-screen.pl-split .player-controls-strip .control-btn {
-      width: 34px !important; height: 34px !important;
-      background: transparent !important; border: none !important; color: #fff !important;
-      filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+    /* keep the natural DOM order (mode, prev, pin, next, mute, speed); override
+       the old split `order` rules that shuffled them */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip > * { order: 0 !important; }
+    /* the pin/keyboard-mode button shows in Split too (Cook shows it) */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerKbToggleBtn { display: flex !important; }
+    /* every control is the same white outline circle */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip .control-btn:not(#playerStripPlayPauseBtn):not(#playerSpeedBtn) {
+      width: 28px !important; min-width: 28px !important; height: 28px !important;
+      flex: 0 0 auto !important; border-radius: 50% !important;
+      background: transparent !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.34) !important; color: #fff !important;
+      box-shadow: none !important; filter: none !important;
     }
-    #view-mobile-player .phone-screen.pl-split #playerStripPlayPauseBtn {
-      width: 36px !important; height: 50px !important;
-      filter: none;
+    /* speed keeps its little pill shape */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerSpeedBtn {
+      width: auto !important; min-width: 28px !important; height: 28px !important; padding: 0 7px !important; border-radius: 999px !important;
+      flex: 0 0 auto !important;
+      background: transparent !important; border: 1.5px solid rgba(255, 255, 255, 0.34) !important; color: #fff !important;
+      box-shadow: none !important; filter: none !important; font-size: 0.68rem !important; font-weight: 800 !important;
     }
-    #view-mobile-player .phone-screen.pl-split #playerKbToggleBtn { display: none !important; }
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerSpeedLabel { color: #fff !important; }
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip .speed-dropdown-wrapper {
+      flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; margin: 0 !important;
+    }
+    /* Play button removed in Split too — tapping the video plays / pauses */
+    #view-mobile-player .phone-screen.pl-split .player-left-column .player-controls-strip #playerStripPlayPauseBtn { display: none !important; }
     /* Step-videos panel open: the single video (and its overlaid transport) rests */
     #view-mobile-player .phone-screen.pl-split.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
     #view-mobile-player .phone-screen.pl-cook.multigrid-active .player-left-column .player-controls-strip { display: none !important; }
@@ -5831,9 +5851,11 @@
         if (sheet && sheet.classList.contains('open')) placeCmtSheet();
       }
 
-      // Option B: in Split, repeat / mute / speed leave the strip and become
-      // minis on the route card, next to the sides and width buttons. They
-      // return to their exact strip positions for Cook.
+      // Option A: keep repeat / mute / speed on the video control strip in BOTH
+      // Cook and Split. In Split, the `.split-view-active .player-controls-strip`
+      // CSS wraps them to a second row of pills right under prev / play / next,
+      // so all controls stay together on the overlay instead of being tucked
+      // into the route-card ⋯ menu. (The CSS `order` rules arrange them.)
       function relocateSplitUtilities(split) {
         const player = document.getElementById('view-mobile-player');
         const strip = player && player.querySelector('.player-controls-strip');
@@ -5843,16 +5865,11 @@
         const mode = document.getElementById('playerModeCycleBtn');
         const mute = document.getElementById('playerMuteBtn');
         const speed = player.querySelector('.speed-dropdown-wrapper');
-        if (split) {
-          [mode, mute, speed].forEach(el => {
-            if (el && el.parentElement !== meta) meta.insertBefore(el, clock);
-          });
-        } else {
-          if (mode && mode.parentElement !== strip)
-            strip.insertBefore(mode, document.getElementById('playerCombinedPrevBtn'));
-          if (mute && mute.parentElement !== strip) strip.appendChild(mute);
-          if (speed && speed.parentElement !== strip) strip.appendChild(speed);
-        }
+        // Same placement for Cook and Split — the buttons live on the strip.
+        if (mode && mode.parentElement !== strip)
+          strip.insertBefore(mode, document.getElementById('playerCombinedPrevBtn'));
+        if (mute && mute.parentElement !== strip) strip.appendChild(mute);
+        if (speed && speed.parentElement !== strip) strip.appendChild(speed);
       }
 
       // D2: buttons whose center sits over the video get the bare-icon

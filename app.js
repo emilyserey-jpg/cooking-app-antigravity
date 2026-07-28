@@ -507,11 +507,16 @@ function startVideoSimulation() {
             });
           });
         }
-        if (Math.abs(realVideo.currentTime - currentTime) > 0.5) {
-          realVideo.currentTime = currentTime;
-        } else {
-          currentTime = realVideo.currentTime;
-        }
+        // While the real <video> plays, IT is the single source of truth for
+        // position — follow its clock directly. The old code kept a separate
+        // "currentTime" stopwatch and, whenever the two drifted past 0.5s
+        // (which happens after any buffering stall), yanked the video BACKWARD
+        // to match the stale stopwatch. That desync made the step-boundary
+        // check fire against the wrong time, so changing the playback mode
+        // mid-step didn't reliably take effect. Following the video keeps the
+        // boundary locked to where playback actually is. Every seek path also
+        // sets realVideo.currentTime, so seeks still take effect here.
+        currentTime = realVideo.currentTime;
       } else {
         if (!realVideo.paused) {
           realVideo.pause();
@@ -935,6 +940,26 @@ let playerPlaybackSpeedIndex = 1; // Default to 1.0
 const PLAYER_SPEEDS = [0.5, 1.0, 1.25, 1.5, 2.0];
 window.playerPlaybackSpeed = 1.0; // Global for canvas simulation sync
 
+// Home wrapper the speed menu lives in when closed (it gets portaled to
+// <body> while open — see togglePlayerSpeedDropdown below).
+window.closePlayerSpeedDropdown = function() {
+  const speedMenu = document.getElementById('playerSpeedDropdownMenu');
+  if (!speedMenu) return;
+  speedMenu.style.display = 'none';
+  // Undo the portal: clear the fixed-position styles and move the menu back
+  // into its wrapper next to the speed button.
+  speedMenu.style.position = '';
+  speedMenu.style.left = '';
+  speedMenu.style.top = '';
+  speedMenu.style.bottom = '';
+  speedMenu.style.transform = '';
+  speedMenu.style.zIndex = '';
+  const home = document.getElementById('playerSpeedBtn')?.parentElement;
+  if (home && speedMenu.parentElement !== home) {
+    home.appendChild(speedMenu);
+  }
+};
+
 window.togglePlayerSpeedDropdown = function(event) {
   if (event) event.stopPropagation();
   const speedMenu = document.getElementById('playerSpeedDropdownMenu');
@@ -942,6 +967,21 @@ window.togglePlayerSpeedDropdown = function(event) {
 
   const isHidden = speedMenu.style.display === 'none' || speedMenu.style.display === '';
   if (isHidden) {
+    // The control strip scrolls horizontally (overflow-x: auto), which forces
+    // it to clip vertically too — so a menu opening upward out of the strip
+    // gets cut off and vanishes. Portal the menu to <body> and pin it with
+    // position: fixed, anchored above the speed button, so nothing clips it.
+    const speedBtn = document.getElementById('playerSpeedBtn');
+    if (speedBtn) {
+      const r = speedBtn.getBoundingClientRect();
+      document.body.appendChild(speedMenu);
+      speedMenu.style.position = 'fixed';
+      speedMenu.style.left = (r.left + r.width / 2) + 'px';
+      speedMenu.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+      speedMenu.style.top = 'auto';
+      speedMenu.style.transform = 'translateX(-50%)';
+      speedMenu.style.zIndex = '100000';
+    }
     speedMenu.style.display = 'flex';
     // Highlight the active option
     const currentSpeed = window.playerPlaybackSpeed || 1.0;
@@ -954,7 +994,7 @@ window.togglePlayerSpeedDropdown = function(event) {
       }
     });
   } else {
-    speedMenu.style.display = 'none';
+    window.closePlayerSpeedDropdown();
   }
 };
 
@@ -974,9 +1014,8 @@ window.setPlayerSpeed = function(speed) {
     label.textContent = (speed === 1 || speed === 2) ? `${speed}.0x` : `${speed}x`;
   }
 
-  const speedMenu = document.getElementById('playerSpeedDropdownMenu');
-  if (speedMenu) {
-    speedMenu.style.display = 'none';
+  if (typeof window.closePlayerSpeedDropdown === 'function') {
+    window.closePlayerSpeedDropdown();
   }
 };
 
@@ -5725,7 +5764,14 @@ function updateStepFromTime(time) {
   if (!recipeData.loops || recipeData.loops.length === 0) return;
   let foundIndex = 0;
   for (let i = 0; i < recipeData.loops.length; i++) {
-    if (time >= recipeData.loops[i] - 0.01) {
+    // NOTE: no early-advance tolerance here. This runs every frame, AFTER the
+    // playback loop's loop/wait/continuous boundary check. If we advanced the
+    // step index even 0.01s before the true boundary, the next frame's
+    // boundary check would read the *next* step's end and miss the current
+    // boundary entirely — so loop mode would slip forward (step 1 -> 2) instead
+    // of looping, and only the last step (whose index is capped) would loop.
+    // Requiring time >= loops[i] exactly lets the boundary check fire first.
+    if (time >= recipeData.loops[i]) {
       foundIndex = i;
     }
   }
@@ -18769,7 +18815,7 @@ document.addEventListener('click', (e) => {
   const speedMenu = document.getElementById('playerSpeedDropdownMenu');
   if (speedMenu && speedMenu.style.display === 'flex') {
     if (!e.target.closest('#playerSpeedDropdownMenu') && !e.target.closest('#playerSpeedBtn')) {
-      speedMenu.style.display = 'none';
+      window.closePlayerSpeedDropdown();
     }
   }
   const libOptsMenu = document.getElementById('libOptionsDropdownMenu');
