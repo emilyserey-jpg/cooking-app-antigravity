@@ -7341,6 +7341,17 @@
       // the drop targets a dragged tile can land beside (the three panels)
       const panels = () => ['#playerCommentsSection','#playerIngredientsPanel','.step-slider-viewport']
         .map(s => document.querySelector('#view-mobile-player ' + s)).filter(el => el && el.offsetParent !== null);
+      // a panel may live inside a sub-wrapper (Comments sits in #mpUnder). Walk
+      // up to the element that is a DIRECT child of a column, so we always drop
+      // the tile at column level — never nested inside a panel's wrapper.
+      function columnSlot(el){
+        let e = el;
+        while (e && e.parentElement && !e.parentElement.classList.contains('player-left-column')
+               && !e.parentElement.classList.contains('mobile-player-body')) {
+          e = e.parentElement;
+        }
+        return e;
+      }
 
       function ensureGrip(){
         const t = tileEl();
@@ -7393,11 +7404,13 @@
           window.removeEventListener('pointercancel', up);
           clone.remove(); ind.remove(); t.classList.remove('mpv-dragging');
           if (drop){
-            const parent = drop.el.parentElement;
-            const ref = drop.where==='before' ? drop.el : drop.el.nextSibling;
+            // drop at COLUMN level next to the target's column-level slot, so
+            // the tile is a sibling of the panels — never nested in a wrapper
+            const slot = columnSlot(drop.el);
+            const parent = slot.parentElement;
+            const ref = drop.where==='before' ? slot : slot.nextSibling;
             parent.insertBefore(t, ref);
-            // sit in the flex order of the panel it landed beside
-            const ord = drop.el.style.getPropertyValue('order') || '0';
+            const ord = slot.style.getPropertyValue('order') || '0';
             t.style.setProperty('order', ord, 'important');
             try { navigator.vibrate && navigator.vibrate(14); } catch(_){}
           }
