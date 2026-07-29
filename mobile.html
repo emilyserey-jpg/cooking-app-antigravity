@@ -7353,21 +7353,36 @@
         return e;
       }
 
-      function ensureGrip(){
-        const t = tileEl();
-        if (!t || !inSplit()){ document.querySelectorAll('#view-mobile-player .mpv-grip').forEach(g => g.remove()); return; }
-        if (t.querySelector(':scope > .mpv-grip')) return;
-        const g = document.createElement('button');
-        g.type = 'button'; g.className = 'mpv-grip'; g.title = 'Drag to move the video';
-        g.setAttribute('aria-label','Drag to move the video');
-        g.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="6" r="1.7"/><circle cx="16" cy="6" r="1.7"/><circle cx="8" cy="12" r="1.7"/><circle cx="16" cy="12" r="1.7"/><circle cx="8" cy="18" r="1.7"/><circle cx="16" cy="18" r="1.7"/></svg>';
-        g.addEventListener('pointerdown', startDrag);
-        t.appendChild(g);
+      function removeGrips(){
+        document.querySelectorAll('#view-mobile-player .mpv-grip').forEach(g => g.remove());
       }
 
-      function startDrag(e){
-        e.preventDefault(); e.stopPropagation();
-        const t = tileEl(); if (!t) return;
+      // ── press-and-hold anywhere on the video to lift it, then drag ──
+      let holdTimer = null, downX = 0, downY = 0;
+      function endHold(){
+        if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+        window.removeEventListener('pointermove', onHoldMove);
+        window.removeEventListener('pointerup', endHold);
+        window.removeEventListener('pointercancel', endHold);
+      }
+      function onHoldMove(e){ if (Math.hypot(e.clientX - downX, e.clientY - downY) > 10) endHold(); }
+      function onDown(e){
+        if (e.button != null && e.button !== 0) return;
+        if (!inSplit()) return;
+        const t = tileEl();
+        if (!t || !t.contains(e.target)) return;
+        // controls + any interactive element keep their normal tap behaviour;
+        // a quick tap on the video still plays/pauses — only a HOLD lifts it
+        if (e.target.closest('button, a, input, select, textarea, .player-controls-strip')) return;
+        downX = e.clientX; downY = e.clientY;
+        holdTimer = setTimeout(() => { holdTimer = null; beginDrag(e, t); }, 340);
+        window.addEventListener('pointermove', onHoldMove, { passive:true });
+        window.addEventListener('pointerup', endHold);
+        window.addEventListener('pointercancel', endHold);
+      }
+
+      function beginDrag(e, t){
+        endHold();
         const r = t.getBoundingClientRect();
         const clone = t.cloneNode(true);
         const cg = clone.querySelector('.mpv-grip'); if (cg) cg.remove();
@@ -7379,11 +7394,13 @@
         t.classList.add('mpv-dragging');
         const ind = document.createElement('div'); ind.className = 'mpv-indicator'; ind.style.display = 'none';
         document.body.appendChild(ind);
-        try { navigator.vibrate && navigator.vibrate(10); } catch(_){}
-        let drop = null;
+        try { navigator.vibrate && navigator.vibrate(12); } catch(_){}
+        let drop = null, moved = false;
+        const place = (x,y) => { clone.style.left = (x - r.width*0.30) + 'px'; clone.style.top = (y - 22) + 'px'; };
+        place(e.clientX, e.clientY);
         function move(ev){
-          clone.style.left = (ev.clientX - r.width*0.30) + 'px';
-          clone.style.top  = (ev.clientY - 22) + 'px';
+          ev.preventDefault(); moved = true;
+          place(ev.clientX, ev.clientY);
           let best=null, bestD=Infinity, where='after';
           panels().forEach(p => {
             const pr = p.getBoundingClientRect();
@@ -7413,6 +7430,13 @@
             const ord = slot.style.getPropertyValue('order') || '0';
             t.style.setProperty('order', ord, 'important');
             try { navigator.vibrate && navigator.vibrate(14); } catch(_){}
+          }
+          // a hold-drag ends in a click on the video — swallow it so it doesn't
+          // also toggle play/pause
+          if (moved){
+            const kill = ev => { ev.preventDefault(); ev.stopPropagation(); document.removeEventListener('click', kill, true); };
+            document.addEventListener('click', kill, true);
+            setTimeout(() => document.removeEventListener('click', kill, true), 500);
           }
         }
         window.addEventListener('pointermove', move, { passive:false });
@@ -7457,11 +7481,12 @@
 
       function sync() {
         try {
-          if (inSplit()) { wrap(); ensureGrip(); }
-          else { unwrap(); ensureGrip(); }
+          if (inSplit()) wrap(); else unwrap();
+          removeGrips();
         } catch (_) {}
       }
 
+      document.addEventListener('pointerdown', onDown, true);
       setInterval(sync, 500);
       document.addEventListener('DOMContentLoaded', sync);
       sync();
